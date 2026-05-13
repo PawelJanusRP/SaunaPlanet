@@ -810,6 +810,52 @@ useEffect(() => {
 			  {visibleItems.length} ogłoszeń w pobliżu
 			</div>
 
+		<div className="mb-3 flex flex-wrap gap-2">
+		  <button
+			onClick={() => setViewMode('all')}
+			className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			  viewMode === 'all'
+				? 'bg-black text-white'
+				: 'bg-gray-100 text-gray-700'
+			}`}
+		  >
+			Wszystkie
+		  </button>
+
+		  <button
+			onClick={() => setViewMode('reservedByMe')}
+			className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			  viewMode === 'reservedByMe'
+				? 'bg-black text-white'
+				: 'bg-gray-100 text-gray-700'
+			}`}
+		  >
+			Rezerwacje
+		  </button>
+
+		  <button
+			onClick={() => setViewMode('myItems')}
+			className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			  viewMode === 'myItems'
+				? 'bg-black text-white'
+				: 'bg-gray-100 text-gray-700'
+			}`}
+		  >
+			Moje
+		  </button>
+
+		  <button
+			onClick={() => setOnlyWithPhotos((v) => !v)}
+			className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			  onlyWithPhotos
+				? 'bg-blue-600 text-white'
+				: 'bg-gray-100 text-gray-700'
+			}`}
+		  >
+			📷 Zdjęcia
+		  </button>
+		</div>
+
 			<div className="flex flex-col gap-2">
 			  {visibleItems.map((item) => {
 				const img = item.image_urls?.[0]
