@@ -176,12 +176,13 @@ export default function AddItemForm({
 
   <label
     htmlFor="photo-upload"
-    className="
-      flex cursor-pointer flex-col items-center justify-center
-      rounded-xl border-2 border-dashed border-gray-300
-      bg-gray-50 p-4 text-center
-      transition hover:bg-gray-100
-    "
+className="
+  flex cursor-pointer flex-col items-center justify-center
+  rounded-xl border-2 border-dashed border-gray-300
+  bg-gray-50 p-4 text-center
+  transition hover:bg-gray-100
+  active:scale-[0.98] active:bg-gray-200
+"
   >
     {photo ? (
       <>
@@ -204,7 +205,7 @@ export default function AddItemForm({
         </div>
 
         <div className="text-xs text-gray-500">
-          Kliknij tutaj
+          Otwieranie może chwilę potrwać
         </div>
       </>
     )}
@@ -220,6 +221,13 @@ export default function AddItemForm({
       setPhoto(selectedFile)
     }}
   />
+  
+{photo && (
+  <div className="mt-2 text-xs text-green-700">
+    Zdjęcie wybrane
+  </div>
+)}
+
 </div>
       <button
         onClick={handleSubmit}
