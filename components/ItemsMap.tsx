@@ -170,29 +170,34 @@ function ItemPopup({
   !!item.created_by_device_id &&
   item.created_by_device_id === deviceId
 
-  async function reserveItem() {
-    if (!deviceId) {
-      toast.error('Nie udało się ustalić identyfikatora urządzenia')
-      return
-    }
-
-    setActionLoading(true)
-
-	const { error } = await supabase.rpc('mark_item_taken_mvp', {
-	  item_id: item.id,
-	})
-
-    setActionLoading(false)
-
-    if (error) {
-      console.error('RESERVATION ERROR:', error)
-      toast.error(error.message)
-      return
-    }
-
-    await onRefresh()
-    toast.success('Zarezerwowano na 30 minut')
+async function reserveItem() {
+  if (!deviceId) {
+    toast.error('Nie udało się ustalić identyfikatora urządzenia')
+    return
   }
+
+  setActionLoading(true)
+
+  const { error } = await supabase
+    .from('items')
+    .update({
+      status: 'reserved',
+      reserved_until: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      reserved_by: deviceId,
+    })
+    .eq('id', item.id)
+
+  setActionLoading(false)
+
+  if (error) {
+    console.error('RESERVATION ERROR:', error)
+    toast.error(error.message)
+    return
+  }
+
+  await onRefresh()
+  toast.success('Zarezerwowano na 30 minut')
+}
 
   async function markAsTaken() {
     setActionLoading(true)
@@ -415,6 +420,7 @@ export default function ItemsMap() {
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
+  const [hideTaken, setHideTaken] = useState(true)
   const [viewMode, setViewMode] = useState<'all' | 'reservedByMe' | 'myItems'>('all')
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const [userLocation, setUserLocation] =
@@ -432,6 +438,9 @@ export default function ItemsMap() {
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
 	const visibleItems = items.filter((item) => {
+		if (hideTaken && item.status === 'taken') {
+	  return false
+		}
 	  if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
 		return false
 	  }
@@ -855,7 +864,16 @@ useEffect(() => {
 		  >
 			📷 Zdjęcia
 		  </button>
-		</div>
+		<button
+		  onClick={() => setHideTaken((v) => !v)}
+		  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			hideTaken
+			  ? 'bg-red-600 text-white'
+			  : 'bg-gray-100 text-gray-700'
+		  }`}
+		>
+		  Ukryj odebrane
+		</button>		</div>
 		<div className="mb-3 flex flex-wrap gap-2">
 		  {[3, 10, 30, 100].map((radius) => (
 			<button
