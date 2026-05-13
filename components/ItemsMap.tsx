@@ -1,5 +1,6 @@
 'use client'
 
+import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import {
   MapContainer,
@@ -220,6 +221,7 @@ function ItemPopup({
   onRefresh: () => Promise<void>
 }) {
   const [imageIndex, setImageIndex] = useState(0)
+  const [fullscreen, setFullscreen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
   const images = item.image_urls ?? []
@@ -332,15 +334,52 @@ async function removeItem() {
   toast.success('Ogłoszenie usunięte')
 }
 
+const fullscreenViewer =
+  fullscreen && currentImage
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95"
+          onClick={() => setFullscreen(false)}
+        >
+          <img
+		  src={currentImage}
+		  alt={item.title}
+		  onMouseDown={(e) => e.stopPropagation()}
+		  onClick={(e) => {
+			e.stopPropagation()
+			console.log('IMAGE CLICK FULLSCREEN')
+			setFullscreen(true)
+		  }}
+		  className="max-h-full max-w-full object-contain"
+		/>
+
+          <button
+            className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-2 text-white"
+            onClick={(e) => {
+              e.stopPropagation()
+              setFullscreen(false)
+            }}
+          >
+            ✕
+          </button>
+        </div>,
+        document.body
+      )
+    : null
+  
   return (
+  <>
+    {fullscreenViewer}
+
     <div className="w-[240px]">
       {currentImage ? (
         <div className="relative mb-3 overflow-hidden rounded-xl">
-          <img
-            src={currentImage}
-            alt={item.title}
-            className="h-44 w-full object-cover"
-          />
+		<img
+		  src={currentImage}
+		  alt={item.title}
+		  onClick={() => setFullscreen(true)}
+		  className="h-44 w-full cursor-pointer object-cover"
+		/>
 
           {images.length > 1 && (
             <>
@@ -476,7 +515,8 @@ async function removeItem() {
 )}
       </div>
     </div>
-  )
+  </>
+)
 }
 
 export default function ItemsMap() {
