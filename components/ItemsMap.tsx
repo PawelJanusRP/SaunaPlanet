@@ -153,40 +153,53 @@ function getCategoryColor(category: string) {
 }
 
 function createItemIcon(
-  imageUrl: string | null,
-  status: string,
-  category: string
+	imageUrl: string | null,
+	status: string,
+	category: string
 )
  {
-  if (!imageUrl) return markerIcon
+	const categoryEmoji = getCategoryEmoji(category)
+	const categoryColor = getCategoryColor(category)
 
   return L.divIcon({
     className: '',
-    html: `
-      <div style="
-        width: 46px;
-        height: 46px;
-        border-radius: 9999px;
-        overflow: hidden;
-        border: 3px solid ${
-		  status === 'reserved'
-			? '#f97316'
-			: getCategoryColor(category)
-		};
-        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-        background: white;
-      ">
-        <img
-          src="${imageUrl}"
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-          "
-        />
-      </div>
-    `,
+html: `
+  <div style="
+    width: 46px;
+    height: 46px;
+    border-radius: 9999px;
+    overflow: hidden;
+    border: 3px solid ${
+      status === 'reserved'
+        ? '#f97316'
+        : categoryColor
+    };
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  ">
+    ${
+      imageUrl
+        ? `
+          <img
+            src="${imageUrl}"
+            style="
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+            "
+          />
+        `
+        : `
+          <div>${categoryEmoji}</div>
+        `
+    }
+  </div>
+`,
     iconSize: [46, 46],
     iconAnchor: [23, 46],
     popupAnchor: [0, -46],
@@ -473,6 +486,7 @@ export default function ItemsMap() {
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
+  const [searchText, setSearchText] = useState('')
   const [hideTaken, setHideTaken] = useState(true)
   const [viewMode, setViewMode] = useState<'all' | 'reservedByMe' | 'myItems'>('all')
   const [deviceId, setDeviceId] = useState<string | null>(null)
@@ -491,9 +505,26 @@ export default function ItemsMap() {
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
 	const visibleItems = items.filter((item) => {
-		if (hideTaken && item.status === 'taken') {
-	  return false
+	  const search = searchText.toLowerCase().trim()
+
+	  if (search) {
+		const title = item.title?.toLowerCase() ?? ''
+		const description = item.description?.toLowerCase() ?? ''
+		const category = item.category?.toLowerCase() ?? ''
+
+		if (
+		  !title.includes(search) &&
+		  !description.includes(search) &&
+		  !category.includes(search)
+		) {
+		  return false
 		}
+	  }
+
+	  if (hideTaken && item.status === 'taken') {
+		return false
+	  }
+
 	  if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
 		return false
 	  }
@@ -501,9 +532,11 @@ export default function ItemsMap() {
 	  if (viewMode === 'reservedByMe') {
 		return item.status === 'reserved' && item.reserved_by === deviceId
 	  }
-		if (viewMode === 'myItems') {
-		  return item.created_by_device_id === deviceId
-		}
+
+	  if (viewMode === 'myItems') {
+		return item.created_by_device_id === deviceId
+	  }
+
 	  return true
 	})
 
@@ -660,6 +693,14 @@ useEffect(() => {
     <div className="flex h-screen w-full">
       <div className="hidden w-80 overflow-y-auto border-r bg-white lg:block">
         <div className="border-b p-3 font-bold">
+		<div className="border-b p-3">
+		  <input
+			className="w-full rounded-xl border p-2 text-sm"
+			placeholder="Szukaj..."
+			value={searchText}
+			onChange={(e) => setSearchText(e.target.value)}
+		  />
+		</div>
           {loading ? 'Ładowanie...' : `Znaleziono: ${visibleItems.length}`}
         </div>
 
@@ -892,6 +933,14 @@ useEffect(() => {
 
 		  <div className="max-h-[40vh] overflow-y-auto p-3">
 			<div className="mb-3 text-sm font-bold">
+			<div className="mb-3">
+			  <input
+				className="w-full rounded-xl border p-2 text-sm"
+				placeholder="Szukaj..."
+				value={searchText}
+				onChange={(e) => setSearchText(e.target.value)}
+			  />
+			</div>
 			  {visibleItems.length} ogłoszeń w pobliżu
 			</div>
 
