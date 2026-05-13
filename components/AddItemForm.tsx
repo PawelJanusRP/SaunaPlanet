@@ -4,6 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
+const categories = [
+  { value: 'furniture', label: '🛋️ Meble' },
+  { value: 'electronics', label: '⚡ Elektronika' },
+  { value: 'clothes', label: '👕 Ubrania' },
+  { value: 'books', label: '📚 Książki' },
+  { value: 'kids', label: '🧸 Dzieci' },
+  { value: 'other', label: '📦 Inne' },
+]
+
 export default function AddItemForm({
   onAdded,
   onClose,
@@ -17,6 +26,7 @@ export default function AddItemForm({
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [category, setCategory] = useState('furniture')
   const [photo, setPhoto] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
@@ -59,7 +69,7 @@ export default function AddItemForm({
           {
             title: title.trim(),
             description: description.trim(),
-            category: 'furniture',
+            category,
             condition: 'good',
             size: 'medium',
             latitude,
@@ -168,6 +178,18 @@ export default function AddItemForm({
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
+
+	<select
+	  className="mb-2 w-full rounded border p-2"
+	  value={category}
+	  onChange={(e) => setCategory(e.target.value)}
+	>
+	  {categories.map((cat) => (
+		<option key={cat.value} value={cat.value}>
+		  {cat.label}
+		</option>
+	  ))}
+	</select>
 
  <div className="mb-3">
   <label className="mb-2 block text-sm font-semibold text-gray-700">

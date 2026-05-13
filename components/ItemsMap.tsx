@@ -108,7 +108,56 @@ function MapCenterController({
   return null
 }
 
-function createItemIcon(imageUrl: string | null, status: string) {
+function getCategoryEmoji(category: string) {
+  switch (category) {
+    case 'furniture':
+      return '🛋️'
+
+    case 'electronics':
+      return '⚡'
+
+    case 'clothes':
+      return '👕'
+
+    case 'books':
+      return '📚'
+
+    case 'kids':
+      return '🧸'
+
+    default:
+      return '📦'
+  }
+}
+
+function getCategoryColor(category: string) {
+  switch (category) {
+    case 'furniture':
+      return '#3b82f6'
+
+    case 'electronics':
+      return '#eab308'
+
+    case 'clothes':
+      return '#ec4899'
+
+    case 'books':
+      return '#22c55e'
+
+    case 'kids':
+      return '#a855f7'
+
+    default:
+      return '#6b7280'
+  }
+}
+
+function createItemIcon(
+  imageUrl: string | null,
+  status: string,
+  category: string
+)
+ {
   if (!imageUrl) return markerIcon
 
   return L.divIcon({
@@ -119,7 +168,11 @@ function createItemIcon(imageUrl: string | null, status: string) {
         height: 46px;
         border-radius: 9999px;
         overflow: hidden;
-        border: 3px solid ${status === 'reserved' ? '#f97316' : 'white'};
+        border: 3px solid ${
+		  status === 'reserved'
+			? '#f97316'
+			: getCategoryColor(category)
+		};
         box-shadow: 0 2px 8px rgba(0,0,0,0.35);
         background: white;
       ">
@@ -328,9 +381,9 @@ async function removeItem() {
       )}
 
       <div className="mb-3 flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-gray-100 px-2 py-1">
-          {item.category}
-        </span>
+		<span className="rounded-full bg-gray-100 px-2 py-1">
+		  {getCategoryEmoji(item.category)} {item.category}
+		</span>
 
         {item.condition && (
           <span className="rounded-full bg-gray-100 px-2 py-1">
@@ -684,7 +737,9 @@ useEffect(() => {
                 </div>
               )}
 
-              <div className="mb-1 text-sm font-semibold">{item.title}</div>
+				<div className="mb-1 text-sm font-semibold">
+					{getCategoryEmoji(item.category)} {item.title}
+				</div>
 
               <div className="mb-1">
                 <ReservationBadge
@@ -782,10 +837,11 @@ useEffect(() => {
                 <Marker
 				  key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
 				  position={[item.latitude, item.longitude]}
-				  icon={createItemIcon(
-					item.image_urls?.[0] ?? null,
-					effectiveStatus
-				  )}
+					icon={createItemIcon(
+					  item.image_urls?.[0] ?? null,
+					  effectiveStatus,
+					  item.category
+					)}
 				  eventHandlers={{
 					click: () => {
 					  setShowAddForm(false)
@@ -937,9 +993,9 @@ useEffect(() => {
 					)}
 
 					<div className="min-w-0 flex-1">
-					  <div className="truncate text-sm font-semibold">
-						{item.title}
-					  </div>
+						<div className="truncate text-sm font-semibold">
+						  {getCategoryEmoji(item.category)} {item.title}
+						</div>
 
 					  <div className="mt-1">
 						<ReservationBadge
