@@ -454,10 +454,29 @@ export default function ItemsMap() {
 	  return true
 	})
 
+async function cleanupExpiredReservations() {
+  const now = new Date().toISOString()
+
+  const { error } = await supabase
+    .from('items')
+    .update({
+      status: 'active',
+      reserved_until: null,
+      reserved_by: null,
+    })
+    .eq('status', 'reserved')
+    .lt('reserved_until', now)
+
+  if (error) {
+    console.error('CLEANUP ERROR:', error)
+  }
+}
   async function loadItems() {
     setLoading(true)
-
-    const { data, error } = await supabase.rpc('get_items_nearby', {
+	
+	await cleanupExpiredReservations()
+    
+	const { data, error } = await supabase.rpc('get_items_nearby', {
 		user_lat: userLocation[0],
 		user_lng: userLocation[1],
       radius_m: radiusKm * 1000,
