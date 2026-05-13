@@ -169,42 +169,58 @@ export default function AddItemForm({
         onChange={(e) => setDescription(e.target.value)}
       />
 
-      <label className="mb-3 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-3 text-center transition hover:bg-gray-100">
-        {photo ? (
-          <div className="w-full">
-            <img
-              src={URL.createObjectURL(photo)}
-              alt="Podgląd zdjęcia"
-              className="mb-2 h-32 w-full rounded-lg object-cover"
-            />
+ <div className="mb-3">
+  <label className="mb-2 block text-sm font-semibold text-gray-700">
+    Zdjęcie
+  </label>
 
-            <div className="text-xs font-medium text-gray-700">
-              Kliknij, aby zmienić zdjęcie
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-1 text-gray-600">
-            <div className="text-2xl">📷</div>
-
-            <div className="text-sm font-semibold">
-              Dodaj zdjęcie
-            </div>
-
-            <div className="text-xs text-gray-500">
-              Kliknij lub wybierz z telefonu
-            </div>
-          </div>
-        )}
-
-        <input
-          ref={fileInputRef}
-          className="hidden"
-          type="file"
-          accept="image/*"
-          onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+  <label
+    htmlFor="photo-upload"
+    className="
+      flex cursor-pointer flex-col items-center justify-center
+      rounded-xl border-2 border-dashed border-gray-300
+      bg-gray-50 p-4 text-center
+      transition hover:bg-gray-100
+    "
+  >
+    {photo ? (
+      <>
+        <img
+          src={URL.createObjectURL(photo)}
+          alt="Preview"
+          className="mb-2 h-32 w-full rounded-lg object-cover"
         />
-      </label>
 
+        <div className="text-sm font-semibold text-gray-700">
+          Zmień zdjęcie
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="text-3xl">📷</div>
+
+        <div className="mt-2 text-sm font-semibold text-gray-700">
+          Dodaj zdjęcie
+        </div>
+
+        <div className="text-xs text-gray-500">
+          Kliknij tutaj
+        </div>
+      </>
+    )}
+  </label>
+
+  <input
+    id="photo-upload"
+    type="file"
+    accept="image/*"
+    className="hidden"
+    onChange={(e) => {
+      const selectedFile = e.target.files?.[0] ?? null
+      setPhoto(selectedFile)
+    }}
+  />
+</div>
       <button
         onClick={handleSubmit}
         disabled={loading}

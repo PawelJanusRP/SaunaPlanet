@@ -562,17 +562,17 @@ useEffect(() => {
     setDeviceId(id)
   }, [])
 
-  useEffect(() => {
-    if (!selectedItem) return
+useEffect(() => {
+  if (!selectedItem) return
 
+  setTimeout(() => {
     const marker = markerRefs.current[selectedItem.id]
 
     if (marker) {
-      setTimeout(() => {
-        marker.openPopup()
-      }, 400)
+      marker.openPopup()
     }
-  }, [selectedItem])
+  }, 700)
+}, [selectedItem])
 
   return (
     <div className="flex h-screen w-full">
@@ -822,6 +822,7 @@ useEffect(() => {
 					  setSelectedItem(item)
 					  setSelectedLocation([item.latitude, item.longitude])
 					  setShowAddForm(false)
+					  setSheetState('collapsed')
 					}}
 				  >
 					{img ? (
