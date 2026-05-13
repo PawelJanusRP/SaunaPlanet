@@ -52,13 +52,23 @@ const markerIcon = new L.Icon({
 
 function MapClickHandler({
   onSelect,
+  onOpenContextMenu,
+  onCloseAddForm,
 }: {
   onSelect: (lat: number, lng: number) => void
+  onOpenContextMenu: (lat: number, lng: number) => void
+  onCloseAddForm: () => void
 }) {
   useMapEvents({
-    click(e) {
-      onSelect(e.latlng.lat, e.latlng.lng)
-    },
+	click(e) {
+	  onSelect(e.latlng.lat, e.latlng.lng)
+	  onCloseAddForm()
+	},
+
+    contextmenu(e) {
+	  onSelect(e.latlng.lat, e.latlng.lng)
+	  onOpenContextMenu(e.latlng.lat, e.latlng.lng)
+	},
   })
 
   return null
@@ -412,8 +422,12 @@ export default function ItemsMap() {
   const [centerTrigger, setCenterTrigger] = useState(0)
   const [selectedLocation, setSelectedLocation] =
 	  useState<[number, number]>(fallbackCenter)
-
-
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [contextMenuLocation, setContextMenuLocation] =
+	useState<[number, number] | null>(null)
+  const [sheetState, setSheetState] =
+    useState<'collapsed' | 'half' | 'full'>('half')
+  
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
 	const visibleItems = items.filter((item) => {
@@ -562,7 +576,7 @@ useEffect(() => {
 
   return (
     <div className="flex h-screen w-full">
-      <div className="w-80 overflow-y-auto border-r bg-white">
+      <div className="hidden w-80 overflow-y-auto border-r bg-white lg:block">
         <div className="border-b p-3 font-bold">
           {loading ? 'Ładowanie...' : `Znaleziono: ${visibleItems.length}`}
         </div>
@@ -680,14 +694,51 @@ useEffect(() => {
 			  center={userLocation}
 			  trigger={centerTrigger}
 			/>
-          <MapClickHandler
-            onSelect={(lat, lng) => setSelectedLocation([lat, lng])}
-          />
-
+		<MapClickHandler
+		  onSelect={(lat, lng) => setSelectedLocation([lat, lng])}
+		  onOpenContextMenu={(lat, lng) => {
+			setContextMenuLocation([lat, lng])
+		  }}
+		  onCloseAddForm={() => setShowAddForm(false)}
+		/>
           <Marker position={selectedLocation} icon={markerIcon}>
             <Popup>Nowe zgłoszenie tutaj</Popup>
           </Marker>
 
+		{contextMenuLocation && (
+		  <Popup
+			position={contextMenuLocation}
+			eventHandlers={{
+			  remove: () => {
+				setContextMenuLocation(null)
+			  },
+			}}
+		  >
+			<div className="flex flex-col gap-2">
+			  <div className="text-sm font-semibold">
+				Co chcesz zrobić?
+			  </div>
+
+			  <button
+				className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white"
+			onClick={() => {
+			  const location = contextMenuLocation
+
+			  if (!location) return
+
+			  setSelectedLocation(location)
+			  setContextMenuLocation(null)
+
+			  setTimeout(() => {
+				setShowAddForm(true)
+			  }, 0)
+			}}
+			  >
+				Dodaj przedmiot tutaj
+			  </button>
+			</div>
+		  </Popup>
+		)}
           <MarkerClusterGroup chunkedLoading maxClusterRadius={60}>
             {visibleItems.map((item) => {
               const reservationExpired =
@@ -700,16 +751,21 @@ useEffect(() => {
 
               return (
                 <Marker
-                  key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
-                  position={[item.latitude, item.longitude]}
-                  icon={createItemIcon(
-                    item.image_urls?.[0] ?? null,
-                    effectiveStatus
-                  )}
-                  ref={(ref) => {
-                    markerRefs.current[item.id] = ref
-                  }}
-                >
+				  key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
+				  position={[item.latitude, item.longitude]}
+				  icon={createItemIcon(
+					item.image_urls?.[0] ?? null,
+					effectiveStatus
+				  )}
+				  eventHandlers={{
+					click: () => {
+					  setShowAddForm(false)
+					},
+				  }}
+				  ref={(ref) => {
+					markerRefs.current[item.id] = ref
+				  }}
+				>
                   <Popup>
 					<ItemPopup
 					  item={item}
@@ -724,15 +780,96 @@ useEffect(() => {
             })}
           </MarkerClusterGroup>
         </MapContainer>
+		<div className={`
+		  absolute bottom-0 left-0 right-0 z-[9999]
+		  rounded-t-3xl bg-white shadow-2xl lg:hidden
+		  transition-all duration-300
+		  ${
+			sheetState === 'collapsed'
+			  ? 'h-[80px]'
+			  : sheetState === 'half'
+			  ? 'h-[40vh]'
+			  : 'h-[85vh]'
+		  }
+		`}>
+		  <button
+			  className="flex w-full justify-center py-3"
+			  onClick={() => {
+				setSheetState((current) => {
+				  if (current === 'collapsed') return 'half'
+				  if (current === 'half') return 'full'
+				  return 'collapsed'
+				})
+			  }}
+			>
+			  <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+			</button>
 
-        <AddItemForm
-          onAdded={async () => {
-            await loadItems()
-            toast.success('Dodano przedmiot')
-          }}
-          latitude={selectedLocation[0]}
-          longitude={selectedLocation[1]}
-        />
+		  <div className="max-h-[40vh] overflow-y-auto p-3">
+			<div className="mb-3 text-sm font-bold">
+			  {visibleItems.length} ogłoszeń w pobliżu
+			</div>
+
+			<div className="flex flex-col gap-2">
+			  {visibleItems.map((item) => {
+				const img = item.image_urls?.[0]
+
+				return (
+				  <div
+					key={item.id}
+					className="flex cursor-pointer gap-3 rounded-xl border p-2 active:bg-gray-100"
+					onClick={() => {
+					  setSelectedItem(item)
+					  setSelectedLocation([item.latitude, item.longitude])
+					  setShowAddForm(false)
+					}}
+				  >
+					{img ? (
+					  <img
+						src={img}
+						alt={item.title}
+						className="h-16 w-16 rounded-lg object-cover"
+					  />
+					) : (
+					  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200 text-xs">
+						brak
+					  </div>
+					)}
+
+					<div className="min-w-0 flex-1">
+					  <div className="truncate text-sm font-semibold">
+						{item.title}
+					  </div>
+
+					  <div className="mt-1">
+						<ReservationBadge
+						  status={item.status}
+						  reservedUntil={item.reserved_until}
+						/>
+					  </div>
+
+					  <div className="mt-1 text-xs text-gray-500">
+						{Math.round(item.distance_m)} m
+					  </div>
+					</div>
+				  </div>
+				)
+			  })}
+			</div>
+		  </div>
+		</div>
+		{showAddForm && (
+		  <AddItemForm
+			onAdded={async () => {
+			  await loadItems()
+			  toast.success('Dodano przedmiot')
+			  setShowAddForm(false)
+			}}
+		    onClose={() => setShowAddForm(false)}
+			latitude={selectedLocation[0]}
+			longitude={selectedLocation[1]}
+		  />
+		)}
       </div>
 		{uploadItemId && (
 		  <AddPhotoModal
