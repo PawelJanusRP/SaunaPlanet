@@ -427,6 +427,7 @@ export default function ItemsMap() {
 	useState<[number, number] | null>(null)
   const [sheetState, setSheetState] =
     useState<'collapsed' | 'half' | 'full'>('half')
+  const [radiusKm, setRadiusKm] = useState(10)
   
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
@@ -450,7 +451,7 @@ export default function ItemsMap() {
     const { data, error } = await supabase.rpc('get_items_nearby', {
 		user_lat: userLocation[0],
 		user_lng: userLocation[1],
-      radius_m: 300000,
+      radius_m: radiusKm * 1000,
     })
 
     if (error) {
@@ -494,7 +495,7 @@ async function centerOnUserLocation() {
 
 	useEffect(() => {
 	  loadItems()
-	}, [userLocation])
+	}, [userLocation, radiusKm])
 
 useEffect(() => {
   if (!navigator.geolocation) return
@@ -854,6 +855,21 @@ useEffect(() => {
 		  >
 			📷 Zdjęcia
 		  </button>
+		</div>
+		<div className="mb-3 flex flex-wrap gap-2">
+		  {[3, 10, 30, 100].map((radius) => (
+			<button
+			  key={radius}
+			  onClick={() => setRadiusKm(radius)}
+			  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+				radiusKm === radius
+				  ? 'bg-green-600 text-white'
+				  : 'bg-gray-100 text-gray-700'
+			  }`}
+			>
+			  {radius} km
+			</button>
+		  ))}
 		</div>
 
 			<div className="flex flex-col gap-2">
