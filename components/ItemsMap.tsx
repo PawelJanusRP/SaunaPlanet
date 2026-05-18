@@ -246,14 +246,10 @@ async function reserveItem() {
 
   setActionLoading(true)
 
-  const { error } = await supabase
-    .from('items')
-    .update({
-      status: 'reserved',
-      reserved_until: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-      reserved_by: deviceId,
-    })
-    .eq('id', item.id)
+  const { error } = await supabase.rpc('reserve_item', {
+  item_id: item.id,
+  device_id: deviceId,
+})
 
   setActionLoading(false)
 
@@ -270,13 +266,10 @@ async function reserveItem() {
   async function markAsTaken() {
     setActionLoading(true)
 
-    const { error } = await supabase
-      .from('items')
-      .update({
-        status: 'taken',
-        taken_at: new Date().toISOString(),
-      })
-      .eq('id', item.id)
+    const { error } = await supabase.rpc('mark_item_taken', {
+	  item_id: item.id,
+	  device_id: deviceId,
+	})
 
     setActionLoading(false)
 
@@ -293,14 +286,10 @@ async function reserveItem() {
   async function cancelReservation() {
     setActionLoading(true)
 
-    const { error } = await supabase
-      .from('items')
-      .update({
-        status: 'active',
-        reserved_until: null,
-        reserved_by: null,
-      })
-      .eq('id', item.id)
+    const { error } = await supabase.rpc('cancel_reservation', {
+	  item_id: item.id,
+	  device_id: deviceId,
+	})
 
     setActionLoading(false)
 
@@ -520,29 +509,30 @@ const fullscreenViewer =
 }
 
 export default function ItemsMap() {
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
-  const [uploadItemId, setUploadItemId] = useState<string | null>(null)
-  const [editingItem, setEditingItem] = useState<Item | null>(null)
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
-  const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
-  const [searchText, setSearchText] = useState('')
-  const [hideTaken, setHideTaken] = useState(true)
-  const [viewMode, setViewMode] = useState<'all' | 'reservedByMe' | 'myItems'>('all')
-  const [deviceId, setDeviceId] = useState<string | null>(null)
-  const [userLocation, setUserLocation] =
-	  useState<[number, number]>(fallbackCenter)
-  const [centerTrigger, setCenterTrigger] = useState(0)
-  const [selectedLocation, setSelectedLocation] =
-	  useState<[number, number]>(fallbackCenter)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [contextMenuLocation, setContextMenuLocation] =
-	useState<[number, number] | null>(null)
-  const [sheetState, setSheetState] =
-    useState<'collapsed' | 'half' | 'full'>('half')
-  const [radiusKm, setRadiusKm] = useState(10)
-  
-  const markerRefs = useRef<Record<string, L.Marker | null>>({})
+	const [items, setItems] = useState<Item[]>([])
+	const [loading, setLoading] = useState(true)
+	const [uploadItemId, setUploadItemId] = useState<string | null>(null)
+	const [editingItem, setEditingItem] = useState<Item | null>(null)
+	const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+	const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
+	const [searchText, setSearchText] = useState('')
+	const [hideTaken, setHideTaken] = useState(true)
+	const [viewMode, setViewMode] = useState<'all' | 'reservedByMe' | 'myItems'>('all')
+	const [deviceId, setDeviceId] = useState<string | null>(null)
+	const [userLocation, setUserLocation] =
+		useState<[number, number]>(fallbackCenter)
+	const [centerTrigger, setCenterTrigger] = useState(0)
+	const [selectedLocation, setSelectedLocation] =
+		useState<[number, number]>(fallbackCenter)
+	const [showAddForm, setShowAddForm] = useState(false)
+	const [contextMenuLocation, setContextMenuLocation] =
+		useState<[number, number] | null>(null)
+	const [sheetState, setSheetState] =
+		useState<'collapsed' | 'half' | 'full'>('half')
+	const [showAccountPanel, setShowAccountPanel] = useState(false)
+	const [radiusKm, setRadiusKm] = useState(10)
+	
+	const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
 	const visibleItems = items.filter((item) => {
 	  const search = searchText.toLowerCase().trim()
@@ -838,6 +828,16 @@ useEffect(() => {
       </div>
 
       <div className="relative flex-1">
+	  <button
+		  onClick={() => setShowAccountPanel(true)}
+		  className="absolute right-4 top-4 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5"
+		>
+		  <div className="flex flex-col items-center gap-1">
+			<span className="block h-[2px] w-5 rounded bg-gray-800" />
+			<span className="block h-[2px] w-5 rounded bg-gray-800" />
+			<span className="block h-[2px] w-5 rounded bg-gray-800" />
+		  </div>
+		</button>
 		<button
 		  onClick={centerOnUserLocation}
 		  className="absolute bottom-24 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-xl transition hover:scale-105 active:scale-95"
@@ -1116,6 +1116,98 @@ useEffect(() => {
 		  />
 		)}
       </div>
+	  {showAccountPanel && (
+		  <div className="fixed inset-0 z-[11000] flex justify-end bg-black/40">
+			<div className="flex h-full w-80 max-w-full flex-col bg-white shadow-2xl">
+			  <div className="flex items-center justify-between border-b px-4 py-3">
+				<h2 className="text-base font-bold">Moje konto</h2>
+
+				<button
+				  onClick={() => setShowAccountPanel(false)}
+				  className="text-gray-500"
+				>
+				  ✕
+				</button>
+			  </div>
+
+			  <div className="flex-1 overflow-y-auto px-4 py-3 text-sm">
+				<div className="mb-4">
+				  <div className="text-xs uppercase tracking-wide text-gray-400">
+					Podsumowanie
+				  </div>
+				  <div className="mt-1 text-sm text-gray-800">
+					Ogłoszenia: {items.filter((i) => i.created_by_device_id === deviceId).length}
+				  </div>
+				  <div className="mt-1 text-sm text-gray-800">
+					Rezerwacje: {items.filter((i) => i.status === 'reserved' && i.reserved_by === deviceId).length}
+				  </div>
+				</div>
+
+				<div className="mb-4 border-t pt-3">
+				  <div className="text-xs uppercase tracking-wide text-gray-400">
+					Szybkie filtry
+				  </div>
+				  <div className="mt-2 flex flex-wrap gap-2">
+					<button
+					  onClick={() => {
+						setViewMode('myItems')
+						setShowAccountPanel(false)
+					  }}
+					  className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white"
+					>
+					  Moje ogłoszenia
+					</button>
+
+					<button
+					  onClick={() => {
+						setViewMode('reservedByMe')
+						setShowAccountPanel(false)
+					  }}
+					  className="rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white"
+					>
+					  Moje rezerwacje
+					</button>
+					
+					<button
+						onClick={() => {
+						  setViewMode('all')
+						  setShowAccountPanel(false)
+						}}
+						className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-800"
+					  >
+						Pokaż wszystkie
+					  </button>
+				  </div>
+				</div>
+
+				<div className="mb-4 border-t pt-3">
+				  <div className="text-xs uppercase tracking-wide text-gray-400">
+					Ustawienia (MVP)
+				  </div>
+				  <div className="mt-2 space-y-2 text-xs text-gray-600">
+					<div>• ID urządzenia (tymczasowy identyfikator):</div>
+					<div className="break-all rounded bg-gray-100 px-2 py-1">
+					  {deviceId ?? '—'}
+					</div>
+					<div className="mt-2 text-[11px] text-gray-500">
+					  Docelowo tutaj pojawi się logowanie (Google / Apple) i profil użytkownika.
+					</div>
+				  </div>
+				</div>
+
+				<div className="border-t pt-3">
+				  <div className="text-xs uppercase tracking-wide text-gray-400">
+					Feedback
+				  </div>
+				  <p className="mt-2 text-xs text-gray-600">
+					Jeśli masz uwagi do działania aplikacji, zapisz je
+					teraz – to idealny moment na dopracowanie MVP.
+				  </p>
+				</div>
+			  </div>
+			</div>
+		  </div>
+		)}
 		{uploadItemId && (
 		  <AddPhotoModal
 			itemId={uploadItemId}
