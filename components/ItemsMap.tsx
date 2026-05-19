@@ -508,6 +508,16 @@ const fullscreenViewer =
 )
 }
 
+const categoryFilters = [
+  { value: 'all', label: 'Wszystko' },
+  { value: 'furniture', label: '🛋️ Meble' },
+  { value: 'electronics', label: '⚡ Elektronika' },
+  { value: 'clothes', label: '👕 Ubrania' },
+  { value: 'books', label: '📚 Książki' },
+  { value: 'kids', label: '🧸 Dzieci' },
+  { value: 'other', label: '📦 Inne' },
+]
+
 export default function ItemsMap() {
 	const [items, setItems] = useState<Item[]>([])
 	const [loading, setLoading] = useState(true)
@@ -518,7 +528,8 @@ export default function ItemsMap() {
 	const [searchText, setSearchText] = useState('')
 	const [hideTaken, setHideTaken] = useState(true)
 	const [viewMode, setViewMode] = useState<'all' | 'reservedByMe' | 'myItems'>('all')
-	const [deviceId, setDeviceId] = useState<string | null>(null)
+	const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [deviceId, setDeviceId] = useState<string | null>(null)
 	const [userLocation, setUserLocation] =
 		useState<[number, number]>(fallbackCenter)
 	const [centerTrigger, setCenterTrigger] = useState(0)
@@ -541,7 +552,7 @@ export default function ItemsMap() {
 		const title = item.title?.toLowerCase() ?? ''
 		const description = item.description?.toLowerCase() ?? ''
 		const category = item.category?.toLowerCase() ?? ''
-
+    
 		if (
 		  !title.includes(search) &&
 		  !description.includes(search) &&
@@ -552,6 +563,7 @@ export default function ItemsMap() {
 	  }
 
 	  if (hideTaken && item.status === 'taken') {
+      
 		return false
 	  }
 
@@ -567,6 +579,9 @@ export default function ItemsMap() {
 		return item.created_by_device_id === deviceId
 	  }
 
+    if (categoryFilter !== 'all' && item.category !== categoryFilter) {
+      return false
+}
 	  return true
 	})
 
@@ -844,6 +859,29 @@ useEffect(() => {
 		>
 		  📍
 		</button>
+    <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] gap-2 overflow-x-auto rounded-xl bg-white/90 p-2 shadow">
+  {[
+    { value: 'all', label: 'Wszystko' },
+    { value: 'furniture', label: '🛋️' },
+    { value: 'electronics', label: '⚡' },
+    { value: 'clothes', label: '👕' },
+    { value: 'books', label: '📚' },
+    { value: 'kids', label: '🧸' },
+    { value: 'other', label: '📦' },
+  ].map((cat) => (
+    <button
+      key={cat.value}
+      onClick={() => setCategoryFilter(cat.value)}
+      className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${
+        categoryFilter === cat.value
+          ? 'bg-black text-white'
+          : 'bg-gray-100 text-gray-700'
+      }`}
+    >
+      {cat.label}
+    </button>
+  ))}
+  </div>
         <MapContainer
           center={userLocation}
           zoom={14}

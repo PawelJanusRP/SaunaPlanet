@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import imageCompression from 'browser-image-compression'
 
 const categories = [
   { value: 'furniture', label: '🛋️ Meble' },
@@ -91,12 +92,18 @@ export default function AddItemForm({
       }
 
       if (photo) {
-        const fileExt = photo.name.split('.').pop() || 'jpg'
-        const filePath = `${itemData.id}/${Date.now()}.${fileExt}`
+  const compressedPhoto = await imageCompression(photo, {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1600,
+    useWebWorker: true,
+  })
 
-        const { error: uploadError } = await supabase.storage
-          .from('item-images')
-          .upload(filePath, photo)
+  const fileExt = compressedPhoto.name.split('.').pop() || 'jpg'
+  const filePath = `${itemData.id}/${Date.now()}.${fileExt}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('item-images')
+    .upload(filePath, compressedPhoto)
 
         if (uploadError) {
           throw uploadError
@@ -209,6 +216,7 @@ className="
     {photo ? (
       <>
         <img
+          loading="lazy"
           src={URL.createObjectURL(photo)}
           alt="Preview"
           className="mb-2 h-32 w-full rounded-lg object-cover"
