@@ -2,10 +2,10 @@
 
 import dynamic from 'next/dynamic'
 
-const ItemsMap = dynamic(() => import('@/components/ItemsMap'), {
+const SaunaMap = dynamic(() => import('@/components/SaunaMap'), {
   ssr: false,
 })
 
 export default function Home() {
-  return <ItemsMap />
+  return <SaunaMap />
 }

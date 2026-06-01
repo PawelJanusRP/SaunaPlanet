@@ -6,12 +6,11 @@ import { supabase } from '@/lib/supabase'
 import imageCompression from 'browser-image-compression'
 
 const categories = [
-  { value: 'furniture', label: '🛋️ Meble' },
-  { value: 'electronics', label: '⚡ Elektronika' },
-  { value: 'clothes', label: '👕 Ubrania' },
-  { value: 'books', label: '📚 Książki' },
-  { value: 'kids', label: '🧸 Dzieci' },
-  { value: 'other', label: '📦 Inne' },
+  { value: 'public_sauna', label: '🧖 Sauna publiczna' },
+  { value: 'spa', label: '♨️ SPA / wellness' },
+  { value: 'hotel', label: '🏨 Sauna hotelowa' },
+  { value: 'outdoor', label: '🌲 Sauna plenerowa' },
+  { value: 'event', label: '🔥 Event saunowy' },
 ]
 
 export default function AddItemForm({
@@ -27,7 +26,7 @@ export default function AddItemForm({
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('furniture')
+  const [category, setCategory] = useState('public_sauna')
   const [photo, setPhoto] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
@@ -47,7 +46,7 @@ export default function AddItemForm({
 
   async function handleSubmit() {
     if (!title.trim()) {
-      toast.error('Podaj tytuł')
+      toast.error('Podaj nazwę sauny lub obiektu')
       return
     }
 
@@ -88,7 +87,7 @@ export default function AddItemForm({
         .single()
 
       if (itemError || !itemData) {
-        throw itemError ?? new Error('Nie udało się dodać przedmiotu')
+        throw itemError ?? new Error('Nie udało się dodać sauny')
       }
 
       if (photo) {
@@ -163,7 +162,7 @@ export default function AddItemForm({
         ✕
       </button>
 
-      <h2 className="mb-2 font-bold">Dodaj przedmiot</h2>
+      <h2 className="mb-2 font-bold">Dodaj saunę</h2>
 
       <p className="mb-2 text-xs text-gray-600">
         Lokalizacja:{' '}
@@ -174,14 +173,14 @@ export default function AddItemForm({
 
       <input
         className="mb-2 w-full border p-2"
-        placeholder="Tytuł"
+        placeholder="Nazwa sauny/obiektu"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
 
       <textarea
         className="mb-2 w-full border p-2"
-        placeholder="Opis"
+        placeholder="Opis, godziny otwarcia, zasady, atrakcje"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
@@ -264,7 +263,7 @@ className="
         disabled={loading}
         className="w-full rounded-xl bg-black p-3 text-white disabled:opacity-50"
       >
-        {loading ? 'Dodawanie...' : 'Dodaj'}
+        {loading ? 'Dodawanie...' : 'Dodaj saunę'}
       </button>
     </div>
   </>

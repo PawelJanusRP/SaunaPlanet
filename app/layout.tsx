@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Śmieciarka jedzie',
+  title: 'SaunaPlanet',
   description:
-    'Mapa darmowych rzeczy z ulicy – zarezerwuj zanim śmieciarka odjedzie.',
+    'Mapa saun i wydarzeń saunowych',
   manifest: '/manifest.webmanifest',
   themeColor: '#000000',
 }

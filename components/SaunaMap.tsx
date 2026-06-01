@@ -111,45 +111,45 @@ function MapCenterController({
 
 function getCategoryEmoji(category: string) {
   switch (category) {
-    case 'furniture':
-      return '🛋️'
+    case 'public_sauna':
+      return '🧖'
 
-    case 'electronics':
-      return '⚡'
+    case 'spa':
+      return '♨️'
 
-    case 'clothes':
-      return '👕'
+    case 'hotel':
+      return '🏨'
 
-    case 'books':
-      return '📚'
+    case 'event':
+      return '🔥'
 
-    case 'kids':
-      return '🧸'
+    case 'outdoor':
+      return '🌲'
 
     default:
-      return '📦'
+      return '🧖'
   }
 }
 
 function getCategoryColor(category: string) {
   switch (category) {
-    case 'furniture':
+    case 'public_sauna':
+      return '#f97316'
+
+    case 'spa':
+      return '#ef4444'
+
+    case 'hotel':
       return '#3b82f6'
 
-    case 'electronics':
-      return '#eab308'
+    case 'event':
+      return '#dc2626'
 
-    case 'clothes':
-      return '#ec4899'
-
-    case 'books':
+    case 'outdoor':
       return '#22c55e'
 
-    case 'kids':
-      return '#a855f7'
-
     default:
-      return '#6b7280'
+      return '#f97316'
   }
 }
 
@@ -314,13 +314,13 @@ async function removeItem() {
 
   if (error) {
     console.error('REMOVE ITEM ERROR FULL:', JSON.stringify(error, null, 2))
-    toast.error(error.message ?? 'Błąd usuwania ogłoszenia')
+    toast.error(error.message ?? 'Błąd usuwania sauny')
     return
   }
 
   await onRefresh()
 
-  toast.success('Ogłoszenie usunięte')
+  toast.success('Sauna usunięta')
 }
 
 const fullscreenViewer =
@@ -455,7 +455,7 @@ const fullscreenViewer =
 			className="rounded-xl bg-gray-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-900 active:scale-95"
 			onClick={() => onEdit(item)}
 		  >
-			Edytuj ogłoszenie
+			Edytuj saunę
 		  </button>
 		)}
         {effectiveStatus === 'active' && (
@@ -470,7 +470,7 @@ const fullscreenViewer =
 
         {isReserved && !isMine && (
           <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700">
-            Ten przedmiot jest chwilowo zarezerwowany.
+            Ten obiekt jest chwilowo oznaczony jako zajęty.
           </div>
         )}
 
@@ -499,7 +499,7 @@ const fullscreenViewer =
 			disabled={actionLoading}
 			onClick={removeItem}
 		  >
-			Usuń ogłoszenie
+			Usuń saunę
 		  </button>
 )}
       </div>
@@ -510,12 +510,11 @@ const fullscreenViewer =
 
 const categoryFilters = [
   { value: 'all', label: 'Wszystko' },
-  { value: 'furniture', label: '🛋️ Meble' },
-  { value: 'electronics', label: '⚡ Elektronika' },
-  { value: 'clothes', label: '👕 Ubrania' },
-  { value: 'books', label: '📚 Książki' },
-  { value: 'kids', label: '🧸 Dzieci' },
-  { value: 'other', label: '📦 Inne' },
+  { value: 'public_sauna', label: '🧖 Sauna publiczna' },
+  { value: 'spa', label: '♨️ SPA' },
+  { value: 'hotel', label: '🏨 Hotel' },
+  { value: 'event', label: '🔥 Event saunowy' },
+  { value: 'outdoor', label: '🌲 Sauna plenerowa' },
 ]
 
 export default function ItemsMap() {
@@ -788,7 +787,7 @@ useEffect(() => {
 				  : 'bg-gray-100 text-gray-700'
 			  }`}
 			>
-			  Moje ogłoszenia
+			  Moje sauny
 			</button>
 		</div>
 
@@ -861,14 +860,13 @@ useEffect(() => {
 		</button>
     <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] gap-2 overflow-x-auto rounded-xl bg-white/90 p-2 shadow">
   {[
-    { value: 'all', label: 'Wszystko' },
-    { value: 'furniture', label: '🛋️' },
-    { value: 'electronics', label: '⚡' },
-    { value: 'clothes', label: '👕' },
-    { value: 'books', label: '📚' },
-    { value: 'kids', label: '🧸' },
-    { value: 'other', label: '📦' },
-  ].map((cat) => (
+  { value: 'all', label: 'Wszystko' },
+  { value: 'public_sauna', label: '🧖' },
+  { value: 'spa', label: '♨️' },
+  { value: 'hotel', label: '🏨' },
+  { value: 'event', label: '🔥' },
+  { value: 'outdoor', label: '🌲' },
+].map((cat) => (
     <button
       key={cat.value}
       onClick={() => setCategoryFilter(cat.value)}
@@ -905,7 +903,7 @@ useEffect(() => {
 		  onCloseAddForm={() => setShowAddForm(false)}
 		/>
           <Marker position={selectedLocation} icon={markerIcon}>
-            <Popup>Nowe zgłoszenie tutaj</Popup>
+            <Popup>Nowa sauna tutaj</Popup>
           </Marker>
 
 		{contextMenuLocation && (
@@ -937,7 +935,7 @@ useEffect(() => {
 			  }, 0)
 			}}
 			  >
-				Dodaj przedmiot tutaj
+				Dodaj Saunę tutaj
 			  </button>
 			</div>
 		  </Popup>
@@ -1019,7 +1017,7 @@ useEffect(() => {
 				onChange={(e) => setSearchText(e.target.value)}
 			  />
 			</div>
-			  {visibleItems.length} ogłoszeń w pobliżu
+			  {visibleItems.length} saun w pobliżu
 			</div>
 
 		<div className="mb-3 flex flex-wrap gap-2">
@@ -1145,7 +1143,7 @@ useEffect(() => {
 		  <AddItemForm
 			onAdded={async () => {
 			  await loadItems()
-			  toast.success('Dodano przedmiot')
+			  toast.success('Dodano saunę')
 			  setShowAddForm(false)
 			}}
 		    onClose={() => setShowAddForm(false)}
@@ -1174,7 +1172,7 @@ useEffect(() => {
 					Podsumowanie
 				  </div>
 				  <div className="mt-1 text-sm text-gray-800">
-					Ogłoszenia: {items.filter((i) => i.created_by_device_id === deviceId).length}
+					Moje sauny: {items.filter((i) => i.created_by_device_id === deviceId).length}
 				  </div>
 				  <div className="mt-1 text-sm text-gray-800">
 					Rezerwacje: {items.filter((i) => i.status === 'reserved' && i.reserved_by === deviceId).length}
@@ -1193,7 +1191,7 @@ useEffect(() => {
 					  }}
 					  className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white"
 					>
-					  Moje ogłoszenia
+					  Moje sauny
 					</button>
 
 					<button
@@ -1203,7 +1201,7 @@ useEffect(() => {
 					  }}
 					  className="rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white"
 					>
-					  Moje rezerwacje
+					  Moje zapisane
 					</button>
 					
 					<button
