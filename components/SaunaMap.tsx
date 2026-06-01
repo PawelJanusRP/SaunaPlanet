@@ -16,9 +16,9 @@ import 'leaflet/dist/leaflet.css'
 
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import AddItemForm from '@/components/AddItemForm'
+import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
-import EditItemModal from '@/components/EditItemModal'
+import EditSaunaModal from '@/components/EditSaunaModal'
 
 type Sauna = {
   id: string
@@ -71,16 +71,16 @@ function MapClickHandler({
   return null
 }
 
-function MapFocusController({ selectedItem }: { selectedItem: Sauna | null }) {
+function MapFocusController({ selectedSauna }: { selectedSauna: Sauna | null }) {
   const map = useMap()
 
   useEffect(() => {
-    if (!selectedItem) return
+    if (!selectedSauna) return
 
-    map.flyTo([selectedItem.latitude, selectedItem.longitude], 16, {
+    map.flyTo([selectedSauna.latitude, selectedSauna.longitude], 16, {
       duration: 0.6,
     })
-  }, [selectedItem, map])
+  }, [selectedSauna, map])
 
   return null
 }
@@ -348,12 +348,12 @@ function SaunaPopup({
   )
 }
 
-export default function ItemsMap() {
+export default function SaunaMap() {
   const [items, setItems] = useState<Sauna[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadItemId, setUploadItemId] = useState<string | null>(null)
-  const [editingItem, setEditingItem] = useState<Sauna | null>(null)
-  const [selectedItem, setSelectedItem] = useState<Sauna | null>(null)
+  const [editingSauna, setEditingSauna] = useState<Sauna | null>(null)
+  const [selectedSauna, setSelectedSauna] = useState<Sauna | null>(null)
   const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -364,7 +364,7 @@ export default function ItemsMap() {
   const [contextMenuLocation, setContextMenuLocation] = useState<[number, number] | null>(null)
   const [sheetState, setSheetState] = useState<'collapsed' | 'half' | 'full'>('half')
   const [showAccountPanel, setShowAccountPanel] = useState(false)
-  const [radiusKm, setRadiusKm] = useState(10)
+  const [radiusKm, setRadiusKm] = useState(1000)
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
@@ -398,7 +398,7 @@ export default function ItemsMap() {
     return true
   })
 
-  async function loadItems() {
+  async function loadSaunas() {
     setLoading(true)
 
     const { data, error } = await supabase.rpc('get_saunas_nearby', {
@@ -448,7 +448,7 @@ export default function ItemsMap() {
   }
 
   useEffect(() => {
-    loadItems()
+    loadSaunas()
   }, [userLocation, radiusKm])
 
   useEffect(() => {
@@ -485,7 +485,7 @@ export default function ItemsMap() {
           table: 'saunas',
         },
         async () => {
-          await loadItems()
+          await loadSaunas()
         }
       )
       .on(
@@ -496,7 +496,7 @@ export default function ItemsMap() {
           table: 'sauna_photos',
         },
         async () => {
-          await loadItems()
+          await loadSaunas()
         }
       )
       .subscribe()
@@ -507,16 +507,16 @@ export default function ItemsMap() {
   }, [])
 
   useEffect(() => {
-    if (!selectedItem) return
+    if (!selectedSauna) return
 
     setTimeout(() => {
-      const marker = markerRefs.current[selectedItem.id]
+      const marker = markerRefs.current[selectedSauna.id]
 
       if (marker) {
         marker.openPopup()
       }
     }, 700)
-  }, [selectedItem])
+  }, [selectedSauna])
 
   return (
     <div className="flex h-screen w-full">
@@ -550,10 +550,10 @@ export default function ItemsMap() {
             <div
               key={item.id}
               className={`cursor-pointer border-b p-2 hover:bg-gray-100 ${
-                selectedItem?.id === item.id ? 'bg-blue-50' : ''
+                selectedSauna?.id === item.id ? 'bg-blue-50' : ''
               }`}
               onClick={() => {
-                setSelectedItem(item)
+                setSelectedSauna(item)
                 setSelectedLocation([item.latitude, item.longitude])
               }}
             >
@@ -633,7 +633,7 @@ export default function ItemsMap() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          <MapFocusController selectedItem={selectedItem} />
+          <MapFocusController selectedSauna={selectedSauna} />
           <MapCenterController center={userLocation} trigger={centerTrigger} />
 
           <MapClickHandler
@@ -700,7 +700,7 @@ export default function ItemsMap() {
                   <SaunaPopup
                     sauna={item}
                     onAddPhoto={(itemId) => setUploadItemId(itemId)}
-                    onEdit={(item) => setEditingItem(item)}
+                    onEdit={(item) => setEditingSauna(item)}
                   />
                 </Popup>
               </Marker>
@@ -785,7 +785,7 @@ export default function ItemsMap() {
                     key={item.id}
                     className="flex cursor-pointer gap-3 rounded-xl border p-2 active:bg-gray-100"
                     onClick={() => {
-                      setSelectedItem(item)
+                      setSelectedSauna(item)
                       setSelectedLocation([item.latitude, item.longitude])
                       setShowAddForm(false)
                       setSheetState('collapsed')
@@ -826,9 +826,9 @@ export default function ItemsMap() {
         </div>
 
         {showAddForm && (
-          <AddItemForm
+          <AddSaunaForm
             onAdded={async () => {
-              await loadItems()
+              await loadSaunas()
               toast.success('Dodano saunę')
               setShowAddForm(false)
             }}
@@ -891,17 +891,17 @@ export default function ItemsMap() {
           itemId={uploadItemId}
           onClose={() => setUploadItemId(null)}
           onUploaded={async () => {
-            await loadItems()
+            await loadSaunas()
             toast.success('Dodano zdjęcie')
           }}
         />
       )}
 
-      {editingItem && (
-        <EditItemModal
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onSaved={loadItems}
+      {editingSauna && (
+        <EditSaunaModal
+          item={editingSauna}
+          onClose={() => setEditingSauna(null)}
+          onSaved={loadSaunas}
         />
       )}
     </div>
