@@ -18,28 +18,24 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import AddItemForm from '@/components/AddItemForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
-import ReservationBadge from '@/components/ReservationBadge'
-import { isReservationExpired } from '@/lib/reservationTime'
 import EditItemModal from '@/components/EditItemModal'
 
-type Item = {
+type Sauna = {
   id: string
-  title: string
+  name: string
   description: string | null
   category: string
-  condition: string | null
-  size: string | null
   latitude: number
   longitude: number
+  city: string | null
+  voivodeship: string | null
+  website: string | null
+  source: string | null
+  source_url: string | null
   status: string
   created_at: string
-  expires_at: string
   distance_m: number
   image_urls: string[] | null
-  reserved_until: string | null
-  reserved_by: string | null
-  taken_at: string | null
-  created_by_device_id: string | null
 }
 
 const fallbackCenter: [number, number] = [52.4064, 16.9252]
@@ -61,21 +57,21 @@ function MapClickHandler({
   onCloseAddForm: () => void
 }) {
   useMapEvents({
-	click(e) {
-	  onSelect(e.latlng.lat, e.latlng.lng)
-	  onCloseAddForm()
-	},
+    click(e) {
+      onSelect(e.latlng.lat, e.latlng.lng)
+      onCloseAddForm()
+    },
 
     contextmenu(e) {
-	  onSelect(e.latlng.lat, e.latlng.lng)
-	  onOpenContextMenu(e.latlng.lat, e.latlng.lng)
-	},
+      onSelect(e.latlng.lat, e.latlng.lng)
+      onOpenContextMenu(e.latlng.lat, e.latlng.lng)
+    },
   })
 
   return null
 }
 
-function MapFocusController({ selectedItem }: { selectedItem: Item | null }) {
+function MapFocusController({ selectedItem }: { selectedItem: Sauna | null }) {
   const map = useMap()
 
   useEffect(() => {
@@ -113,21 +109,33 @@ function getCategoryEmoji(category: string) {
   switch (category) {
     case 'public_sauna':
       return '🧖'
-
     case 'spa':
       return '♨️'
-
     case 'hotel':
       return '🏨'
-
     case 'event':
       return '🔥'
-
     case 'outdoor':
       return '🌲'
-
     default:
       return '🧖'
+  }
+}
+
+function getCategoryLabel(category: string) {
+  switch (category) {
+    case 'public_sauna':
+      return 'Sauna publiczna'
+    case 'spa':
+      return 'SPA / wellness'
+    case 'hotel':
+      return 'Sauna hotelowa'
+    case 'event':
+      return 'Event saunowy'
+    case 'outdoor':
+      return 'Sauna plenerowa'
+    default:
+      return category
   }
 }
 
@@ -135,485 +143,273 @@ function getCategoryColor(category: string) {
   switch (category) {
     case 'public_sauna':
       return '#f97316'
-
     case 'spa':
       return '#ef4444'
-
     case 'hotel':
       return '#3b82f6'
-
     case 'event':
       return '#dc2626'
-
     case 'outdoor':
       return '#22c55e'
-
     default:
       return '#f97316'
   }
 }
 
-function createItemIcon(
-	imageUrl: string | null,
-	status: string,
-	category: string
-)
- {
-	const categoryEmoji = getCategoryEmoji(category)
-	const categoryColor = getCategoryColor(category)
+function createSaunaIcon(imageUrl: string | null, category: string) {
+  const categoryEmoji = getCategoryEmoji(category)
+  const categoryColor = getCategoryColor(category)
 
   return L.divIcon({
     className: '',
-html: `
-  <div style="
-    width: 46px;
-    height: 46px;
-    border-radius: 9999px;
-    overflow: hidden;
-    border: 3px solid ${
-      status === 'reserved'
-        ? '#f97316'
-        : categoryColor
-    };
-    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-  ">
-    ${
-      imageUrl
-        ? `
-          <img
-            src="${imageUrl}"
-            style="
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-              display: block;
-            "
-          />
-        `
-        : `
-          <div>${categoryEmoji}</div>
-        `
-    }
-  </div>
-`,
+    html: `
+      <div style="
+        width: 46px;
+        height: 46px;
+        border-radius: 9999px;
+        overflow: hidden;
+        border: 3px solid ${categoryColor};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+      ">
+        ${
+          imageUrl
+            ? `
+              <img
+                src="${imageUrl}"
+                style="
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  display: block;
+                "
+              />
+            `
+            : `<div>${categoryEmoji}</div>`
+        }
+      </div>
+    `,
     iconSize: [46, 46],
     iconAnchor: [23, 46],
     popupAnchor: [0, -46],
   })
 }
 
-function ItemPopup({
-  item,
-  deviceId,
+function SaunaPopup({
+  sauna,
   onAddPhoto,
   onEdit,
-  onRefresh,
 }: {
-  item: Item
-  deviceId: string | null
-  onAddPhoto: (itemId: string) => void
-  onEdit: (item: Item) => void
-  onRefresh: () => Promise<void>
+  sauna: Sauna
+  onAddPhoto: (saunaId: string) => void
+  onEdit: (sauna: Sauna) => void
 }) {
   const [imageIndex, setImageIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
-  const [actionLoading, setActionLoading] = useState(false)
 
-  const images = item.image_urls ?? []
+  const images = sauna.image_urls ?? []
   const currentImage = images[imageIndex]
 
-  const reservationExpired =
-    item.status === 'reserved' && isReservationExpired(item.reserved_until)
-
-  const effectiveStatus = reservationExpired ? 'active' : item.status
-
-  const isReserved = effectiveStatus === 'reserved' && !!item.reserved_until
-  const isMine = !!item.reserved_by && deviceId === item.reserved_by
-  const isOwner =
-  !!item.created_by_device_id &&
-  item.created_by_device_id === deviceId
-
-async function reserveItem() {
-  if (!deviceId) {
-    toast.error('Nie udało się ustalić identyfikatora urządzenia')
-    return
-  }
-
-  setActionLoading(true)
-
-  const { error } = await supabase.rpc('reserve_item', {
-  item_id: item.id,
-  device_id: deviceId,
-})
-
-  setActionLoading(false)
-
-  if (error) {
-    console.error('RESERVATION ERROR:', error)
-    toast.error(error.message)
-    return
-  }
-
-  await onRefresh()
-  toast.success('Zarezerwowano na 30 minut')
-}
-
-  async function markAsTaken() {
-    setActionLoading(true)
-
-    const { error } = await supabase.rpc('mark_item_taken', {
-	  item_id: item.id,
-	  device_id: deviceId,
-	})
-
-    setActionLoading(false)
-
-    if (error) {
-      console.error('TAKEN ERROR:', error)
-      toast.error(error.message)
-      return
-    }
-
-    await onRefresh()
-    toast.success('Oznaczono jako odebrane')
-  }
-
-  async function cancelReservation() {
-    setActionLoading(true)
-
-    const { error } = await supabase.rpc('cancel_reservation', {
-	  item_id: item.id,
-	  device_id: deviceId,
-	})
-
-    setActionLoading(false)
-
-    if (error) {
-      console.error('CANCEL RESERVATION ERROR:', error)
-      toast.error(error.message)
-      return
-    }
-
-    await onRefresh()
-    toast.success('Anulowano rezerwację')
-  }
-
-async function removeItem() {
-  setActionLoading(true)
-
-  const { error } = await supabase.rpc('mark_item_taken_mvp', {
-    item_id: item.id,
-  })
-
-  setActionLoading(false)
-
-  if (error) {
-    console.error('REMOVE ITEM ERROR FULL:', JSON.stringify(error, null, 2))
-    toast.error(error.message ?? 'Błąd usuwania sauny')
-    return
-  }
-
-  await onRefresh()
-
-  toast.success('Sauna usunięta')
-}
-
-const fullscreenViewer =
-  fullscreen && currentImage
-    ? createPortal(
-        <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95"
-          onClick={() => setFullscreen(false)}
-        >
-          <img
-		  src={currentImage}
-		  alt={item.title}
-		  onMouseDown={(e) => e.stopPropagation()}
-		  onClick={(e) => {
-			e.stopPropagation()
-			console.log('IMAGE CLICK FULLSCREEN')
-			setFullscreen(true)
-		  }}
-		  className="max-h-full max-w-full object-contain"
-		/>
-
-          <button
-            className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-2 text-white"
-            onClick={(e) => {
-              e.stopPropagation()
-              setFullscreen(false)
-            }}
+  const fullscreenViewer =
+    fullscreen && currentImage
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95"
+            onClick={() => setFullscreen(false)}
           >
-            ✕
-          </button>
-        </div>,
-        document.body
-      )
-    : null
-  
+            <img
+              src={currentImage}
+              alt={sauna.name}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-full max-w-full object-contain"
+            />
+
+            <button
+              className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-2 text-white"
+              onClick={(e) => {
+                e.stopPropagation()
+                setFullscreen(false)
+              }}
+            >
+              ✕
+            </button>
+          </div>,
+          document.body
+        )
+      : null
+
   return (
-  <>
-    {fullscreenViewer}
+    <>
+      {fullscreenViewer}
 
-    <div className="w-[240px]">
-      {currentImage ? (
-        <div className="relative mb-3 overflow-hidden rounded-xl">
-		<img
-		  src={currentImage}
-		  alt={item.title}
-		  onClick={() => setFullscreen(true)}
-		  className="h-44 w-full cursor-pointer object-cover"
-		/>
+      <div className="w-[260px]">
+        {currentImage ? (
+          <div className="relative mb-3 overflow-hidden rounded-xl">
+            <img
+              src={currentImage}
+              alt={sauna.name}
+              onClick={() => setFullscreen(true)}
+              className="h-44 w-full cursor-pointer object-cover"
+            />
 
-          {images.length > 1 && (
-            <>
-              <button
-                onClick={() =>
-                  setImageIndex((prev) =>
-                    prev === 0 ? images.length - 1 : prev - 1
-                  )
-                }
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-2 py-1 text-xs text-white"
-              >
-                ←
-              </button>
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() =>
+                    setImageIndex((prev) =>
+                      prev === 0 ? images.length - 1 : prev - 1
+                    )
+                  }
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-2 py-1 text-xs text-white"
+                >
+                  ←
+                </button>
 
-              <button
-                onClick={() =>
-                  setImageIndex((prev) =>
-                    prev === images.length - 1 ? 0 : prev + 1
-                  )
-                }
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-2 py-1 text-xs text-white"
-              >
-                →
-              </button>
+                <button
+                  onClick={() =>
+                    setImageIndex((prev) =>
+                      prev === images.length - 1 ? 0 : prev + 1
+                    )
+                  }
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-2 py-1 text-xs text-white"
+                >
+                  →
+                </button>
 
-              <div className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
-                {imageIndex + 1}/{images.length}
-              </div>
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="mb-3 flex h-40 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400">
-          Brak zdjęcia
-        </div>
-      )}
-
-      <div className="mb-2">
-        <h3 className="text-base font-bold text-gray-900">{item.title}</h3>
-
-        <div className="mt-1">
-          <ReservationBadge
-            status={effectiveStatus}
-            reservedUntil={item.reserved_until}
-          />
-        </div>
-      </div>
-
-      {item.description && (
-        <p className="mb-3 text-sm text-gray-700">{item.description}</p>
-      )}
-
-      <div className="mb-3 flex flex-wrap gap-2 text-xs">
-		<span className="rounded-full bg-gray-100 px-2 py-1">
-		  {getCategoryEmoji(item.category)} {item.category}
-		</span>
-
-        {item.condition && (
-          <span className="rounded-full bg-gray-100 px-2 py-1">
-            {item.condition}
-          </span>
-        )}
-
-        {item.size && (
-          <span className="rounded-full bg-gray-100 px-2 py-1">
-            {item.size}
-          </span>
-        )}
-
-        <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
-          {Math.round(item.distance_m)} m
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <button
-          className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 active:scale-95"
-          onClick={() => onAddPhoto(item.id)}
-        >
-          Dodaj zdjęcie
-        </button>
-		{isOwner && (
-		  <button
-			className="rounded-xl bg-gray-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-900 active:scale-95"
-			onClick={() => onEdit(item)}
-		  >
-			Edytuj saunę
-		  </button>
-		)}
-        {effectiveStatus === 'active' && (
-          <button
-            className="rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-700 active:scale-95 disabled:opacity-50"
-            disabled={actionLoading || !deviceId}
-            onClick={reserveItem}
-          >
-            {actionLoading ? 'Rezerwuję...' : 'Rezerwuję na 30 min'}
-          </button>
-        )}
-
-        {isReserved && !isMine && (
-          <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700">
-            Ten obiekt jest chwilowo oznaczony jako zajęty.
+                <div className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
+                  {imageIndex + 1}/{images.length}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="mb-3 flex h-40 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400">
+            Brak zdjęcia
           </div>
         )}
 
-        {isReserved && isMine && (
-          <>
-            <button
-              className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95 disabled:opacity-50"
-              disabled={actionLoading}
-              onClick={markAsTaken}
-            >
-              Odebrane
-            </button>
+        <h3 className="mb-2 text-base font-bold text-gray-900">
+          {sauna.name}
+        </h3>
 
-            <button
-              className="rounded-xl bg-gray-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-600 active:scale-95 disabled:opacity-50"
-              disabled={actionLoading}
-              onClick={cancelReservation}
-            >
-              Anuluj rezerwację
-            </button>
-          </>
+        {sauna.description && (
+          <p className="mb-3 text-sm text-gray-700">{sauna.description}</p>
         )}
-		{isOwner && (
-		  <button
-			className="rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 active:scale-95 disabled:opacity-50"
-			disabled={actionLoading}
-			onClick={removeItem}
-		  >
-			Usuń saunę
-		  </button>
-)}
+
+        <div className="mb-3 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full bg-gray-100 px-2 py-1">
+            {getCategoryEmoji(sauna.category)} {getCategoryLabel(sauna.category)}
+          </span>
+
+          {sauna.city && (
+            <span className="rounded-full bg-gray-100 px-2 py-1">
+              {sauna.city}
+            </span>
+          )}
+
+          <span className="rounded-full bg-blue-100 px-2 py-1 text-blue-700">
+            {Math.round(sauna.distance_m)} m
+          </span>
+        </div>
+
+        {sauna.website && (
+          <a
+            href={sauna.website}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-2 block rounded-xl bg-orange-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-orange-700"
+          >
+            Strona obiektu
+          </a>
+        )}
+
+        <div className="flex flex-col gap-2">
+          <button
+            className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+            onClick={() => onAddPhoto(sauna.id)}
+          >
+            Dodaj zdjęcie
+          </button>
+
+          <button
+            className="rounded-xl bg-gray-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-900"
+            onClick={() => onEdit(sauna)}
+          >
+            Edytuj saunę
+          </button>
+        </div>
       </div>
-    </div>
-  </>
-)
+    </>
+  )
 }
 
-const categoryFilters = [
-  { value: 'all', label: 'Wszystko' },
-  { value: 'public_sauna', label: '🧖 Sauna publiczna' },
-  { value: 'spa', label: '♨️ SPA' },
-  { value: 'hotel', label: '🏨 Hotel' },
-  { value: 'event', label: '🔥 Event saunowy' },
-  { value: 'outdoor', label: '🌲 Sauna plenerowa' },
-]
-
 export default function ItemsMap() {
-	const [items, setItems] = useState<Item[]>([])
-	const [loading, setLoading] = useState(true)
-	const [uploadItemId, setUploadItemId] = useState<string | null>(null)
-	const [editingItem, setEditingItem] = useState<Item | null>(null)
-	const [selectedItem, setSelectedItem] = useState<Item | null>(null)
-	const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
-	const [searchText, setSearchText] = useState('')
-	const [hideTaken, setHideTaken] = useState(true)
-	const [viewMode, setViewMode] = useState<'all' | 'reservedByMe' | 'myItems'>('all')
-	const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [deviceId, setDeviceId] = useState<string | null>(null)
-	const [userLocation, setUserLocation] =
-		useState<[number, number]>(fallbackCenter)
-	const [centerTrigger, setCenterTrigger] = useState(0)
-	const [selectedLocation, setSelectedLocation] =
-		useState<[number, number]>(fallbackCenter)
-	const [showAddForm, setShowAddForm] = useState(false)
-	const [contextMenuLocation, setContextMenuLocation] =
-		useState<[number, number] | null>(null)
-	const [sheetState, setSheetState] =
-		useState<'collapsed' | 'half' | 'full'>('half')
-	const [showAccountPanel, setShowAccountPanel] = useState(false)
-	const [radiusKm, setRadiusKm] = useState(10)
-	
-	const markerRefs = useRef<Record<string, L.Marker | null>>({})
+  const [items, setItems] = useState<Sauna[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploadItemId, setUploadItemId] = useState<string | null>(null)
+  const [editingItem, setEditingItem] = useState<Sauna | null>(null)
+  const [selectedItem, setSelectedItem] = useState<Sauna | null>(null)
+  const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
+  const [searchText, setSearchText] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [userLocation, setUserLocation] = useState<[number, number]>(fallbackCenter)
+  const [centerTrigger, setCenterTrigger] = useState(0)
+  const [selectedLocation, setSelectedLocation] = useState<[number, number]>(fallbackCenter)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [contextMenuLocation, setContextMenuLocation] = useState<[number, number] | null>(null)
+  const [sheetState, setSheetState] = useState<'collapsed' | 'half' | 'full'>('half')
+  const [showAccountPanel, setShowAccountPanel] = useState(false)
+  const [radiusKm, setRadiusKm] = useState(10)
 
-	const visibleItems = items.filter((item) => {
-	  const search = searchText.toLowerCase().trim()
+  const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
-	  if (search) {
-		const title = item.title?.toLowerCase() ?? ''
-		const description = item.description?.toLowerCase() ?? ''
-		const category = item.category?.toLowerCase() ?? ''
-    
-		if (
-		  !title.includes(search) &&
-		  !description.includes(search) &&
-		  !category.includes(search)
-		) {
-		  return false
-		}
-	  }
+  const visibleItems = items.filter((item) => {
+    const search = searchText.toLowerCase().trim()
 
-	  if (hideTaken && item.status === 'taken') {
-      
-		return false
-	  }
+    if (search) {
+      const name = item.name?.toLowerCase() ?? ''
+      const description = item.description?.toLowerCase() ?? ''
+      const category = item.category?.toLowerCase() ?? ''
+      const city = item.city?.toLowerCase() ?? ''
 
-	  if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
-		return false
-	  }
+      if (
+        !name.includes(search) &&
+        !description.includes(search) &&
+        !category.includes(search) &&
+        !city.includes(search)
+      ) {
+        return false
+      }
+    }
 
-	  if (viewMode === 'reservedByMe') {
-		return item.status === 'reserved' && item.reserved_by === deviceId
-	  }
-
-	  if (viewMode === 'myItems') {
-		return item.created_by_device_id === deviceId
-	  }
+    if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
+      return false
+    }
 
     if (categoryFilter !== 'all' && item.category !== categoryFilter) {
       return false
-}
-	  return true
-	})
+    }
 
-async function cleanupExpiredReservations() {
-  const now = new Date().toISOString()
+    return true
+  })
 
-  const { error } = await supabase
-    .from('items')
-    .update({
-      status: 'active',
-      reserved_until: null,
-      reserved_by: null,
-    })
-    .eq('status', 'reserved')
-    .lt('reserved_until', now)
-
-  if (error) {
-    console.error('CLEANUP ERROR:', error)
-  }
-}
   async function loadItems() {
     setLoading(true)
-	
-	await cleanupExpiredReservations()
-    
-	const { data, error } = await supabase.rpc('get_items_nearby', {
-		user_lat: userLocation[0],
-		user_lng: userLocation[1],
+
+    const { data, error } = await supabase.rpc('get_saunas_nearby', {
+      user_lat: userLocation[0],
+      user_lng: userLocation[1],
       radius_m: radiusKm * 1000,
     })
 
     if (error) {
       console.error(error)
+      toast.error('Nie udało się pobrać listy saun')
       setLoading(false)
       return
     }
@@ -622,71 +418,71 @@ async function cleanupExpiredReservations() {
     setLoading(false)
   }
 
-async function centerOnUserLocation() {
-  if (!navigator.geolocation) {
-    toast.error('Geolokalizacja nie jest wspierana')
-    return
+  async function centerOnUserLocation() {
+    if (!navigator.geolocation) {
+      toast.error('Geolokalizacja nie jest wspierana')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords: [number, number] = [
+          position.coords.latitude,
+          position.coords.longitude,
+        ]
+
+        setUserLocation(coords)
+        setSelectedLocation(coords)
+        setCenterTrigger((value) => value + 1)
+
+        toast.success('Wycentrowano mapę')
+      },
+      () => {
+        toast.error('Nie udało się pobrać lokalizacji')
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    )
   }
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const coords: [number, number] = [
-        position.coords.latitude,
-        position.coords.longitude,
-      ]
+  useEffect(() => {
+    loadItems()
+  }, [userLocation, radiusKm])
 
-      setUserLocation(coords)
-      setSelectedLocation(coords)
-      setCenterTrigger((value) => value + 1)
+  useEffect(() => {
+    if (!navigator.geolocation) return
 
-      toast.success('Wycentrowano mapę')
-    },
-    () => {
-      toast.error('Nie udało się pobrać lokalizacji')
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-    }
-  )
-}
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords: [number, number] = [
+          position.coords.latitude,
+          position.coords.longitude,
+        ]
 
-	useEffect(() => {
-	  loadItems()
-	}, [userLocation, radiusKm])
-
-useEffect(() => {
-  if (!navigator.geolocation) return
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const coords: [number, number] = [
-        position.coords.latitude,
-        position.coords.longitude,
-      ]
-
-      setUserLocation(coords)
-      setSelectedLocation(coords)
-    },
-    (error) => {
-      console.error('GEOLOCATION ERROR:', error)
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-    }
-  )
-}, [])
+        setUserLocation(coords)
+        setSelectedLocation(coords)
+      },
+      (error) => {
+        console.error('GEOLOCATION ERROR:', error)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    )
+  }, [])
 
   useEffect(() => {
     const channel = supabase
-      .channel('items-realtime')
+      .channel('saunas-realtime')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'items',
+          table: 'saunas',
         },
         async () => {
           await loadItems()
@@ -697,7 +493,7 @@ useEffect(() => {
         {
           event: '*',
           schema: 'public',
-          table: 'item_photos',
+          table: 'sauna_photos',
         },
         async () => {
           await loadItems()
@@ -711,41 +507,31 @@ useEffect(() => {
   }, [])
 
   useEffect(() => {
-    let id = localStorage.getItem('device_id')
+    if (!selectedItem) return
 
-    if (!id) {
-      id = crypto.randomUUID()
-      localStorage.setItem('device_id', id)
-    }
+    setTimeout(() => {
+      const marker = markerRefs.current[selectedItem.id]
 
-    setDeviceId(id)
-  }, [])
-
-useEffect(() => {
-  if (!selectedItem) return
-
-  setTimeout(() => {
-    const marker = markerRefs.current[selectedItem.id]
-
-    if (marker) {
-      marker.openPopup()
-    }
-  }, 700)
-}, [selectedItem])
+      if (marker) {
+        marker.openPopup()
+      }
+    }, 700)
+  }, [selectedItem])
 
   return (
     <div className="flex h-screen w-full">
       <div className="hidden w-80 overflow-y-auto border-r bg-white lg:block">
-        <div className="border-b p-3 font-bold">
-		<div className="border-b p-3">
-		  <input
-			className="w-full rounded-xl border p-2 text-sm"
-			placeholder="Szukaj..."
-			value={searchText}
-			onChange={(e) => setSearchText(e.target.value)}
-		  />
-		</div>
-          {loading ? 'Ładowanie...' : `Znaleziono: ${visibleItems.length}`}
+        <div className="border-b p-3">
+          <input
+            className="mb-3 w-full rounded-xl border p-2 text-sm"
+            placeholder="Szukaj sauny, miasta, kategorii..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+
+          <div className="font-bold">
+            {loading ? 'Ładowanie...' : `Znaleziono: ${visibleItems.length}`}
+          </div>
         </div>
 
         <label className="flex items-center gap-2 border-b p-3 text-sm">
@@ -757,47 +543,8 @@ useEffect(() => {
           Tylko ze zdjęciem
         </label>
 
-		<div className="flex gap-2 border-b p-3 text-sm">
-		  <button
-			onClick={() => setViewMode('all')}
-			className={`rounded-full px-3 py-1 font-semibold ${
-			  viewMode === 'all'
-				? 'bg-black text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-		  >
-			Wszystkie
-		  </button>
-
-		  <button
-			onClick={() => setViewMode('reservedByMe')}
-			className={`rounded-full px-3 py-1 font-semibold ${
-			  viewMode === 'reservedByMe'
-				? 'bg-black text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-		  >
-			Moje rezerwacje
-		  </button>
-			<button
-			  onClick={() => setViewMode('myItems')}
-			  className={`rounded-full px-3 py-1 font-semibold ${
-				viewMode === 'myItems'
-				  ? 'bg-black text-white'
-				  : 'bg-gray-100 text-gray-700'
-			  }`}
-			>
-			  Moje sauny
-			</button>
-		</div>
-
         {visibleItems.map((item) => {
           const img = item.image_urls?.[0]
-          const reservationExpired =
-            item.status === 'reserved' &&
-            isReservationExpired(item.reserved_until)
-
-          const effectiveStatus = reservationExpired ? 'active' : item.status
 
           return (
             <div
@@ -813,7 +560,7 @@ useEffect(() => {
               {img ? (
                 <img
                   src={img}
-                  alt={item.title}
+                  alt={item.name}
                   className="mb-2 h-24 w-full rounded object-cover"
                 />
               ) : (
@@ -822,16 +569,13 @@ useEffect(() => {
                 </div>
               )}
 
-				<div className="mb-1 text-sm font-semibold">
-					{getCategoryEmoji(item.category)} {item.title}
-				</div>
-
-              <div className="mb-1">
-                <ReservationBadge
-                  status={effectiveStatus}
-                  reservedUntil={item.reserved_until}
-                />
+              <div className="mb-1 text-sm font-semibold">
+                {getCategoryEmoji(item.category)} {item.name}
               </div>
+
+              {item.city && (
+                <div className="mb-1 text-xs text-gray-500">{item.city}</div>
+              )}
 
               <div className="text-xs text-gray-500">
                 {Math.round(item.distance_m)} m
@@ -842,426 +586,324 @@ useEffect(() => {
       </div>
 
       <div className="relative flex-1">
-	  <button
-		  onClick={() => setShowAccountPanel(true)}
-		  className="absolute right-4 top-4 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5"
-		>
-		  <div className="flex flex-col items-center gap-1">
-			<span className="block h-[2px] w-5 rounded bg-gray-800" />
-			<span className="block h-[2px] w-5 rounded bg-gray-800" />
-			<span className="block h-[2px] w-5 rounded bg-gray-800" />
-		  </div>
-		</button>
-		<button
-		  onClick={centerOnUserLocation}
-		  className="absolute bottom-24 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-xl transition hover:scale-105 active:scale-95"
-		>
-		  📍
-		</button>
-    <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] gap-2 overflow-x-auto rounded-xl bg-white/90 p-2 shadow">
-  {[
-  { value: 'all', label: 'Wszystko' },
-  { value: 'public_sauna', label: '🧖' },
-  { value: 'spa', label: '♨️' },
-  { value: 'hotel', label: '🏨' },
-  { value: 'event', label: '🔥' },
-  { value: 'outdoor', label: '🌲' },
-].map((cat) => (
-    <button
-      key={cat.value}
-      onClick={() => setCategoryFilter(cat.value)}
-      className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${
-        categoryFilter === cat.value
-          ? 'bg-black text-white'
-          : 'bg-gray-100 text-gray-700'
-      }`}
-    >
-      {cat.label}
-    </button>
-  ))}
-  </div>
-        <MapContainer
-          center={userLocation}
-          zoom={14}
-          className="h-full w-full"
+        <button
+          onClick={() => setShowAccountPanel(true)}
+          className="absolute right-4 top-4 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5"
         >
+          <div className="flex flex-col items-center gap-1">
+            <span className="block h-[2px] w-5 rounded bg-gray-800" />
+            <span className="block h-[2px] w-5 rounded bg-gray-800" />
+            <span className="block h-[2px] w-5 rounded bg-gray-800" />
+          </div>
+        </button>
+
+        <button
+          onClick={centerOnUserLocation}
+          className="absolute bottom-24 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-xl transition hover:scale-105 active:scale-95"
+        >
+          📍
+        </button>
+
+        <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] gap-2 overflow-x-auto rounded-xl bg-white/90 p-2 shadow">
+          {[
+            { value: 'all', label: 'Wszystko' },
+            { value: 'public_sauna', label: '🧖' },
+            { value: 'spa', label: '♨️' },
+            { value: 'hotel', label: '🏨' },
+            { value: 'event', label: '🔥' },
+            { value: 'outdoor', label: '🌲' },
+          ].map((cat) => (
+            <button
+              key={cat.value}
+              onClick={() => setCategoryFilter(cat.value)}
+              className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${
+                categoryFilter === cat.value
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <MapContainer center={userLocation} zoom={14} className="h-full w-full">
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
           <MapFocusController selectedItem={selectedItem} />
-			<MapCenterController
-			  center={userLocation}
-			  trigger={centerTrigger}
-			/>
-		<MapClickHandler
-		  onSelect={(lat, lng) => setSelectedLocation([lat, lng])}
-		  onOpenContextMenu={(lat, lng) => {
-			setContextMenuLocation([lat, lng])
-		  }}
-		  onCloseAddForm={() => setShowAddForm(false)}
-		/>
+          <MapCenterController center={userLocation} trigger={centerTrigger} />
+
+          <MapClickHandler
+            onSelect={(lat, lng) => setSelectedLocation([lat, lng])}
+            onOpenContextMenu={(lat, lng) => {
+              setContextMenuLocation([lat, lng])
+            }}
+            onCloseAddForm={() => setShowAddForm(false)}
+          />
+
           <Marker position={selectedLocation} icon={markerIcon}>
             <Popup>Nowa sauna tutaj</Popup>
           </Marker>
 
-		{contextMenuLocation && (
-		  <Popup
-			position={contextMenuLocation}
-			eventHandlers={{
-			  remove: () => {
-				setContextMenuLocation(null)
-			  },
-			}}
-		  >
-			<div className="flex flex-col gap-2">
-			  <div className="text-sm font-semibold">
-				Co chcesz zrobić?
-			  </div>
+          {contextMenuLocation && (
+            <Popup
+              position={contextMenuLocation}
+              eventHandlers={{
+                remove: () => {
+                  setContextMenuLocation(null)
+                },
+              }}
+            >
+              <div className="flex flex-col gap-2">
+                <div className="text-sm font-semibold">Co chcesz zrobić?</div>
 
-			  <button
-				className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white"
-			onClick={() => {
-			  const location = contextMenuLocation
+                <button
+                  className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white"
+                  onClick={() => {
+                    const location = contextMenuLocation
 
-			  if (!location) return
+                    if (!location) return
 
-			  setSelectedLocation(location)
-			  setContextMenuLocation(null)
+                    setSelectedLocation(location)
+                    setContextMenuLocation(null)
 
-			  setTimeout(() => {
-				setShowAddForm(true)
-			  }, 0)
-			}}
-			  >
-				Dodaj Saunę tutaj
-			  </button>
-			</div>
-		  </Popup>
-		)}
+                    setTimeout(() => {
+                      setShowAddForm(true)
+                    }, 0)
+                  }}
+                >
+                  Dodaj saunę tutaj
+                </button>
+              </div>
+            </Popup>
+          )}
+
           <MarkerClusterGroup chunkedLoading maxClusterRadius={60}>
-            {visibleItems.map((item) => {
-              const reservationExpired =
-                item.status === 'reserved' &&
-                isReservationExpired(item.reserved_until)
-
-              const effectiveStatus = reservationExpired
-                ? 'active'
-                : item.status
-
-              return (
-                <Marker
-				  key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
-				  position={[item.latitude, item.longitude]}
-					icon={createItemIcon(
-					  item.image_urls?.[0] ?? null,
-					  effectiveStatus,
-					  item.category
-					)}
-				  eventHandlers={{
-					click: () => {
-					  setShowAddForm(false)
-					},
-				  }}
-				  ref={(ref) => {
-					markerRefs.current[item.id] = ref
-				  }}
-				>
-                  <Popup>
-					<ItemPopup
-					  item={item}
-					  deviceId={deviceId}
-					  onAddPhoto={(itemId) => setUploadItemId(itemId)}
-					  onEdit={(item) => setEditingItem(item)}
-					  onRefresh={loadItems}
-					/>
-                  </Popup>
-                </Marker>
-              )
-            })}
+            {visibleItems.map((item) => (
+              <Marker
+                key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
+                position={[item.latitude, item.longitude]}
+                icon={createSaunaIcon(item.image_urls?.[0] ?? null, item.category)}
+                eventHandlers={{
+                  click: () => {
+                    setShowAddForm(false)
+                  },
+                }}
+                ref={(ref) => {
+                  markerRefs.current[item.id] = ref
+                }}
+              >
+                <Popup>
+                  <SaunaPopup
+                    sauna={item}
+                    onAddPhoto={(itemId) => setUploadItemId(itemId)}
+                    onEdit={(item) => setEditingItem(item)}
+                  />
+                </Popup>
+              </Marker>
+            ))}
           </MarkerClusterGroup>
         </MapContainer>
-		<div className={`
-		  absolute bottom-0 left-0 right-0 z-[9999]
-		  rounded-t-3xl bg-white shadow-2xl lg:hidden
-		  transition-all duration-300
-		  ${
-			sheetState === 'collapsed'
-			  ? 'h-[80px]'
-			  : sheetState === 'half'
-			  ? 'h-[40vh]'
-			  : 'h-[85vh]'
-		  }
-		`}>
-		  <button
-			  className="flex w-full justify-center py-3"
-			  onClick={() => {
-				setSheetState((current) => {
-				  if (current === 'collapsed') return 'half'
-				  if (current === 'half') return 'full'
-				  return 'collapsed'
-				})
-			  }}
-			>
-			  <div className="h-1.5 w-12 rounded-full bg-gray-300" />
-			</button>
 
-		  <div className="max-h-[40vh] overflow-y-auto p-3">
-			<div className="mb-3 text-sm font-bold">
-			<div className="mb-3">
-			  <input
-				className="w-full rounded-xl border p-2 text-sm"
-				placeholder="Szukaj..."
-				value={searchText}
-				onChange={(e) => setSearchText(e.target.value)}
-			  />
-			</div>
-			  {visibleItems.length} saun w pobliżu
-			</div>
+        <div
+          className={`
+            absolute bottom-0 left-0 right-0 z-[9999]
+            rounded-t-3xl bg-white shadow-2xl lg:hidden
+            transition-all duration-300
+            ${
+              sheetState === 'collapsed'
+                ? 'h-[80px]'
+                : sheetState === 'half'
+                ? 'h-[40vh]'
+                : 'h-[85vh]'
+            }
+          `}
+        >
+          <button
+            className="flex w-full justify-center py-3"
+            onClick={() => {
+              setSheetState((current) => {
+                if (current === 'collapsed') return 'half'
+                if (current === 'half') return 'full'
+                return 'collapsed'
+              })
+            }}
+          >
+            <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+          </button>
 
-		<div className="mb-3 flex flex-wrap gap-2">
-		  <button
-			onClick={() => setViewMode('all')}
-			className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			  viewMode === 'all'
-				? 'bg-black text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-		  >
-			Wszystkie
-		  </button>
+          <div className="max-h-[40vh] overflow-y-auto p-3">
+            <div className="mb-3 text-sm font-bold">
+              <input
+                className="mb-3 w-full rounded-xl border p-2 text-sm"
+                placeholder="Szukaj sauny..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
 
-		  <button
-			onClick={() => setViewMode('reservedByMe')}
-			className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			  viewMode === 'reservedByMe'
-				? 'bg-black text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-		  >
-			Rezerwacje
-		  </button>
+              {visibleItems.length} saun w pobliżu
+            </div>
 
-		  <button
-			onClick={() => setViewMode('myItems')}
-			className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			  viewMode === 'myItems'
-				? 'bg-black text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-		  >
-			Moje
-		  </button>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <button
+                onClick={() => setOnlyWithPhotos((v) => !v)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  onlyWithPhotos
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                📷 Zdjęcia
+              </button>
+            </div>
 
-		  <button
-			onClick={() => setOnlyWithPhotos((v) => !v)}
-			className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			  onlyWithPhotos
-				? 'bg-blue-600 text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-		  >
-			📷 Zdjęcia
-		  </button>
-		<button
-		  onClick={() => setHideTaken((v) => !v)}
-		  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			hideTaken
-			  ? 'bg-red-600 text-white'
-			  : 'bg-gray-100 text-gray-700'
-		  }`}
-		>
-		  Ukryj odebrane
-		</button>		</div>
-		<div className="mb-3 flex flex-wrap gap-2">
-		  {[3, 10, 30, 100].map((radius) => (
-			<button
-			  key={radius}
-			  onClick={() => setRadiusKm(radius)}
-			  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-				radiusKm === radius
-				  ? 'bg-green-600 text-white'
-				  : 'bg-gray-100 text-gray-700'
-			  }`}
-			>
-			  {radius} km
-			</button>
-		  ))}
-		</div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {[3, 10, 30, 100].map((radius) => (
+                <button
+                  key={radius}
+                  onClick={() => setRadiusKm(radius)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    radiusKm === radius
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {radius} km
+                </button>
+              ))}
+            </div>
 
-			<div className="flex flex-col gap-2">
-			  {visibleItems.map((item) => {
-				const img = item.image_urls?.[0]
+            <div className="flex flex-col gap-2">
+              {visibleItems.map((item) => {
+                const img = item.image_urls?.[0]
 
-				return (
-				  <div
-					key={item.id}
-					className="flex cursor-pointer gap-3 rounded-xl border p-2 active:bg-gray-100"
-					onClick={() => {
-					  setSelectedItem(item)
-					  setSelectedLocation([item.latitude, item.longitude])
-					  setShowAddForm(false)
-					  setSheetState('collapsed')
-					}}
-				  >
-					{img ? (
-					  <img
-						src={img}
-						alt={item.title}
-						className="h-16 w-16 rounded-lg object-cover"
-					  />
-					) : (
-					  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200 text-xs">
-						brak
-					  </div>
-					)}
+                return (
+                  <div
+                    key={item.id}
+                    className="flex cursor-pointer gap-3 rounded-xl border p-2 active:bg-gray-100"
+                    onClick={() => {
+                      setSelectedItem(item)
+                      setSelectedLocation([item.latitude, item.longitude])
+                      setShowAddForm(false)
+                      setSheetState('collapsed')
+                    }}
+                  >
+                    {img ? (
+                      <img
+                        src={img}
+                        alt={item.name}
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200 text-xs">
+                        brak
+                      </div>
+                    )}
 
-					<div className="min-w-0 flex-1">
-						<div className="truncate text-sm font-semibold">
-						  {getCategoryEmoji(item.category)} {item.title}
-						</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">
+                        {getCategoryEmoji(item.category)} {item.name}
+                      </div>
 
-					  <div className="mt-1">
-						<ReservationBadge
-						  status={item.status}
-						  reservedUntil={item.reserved_until}
-						/>
-					  </div>
+                      {item.city && (
+                        <div className="mt-1 text-xs text-gray-500">
+                          {item.city}
+                        </div>
+                      )}
 
-					  <div className="mt-1 text-xs text-gray-500">
-						{Math.round(item.distance_m)} m
-					  </div>
-					</div>
-				  </div>
-				)
-			  })}
-			</div>
-		  </div>
-		</div>
-		{showAddForm && (
-		  <AddItemForm
-			onAdded={async () => {
-			  await loadItems()
-			  toast.success('Dodano saunę')
-			  setShowAddForm(false)
-			}}
-		    onClose={() => setShowAddForm(false)}
-			latitude={selectedLocation[0]}
-			longitude={selectedLocation[1]}
-		  />
-		)}
+                      <div className="mt-1 text-xs text-gray-500">
+                        {Math.round(item.distance_m)} m
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {showAddForm && (
+          <AddItemForm
+            onAdded={async () => {
+              await loadItems()
+              toast.success('Dodano saunę')
+              setShowAddForm(false)
+            }}
+            onClose={() => setShowAddForm(false)}
+            latitude={selectedLocation[0]}
+            longitude={selectedLocation[1]}
+          />
+        )}
       </div>
-	  {showAccountPanel && (
-		  <div className="fixed inset-0 z-[11000] flex justify-end bg-black/40">
-			<div className="flex h-full w-80 max-w-full flex-col bg-white shadow-2xl">
-			  <div className="flex items-center justify-between border-b px-4 py-3">
-				<h2 className="text-base font-bold">Moje konto</h2>
 
-				<button
-				  onClick={() => setShowAccountPanel(false)}
-				  className="text-gray-500"
-				>
-				  ✕
-				</button>
-			  </div>
+      {showAccountPanel && (
+        <div className="fixed inset-0 z-[11000] flex justify-end bg-black/40">
+          <div className="flex h-full w-80 max-w-full flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <h2 className="text-base font-bold">SaunaPlanet</h2>
 
-			  <div className="flex-1 overflow-y-auto px-4 py-3 text-sm">
-				<div className="mb-4">
-				  <div className="text-xs uppercase tracking-wide text-gray-400">
-					Podsumowanie
-				  </div>
-				  <div className="mt-1 text-sm text-gray-800">
-					Moje sauny: {items.filter((i) => i.created_by_device_id === deviceId).length}
-				  </div>
-				  <div className="mt-1 text-sm text-gray-800">
-					Rezerwacje: {items.filter((i) => i.status === 'reserved' && i.reserved_by === deviceId).length}
-				  </div>
-				</div>
+              <button
+                onClick={() => setShowAccountPanel(false)}
+                className="text-gray-500"
+              >
+                ✕
+              </button>
+            </div>
 
-				<div className="mb-4 border-t pt-3">
-				  <div className="text-xs uppercase tracking-wide text-gray-400">
-					Szybkie filtry
-				  </div>
-				  <div className="mt-2 flex flex-wrap gap-2">
-					<button
-					  onClick={() => {
-						setViewMode('myItems')
-						setShowAccountPanel(false)
-					  }}
-					  className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white"
-					>
-					  Moje sauny
-					</button>
+            <div className="flex-1 overflow-y-auto px-4 py-3 text-sm">
+              <div className="mb-4">
+                <div className="text-xs uppercase tracking-wide text-gray-400">
+                  Podsumowanie
+                </div>
+                <div className="mt-1 text-sm text-gray-800">
+                  Liczba saun w pobliżu: {items.length}
+                </div>
+              </div>
 
-					<button
-					  onClick={() => {
-						setViewMode('reservedByMe')
-						setShowAccountPanel(false)
-					  }}
-					  className="rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white"
-					>
-					  Moje zapisane
-					</button>
-					
-					<button
-						onClick={() => {
-						  setViewMode('all')
-						  setShowAccountPanel(false)
-						}}
-						className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-800"
-					  >
-						Pokaż wszystkie
-					  </button>
-				  </div>
-				</div>
+              <div className="mb-4 border-t pt-3">
+                <div className="text-xs uppercase tracking-wide text-gray-400">
+                  Ustawienia MVP
+                </div>
+                <div className="mt-2 space-y-2 text-xs text-gray-600">
+                  <div>Docelowo tutaj pojawi się logowanie i profil użytkownika.</div>
+                </div>
+              </div>
 
-				<div className="mb-4 border-t pt-3">
-				  <div className="text-xs uppercase tracking-wide text-gray-400">
-					Ustawienia (MVP)
-				  </div>
-				  <div className="mt-2 space-y-2 text-xs text-gray-600">
-					<div>• ID urządzenia (tymczasowy identyfikator):</div>
-					<div className="break-all rounded bg-gray-100 px-2 py-1">
-					  {deviceId ?? '—'}
-					</div>
-					<div className="mt-2 text-[11px] text-gray-500">
-					  Docelowo tutaj pojawi się logowanie (Google / Apple) i profil użytkownika.
-					</div>
-				  </div>
-				</div>
+              <div className="border-t pt-3">
+                <div className="text-xs uppercase tracking-wide text-gray-400">
+                  Feedback
+                </div>
+                <p className="mt-2 text-xs text-gray-600">
+                  Jeśli masz uwagi do działania aplikacji, zapisz je teraz – to
+                  dobry moment na dopracowanie MVP.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-				<div className="border-t pt-3">
-				  <div className="text-xs uppercase tracking-wide text-gray-400">
-					Feedback
-				  </div>
-				  <p className="mt-2 text-xs text-gray-600">
-					Jeśli masz uwagi do działania aplikacji, zapisz je
-					teraz – to idealny moment na dopracowanie MVP.
-				  </p>
-				</div>
-			  </div>
-			</div>
-		  </div>
-		)}
-		{uploadItemId && (
-		  <AddPhotoModal
-			itemId={uploadItemId}
-			onClose={() => setUploadItemId(null)}
-			onUploaded={async () => {
-			  await loadItems()
-			  toast.success('Dodano zdjęcie')
-			}}
-		  />
-		)}
+      {uploadItemId && (
+        <AddPhotoModal
+          itemId={uploadItemId}
+          onClose={() => setUploadItemId(null)}
+          onUploaded={async () => {
+            await loadItems()
+            toast.success('Dodano zdjęcie')
+          }}
+        />
+      )}
 
-		{editingItem && (
-		  <EditItemModal
-			item={editingItem}
-			onClose={() => setEditingItem(null)}
-			onSaved={loadItems}
-		  />
-		)}
+      {editingItem && (
+        <EditItemModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={loadItems}
+        />
+      )}
     </div>
   )
 }
