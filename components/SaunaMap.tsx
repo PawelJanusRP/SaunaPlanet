@@ -19,6 +19,17 @@ import { supabase } from '@/lib/supabase'
 import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
+import AddEventModal from '@/components/AddEventModal'
+
+type SaunaEvent = {
+  id: string
+  title: string
+  description: string | null
+  event_date: string
+  event_time: string | null
+  price: string | null
+  status: string
+}
 
 type Sauna = {
   id: string
@@ -36,6 +47,8 @@ type Sauna = {
   created_at: string
   distance_m: number
   image_urls: string[] | null
+  cover_image_url: string | null
+  has_upcoming_event?: boolean
 }
 
 const fallbackCenter: [number, number] = [52.4064, 16.9252]
@@ -156,43 +169,79 @@ function getCategoryColor(category: string) {
   }
 }
 
-function createSaunaIcon(imageUrl: string | null, category: string) {
+function createSaunaIcon(
+  imageUrl: string | null,
+  category: string,
+  hasUpcomingEvent = false
+) {
   const categoryEmoji = getCategoryEmoji(category)
   const categoryColor = getCategoryColor(category)
-
+  const size = hasUpcomingEvent ? 60 : 46
+  const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
+  const pulseClass = hasUpcomingEvent
+  ? 'sauna-event-pulse'
+  : ''
   return L.divIcon({
     className: '',
-    html: `
-      <div style="
-        width: 46px;
-        height: 46px;
-        border-radius: 9999px;
-        overflow: hidden;
-        border: 3px solid ${categoryColor};
-        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-        background: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-      ">
-        ${
-          imageUrl
-            ? `
-              <img
-                src="${imageUrl}"
-                style="
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  display: block;
-                "
-              />
-            `
-            : `<div>${categoryEmoji}</div>`
-        }
-      </div>
-    `,
+		html: `
+		<div class="${hasUpcomingEvent ? 'sauna-event-pulse' : ''}"
+			style="
+				position: relative;
+				width: ${size}px;
+				height: ${size}px;
+			">
+		
+			${
+				hasUpcomingEvent
+				? `
+					<div style="
+					position:absolute;
+					top:-10px;
+					right:-10px;
+					z-index:999;
+					font-size:20px;
+					line-height:1;
+					">
+					🔥
+					</div>
+				`
+				: ''
+			}
+		
+			<div style="
+				width: ${size}px;
+				height: ${size}px;
+				border: 4px solid ${borderColor};
+				overflow: hidden;
+				border-radius: 50%;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+				background: white;
+				display:flex;
+				align-items:center;
+				justify-content:center;
+			">
+				${
+				imageUrl
+					? `
+					<img
+						src="${imageUrl}"
+						style="
+						width:100%;
+						height:100%;
+						object-fit:cover;
+						display:block;
+						"
+					/>
+					`
+					: `
+					<div style="font-size:22px;">
+						${categoryEmoji}
+					</div>
+					`
+				}
+			</div>
+		</div>
+		`,
     iconSize: [46, 46],
     iconAnchor: [23, 46],
     popupAnchor: [0, -46],
@@ -203,15 +252,40 @@ function SaunaPopup({
   sauna,
   onAddPhoto,
   onEdit,
+  onAddEvent,
 }: {
   sauna: Sauna
   onAddPhoto: (saunaId: string) => void
   onEdit: (sauna: Sauna) => void
+  onAddEvent: (sauna: Sauna) => void
 }) {
   const [imageIndex, setImageIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
+  const [events, setEvents] = useState<SaunaEvent[]>([])
 
-  const images = sauna.image_urls ?? []
+  useEffect(() => {
+    loadEvents()
+  }, [sauna.id])
+
+  async function loadEvents() {
+    const { data, error } = await supabase.rpc('get_sauna_events', {
+      sauna_uuid: sauna.id,
+    })
+
+    if (error) {
+      console.error('LOAD EVENTS ERROR:', error)
+      return
+    }
+
+    setEvents(data ?? [])
+  }
+
+  const images = sauna.image_urls?.length
+    ? sauna.image_urls
+    : sauna.cover_image_url
+    ? [sauna.cover_image_url]
+    : []
+
   const currentImage = images[imageIndex]
 
   const fullscreenViewer =
@@ -328,6 +402,46 @@ function SaunaPopup({
           </a>
         )}
 
+		{events.length > 0 && (
+		<div className="mb-3 rounded-xl border border-orange-200 bg-orange-50 p-2">
+			<div className="mb-2 text-sm font-bold text-orange-700">
+			🔥 Najbliższe wydarzenia
+			</div>
+		
+			<div className="space-y-2">
+			{events.slice(0, 3).map((event) => (
+				<div
+				key={event.id}
+				className="rounded-lg bg-white p-2 text-xs"
+				>
+				<div className="font-semibold">
+					{event.title}
+				</div>
+		
+				<div className="text-gray-500">
+				{event.event_date.substring(0, 10)}
+				{event.event_time
+					? ` ${event.event_time.substring(0, 5)}`
+					: ''}
+				</div>
+		
+				{event.price && (
+					<div className="text-orange-700">
+					{event.price && (
+					<div className="text-orange-700 font-semibold">
+						{event.price.includes('zł')
+						? event.price
+						: `${event.price} zł`}
+					</div>
+)}
+					</div>
+				)}
+				</div>
+			))}
+			</div>
+		</div>
+		)}
+		
         <div className="flex flex-col gap-2">
           <button
             className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
@@ -336,6 +450,13 @@ function SaunaPopup({
             Dodaj zdjęcie
           </button>
 
+		  <button
+		  	className="rounded-xl bg-orange-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+		  	onClick={() => onAddEvent(sauna)}
+		  >
+		  	🔥 Dodaj event
+		  </button>
+  
           <button
             className="rounded-xl bg-gray-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-900"
             onClick={() => onEdit(sauna)}
@@ -353,6 +474,7 @@ export default function SaunaMap() {
   const [loading, setLoading] = useState(true)
   const [uploadItemId, setUploadItemId] = useState<string | null>(null)
   const [editingSauna, setEditingSauna] = useState<Sauna | null>(null)
+  const [eventSauna, setEventSauna] = useState<Sauna | null>(null)
   const [selectedSauna, setSelectedSauna] = useState<Sauna | null>(null)
   const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
   const [searchText, setSearchText] = useState('')
@@ -406,6 +528,10 @@ export default function SaunaMap() {
       user_lng: userLocation[1],
       radius_m: radiusKm * 1000,
     })
+	
+	console.log(
+		data?.find((s) => s.image_urls?.length > 0)
+)
 
     if (error) {
       console.error(error)
@@ -413,8 +539,20 @@ export default function SaunaMap() {
       setLoading(false)
       return
     }
+	const { data: eventSaunas } = await supabase.rpc(
+  'get_upcoming_event_saunas'
+)
 
-    setItems(data ?? [])
+	const eventIds = new Set(
+	  (eventSaunas ?? []).map((e) => e.sauna_id)
+)
+
+    setItems(
+	  (data ?? []).map((sauna) => ({
+		...sauna,
+		has_upcoming_event: eventIds.has(sauna.id),
+	  }))
+	)
     setLoading(false)
   }
 
@@ -544,7 +682,7 @@ export default function SaunaMap() {
         </label>
 
         {visibleItems.map((item) => {
-          const img = item.image_urls?.[0]
+          const img = item.image_urls?.[0] ?? item.cover_image_url
 
           return (
             <div
@@ -686,7 +824,11 @@ export default function SaunaMap() {
               <Marker
                 key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
                 position={[item.latitude, item.longitude]}
-                icon={createSaunaIcon(item.image_urls?.[0] ?? null, item.category)}
+                icon={createSaunaIcon(
+				item.image_urls?.[0] ?? item.cover_image_url,
+				item.category,
+				item.has_upcoming_event
+				)}
                 eventHandlers={{
                   click: () => {
                     setShowAddForm(false)
@@ -698,10 +840,11 @@ export default function SaunaMap() {
               >
                 <Popup>
                   <SaunaPopup
-                    sauna={item}
-                    onAddPhoto={(itemId) => setUploadItemId(itemId)}
-                    onEdit={(item) => setEditingSauna(item)}
-                  />
+					sauna={item}
+					onAddPhoto={(itemId) => setUploadItemId(itemId)}
+					onEdit={(item) => setEditingSauna(item)}
+					onAddEvent={(item) => setEventSauna(item)}
+				  />					
                 </Popup>
               </Marker>
             ))}
@@ -778,7 +921,7 @@ export default function SaunaMap() {
 
             <div className="flex flex-col gap-2">
               {visibleItems.map((item) => {
-                const img = item.image_urls?.[0]
+                const img = item.image_urls?.[0] ?? item.cover_image_url
 
                 return (
                   <div
@@ -904,6 +1047,14 @@ export default function SaunaMap() {
           onSaved={loadSaunas}
         />
       )}
+	  {eventSauna && (
+		<AddEventModal
+			saunaId={eventSauna.id}
+			saunaName={eventSauna.name}
+			onClose={() => setEventSauna(null)}
+			onAdded={loadSaunas}
+		/>
+	  )}		
     </div>
   )
 }

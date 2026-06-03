@@ -30,18 +30,18 @@ export default function AddPhotoModal({
       const path = `${itemId}/${Date.now()}.${ext}`
 
       const { error: uploadError } = await supabase.storage
-        .from('item-images')
+        .from('sauna-images')
         .upload(path, file)
 
       if (uploadError) throw uploadError
 
       const { data } = supabase.storage
-        .from('item-images')
+        .from('sauna-images')
         .getPublicUrl(path)
 
-      const { error: dbError } = await supabase.from('item_photos').insert([
+      const { error: dbError } = await supabase.from('sauna_photos').insert([
         {
-          item_id: itemId,
+          sauna_id: itemId,
           image_url: data.publicUrl,
         },
       ])
@@ -59,8 +59,13 @@ export default function AddPhotoModal({
 
       toast.success('Zdjęcie dodane')
     } catch (e) {
-      console.error(e)
-      toast.error('Błąd uploadu')
+      console.error('UPLOAD ERROR FULL:', e)
+
+	  if (e instanceof Error) {
+	  toast.error(e.message)
+	  } else {
+	  toast.error('Błąd uploadu')
+	  }
     } finally {
       setLoading(false)
     }
