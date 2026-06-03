@@ -20,6 +20,14 @@ import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
+import Link from 'next/link'
+
+type TopSauna = {
+  sauna_id: string
+  sauna_name: string
+  avg_rating: number
+  review_count: number
+}
 
 type SaunaEvent = {
   id: string
@@ -391,16 +399,23 @@ function SaunaPopup({
           </span>
         </div>
 
-        {sauna.website && (
-          <a
-            href={sauna.website}
-            target="_blank"
-            rel="noreferrer"
-            className="mb-2 block rounded-xl bg-orange-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-orange-700"
-          >
-            Strona obiektu
-          </a>
-        )}
+		<Link
+		href={`/sauna/${sauna.id}`}
+		className="mb-2 block rounded-xl bg-blue-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-blue-700"
+		>
+		📖 Szczegóły obiektu
+		</Link>
+		
+		{sauna.website && (
+		<a
+			href={sauna.website}
+			target="_blank"
+			rel="noreferrer"
+			className="mb-2 block rounded-xl bg-green-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-green-700"
+		>
+			🌍 Oficjalna strona
+		</a>
+		)}
 
 		{events.length > 0 && (
 		<div className="mb-3 rounded-xl border border-orange-200 bg-orange-50 p-2">
@@ -444,10 +459,10 @@ function SaunaPopup({
 		
         <div className="flex flex-col gap-2">
           <button
-            className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+            className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
             onClick={() => onAddPhoto(sauna.id)}
           >
-            Dodaj zdjęcie
+            📷 Dodaj zdjęcie
           </button>
 
 		  <button
@@ -461,7 +476,7 @@ function SaunaPopup({
             className="rounded-xl bg-gray-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-900"
             onClick={() => onEdit(sauna)}
           >
-            Edytuj saunę
+            ✏️ Edytuj saunę
           </button>
         </div>
       </div>
@@ -471,6 +486,7 @@ function SaunaPopup({
 
 export default function SaunaMap() {
   const [items, setItems] = useState<Sauna[]>([])
+  const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadItemId, setUploadItemId] = useState<string | null>(null)
   const [editingSauna, setEditingSauna] = useState<Sauna | null>(null)
@@ -520,6 +536,16 @@ export default function SaunaMap() {
     return true
   })
 
+  async function loadTopSaunas() {
+    const { data, error } = await supabase.rpc('get_top_saunas')
+  
+    if (error) {
+      console.error('LOAD TOP SAUNAS ERROR:', error)
+      return
+    }
+  
+  setTopSaunas(data ?? [])
+}
   async function loadSaunas() {
     setLoading(true)
 
@@ -587,6 +613,7 @@ export default function SaunaMap() {
 
   useEffect(() => {
     loadSaunas()
+    loadTopSaunas()
   }, [userLocation, radiusKm])
 
   useEffect(() => {
@@ -670,6 +697,31 @@ export default function SaunaMap() {
           <div className="font-bold">
             {loading ? 'Ładowanie...' : `Znaleziono: ${visibleItems.length}`}
           </div>
+		  {topSaunas.length > 0 && (
+		  <div className="mt-3 rounded-xl bg-yellow-50 p-3">
+		  	<div className="mb-2 text-sm font-bold text-yellow-700">
+		  	🏆 TOP SaunaPlanet
+		  	</div>
+		  
+		  	<div className="space-y-2">
+		  	{topSaunas.map((sauna, index) => (
+		  		<a
+		  		key={sauna.sauna_id}
+		  		href={`/sauna/${sauna.sauna_id}`}
+		  		className="block rounded-lg bg-white p-2 text-xs hover:bg-yellow-100"
+		  		>
+		  		<div className="font-semibold">
+		  			{index + 1}. {sauna.sauna_name}
+		  		</div>
+		  
+		  		<div className="text-yellow-700">
+		  			⭐ {Number(sauna.avg_rating).toFixed(1)} ({sauna.review_count})
+		  		</div>
+		  		</a>
+		  	))}
+		  	</div>
+		  </div>
+		  )}
         </div>
 
         <label className="flex items-center gap-2 border-b p-3 text-sm">
