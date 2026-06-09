@@ -57,6 +57,8 @@ type Sauna = {
   image_urls: string[] | null
   cover_image_url: string | null
   has_upcoming_event?: boolean
+  avg_rating: number | null
+  review_count: number
 }
 
 const fallbackCenter: [number, number] = [52.4064, 16.9252]
@@ -180,7 +182,8 @@ function getCategoryColor(category: string) {
 function createSaunaIcon(
   imageUrl: string | null,
   category: string,
-  hasUpcomingEvent = false
+  hasUpcomingEvent = false,
+  avgRating: number | null = null
 ) {
   const categoryEmoji = getCategoryEmoji(category)
   const categoryColor = getCategoryColor(category)
@@ -248,11 +251,35 @@ function createSaunaIcon(
 					`
 				}
 			</div>
+			${
+			avgRating
+				? `
+				<div style="
+					position:absolute;
+					left:50%;
+					bottom:-18px;
+					transform:translateX(-50%);
+					z-index:1000;
+					border-radius:9999px;
+					background:#facc15;
+					color:#111827;
+					padding:2px 6px;
+					font-size:11px;
+					font-weight:700;
+					line-height:1;
+					box-shadow:0 1px 4px rgba(0,0,0,0.25);
+					white-space:nowrap;
+				">
+					⭐${Number(avgRating).toFixed(1)}
+				</div>
+				`
+				: ''
+			}
 		</div>
 		`,
-    iconSize: [46, 46],
-    iconAnchor: [23, 46],
-    popupAnchor: [0, -46],
+		iconSize: [size, size + (avgRating ? 18 : 0)],
+		iconAnchor: [size / 2, size + (avgRating ? 18 : 0)],
+		popupAnchor: [0, -size],
   })
 }
 
@@ -378,7 +405,12 @@ function SaunaPopup({
         <h3 className="mb-2 text-base font-bold text-gray-900">
           {sauna.name}
         </h3>
-
+		{sauna.avg_rating && (
+		<div className="mb-2 text-sm font-semibold text-yellow-600">
+			⭐ {Number(sauna.avg_rating).toFixed(1)} ({sauna.review_count} opinii)
+		</div>
+		)}
+		
         {sauna.description && (
           <p className="mb-3 text-sm text-gray-700">{sauna.description}</p>
         )}
@@ -503,39 +535,48 @@ export default function SaunaMap() {
   const [sheetState, setSheetState] = useState<'collapsed' | 'half' | 'full'>('half')
   const [showAccountPanel, setShowAccountPanel] = useState(false)
   const [radiusKm, setRadiusKm] = useState(1000)
+  const [onlyWithEvents, setOnlyWithEvents] = useState(false)
+  const [mapMode, setMapMode] = useState<'saunas' | 'events' | 'all'>('all')
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
   const visibleItems = items.filter((item) => {
-    const search = searchText.toLowerCase().trim()
-
-    if (search) {
-      const name = item.name?.toLowerCase() ?? ''
-      const description = item.description?.toLowerCase() ?? ''
-      const category = item.category?.toLowerCase() ?? ''
-      const city = item.city?.toLowerCase() ?? ''
-
-      if (
-        !name.includes(search) &&
-        !description.includes(search) &&
-        !category.includes(search) &&
-        !city.includes(search)
-      ) {
-        return false
-      }
-    }
-
-    if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
-      return false
-    }
-
-    if (categoryFilter !== 'all' && item.category !== categoryFilter) {
-      return false
-    }
-
-    return true
+	  if (mapMode === 'events' && !item.has_upcoming_event) {
+	    return false
+	  }
+  const search = searchText.toLowerCase().trim()
+  
+  if (search) {
+  	const name = item.name?.toLowerCase() ?? ''
+  	const description = item.description?.toLowerCase() ?? ''
+  	const category = item.category?.toLowerCase() ?? ''
+  	const city = item.city?.toLowerCase() ?? ''
+  
+  	if (
+  	!name.includes(search) &&
+  	!description.includes(search) &&
+  	!category.includes(search) &&
+  	!city.includes(search)
+  	) {
+  	return false
+  	}
+  }
+  
+  if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
+  	return false
+  }
+  
+  if (onlyWithEvents && !item.has_upcoming_event) {
+  	return false
+  }
+  
+  if (categoryFilter !== 'all' && item.category !== categoryFilter) {
+  	return false
+  }
+  
+  return true
   })
-
+  
   async function loadTopSaunas() {
     const { data, error } = await supabase.rpc('get_top_saunas')
   
@@ -730,9 +771,29 @@ export default function SaunaMap() {
             checked={onlyWithPhotos}
             onChange={(e) => setOnlyWithPhotos(e.target.checked)}
           />
-          Tylko ze zdjęciem
+          📷 Tylko ze zdjęciem
         </label>
 
+		<label className="flex items-center gap-2 border-b p-3 text-sm">
+		<input
+			type="checkbox"
+			checked={onlyWithEvents}
+			onChange={(e) => setOnlyWithEvents(e.target.checked)}
+		/>
+		🔥 Tylko sauny z eventem w 7 dni
+		</label>
+				
+		<button
+		onClick={() => setOnlyWithEvents((v) => !v)}
+		className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			onlyWithEvents
+			? 'bg-orange-600 text-white'
+			: 'bg-gray-100 text-gray-700'
+		}`}
+		>
+		
+		🔥 Eventy 7 dni
+		</button>
         {visibleItems.map((item) => {
           const img = item.image_urls?.[0] ?? item.cover_image_url
 
@@ -762,7 +823,11 @@ export default function SaunaMap() {
               <div className="mb-1 text-sm font-semibold">
                 {getCategoryEmoji(item.category)} {item.name}
               </div>
-
+			  {item.avg_rating && (
+			  <div className="mb-1 text-xs font-semibold text-yellow-600">
+			  	⭐ {Number(item.avg_rating).toFixed(1)} ({item.review_count})
+			  </div>
+			  )}
               {item.city && (
                 <div className="mb-1 text-xs text-gray-500">{item.city}</div>
               )}
@@ -816,7 +881,26 @@ export default function SaunaMap() {
             </button>
           ))}
         </div>
-
+		<div className="absolute left-3 top-3 z-[9999] flex gap-2 rounded-xl bg-white/90 p-2 shadow">
+		{[
+			{ value: 'all', label: '🧖+🔥' },
+			{ value: 'saunas', label: '🧖 Sauny' },
+			{ value: 'events', label: '🔥 Eventy' },
+		].map((mode) => (
+			<button
+			key={mode.value}
+			onClick={() => setMapMode(mode.value as 'saunas' | 'events' | 'all')}
+			className={`rounded-full px-3 py-1 text-sm font-semibold ${
+				mapMode === mode.value
+				? 'bg-black text-white'
+				: 'bg-gray-100 text-gray-700'
+			}`}
+			>
+			{mode.label}
+			</button>
+		))}
+		</div>
+		
         <MapContainer center={userLocation} zoom={14} className="h-full w-full">
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
@@ -876,10 +960,11 @@ export default function SaunaMap() {
               <Marker
                 key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
                 position={[item.latitude, item.longitude]}
-                icon={createSaunaIcon(
-				item.image_urls?.[0] ?? item.cover_image_url,
-				item.category,
-				item.has_upcoming_event
+				icon={createSaunaIcon(
+				  item.image_urls?.[0] ?? item.cover_image_url,
+				  item.category,
+				  item.has_upcoming_event,
+				  item.avg_rating
 				)}
                 eventHandlers={{
                   click: () => {
@@ -953,6 +1038,16 @@ export default function SaunaMap() {
               >
                 📷 Zdjęcia
               </button>
+			  <button
+			  onClick={() => setOnlyWithEvents((v) => !v)}
+			  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+			  	onlyWithEvents
+			  	? 'bg-orange-600 text-white'
+			  	: 'bg-gray-100 text-gray-700'
+			  }`}
+			  >
+			  🔥 Eventy 7 dni
+			  </button>
             </div>
 
             <div className="mb-3 flex flex-wrap gap-2">
@@ -1002,6 +1097,11 @@ export default function SaunaMap() {
                       <div className="truncate text-sm font-semibold">
                         {getCategoryEmoji(item.category)} {item.name}
                       </div>
+					  {item.avg_rating && (
+					  <div className="mt-1 text-xs font-semibold text-yellow-600">
+					  	⭐ {Number(item.avg_rating).toFixed(1)} ({item.review_count})
+					  </div>
+					  )}
 
                       {item.city && (
                         <div className="mt-1 text-xs text-gray-500">
