@@ -13,12 +13,13 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'SaunaPlanet',
-  description:
-    'Mapa saun i wydarzeń saunowych',
-  manifest: '/manifest.webmanifest',
-  themeColor: '#000000',
+  description: 'Mapa saun i eventów saunowych',
+}
+
+export const viewport = {
+  themeColor: '#ffffff',
 }
 
 export default function RootLayout({

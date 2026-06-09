@@ -61,6 +61,19 @@ type Sauna = {
   review_count: number
 }
 
+type UpcomingEvent = {
+  event_id: string
+  title: string
+  event_date: string
+  event_time: string | null
+  price: string | null
+  sauna_id: string
+  sauna_name: string
+  city: string | null
+  latitude: number
+  longitude: number
+}
+
 const fallbackCenter: [number, number] = [52.4064, 16.9252]
 
 const markerIcon = new L.Icon({
@@ -519,6 +532,7 @@ function SaunaPopup({
 export default function SaunaMap() {
   const [items, setItems] = useState<Sauna[]>([])
   const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadItemId, setUploadItemId] = useState<string | null>(null)
   const [editingSauna, setEditingSauna] = useState<Sauna | null>(null)
@@ -577,6 +591,21 @@ export default function SaunaMap() {
   return true
   })
   
+  async function loadUpcomingEvents() {
+  const { data, error } = await supabase.rpc(
+    'get_upcoming_events'
+  )
+
+  if (error) {
+    console.error('LOAD EVENTS ERROR:', error)
+    return
+  }
+  
+  console.log('UPCOMING EVENTS:', data)
+  
+  setUpcomingEvents(data ?? [])
+}
+
   async function loadTopSaunas() {
     const { data, error } = await supabase.rpc('get_top_saunas')
   
@@ -652,10 +681,11 @@ export default function SaunaMap() {
     )
   }
 
-  useEffect(() => {
-    loadSaunas()
-    loadTopSaunas()
-  }, [userLocation, radiusKm])
+useEffect(() => {
+  loadSaunas()
+  loadTopSaunas()
+  loadUpcomingEvents()
+}, [userLocation, radiusKm])
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -794,50 +824,110 @@ export default function SaunaMap() {
 		
 		🔥 Eventy 7 dni
 		</button>
-        {visibleItems.map((item) => {
-          const img = item.image_urls?.[0] ?? item.cover_image_url
+        {mapMode === 'events' ? (
+  <div className="p-3">
+    <div className="mb-3 text-sm font-bold text-orange-700">
+      🔥 Nadchodzące eventy
+    </div>
 
-          return (
-            <div
-              key={item.id}
-              className={`cursor-pointer border-b p-2 hover:bg-gray-100 ${
-                selectedSauna?.id === item.id ? 'bg-blue-50' : ''
-              }`}
-              onClick={() => {
-                setSelectedSauna(item)
-                setSelectedLocation([item.latitude, item.longitude])
-              }}
-            >
-              {img ? (
-                <img
-                  src={img}
-                  alt={item.name}
-                  className="mb-2 h-24 w-full rounded object-cover"
-                />
-              ) : (
-                <div className="mb-2 flex h-24 w-full items-center justify-center rounded bg-gray-200 text-xs">
-                  Brak zdjęcia
-                </div>
-              )}
+    <div className="space-y-2">
+      {upcomingEvents.map((event) => (
+        <div
+		key={event.event_id}
+		className="cursor-pointer rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
+		onClick={() => {
+			const sauna = items.find(
+			(s) => s.id === event.sauna_id
+			)
+		
+			if (!sauna) return
+		
+			setSelectedSauna(sauna)
+		
+			setSelectedLocation([
+			sauna.latitude,
+			sauna.longitude,
+			])
+		
+			const marker = markerRefs.current[sauna.id]
+		
+			if (marker) {
+			marker.openPopup()
+			}
+		}}
+		>
+          <div className="font-semibold text-orange-700">
+            🔥 {event.title}
+          </div>
 
-              <div className="mb-1 text-sm font-semibold">
-                {getCategoryEmoji(item.category)} {item.name}
-              </div>
-			  {item.avg_rating && (
-			  <div className="mb-1 text-xs font-semibold text-yellow-600">
-			  	⭐ {Number(item.avg_rating).toFixed(1)} ({item.review_count})
-			  </div>
-			  )}
-              {item.city && (
-                <div className="mb-1 text-xs text-gray-500">{item.city}</div>
-              )}
+          <div className="mt-1 text-xs font-medium text-gray-800">
+            {event.sauna_name}
+          </div>
 
-              <div className="text-xs text-gray-500">
-                {Math.round(item.distance_m)} m
-              </div>
+          <div className="mt-1 text-xs text-gray-500">
+            {event.event_date.substring(0, 10)}
+            {event.event_time
+              ? ` ${event.event_time.substring(0, 5)}`
+              : ''}
+          </div>
+
+          {event.price && (
+            <div className="mt-1 text-xs font-semibold text-orange-700">
+              {event.price.includes('zł') ? event.price : `${event.price} zł`}
             </div>
-          )
-        })}
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+) : (
+  visibleItems.map((item) => {
+    const img = item.image_urls?.[0] ?? item.cover_image_url
+
+    return (
+      <div
+        key={item.id}
+        className={`cursor-pointer border-b p-2 hover:bg-gray-100 ${
+          selectedSauna?.id === item.id ? 'bg-blue-50' : ''
+        }`}
+        onClick={() => {
+          setSelectedSauna(item)
+          setSelectedLocation([item.latitude, item.longitude])
+        }}
+      >
+        {img ? (
+          <img
+            src={img}
+            alt={item.name}
+            className="mb-2 h-24 w-full rounded object-cover"
+          />
+        ) : (
+          <div className="mb-2 flex h-24 w-full items-center justify-center rounded bg-gray-200 text-xs">
+            Brak zdjęcia
+          </div>
+        )}
+
+        <div className="mb-1 text-sm font-semibold">
+          {getCategoryEmoji(item.category)} {item.name}
+        </div>
+
+        {item.avg_rating && (
+          <div className="mb-1 text-xs font-semibold text-yellow-600">
+            ⭐ {Number(item.avg_rating).toFixed(1)} ({item.review_count})
+          </div>
+        )}
+
+        {item.city && (
+          <div className="mb-1 text-xs text-gray-500">{item.city}</div>
+        )}
+
+        <div className="text-xs text-gray-500">
+          {Math.round(item.distance_m)} m
+        </div>
+      </div>
+    )
+  })
+)}
       </div>
 
       <div className="relative flex-1">
