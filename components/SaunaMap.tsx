@@ -39,7 +39,7 @@ type SaunaEvent = {
   status: string
 }
 
-type Sauna = {
+type Sauna = { 
   id: string
   name: string
   description: string | null
@@ -59,6 +59,12 @@ type Sauna = {
   has_upcoming_event?: boolean
   avg_rating: number | null
   review_count: number
+  masters?: {
+    id: string
+    name: string
+    avatar_url: string | null
+    level: string | null
+  }[]
 }
 
 type UpcomingEvent = {
@@ -196,15 +202,15 @@ function createSaunaIcon(
   imageUrl: string | null,
   category: string,
   hasUpcomingEvent = false,
-  avgRating: number | null = null
+  avgRating: number | null = null,
+  masters: Sauna['masters'] = []
 ) {
   const categoryEmoji = getCategoryEmoji(category)
   const categoryColor = getCategoryColor(category)
   const size = hasUpcomingEvent ? 60 : 46
   const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
-  const pulseClass = hasUpcomingEvent
-  ? 'sauna-event-pulse'
-  : ''
+  const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
+  const firstMaster = masters?.[0]
   return L.divIcon({
     className: '',
 		html: `
@@ -214,6 +220,30 @@ function createSaunaIcon(
 				width: ${size}px;
 				height: ${size}px;
 			">
+		
+			${
+			firstMaster?.avatar_url
+				? `
+				<img
+					src="${firstMaster.avatar_url}"
+					title="${firstMaster.name}"
+					style="
+					position:absolute;
+					right:-12px;
+					top:8px;
+					z-index:1001;
+					width:24px;
+					height:24px;
+					border-radius:9999px;
+					object-fit:cover;
+					border:2px solid #facc15;
+					background:white;
+					box-shadow:0 1px 4px rgba(0,0,0,0.35);
+					"
+				/>
+				`
+				: ''
+			}
 		
 			${
 				hasUpcomingEvent
@@ -1054,7 +1084,8 @@ useEffect(() => {
 				  item.image_urls?.[0] ?? item.cover_image_url,
 				  item.category,
 				  item.has_upcoming_event,
-				  item.avg_rating
+				  item.avg_rating,
+				  item.masters
 				)}
                 eventHandlers={{
                   click: () => {
