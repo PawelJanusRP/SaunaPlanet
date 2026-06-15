@@ -1,3 +1,4 @@
+import AddEventMasterForm from '@/components/AddEventMasterForm'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import AddReviewForm from '@/components/AddReviewForm'
@@ -62,12 +63,21 @@ export default async function SaunaPage({
     `)
     .eq('status', 'approved')
 
-  const activeMasters =
-    saunaMasters?.filter(
-      (item: any) =>
-        item.sauna_events?.sauna_id === id
-    ) ?? []
-    
+	const activeMastersRaw =
+	saunaMasters?.filter(
+		(item: any) =>
+		item.sauna_events?.sauna_id === id
+	) ?? []
+	
+	const activeMasters = Array.from(
+	new Map(
+		activeMastersRaw.map((item: any) => [
+		item.sauna_masters?.id,
+		item,
+		])
+	).values()
+	)
+		
   const { data: reviews } = await supabase
     .from('sauna_reviews')
     .select('*')
@@ -194,11 +204,13 @@ export default async function SaunaPage({
                   </div>
                 )}
 
-                {event.description && (
-                  <p className="mt-2 text-sm text-gray-700">
-                    {event.description}
-                  </p>
-                )}
+				{event.description && (
+				<p className="mt-2 text-sm text-gray-700">
+					{event.description}
+				</p>
+				)}
+				
+				<AddEventMasterForm eventId={event.id} />
               </div>
             ))}
           </div>

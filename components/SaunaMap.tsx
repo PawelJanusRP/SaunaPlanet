@@ -211,6 +211,14 @@ function createSaunaIcon(
   const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
   const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
   const firstMaster = masters?.[0]
+  const masterBorderColor =
+  firstMaster?.level === 'master'
+    ? '#facc15'
+    : firstMaster?.level === 'senior'
+    ? '#a855f7'
+    : firstMaster?.level === 'certified'
+    ? '#3b82f6'
+    : '#9ca3af'
   return L.divIcon({
     className: '',
 		html: `
@@ -236,7 +244,7 @@ function createSaunaIcon(
 					height:24px;
 					border-radius:9999px;
 					object-fit:cover;
-					border:2px solid #facc15;
+					border:2px solid ${masterBorderColor};
 					background:white;
 					box-shadow:0 1px 4px rgba(0,0,0,0.35);
 					"
