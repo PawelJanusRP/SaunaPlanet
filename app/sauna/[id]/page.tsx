@@ -45,6 +45,29 @@ export default async function SaunaPage({
     .eq('status', 'active')
     .order('event_date', { ascending: true })
 
+  const { data: saunaMasters } = await supabase
+    .from('sauna_event_masters')
+    .select(`
+      role,
+      status,
+      sauna_masters (
+        id,
+        name,
+        avatar_url,
+        rating
+      ),
+      sauna_events (
+        sauna_id
+      )
+    `)
+    .eq('status', 'approved')
+
+  const activeMasters =
+    saunaMasters?.filter(
+      (item: any) =>
+        item.sauna_events?.sauna_id === id
+    ) ?? []
+    
   const { data: reviews } = await supabase
     .from('sauna_reviews')
     .select('*')
@@ -97,6 +120,58 @@ export default async function SaunaPage({
 
       <div className="mb-6 text-gray-700">{sauna.description}</div>
 
+	 <section className="mb-6 rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
+	 <h2 className="mb-3 text-xl font-bold text-yellow-700">
+	 	🧖 Saunamistrzowie
+	 </h2>
+	 
+	 {activeMasters.length === 0 ? (
+	 	<div className="text-sm text-gray-600">
+	 	Brak przypisanych saunamistrzów.
+	 	</div>
+	 ) : (
+	 	<div className="grid gap-3 md:grid-cols-2">
+	 	{activeMasters.map((item: any, index: number) => {
+	 		const master = item.sauna_masters
+	 
+	 		return (
+	 		<Link
+	 			key={index}
+	 			href={`/masters/${master?.id}`}
+	 			className="flex items-center gap-3 rounded-xl bg-white p-3 hover:bg-yellow-100"
+	 		>
+	 			{master?.avatar_url ? (
+	 			<img
+	 				src={master.avatar_url}
+	 				alt={master.name}
+	 				className="h-14 w-14 rounded-full object-cover"
+	 			/>
+	 			) : (
+	 			<div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200">
+	 				🧖
+	 			</div>
+	 			)}
+	 
+	 			<div>
+	 			<div className="font-bold">
+	 				{master?.name}
+	 			</div>
+	 
+	 			<div className="text-sm text-yellow-700">
+	 				⭐ {Number(master?.rating ?? 0).toFixed(1)}
+	 			</div>
+	 
+	 			<div className="text-xs text-gray-500">
+	 				Rola: {item.role}
+	 			</div>
+	 			</div>
+	 		</Link>
+	 		)
+	 	})}
+	 	</div>
+	 )}
+	 </section>
+	 
       {events && events.length > 0 && (
         <section className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
           <h2 className="mb-3 text-xl font-bold text-orange-700">
