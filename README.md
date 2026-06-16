@@ -1,36 +1,253 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SaunaPlanet
 
-## Getting Started
+SaunaPlanet is a platform for discovering sauna facilities, sauna events and sauna masters.
 
-First, run the development server:
+The project aims to build a complete sauna ecosystem rather than a simple sauna directory.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Sauna Map
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* Interactive map
+* Marker clustering
+* Search by name and city
+* Category filtering
+* Radius filtering
+* Photo filtering
+* Upcoming event filtering
 
-## Learn More
+### Sauna Facilities
 
-To learn more about Next.js, take a look at the following resources:
+* Detailed facility pages
+* Photos
+* Reviews
+* Ratings
+* Events
+* Sauna masters
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Events
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* Event creation
+* Event listings
+* Upcoming events
+* Calendar view
 
-## Deploy on Vercel
+### Sauna Masters
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+* Dedicated profiles
+* Certifications
+* Event assignments
+* Map satellites
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Rankings
+
+* Sauna rankings
+* Review-based scoring
+
+---
+
+## Unique Features
+
+### Event-Based Discovery
+
+Users can discover sauna experiences through events rather than only through locations.
+
+### Sauna Master Ecosystem
+
+Sauna masters are treated as first-class entities.
+
+Each master can have:
+
+* profile
+* certifications
+* rankings
+* event assignments
+
+### Satellite Avatars
+
+Assigned sauna masters appear as avatar satellites around sauna facilities on the map.
+
+Satellite colors reflect master levels:
+
+* Gold — Master
+* Purple — Senior
+* Blue — Certified
+* Gray — Guest
+
+---
+
+## Technology Stack
+
+### Frontend
+
+* Next.js
+* TypeScript
+* TailwindCSS
+* React Leaflet
+* react-leaflet-cluster
+
+### Backend
+
+* Supabase
+* PostgreSQL
+* PostGIS
+
+### Maps
+
+* OpenStreetMap
+* Leaflet
+
+---
+
+## Project Structure
+
+See:
+
+* docs/ARCHITECTURE.md
+* docs/DATABASE.md
+
+---
+
+## Documentation
+
+Project documentation is located in:
+
+docs/
+
+├── ARCHITECTURE.md
+├── DATABASE.md
+├── VISION.md
+├── BACKLOG.md
+├── FEATURES.md
+├── ROADMAP.md
+├── DECISIONS.md
+├── IMPORTS.md
+├── RLS.md
+├── KNOWN_ISSUES.md
+├── AGENT_WORKFLOW.md
+├── SETUP.md
+├── SCRIPTS_NOTES.md
+└── history/
+└── SCRIPTS_HISTORY.md
+
+---
+
+## Setup
+
+See:
+
+docs/SETUP.md
+
+---
+
+## Current Focus
+
+Current priorities include:
+
+* Authentication
+* User accounts
+* Roles and permissions
+* Admin panel
+* Event management improvements
+* Sauna master profile improvements
+
+---
+
+## Long-Term Vision
+
+SaunaPlanet aims to become the leading sauna ecosystem platform in Europe.
+
+Core ecosystem:
+
+Sauna Facilities
+→ Sauna Events
+→ Sauna Masters
+→ Certifications
+→ Reviews
+→ Rankings
+→ Community
+
+Future plans include:
+
+* bookings
+* payments
+* subscriptions
+* private garden saunas
+* verification workflows
+
+---
+
+## Development
+
+For AI-assisted development:
+
+Read:
+
+* CLAUDE.md
+
+before making changes.
+
+---
+
+## Roadmap
+
+Current phase:
+
+Phase 2 – Accounts and Security
+
+Planned next steps:
+
+* Authentication
+* Supabase Auth integration
+* User accounts
+* Role-based permissions
+* Admin tools
+
+See:
+
+docs/ROADMAP.md
+
+---
+
+## Security
+
+Current security model and migration strategy are documented in:
+
+docs/RLS.md
+
+---
+
+## Repository
+
+GitHub:
+
+https://github.com/PawelJanusRP/SaunaPlanet
+
+Main branch:
+
+main
+
+---
+
+## Project Status
+
+Current milestone:
+
+SP-006 Add project documentation for Claude Code
+
+Completed:
+
+* Sauna Map
+* Sauna Details
+* Events
+* Reviews
+* Rankings
+* Sauna Masters
+* Satellite Avatars
+* Documentation System
+
+See:
+
+docs/FEATURES.md
