@@ -210,15 +210,34 @@ function createSaunaIcon(
   const size = hasUpcomingEvent ? 60 : 46
   const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
   const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
-  const firstMaster = masters?.[0]
-  const masterBorderColor =
-  firstMaster?.level === 'master'
-    ? '#facc15'
-    : firstMaster?.level === 'senior'
-    ? '#a855f7'
-    : firstMaster?.level === 'certified'
-    ? '#3b82f6'
-    : '#9ca3af'
+
+  function getMasterBorderColor(level?: string | null) {
+	switch (level) {
+		case 'master':
+		return '#facc15'
+	
+		case 'senior':
+		return '#a855f7'
+	
+		case 'certified':
+		return '#3b82f6'
+	
+		default:
+		return '#9ca3af'
+	}
+	}
+  
+  const visibleMasters = masters?.slice(0, 4) ?? []
+
+const satellitePositions = [
+  { top: '50%', left: '100%', transform: 'translate(-20%, -50%)' },
+  { top: '50%', left: '0%', transform: 'translate(-80%, -50%)' },
+  { top: '0%', left: '50%', transform: 'translate(-50%, -80%)' },
+  { top: '100%', left: '50%', transform: 'translate(-50%, -20%)' },
+]
+
+const iconBoxSize = size + 48
+
   return L.divIcon({
     className: '',
 		html: `
@@ -229,29 +248,33 @@ function createSaunaIcon(
 				height: ${size}px;
 			">
 		
-			${
-			firstMaster?.avatar_url
-				? `
+			${visibleMasters
+			.map((master, index) => {
+				const pos = satellitePositions[index]
+			
+				return `
 				<img
-					src="${firstMaster.avatar_url}"
-					title="${firstMaster.name}"
+					src="${master.avatar_url ?? ''}"
+					title="${master.name}"
 					style="
 					position:absolute;
-					right:-12px;
-					top:8px;
+					top:${pos.top};
+					left:${pos.left};
+					transform:${pos.transform};
 					z-index:1001;
 					width:24px;
 					height:24px;
 					border-radius:9999px;
 					object-fit:cover;
-					border:2px solid ${masterBorderColor};
+					border:2px solid ${getMasterBorderColor(master.level)};
 					background:white;
 					box-shadow:0 1px 4px rgba(0,0,0,0.35);
 					"
 				/>
 				`
-				: ''
-			}
+			})
+			.join('')}
+			
 		
 			${
 				hasUpcomingEvent
@@ -639,7 +662,6 @@ export default function SaunaMap() {
     return
   }
   
-  console.log('UPCOMING EVENTS:', data)
   
   setUpcomingEvents(data ?? [])
 }

@@ -45,6 +45,7 @@ export default async function SaunaPage({
     .eq('sauna_id', id)
     .eq('status', 'active')
     .order('event_date', { ascending: true })
+	.gte('event_date', new Date().toISOString().substring(0, 10))
 
   const { data: saunaMasters } = await supabase
     .from('sauna_event_masters')
