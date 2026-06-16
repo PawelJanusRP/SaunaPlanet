@@ -1,0 +1,14 @@
+saunas
+sauna_photos
+sauna_events
+sauna_reviews
+sauna_masters
+master_credentials
+sauna_event_masters
+pts_import_log
+
+get_saunas_nearby
+get_sauna_events
+get_upcoming_events
+get_top_saunas
+get_upcoming_event_saunas
