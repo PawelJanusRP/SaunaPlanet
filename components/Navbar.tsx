@@ -28,6 +28,11 @@ export default function Navbar() {
         <Link href="/masters" className="text-sm text-gray-600 hover:text-black">
           Saunamistrzowie
         </Link>
+        {user && (
+          <Link href="/submit" className="text-sm text-gray-600 hover:text-black">
+            Zgłoś saunę
+          </Link>
+        )}
         {(role === 'admin' || role === 'moderator') && (
           <Link href="/admin" className="text-sm font-medium text-orange-600 hover:text-orange-800">
             Admin

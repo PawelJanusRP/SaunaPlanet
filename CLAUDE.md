@@ -331,3 +331,29 @@ A task is complete only if:
 * functionality is tested
 * changed files are summarized
 * commit is prepared but NOT merged automatically
+
+## Mobile-First Requirement
+
+SaunaPlanet is a mobile-first product.
+
+The primary target device is a smartphone.
+
+Desktop support is required, but mobile experience has priority.
+
+When designing new functionality:
+
+Prefer:
+- mobile-first layouts
+- bottom sheets
+- touch-friendly controls
+- camera/photo workflows
+- minimal typing
+- responsive forms
+
+Avoid:
+- desktop-only workflows
+- large complex tables
+- hover-dependent interactions
+- features that are difficult to use on phones
+
+All major features should be tested on mobile layouts.

@@ -233,3 +233,16 @@ Before implementing any major feature:
 If implementation choices are unclear:
 
 Choose the option that strengthens the Sauna → Event → Sauna Master ecosystem.
+
+## Mobile Usage Vision
+
+Typical user scenarios:
+
+- discovering nearby saunas while travelling
+- finding events near current location
+- booking a sauna session from a phone
+- uploading sauna photos directly from a camera
+- following favourite sauna masters
+- reserving private garden saunas
+
+The platform should feel natural as a mobile application.
