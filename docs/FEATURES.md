@@ -172,6 +172,22 @@ Related components:
 
 ---
 
+# SP-009 Clickable Satellite Avatars
+
+Status: DONE
+
+Implemented:
+
+* each satellite avatar on the map links to the sauna master profile page
+* clicking a satellite navigates to /masters/[id]
+* click does not open the sauna popup (stopPropagation)
+
+Related components:
+
+* components/SaunaMap.tsx
+
+---
+
 # Authentication
 
 Status: PLANNED

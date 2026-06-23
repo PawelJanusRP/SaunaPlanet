@@ -224,7 +224,7 @@ function createSaunaIcon(
       : m.level === 'senior' ? '#a855f7'
       : m.level === 'certified' ? '#3b82f6'
       : '#9ca3af'
-    return `<img src="${m.avatar_url}" title="${m.name}" style="position:absolute;left:${left}px;top:${top}px;z-index:1001;width:${satSize}px;height:${satSize}px;border-radius:9999px;object-fit:cover;border:2px solid ${color};background:white;box-shadow:0 1px 4px rgba(0,0,0,0.35);" />`
+    return `<a href="/masters/${m.id}" title="${m.name}" onclick="event.stopPropagation()" style="position:absolute;left:${left}px;top:${top}px;z-index:1001;width:${satSize}px;height:${satSize}px;border-radius:9999px;display:block;cursor:pointer;"><img src="${m.avatar_url}" style="width:100%;height:100%;border-radius:9999px;object-fit:cover;border:2px solid ${color};background:white;box-shadow:0 1px 4px rgba(0,0,0,0.35);" /></a>`
   }).join('')
   return L.divIcon({
     className: '',
