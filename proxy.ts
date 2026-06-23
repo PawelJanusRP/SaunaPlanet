@@ -23,7 +23,25 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'moderator') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
 
   return supabaseResponse
 }

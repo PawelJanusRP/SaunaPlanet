@@ -6,7 +6,7 @@ import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 
 export default function Navbar() {
-  const { user, loading } = useAuth()
+  const { user, role, loading } = useAuth()
   const router = useRouter()
 
   async function handleLogout() {
@@ -28,6 +28,11 @@ export default function Navbar() {
         <Link href="/masters" className="text-sm text-gray-600 hover:text-black">
           Saunamistrzowie
         </Link>
+        {(role === 'admin' || role === 'moderator') && (
+          <Link href="/admin" className="text-sm font-medium text-orange-600 hover:text-orange-800">
+            Admin
+          </Link>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

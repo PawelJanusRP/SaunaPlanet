@@ -1,3 +1,4 @@
+profiles
 saunas
 sauna_photos
 sauna_events

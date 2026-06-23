@@ -25,3 +25,19 @@ export async function createClient() {
     }
   )
 }
+
+export type UserRole = 'user' | 'moderator' | 'admin' | null
+
+export async function getCurrentUserRole(): Promise<UserRole> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  return (data?.role as UserRole) ?? 'user'
+}

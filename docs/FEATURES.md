@@ -257,17 +257,37 @@ Future scope:
 
 ---
 
-# Roles and Permissions
+# SP-012 Roles and Permissions
 
-Status: PLANNED
+Status: DONE
 
-Future scope:
+Implemented:
 
-* user
-* sauna manager
-* sauna master
-* moderator
-* administrator
+* profiles table in Supabase (id, role, created_at)
+* roles: user, moderator, admin
+* trigger: auto-create profile on registration
+* RLS: user sees own profile, admin sees all
+* getCurrentUserRole() server helper
+* role exposed in AuthProvider context (client-side)
+* Navbar shows Admin link for admin/moderator
+* /profile page displays role badge
+* /admin page — protected, redirects non-admin
+* proxy.ts enforces /admin access at middleware level
+
+Related database objects:
+
+* profiles
+* handle_new_user() trigger
+* on_auth_user_created trigger
+
+Related files:
+
+* lib/supabase/server.ts (getCurrentUserRole)
+* components/AuthProvider.tsx (role in context)
+* components/Navbar.tsx (Admin link)
+* app/(main)/profile/page.tsx
+* app/(main)/admin/page.tsx
+* proxy.ts
 
 ---
 
