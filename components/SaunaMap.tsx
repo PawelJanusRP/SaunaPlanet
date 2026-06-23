@@ -649,7 +649,7 @@ export default function SaunaMap() {
     })
 	
 	console.log(
-		data?.find((s) => s.image_urls?.length > 0)
+		data?.find((s: any) => s.image_urls?.length > 0)
 )
 
     if (error) {
@@ -663,11 +663,11 @@ export default function SaunaMap() {
 )
 
 	const eventIds = new Set(
-	  (eventSaunas ?? []).map((e) => e.sauna_id)
+	  (eventSaunas ?? []).map((e: any) => e.sauna_id)
 )
 
     setItems(
-	  (data ?? []).map((sauna) => ({
+	  (data ?? []).map((sauna: any) => ({
 		...sauna,
 		has_upcoming_event: eventIds.has(sauna.id),
 	  }))

@@ -39,7 +39,7 @@ Milestones:
 
 # Phase 2 - Accounts and Security
 
-Status: NEXT PRIORITY
+Status: IN PROGRESS
 
 Goal:
 

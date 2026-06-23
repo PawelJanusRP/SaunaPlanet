@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { AuthProvider } from '@/components/AuthProvider'
 import './globals.css'
 
 const geistSans = Geist({
@@ -38,8 +39,10 @@ export default function RootLayout({
         <link rel="icon" href="/icons/icon-192.png" />
       </head>
       <body>
-        {children}
-        <Toaster position="top-center" richColors closeButton />
+        <AuthProvider>
+          {children}
+          <Toaster position="top-center" richColors closeButton />
+        </AuthProvider>
       </body>
     </html>
   )

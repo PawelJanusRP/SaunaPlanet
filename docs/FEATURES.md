@@ -207,16 +207,41 @@ Related components:
 
 ---
 
-# Authentication
+# SP-011 Authentication
 
-Status: PLANNED
+Status: DONE
 
-Future scope:
+Route:
 
-* registration
-* login
-* password reset
-* social login
+* /auth/login
+* /auth/register
+* /auth/reset-password
+* /auth/update-password
+* /profile
+
+Implemented:
+
+* email + password registration
+* email confirmation flow
+* login / logout
+* password reset via email
+* password update page
+* user profile page (server-side auth guard)
+* Navbar with auth state (logged in / logged out)
+* AuthProvider context for client components
+* Supabase SSR client (browser + server)
+* Next.js proxy (session refresh on every request)
+
+Related files:
+
+* lib/supabase/client.ts
+* lib/supabase/server.ts
+* proxy.ts
+* components/AuthProvider.tsx
+* components/Navbar.tsx
+* app/(main)/layout.tsx
+* app/(main)/auth/*
+* app/(main)/profile/page.tsx
 
 ---
 
@@ -226,7 +251,7 @@ Status: PLANNED
 
 Future scope:
 
-* user profiles
+* extended user profiles
 * favorites
 * event history
 
