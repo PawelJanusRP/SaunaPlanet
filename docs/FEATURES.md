@@ -207,16 +207,41 @@ Related components:
 
 ---
 
-# Authentication
+# SP-011 Authentication
 
-Status: PLANNED
+Status: DONE
 
-Future scope:
+Route:
 
-* registration
-* login
-* password reset
-* social login
+* /auth/login
+* /auth/register
+* /auth/reset-password
+* /auth/update-password
+* /profile
+
+Implemented:
+
+* email + password registration
+* email confirmation flow
+* login / logout
+* password reset via email
+* password update page
+* user profile page (server-side auth guard)
+* Navbar with auth state (logged in / logged out)
+* AuthProvider context for client components
+* Supabase SSR client (browser + server)
+* Next.js proxy (session refresh on every request)
+
+Related files:
+
+* lib/supabase/client.ts
+* lib/supabase/server.ts
+* proxy.ts
+* components/AuthProvider.tsx
+* components/Navbar.tsx
+* app/(main)/layout.tsx
+* app/(main)/auth/*
+* app/(main)/profile/page.tsx
 
 ---
 
@@ -226,23 +251,43 @@ Status: PLANNED
 
 Future scope:
 
-* user profiles
+* extended user profiles
 * favorites
 * event history
 
 ---
 
-# Roles and Permissions
+# SP-012 Roles and Permissions
 
-Status: PLANNED
+Status: DONE
 
-Future scope:
+Implemented:
 
-* user
-* sauna manager
-* sauna master
-* moderator
-* administrator
+* profiles table in Supabase (id, role, created_at)
+* roles: user, moderator, admin
+* trigger: auto-create profile on registration
+* RLS: user sees own profile, admin sees all
+* getCurrentUserRole() server helper
+* role exposed in AuthProvider context (client-side)
+* Navbar shows Admin link for admin/moderator
+* /profile page displays role badge
+* /admin page — protected, redirects non-admin
+* proxy.ts enforces /admin access at middleware level
+
+Related database objects:
+
+* profiles
+* handle_new_user() trigger
+* on_auth_user_created trigger
+
+Related files:
+
+* lib/supabase/server.ts (getCurrentUserRole)
+* components/AuthProvider.tsx (role in context)
+* components/Navbar.tsx (Admin link)
+* app/(main)/profile/page.tsx
+* app/(main)/admin/page.tsx
+* proxy.ts
 
 ---
 

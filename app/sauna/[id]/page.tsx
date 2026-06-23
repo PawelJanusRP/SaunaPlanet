@@ -3,6 +3,7 @@ import AddMasterToSaunaModal from '@/components/AddMasterToSaunaModal'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import AddReviewForm from '@/components/AddReviewForm'
+import Navbar from '@/components/Navbar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -124,7 +125,9 @@ export default async function SaunaPage({
   const mainImage = photos?.[0]?.image_url ?? sauna.cover_image_url
 
   return (
-    <main className="mx-auto max-w-5xl p-4">
+    <>
+      <Navbar />
+      <main className="mx-auto max-w-5xl p-4">
       <Link href="/" className="mb-4 inline-block rounded-xl border px-4 py-2">
         ← Powrót do mapy
       </Link>
@@ -325,5 +328,6 @@ export default async function SaunaPage({
         </a>
       )}
     </main>
+    </>
   )
 }

@@ -147,6 +147,14 @@ function MapCenterController({
   return null
 }
 
+function MapResizeGuard() {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+  }, [map])
+  return null
+}
+
 function getCategoryEmoji(category: string) {
   switch (category) {
     case 'public_sauna':
@@ -212,8 +220,8 @@ function createSaunaIcon(
   const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
   const mastersWithAvatar = (masters ?? []).filter((m) => m != null && m.avatar_url)
 
-  const satSize = 20
-  const orbitR = Math.floor(size / 2) + 14
+  const satSize = 40
+  const orbitR = Math.floor(size / 2) + 26
 
   const satellitesHtml = mastersWithAvatar.map((m, i) => {
     const angleDeg = -150 + (300 / mastersWithAvatar.length) * (i + 0.5)
@@ -649,7 +657,7 @@ export default function SaunaMap() {
     })
 	
 	console.log(
-		data?.find((s) => s.image_urls?.length > 0)
+		data?.find((s: any) => s.image_urls?.length > 0)
 )
 
     if (error) {
@@ -663,11 +671,11 @@ export default function SaunaMap() {
 )
 
 	const eventIds = new Set(
-	  (eventSaunas ?? []).map((e) => e.sauna_id)
+	  (eventSaunas ?? []).map((e: any) => e.sauna_id)
 )
 
     setItems(
-	  (data ?? []).map((sauna) => ({
+	  (data ?? []).map((sauna: any) => ({
 		...sauna,
 		has_upcoming_event: eventIds.has(sauna.id),
 	  }))
@@ -1020,6 +1028,7 @@ useEffect(() => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          <MapResizeGuard />
           <MapFocusController selectedSauna={selectedSauna} />
           <MapCenterController center={userLocation} trigger={centerTrigger} />
 

@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { useAuth } from './AuthProvider'
+import Link from 'next/link'
 
 export default function AddReviewForm({
   saunaId,
@@ -12,25 +14,36 @@ export default function AddReviewForm({
   saunaId: string
   onAdded?: () => void
 }) {
-  const [authorName, setAuthorName] = useState('')
+  const { user } = useAuth()
   const [rating, setRating] = useState(5)
   const [reviewText, setReviewText] = useState('')
   const [saving, setSaving] = useState(false)
   const router = useRouter()
-  
+
+  if (!user) {
+    return (
+      <div className="rounded-2xl border border-dashed p-4 text-center text-sm text-gray-500">
+        <Link href="/auth/login" className="font-medium text-black hover:underline">
+          Zaloguj się
+        </Link>
+        {' '}aby dodać opinię.
+      </div>
+    )
+  }
+
   async function saveReview() {
     setSaving(true)
 
+    const supabase = createClient()
     const { error } = await supabase
       .from('sauna_reviews')
-      .insert([
-        {
-          sauna_id: saunaId,
-          author_name: authorName || 'Anonim',
-          rating,
-          review_text: reviewText,
-        },
-      ])
+      .insert([{
+        sauna_id: saunaId,
+        author_name: user!.email ?? 'Użytkownik',
+        rating,
+        review_text: reviewText,
+        user_id: user!.id,
+      }])
 
     setSaving(false)
 
@@ -41,27 +54,15 @@ export default function AddReviewForm({
     }
 
     toast.success('Opinia dodana')
-	router.refresh()
-	
-    setAuthorName('')
+    router.refresh()
     setReviewText('')
     setRating(5)
-
     onAdded?.()
   }
 
   return (
     <div className="rounded-2xl border p-4">
-      <h2 className="mb-3 text-xl font-bold">
-        Dodaj opinię
-      </h2>
-
-      <input
-        value={authorName}
-        onChange={(e) => setAuthorName(e.target.value)}
-        placeholder="Twoje imię"
-        className="mb-3 w-full rounded-xl border p-2"
-      />
+      <h2 className="mb-3 text-xl font-bold">Dodaj opinię</h2>
 
       <select
         value={rating}
@@ -86,7 +87,7 @@ export default function AddReviewForm({
       <button
         disabled={saving}
         onClick={saveReview}
-        className="rounded-xl bg-yellow-500 px-4 py-2 font-semibold text-white"
+        className="rounded-xl bg-yellow-500 px-4 py-2 font-semibold text-white disabled:opacity-50"
       >
         {saving ? 'Zapisywanie...' : 'Dodaj opinię'}
       </button>

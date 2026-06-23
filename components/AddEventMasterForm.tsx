@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -27,6 +27,7 @@ export default function AddEventMasterForm({
   }, [])
 
   async function loadMasters() {
+    const supabase = createClient()
     const { data, error } = await supabase
       .from('sauna_masters')
       .select('id, name, level')
@@ -49,6 +50,7 @@ export default function AddEventMasterForm({
 
     setSaving(true)
 
+    const supabase = createClient()
     const { error } = await supabase
       .from('sauna_event_masters')
       .insert({

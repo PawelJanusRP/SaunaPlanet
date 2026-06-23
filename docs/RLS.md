@@ -12,13 +12,13 @@ Production deployment requires a stricter authorization model.
 
 # Current State
 
-Status: MVP
+Status: HARDENED (SP-013)
 
-Current database contains development-friendly policies.
+All tables have RLS enabled with explicit policies.
 
-These policies were intentionally used to accelerate development.
+Anonymous write access has been removed from all tables.
 
-Some operations currently allow broader access than acceptable for production.
+Public read access is preserved for all content tables.
 
 ---
 

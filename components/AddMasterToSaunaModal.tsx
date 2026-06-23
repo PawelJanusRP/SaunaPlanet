@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 type Event = {
   id: string
@@ -36,6 +36,7 @@ export default function AddMasterToSaunaModal({
   async function handleOpen() {
     setOpen(true)
     if (!mastersLoaded) {
+      const supabase = createClient()
       const { data } = await supabase
         .from('sauna_masters')
         .select('id, name, level')
@@ -64,6 +65,7 @@ export default function AddMasterToSaunaModal({
     setSaving(true)
 
     try {
+      const supabase = createClient()
       let resolvedMasterId = masterId
 
       if (mode === 'new') {

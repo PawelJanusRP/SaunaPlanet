@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import Navbar from '@/components/Navbar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,7 +14,9 @@ export default async function MastersPage() {
     .order('name')
 
   return (
-    <main className="mx-auto max-w-5xl p-4">
+    <>
+      <Navbar />
+      <main className="mx-auto max-w-5xl p-4">
       <Link
         href="/"
         className="mb-4 inline-block rounded-xl border px-4 py-2"
@@ -71,5 +74,6 @@ export default async function MastersPage() {
         </div>
       )}
     </main>
+    </>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 type AddEventModalProps = {
   saunaId: string
@@ -39,6 +39,7 @@ export default function AddEventModal({
 
     setLoading(true)
 
+    const supabase = createClient()
     const { error } = await supabase.from('sauna_events').insert({
       sauna_id: saunaId,
       title: title.trim(),

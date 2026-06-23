@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import UploadAvatarButton from '@/components/UploadAvatarButton'
 import EditSaunaMasterModal from '@/components/EditSaunaMasterModal'
+import Navbar from '@/components/Navbar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,7 +57,9 @@ export default async function MasterPage({
 	.eq('status', 'approved')
 	
   return (
-    <main className="mx-auto max-w-4xl p-4">
+    <>
+      <Navbar />
+      <main className="mx-auto max-w-4xl p-4">
       <Link href="/masters" className="mb-4 inline-block rounded-xl border px-4 py-2">
         ← Powrót do saunamistrzów
       </Link>
@@ -187,5 +190,6 @@ export default async function MasterPage({
 
 
     </main>
+    </>
   )
 }
