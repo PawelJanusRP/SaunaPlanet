@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 type EditSaunaModalProps = {
   item: {
@@ -37,6 +37,7 @@ export default function EditItemModal({
 
     setLoading(true)
 
+    const supabase = createClient()
     const { error } = await supabase
       .from('saunas')
       .update({

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function EditSaunaMasterModal({
   masterId,
@@ -40,6 +40,7 @@ export default function EditSaunaMasterModal({
     setSaving(true)
 
     try {
+      const supabase = createClient()
       const { error } = await supabase
         .from('sauna_masters')
         .update({

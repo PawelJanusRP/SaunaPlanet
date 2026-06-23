@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import imageCompression from 'browser-image-compression'
 
 const categories = [
@@ -47,6 +47,7 @@ export default function AddItemForm({
     setLoading(true)
 
     try {
+      const supabase = createClient()
       const { data: itemData, error: itemError } = await supabase
         .from('saunas')
         .insert([

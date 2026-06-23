@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function UploadAvatarButton({
   masterId,
@@ -23,6 +23,7 @@ export default function UploadAvatarButton({
     setLoading(true)
 
     try {
+      const supabase = createClient()
       const ext = file.name.split('.').pop() || 'jpg'
       const path = `${masterId}/${Date.now()}.${ext}`
 

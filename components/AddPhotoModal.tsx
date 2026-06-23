@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AddPhotoModal({
   itemId,
@@ -26,6 +26,7 @@ export default function AddPhotoModal({
     setLoading(true)
 
     try {
+      const supabase = createClient()
       const ext = file.name.split('.').pop() || 'jpg'
       const path = `${itemId}/${Date.now()}.${ext}`
 
