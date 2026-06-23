@@ -212,8 +212,8 @@ function createSaunaIcon(
   const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
   const mastersWithAvatar = (masters ?? []).filter((m) => m != null && m.avatar_url)
 
-  const satSize = 20
-  const orbitR = Math.floor(size / 2) + 14
+  const satSize = 40
+  const orbitR = Math.floor(size / 2) + 26
 
   const satellitesHtml = mastersWithAvatar.map((m, i) => {
     const angleDeg = -150 + (300 / mastersWithAvatar.length) * (i + 0.5)
