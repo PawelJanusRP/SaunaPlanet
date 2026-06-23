@@ -172,6 +172,25 @@ Related components:
 
 ---
 
+# SP-010 Edit Sauna Master Profile
+
+Status: DONE
+
+Implemented:
+
+* edit button on sauna master profile page
+* editable fields: name, level, bio
+* modal form pre-filled with current values
+* saves to sauna_masters via UPDATE
+* page refreshes after save
+
+Related components:
+
+* components/EditSaunaMasterModal.tsx
+* app/masters/[id]/page.tsx
+
+---
+
 # SP-009 Clickable Satellite Avatars
 
 Status: DONE

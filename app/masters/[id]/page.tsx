@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import UploadAvatarButton from '@/components/UploadAvatarButton'
+import EditSaunaMasterModal from '@/components/EditSaunaMasterModal'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,6 +85,19 @@ export default async function MasterPage({
             <div className="mt-2 text-lg font-semibold text-yellow-600">
               ⭐ {Number(master.rating ?? 0).toFixed(1)} ({master.review_count ?? 0} opinii)
             </div>
+
+            {master.level && (
+              <div className="mt-1 text-sm font-semibold text-gray-500">
+                {master.level}
+              </div>
+            )}
+
+            <EditSaunaMasterModal
+              masterId={id}
+              currentName={master.name}
+              currentLevel={master.level ?? null}
+              currentBio={master.bio ?? null}
+            />
           </div>
         </div>
 
