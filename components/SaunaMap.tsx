@@ -147,6 +147,14 @@ function MapCenterController({
   return null
 }
 
+function MapResizeGuard() {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+  }, [map])
+  return null
+}
+
 function getCategoryEmoji(category: string) {
   switch (category) {
     case 'public_sauna':
@@ -1020,6 +1028,7 @@ useEffect(() => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          <MapResizeGuard />
           <MapFocusController selectedSauna={selectedSauna} />
           <MapCenterController center={userLocation} trigger={centerTrigger} />
 
