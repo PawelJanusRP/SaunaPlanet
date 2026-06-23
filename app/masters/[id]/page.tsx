@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import UploadAvatarButton from '@/components/UploadAvatarButton'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,17 +62,21 @@ export default async function MasterPage({
 
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <div className="flex items-center gap-5">
-          {master.avatar_url ? (
-            <img
-              src={master.avatar_url}
-              alt={master.name}
-              className="h-28 w-28 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-5xl">
-              🧖
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2">
+            {master.avatar_url ? (
+              <img
+                src={master.avatar_url}
+                alt={master.name}
+                className="h-28 w-28 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-5xl">
+                🧖
+              </div>
+            )}
+
+            <UploadAvatarButton masterId={id} currentAvatarUrl={master.avatar_url} />
+          </div>
 
           <div>
             <h1 className="text-3xl font-bold">{master.name}</h1>

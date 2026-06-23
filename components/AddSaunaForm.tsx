@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import imageCompression from 'browser-image-compression'
@@ -24,28 +24,17 @@ export default function AddItemForm({
   latitude: number | undefined
   longitude: number | undefined
 }) {
-  const [title, setTitle] = useState('')
+  const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('public_sauna')
+  const [city, setCity] = useState('')
   const [photo, setPhoto] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
-  const [deviceId, setDeviceId] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  useEffect(() => {
-    let id = localStorage.getItem('device_id')
-
-    if (!id) {
-      id = crypto.randomUUID()
-      localStorage.setItem('device_id', id)
-    }
-
-    setDeviceId(id)
-  }, [])
-
   async function handleSubmit() {
-    if (!title.trim()) {
+    if (!name.trim()) {
       toast.error('Podaj nazwę sauny lub obiektu')
       return
     }
@@ -55,32 +44,20 @@ export default function AddItemForm({
       return
     }
 
-    if (!deviceId) {
-      toast.error('Nie udało się ustalić identyfikatora urządzenia')
-      return
-    }
-
     setLoading(true)
 
     try {
       const { data: itemData, error: itemError } = await supabase
-        .from('items')
+        .from('saunas')
         .insert([
           {
-            title: title.trim(),
+            name: name.trim(),
             description: description.trim(),
             category,
-            condition: 'good',
-            size: 'medium',
             latitude,
             longitude,
-            location: `POINT(${longitude} ${latitude})`,
-            user_id: null,
+            city: city.trim() || null,
             status: 'active',
-            expires_at: new Date(
-              Date.now() + 24 * 60 * 60 * 1000
-            ).toISOString(),
-            created_by_device_id: deviceId,
           },
         ])
         .select('id')
@@ -101,7 +78,7 @@ export default function AddItemForm({
   const filePath = `${itemData.id}/${Date.now()}.${fileExt}`
 
   const { error: uploadError } = await supabase.storage
-    .from('item-images')
+    .from('sauna-images')
     .upload(filePath, compressedPhoto)
 
         if (uploadError) {
@@ -109,12 +86,12 @@ export default function AddItemForm({
         }
 
         const { data: publicUrlData } = supabase.storage
-          .from('item-images')
+          .from('sauna-images')
           .getPublicUrl(filePath)
 
-        const { error: photoError } = await supabase.from('item_photos').insert([
+        const { error: photoError } = await supabase.from('sauna_photos').insert([
           {
-            item_id: itemData.id,
+            sauna_id: itemData.id,
             image_url: publicUrlData.publicUrl,
           },
         ])
@@ -124,8 +101,9 @@ export default function AddItemForm({
         }
       }
 
-      setTitle('')
+      setName('')
       setDescription('')
+      setCity('')
       setPhoto(null)
 
       if (fileInputRef.current) {
@@ -174,8 +152,15 @@ export default function AddItemForm({
       <input
         className="mb-2 w-full border p-2"
         placeholder="Nazwa sauny/obiektu"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <input
+        className="mb-2 w-full border p-2"
+        placeholder="Miasto (opcjonalnie)"
+        value={city}
+        onChange={(e) => setCity(e.target.value)}
       />
 
       <textarea
