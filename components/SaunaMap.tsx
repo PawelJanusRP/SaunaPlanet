@@ -1330,7 +1330,7 @@ useEffect(() => {
                       setShowAccountPanel(false)
                       window.location.reload()
                     }}
-                    className="w-full rounded-xl border px-4 py-2 text-left text-gray-600 hover:bg-gray-50"
+                    className="w-full rounded-xl bg-red-50 px-4 py-2.5 text-center text-sm font-medium text-red-600 hover:bg-red-100 active:bg-red-200"
                   >
                     Wyloguj
                   </button>
