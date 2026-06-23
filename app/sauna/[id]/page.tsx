@@ -1,4 +1,5 @@
 import AddEventMasterForm from '@/components/AddEventMasterForm'
+import AddMasterToSaunaModal from '@/components/AddMasterToSaunaModal'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import AddReviewForm from '@/components/AddReviewForm'
@@ -39,12 +40,43 @@ export default async function SaunaPage({
     .eq('sauna_id', id)
     .order('created_at', { ascending: true })
 
+  const today = new Date().toISOString().split('T')[0]
+
   const { data: events } = await supabase
     .from('sauna_events')
     .select('*')
     .eq('sauna_id', id)
     .eq('status', 'active')
+    .gte('event_date', today)
     .order('event_date', { ascending: true })
+
+  const eventIds = events?.map((e) => e.id) ?? []
+
+  const { data: eventMasters } = eventIds.length > 0
+    ? await supabase
+        .from('sauna_event_masters')
+        .select(`
+          event_id,
+          role,
+          sauna_masters (
+            id,
+            name,
+            avatar_url,
+            level
+          )
+        `)
+        .in('event_id', eventIds)
+        .eq('status', 'approved')
+    : { data: [] }
+
+  const mastersByEvent = (eventMasters ?? []).reduce<Record<string, any[]>>(
+    (acc, item: any) => {
+      if (!acc[item.event_id]) acc[item.event_id] = []
+      acc[item.event_id].push(item)
+      return acc
+    },
+    {}
+  )
 
   const { data: saunaMasters } = await supabase
     .from('sauna_event_masters')
@@ -180,8 +212,15 @@ export default async function SaunaPage({
 	 	})}
 	 	</div>
 	 )}
+	   <AddMasterToSaunaModal
+	     existingEvents={(events ?? []).map((e) => ({
+	       id: e.id,
+	       title: e.title,
+	       event_date: e.event_date,
+	     }))}
+	   />
 	 </section>
-	 
+
       {events && events.length > 0 && (
         <section className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
           <h2 className="mb-3 text-xl font-bold text-orange-700">
@@ -209,7 +248,41 @@ export default async function SaunaPage({
 					{event.description}
 				</p>
 				)}
-				
+
+				<div className="mt-3">
+				  {(mastersByEvent[event.id] ?? []).length > 0 ? (
+				    <div className="flex flex-wrap gap-2">
+				      {(mastersByEvent[event.id] ?? []).map((item: any) => (
+				        <Link
+				          key={item.sauna_masters?.id}
+				          href={`/masters/${item.sauna_masters?.id}`}
+				          className="flex items-center gap-2 rounded-xl bg-yellow-50 px-2 py-1.5 hover:bg-yellow-100"
+				        >
+				          {item.sauna_masters?.avatar_url ? (
+				            <img
+				              src={item.sauna_masters.avatar_url}
+				              alt={item.sauna_masters.name}
+				              className="h-7 w-7 rounded-full object-cover"
+				            />
+				          ) : (
+				            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 text-xs">
+				              🧖
+				            </div>
+				          )}
+				          <div>
+				            <div className="text-xs font-semibold">{item.sauna_masters?.name}</div>
+				            {item.sauna_masters?.level && (
+				              <div className="text-xs text-gray-400">{item.sauna_masters.level}</div>
+				            )}
+				          </div>
+				        </Link>
+				      ))}
+				    </div>
+				  ) : (
+				    <p className="text-xs text-gray-400">Brak przypisanych saunamistrzów</p>
+				  )}
+				</div>
+
 				<AddEventMasterForm eventId={event.id} />
               </div>
             ))}

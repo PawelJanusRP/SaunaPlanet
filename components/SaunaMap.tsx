@@ -210,15 +210,22 @@ function createSaunaIcon(
   const size = hasUpcomingEvent ? 60 : 46
   const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
   const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
-  const firstMaster = masters?.[0]
-  const masterBorderColor =
-  firstMaster?.level === 'master'
-    ? '#facc15'
-    : firstMaster?.level === 'senior'
-    ? '#a855f7'
-    : firstMaster?.level === 'certified'
-    ? '#3b82f6'
-    : '#9ca3af'
+  const mastersWithAvatar = (masters ?? []).filter((m) => m != null && m.avatar_url)
+
+  const satSize = 20
+  const orbitR = Math.floor(size / 2) + 14
+
+  const satellitesHtml = mastersWithAvatar.map((m, i) => {
+    const angleDeg = -150 + (300 / mastersWithAvatar.length) * (i + 0.5)
+    const angleRad = (angleDeg * Math.PI) / 180
+    const left = Math.round(size / 2 + orbitR * Math.cos(angleRad) - satSize / 2)
+    const top = Math.round(size / 2 + orbitR * Math.sin(angleRad) - satSize / 2)
+    const color = m.level === 'master' ? '#facc15'
+      : m.level === 'senior' ? '#a855f7'
+      : m.level === 'certified' ? '#3b82f6'
+      : '#9ca3af'
+    return `<img src="${m.avatar_url}" title="${m.name}" style="position:absolute;left:${left}px;top:${top}px;z-index:1001;width:${satSize}px;height:${satSize}px;border-radius:9999px;object-fit:cover;border:2px solid ${color};background:white;box-shadow:0 1px 4px rgba(0,0,0,0.35);" />`
+  }).join('')
   return L.divIcon({
     className: '',
 		html: `
@@ -229,29 +236,7 @@ function createSaunaIcon(
 				height: ${size}px;
 			">
 		
-			${
-			firstMaster?.avatar_url
-				? `
-				<img
-					src="${firstMaster.avatar_url}"
-					title="${firstMaster.name}"
-					style="
-					position:absolute;
-					right:-12px;
-					top:8px;
-					z-index:1001;
-					width:24px;
-					height:24px;
-					border-radius:9999px;
-					object-fit:cover;
-					border:2px solid ${masterBorderColor};
-					background:white;
-					box-shadow:0 1px 4px rgba(0,0,0,0.35);
-					"
-				/>
-				`
-				: ''
-			}
+			${satellitesHtml}
 		
 			${
 				hasUpcomingEvent

@@ -4,11 +4,14 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
-type EditItemModalProps = {
+type EditSaunaModalProps = {
   item: {
     id: string
-    title: string
+    name: string
     description: string | null
+    category: string
+    city: string | null
+    website: string | null
   }
   onClose: () => void
   onSaved: () => Promise<void>
@@ -18,55 +21,89 @@ export default function EditItemModal({
   item,
   onClose,
   onSaved,
-}: EditItemModalProps) {
-  const [title, setTitle] = useState(item.title)
+}: EditSaunaModalProps) {
+  const [name, setName] = useState(item.name)
   const [description, setDescription] = useState(item.description ?? '')
+  const [category, setCategory] = useState(item.category)
+  const [city, setCity] = useState(item.city ?? '')
+  const [website, setWebsite] = useState(item.website ?? '')
   const [loading, setLoading] = useState(false)
 
   async function handleSave() {
-    if (!title.trim()) {
-      toast.error('Podaj tytuł')
+    if (!name.trim()) {
+      toast.error('Podaj nazwę sauny')
       return
     }
 
     setLoading(true)
 
-    const { error } = await supabase.rpc('update_item_mvp', {
-      item_id: item.id,
-      new_title: title.trim(),
-      new_description: description.trim(),
-    })
+    const { error } = await supabase
+      .from('saunas')
+      .update({
+        name: name.trim(),
+        description: description.trim(),
+        category,
+        city: city.trim() || null,
+        website: website.trim() || null,
+      })
+      .eq('id', item.id)
 
     setLoading(false)
 
     if (error) {
-      console.error('EDIT ITEM ERROR:', error)
+      console.error('EDIT SAUNA ERROR:', error)
       toast.error(error.message)
       return
     }
 
     await onSaved()
-    toast.success('Ogłoszenie zaktualizowane')
+    toast.success('Sauna zaktualizowana')
     onClose()
   }
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40">
       <div className="w-80 rounded-xl bg-white p-4 shadow-xl">
-        <h2 className="mb-3 text-lg font-bold">Edytuj ogłoszenie</h2>
+        <h2 className="mb-3 text-lg font-bold">Edytuj saunę</h2>
 
         <input
           className="mb-2 w-full rounded border p-2"
-          placeholder="Tytuł"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Nazwa sauny"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
 
         <textarea
-          className="mb-3 h-28 w-full rounded border p-2"
+          className="mb-2 h-28 w-full rounded border p-2"
           placeholder="Opis"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+        />
+
+        <select
+          className="mb-2 w-full rounded border p-2"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="public_sauna">🧖 Sauna publiczna</option>
+          <option value="spa">♨️ SPA / wellness</option>
+          <option value="hotel">🏨 Sauna hotelowa</option>
+          <option value="outdoor">🌲 Sauna plenerowa</option>
+          <option value="event">🔥 Event saunowy</option>
+        </select>
+
+        <input
+          className="mb-2 w-full rounded border p-2"
+          placeholder="Miasto (opcjonalnie)"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+        />
+
+        <input
+          className="mb-3 w-full rounded border p-2"
+          placeholder="Strona www (opcjonalnie)"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
         />
 
         <div className="flex gap-2">

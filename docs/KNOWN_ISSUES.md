@@ -20,16 +20,19 @@ Status: Working
 
 Description:
 
-Sauna master avatar satellites are displayed around sauna markers.
+Sauna master avatar satellites are displayed around sauna markers in an orbital layout.
 
 Requirements:
 
 * approved assignment
 * future active event
+* avatar_url set on sauna_masters record
 
 Current behavior:
 
-* only masters assigned to future events are displayed
+* all masters with avatar_url are shown (no limit)
+* satellites orbit the main marker in a 300° arc (from SSW to SSE through top)
+* bottom area reserved for rating badge
 * satellite ring color depends on master level
 
 Levels:
@@ -41,28 +44,24 @@ Levels:
 
 Important:
 
-This functionality was recently fixed.
-
-Do not redesign or replace without explicit request.
+This functionality was recently refactored. Do not redesign or replace without explicit request.
 
 ---
 
 # Event Visibility
 
-Status: Needs Review
+Status: Fixed
 
-Observed issue:
+Fix applied:
 
-Historical events may still appear on sauna detail pages.
+* sauna detail page (`app/sauna/[id]/page.tsx`) now filters events with `event_date >= today`
+* only current and future events are displayed
+* sorted ascending by event_date
 
-Expected behavior:
+Note:
 
-Past events should either:
-
-* be hidden
-* or appear in a dedicated history section
-
-Review before implementing changes.
+RPC `get_sauna_events` (used in map popup) may still return past events.
+That RPC should be updated separately in Supabase Dashboard.
 
 ---
 
@@ -259,3 +258,31 @@ Facilities
 Changes that strengthen this ecosystem are generally preferred.
 
 Changes that move the platform toward a simple sauna directory should be avoided.
+
+---
+
+# Legacy Item Code in Sauna Forms
+
+Status: Fixed
+
+Both components have been rewritten to use correct SaunaPlanet database objects.
+
+---
+
+## components/AddSaunaForm.tsx
+
+Fixed:
+
+* inserts into `saunas` table
+* inserts into `sauna_photos` table
+* uploads to `sauna-images` bucket
+* legacy fields removed
+
+---
+
+## components/EditSaunaModal.tsx
+
+Fixed:
+
+* uses correct sauna update logic
+* UI messages updated to sauna terminology
