@@ -16,6 +16,8 @@ import 'leaflet/dist/leaflet.css'
 
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/AuthProvider'
+import { createClient } from '@/lib/supabase/client'
 import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
@@ -560,7 +562,20 @@ function SaunaPopup({
   )
 }
 
+const roleLabel: Record<string, string> = {
+  admin: 'Administrator',
+  moderator: 'Moderator',
+  user: 'Użytkownik',
+}
+
+const roleBadge: Record<string, string> = {
+  admin: 'bg-red-100 text-red-700',
+  moderator: 'bg-orange-100 text-orange-700',
+  user: 'bg-gray-100 text-gray-600',
+}
+
 export default function SaunaMap() {
+  const { user, role } = useAuth()
   const [items, setItems] = useState<Sauna[]>([])
   const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
@@ -1271,34 +1286,56 @@ useEffect(() => {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 text-sm">
-              <div className="mb-4">
-                <div className="text-xs uppercase tracking-wide text-gray-400">
-                  Podsumowanie
+            <div className="flex flex-1 flex-col overflow-y-auto text-sm">
+              {user ? (
+                <div className="border-b px-4 py-4">
+                  <p className="truncate font-medium text-gray-900">{user.email}</p>
+                  {role && (
+                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${roleBadge[role] ?? roleBadge.user}`}>
+                      {roleLabel[role] ?? role}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-1 text-sm text-gray-800">
-                  Liczba saun w pobliżu: {items.length}
+              ) : (
+                <div className="border-b px-4 py-4 space-y-2">
+                  <Link href="/auth/login" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 font-semibold text-gray-700 hover:bg-gray-100">Zaloguj się</Link>
+                  <Link href="/auth/register" onClick={() => setShowAccountPanel(false)} className="block rounded-xl bg-black px-3 py-2 text-center text-white hover:bg-gray-800">Zarejestruj się</Link>
                 </div>
+              )}
+
+              {user && (
+                <div className="border-b px-4 py-3 space-y-1">
+                  <Link href="/profile" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Mój profil</Link>
+                  <Link href="/submit" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Zgłoś saunę</Link>
+                  {(role === 'admin' || role === 'moderator') && (
+                    <Link href="/admin" onClick={() => setShowAccountPanel(false)} className="flex items-center justify-between rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">
+                      Panel admina
+                      <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">Admin</span>
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              <div className="border-b px-4 py-3 space-y-1">
+                <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Odkrywaj</p>
+                <Link href="/events" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Wydarzenia</Link>
+                <Link href="/masters" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Saunamistrzowie</Link>
               </div>
 
-              <div className="mb-4 border-t pt-3">
-                <div className="text-xs uppercase tracking-wide text-gray-400">
-                  Ustawienia MVP
+              {user && (
+                <div className="px-4 py-3">
+                  <button
+                    onClick={async () => {
+                      await createClient().auth.signOut()
+                      setShowAccountPanel(false)
+                      window.location.reload()
+                    }}
+                    className="w-full rounded-xl border px-4 py-2 text-left text-gray-600 hover:bg-gray-50"
+                  >
+                    Wyloguj
+                  </button>
                 </div>
-                <div className="mt-2 space-y-2 text-xs text-gray-600">
-                  <div>Docelowo tutaj pojawi się logowanie i profil użytkownika.</div>
-                </div>
-              </div>
-
-              <div className="border-t pt-3">
-                <div className="text-xs uppercase tracking-wide text-gray-400">
-                  Feedback
-                </div>
-                <p className="mt-2 text-xs text-gray-600">
-                  Jeśli masz uwagi do działania aplikacji, zapisz je teraz – to
-                  dobry moment na dopracowanie MVP.
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </div>
