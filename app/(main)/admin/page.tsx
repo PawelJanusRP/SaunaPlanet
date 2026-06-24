@@ -9,6 +9,7 @@ import EditSaunaAdminForm from '@/components/EditSaunaAdminForm'
 import EventModerationActions from '@/components/EventModerationActions'
 import DeleteReviewButton from '@/components/DeleteReviewButton'
 import UserRoleSelector from '@/components/UserRoleSelector'
+import ManagerApprovalActions from '@/components/ManagerApprovalActions'
 
 const statusLabel: Record<string, { label: string; className: string }> = {
   pending:   { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
@@ -49,6 +50,7 @@ export default async function AdminPage({
     { data: saunas },
     { data: events },
     { data: reviews },
+    { data: pendingManagers },
   ] = await Promise.all([
     supabase.from('profiles').select('id, role, first_name, last_name, email, created_at').order('created_at', { ascending: false }),
     supabase.from('sauna_submissions').select('*').order('created_at', { ascending: false }),
@@ -71,12 +73,30 @@ export default async function AdminPage({
       .from('sauna_reviews')
       .select('id, rating, review_text, author_name, created_at, sauna_id, saunas(name)')
       .order('created_at', { ascending: false }),
+    supabase
+      .from('sauna_managers')
+      .select('id, user_id, status, created_at, saunas(id, name, city)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
   ])
 
   const pending = submissions?.filter((s) => s.status === 'pending') ?? []
   const pendingMasterCount = pendingMasters?.length ?? 0
   const pendingCertCount = pendingCertificates?.length ?? 0
-  const totalPending = pending.length + pendingMasterCount + pendingCertCount
+  const pendingManagerCount = pendingManagers?.length ?? 0
+  const totalPending = pending.length + pendingMasterCount + pendingCertCount + pendingManagerCount
+
+  // Resolve manager user names
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const managerUserIds = [...new Set((pendingManagers ?? []).map((m: any) => m.user_id))]
+  const { data: managerProfilesRaw } = managerUserIds.length > 0
+    ? await supabase.from('profiles').select('id, first_name, last_name, email').in('id', managerUserIds)
+    : { data: [] }
+  const managerNameById: Record<string, string> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const p of (managerProfilesRaw ?? []) as any[]) {
+    managerNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || 'Użytkownik'
+  }
 
   const tabs = [
     { id: 'submissions', label: `Zgłoszenia (${submissions?.length ?? 0})` },
@@ -86,6 +106,7 @@ export default async function AdminPage({
     { id: 'masters',     label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
     { id: 'certyfikaty', label: `Certyfikaty${pendingCertCount > 0 ? ` (${pendingCertCount})` : ''}` },
     { id: 'slownik',     label: 'Słownik certyfikatów' },
+    { id: 'managerowie', label: `Managerowie${pendingManagerCount > 0 ? ` (${pendingManagerCount})` : ''}` },
     { id: 'users',       label: `Użytkownicy (${profiles?.length ?? 0})` },
   ]
 
@@ -319,7 +340,41 @@ export default async function AdminPage({
 
       {/* Słownik tab */}
       {activeTab === 'slownik' && (
-        <ManageCertificateTypes types={(certTypes ?? []) as any} />
+        <ManageCertificateTypes
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          types={(certTypes ?? []) as any}
+        />
+      )}
+
+      {/* Managerowie tab */}
+      {activeTab === 'managerowie' && (
+        <section className="space-y-3">
+          {!pendingManagers || pendingManagers.length === 0 ? (
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak oczekujących wniosków o rolę managera.</div>
+          ) : (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (pendingManagers as any[]).map((m) => (
+              <div key={m.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="font-bold">{managerNameById[m.user_id] ?? 'Użytkownik'}</p>
+                    <p className="mt-0.5 text-sm text-gray-500">
+                      Sauna:{' '}
+                      <Link href={`/sauna/${m.saunas?.id}`} className="hover:underline">
+                        {m.saunas?.name}
+                      </Link>
+                      {m.saunas?.city && <span className="ml-1 text-gray-400">· {m.saunas.city}</span>}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {new Date(m.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <ManagerApprovalActions managerId={m.id} />
+                </div>
+              </div>
+            ))
+          )}
+        </section>
       )}
 
       {/* Users tab */}

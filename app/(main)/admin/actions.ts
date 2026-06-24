@@ -209,6 +209,32 @@ export async function deleteReviewAdmin(id: string) {
   revalidatePath('/admin')
 }
 
+export async function approveManagerRequest(managerId: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('sauna_managers')
+    .update({ status: 'approved' })
+    .eq('id', managerId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
+export async function rejectManagerRequest(managerId: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('sauna_managers')
+    .update({ status: 'rejected' })
+    .eq('id', managerId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
 export async function updateUserRole(userId: string, newRole: 'user' | 'moderator' | 'admin') {
   const role = await getCurrentUserRole()
   if (role !== 'admin') throw new Error('Tylko administrator może zmieniać role')

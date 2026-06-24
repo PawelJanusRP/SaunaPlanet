@@ -8,7 +8,7 @@ import EventReviewForm from '@/components/EventReviewForm'
 import EventCommentForm from '@/components/EventCommentForm'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { toggleEventInterest } from '@/app/(main)/profile/actions'
-import { deleteEventReview, deleteEventComment } from '@/app/events/actions'
+import { deleteEventReview, deleteEventComment, registerForEvent, cancelRegistration } from '@/app/events/actions'
 
 export default async function EventPage({
   params,
@@ -23,7 +23,7 @@ export default async function EventPage({
 
   const { data: eventData } = await supabase
     .from('sauna_events')
-    .select('id, title, event_date, event_time, price, description, status, sauna_id, saunas(id, name, city)')
+    .select('id, title, event_date, event_time, price, description, status, sauna_id, max_participants, saunas(id, name, city)')
     .eq('id', id)
     .single()
 
@@ -62,12 +62,14 @@ export default async function EventPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const photos = (photosRaw ?? []) as any[]
 
-  // Reviews (past) / Comments (upcoming) + going count — all parallel
+  // Reviews (past) / Comments (upcoming) + going count + registrations — all parallel
   const [
     isGoingResult,
     goingCountResult,
     reviewsResult,
     commentsResult,
+    userRegistrationResult,
+    confirmedCountResult,
   ] = await Promise.all([
     user
       ? supabase.from('user_event_interests').select('id').eq('user_id', user.id).eq('event_id', id).maybeSingle()
@@ -79,6 +81,12 @@ export default async function EventPage({
     !isPast
       ? supabase.from('event_comments').select('id, comment, created_at, user_id').eq('event_id', id).order('created_at', { ascending: true })
       : Promise.resolve({ data: [] }),
+    user && !isPast
+      ? supabase.from('event_registrations').select('id, status').eq('event_id', id).eq('user_id', user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    !isPast
+      ? supabase.from('event_registrations').select('id', { count: 'exact', head: true }).eq('event_id', id).eq('status', 'confirmed')
+      : Promise.resolve({ count: 0 }),
   ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,6 +95,12 @@ export default async function EventPage({
   const comments = (commentsResult.data ?? []) as any[]
   const isGoing = isGoingResult.data !== null
   const goingCount = goingCountResult.count ?? 0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userRegistration = userRegistrationResult.data as any
+  const confirmedCount = confirmedCountResult.count ?? 0
+  const maxParticipants: number | null = ev.max_participants ?? null
+  const spotsLeft = maxParticipants !== null ? maxParticipants - confirmedCount : null
+  const isFull = spotsLeft !== null && spotsLeft <= 0 && userRegistration?.status !== 'confirmed'
 
   // Resolve display names for review/comment authors
   const authorIds = [...new Set([...reviews, ...comments].map((r) => r.user_id))]
@@ -139,6 +153,8 @@ export default async function EventPage({
     : null
 
   const toggleInterestAction = toggleEventInterest.bind(null, id)
+  const registerAction = registerForEvent.bind(null, id)
+  const cancelAction = cancelRegistration.bind(null, id)
 
   return (
     <>
@@ -207,26 +223,75 @@ export default async function EventPage({
           )}
 
           {!isPast && (
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-5 space-y-3">
+              {/* Rejestracja */}
               {user && (
-                <form action={toggleInterestAction} className="flex-1">
-                  <button
-                    type="submit"
-                    className={`w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
-                      isGoing
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'bg-orange-600 text-white hover:bg-orange-700'
-                    }`}
-                  >
-                    {isGoing ? '✓ Idę na to wydarzenie' : 'Idę →'}
-                  </button>
-                </form>
+                <div className="rounded-xl bg-gray-50 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Rezerwacja miejsca</p>
+                    {spotsLeft !== null && (
+                      <p className={`text-xs font-semibold ${spotsLeft <= 3 ? 'text-red-600' : 'text-gray-500'}`}>
+                        {spotsLeft > 0 ? `${spotsLeft} wolnych miejsc` : 'Brak miejsc'}
+                      </p>
+                    )}
+                  </div>
+                  {!userRegistration && (
+                    <form action={registerAction}>
+                      <button
+                        type="submit"
+                        disabled={isFull}
+                        className="w-full rounded-xl bg-orange-600 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {isFull ? 'Brak wolnych miejsc' : 'Zapisz się →'}
+                      </button>
+                    </form>
+                  )}
+                  {userRegistration?.status === 'pending' && (
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-yellow-700">⏳ Zapis oczekuje na potwierdzenie</p>
+                      <form action={cancelAction}>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Anuluj</button>
+                      </form>
+                    </div>
+                  )}
+                  {userRegistration?.status === 'confirmed' && (
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-green-700">✓ Jesteś zapisany</p>
+                      <form action={cancelAction}>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Anuluj zapis</button>
+                      </form>
+                    </div>
+                  )}
+                  {confirmedCount > 0 && (
+                    <p className="mt-1.5 text-xs text-gray-400">
+                      {confirmedCount} {confirmedCount === 1 ? 'osoba zapisana' : confirmedCount < 5 ? 'osoby zapisane' : 'osób zapisanych'}
+                    </p>
+                  )}
+                </div>
               )}
-              {goingCount > 0 && (
-                <p className="shrink-0 text-sm text-gray-500">
-                  {goingCount} {goingCount === 1 ? 'osoba idzie' : goingCount < 5 ? 'osoby idą' : 'osób idzie'}
-                </p>
-              )}
+
+              {/* Nieformalny interest ("Idę") */}
+              <div className="flex items-center gap-3">
+                {user && (
+                  <form action={toggleInterestAction} className="flex-1">
+                    <button
+                      type="submit"
+                      className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${
+                        isGoing
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {isGoing ? '✓ Idę' : 'Idę (bez rezerwacji)'}
+                    </button>
+                  </form>
+                )}
+                {goingCount > 0 && (
+                  <p className="shrink-0 text-sm text-gray-500">
+                    {goingCount} {goingCount === 1 ? 'osoba idzie' : goingCount < 5 ? 'osoby idą' : 'osób idzie'}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </section>

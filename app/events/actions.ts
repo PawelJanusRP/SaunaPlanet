@@ -53,6 +53,76 @@ export async function removeEventMaster(eventId: string, masterId: string) {
   revalidatePath(`/events/${eventId}`)
 }
 
+export async function registerForEvent(eventId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const { error } = await supabase
+    .from('event_registrations')
+    .insert({ event_id: eventId, user_id: user.id, status: 'pending' })
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}`)
+}
+
+export async function cancelRegistration(eventId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const { error } = await supabase
+    .from('event_registrations')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}`)
+}
+
+export async function updateRegistrationStatus(registrationId: string, status: 'confirmed' | 'cancelled') {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const role = await getCurrentUserRole()
+  if (role !== 'admin' && role !== 'moderator') {
+    const { data: reg } = await supabase
+      .from('event_registrations')
+      .select('event_id')
+      .eq('id', registrationId)
+      .single()
+    if (!reg) throw new Error('Nie znaleziono rezerwacji')
+
+    const { data: ev } = await supabase
+      .from('sauna_events')
+      .select('sauna_id')
+      .eq('id', reg.event_id)
+      .single()
+    if (!ev) throw new Error('Nie znaleziono eventu')
+
+    const { data: mgr } = await supabase
+      .from('sauna_managers')
+      .select('id')
+      .eq('user_id', user.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .eq('sauna_id', (ev as any).sauna_id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    if (!mgr) throw new Error('Brak uprawnień')
+  }
+
+  const { error } = await supabase
+    .from('event_registrations')
+    .update({ status })
+    .eq('id', registrationId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/profile')
+  revalidatePath(`/events/${registrationId}`)
+}
+
 export async function addEventReview(eventId: string, rating: number, comment: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

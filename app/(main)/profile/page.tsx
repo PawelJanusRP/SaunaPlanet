@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import ChangePasswordForm from '@/components/ChangePasswordForm'
 import EditProfileNameForm from '@/components/EditProfileNameForm'
+import RegistrationModerationActions from '@/components/RegistrationModerationActions'
 
 const roleLabels: Record<string, string> = {
   user: 'Użytkownik',
@@ -27,7 +28,7 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single()
 
-  const [{ data: favoritesRaw }, { data: interestsRaw }] = await Promise.all([
+  const [{ data: favoritesRaw }, { data: interestsRaw }, { data: managedSaunasRaw }] = await Promise.all([
     supabase
       .from('user_favorites')
       .select('sauna_id, saunas(id, name, city, cover_image_url)')
@@ -38,9 +39,18 @@ export default async function ProfilePage() {
       .select('event_id, status, sauna_events(id, title, event_date, event_time, price, sauna_id, saunas(name, city))')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('sauna_managers')
+      .select('id, status, sauna_id, saunas(id, name, city)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
   ])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const favorites = (favoritesRaw ?? []) as any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const managedSaunas = (managedSaunasRaw ?? []) as any[]
+  const approvedSaunas = managedSaunas.filter((m) => m.status === 'approved')
 
   const favSaunaIds = favorites.map((f) => f.sauna_id).filter(Boolean)
   const { data: favPhotosRaw } = favSaunaIds.length > 0
@@ -55,9 +65,50 @@ export default async function ProfilePage() {
   for (const p of favPhotosRaw ?? []) {
     if (!firstFavPhoto[p.sauna_id]) firstFavPhoto[p.sauna_id] = p.image_url
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const upcomingEvents = ((interestsRaw ?? []) as any[]).filter(
     (i) => i.sauna_events?.event_date >= today
   )
+
+  // Pending registrations for saunas managed by this user
+  const approvedSaunaIds = approvedSaunas.map((m) => m.sauna_id)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let pendingRegistrations: any[] = []
+  if (approvedSaunaIds.length > 0) {
+    const { data: pendingEventsRaw } = await supabase
+      .from('sauna_events')
+      .select('id')
+      .in('sauna_id', approvedSaunaIds)
+      .gte('event_date', today)
+
+    const pendingEventIds = (pendingEventsRaw ?? []).map((e) => e.id)
+    if (pendingEventIds.length > 0) {
+      const { data: regsRaw } = await supabase
+        .from('event_registrations')
+        .select('id, status, created_at, user_id, event_id, sauna_events(id, title, event_date, sauna_id, saunas(name))')
+        .in('event_id', pendingEventIds)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      pendingRegistrations = (regsRaw ?? []) as any[]
+
+      // Resolve registrant names
+      const regUserIds = [...new Set(pendingRegistrations.map((r) => r.user_id))]
+      if (regUserIds.length > 0) {
+        const { data: regProfiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .in('id', regUserIds)
+        const regNameById: Record<string, string> = {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const p of (regProfiles ?? []) as any[]) {
+          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || 'Użytkownik'
+        }
+        pendingRegistrations = pendingRegistrations.map((r) => ({ ...r, _userName: regNameById[r.user_id] ?? 'Użytkownik' }))
+      }
+    }
+  }
 
   return (
     <main className="mx-auto max-w-2xl p-4">
@@ -104,6 +155,68 @@ export default async function ProfilePage() {
         <ChangePasswordForm />
       </section>
 
+      {/* Panel managera */}
+      {managedSaunas.length > 0 && (
+        <section className="mb-6 rounded-3xl border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold">🏢 Moje sauny (manager)</h2>
+          <div className="mb-4 space-y-2">
+            {managedSaunas.map((m) => (
+              <div key={m.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5">
+                <Link href={`/sauna/${m.saunas?.id}`} className="font-semibold hover:underline">
+                  {m.saunas?.name}
+                  {m.saunas?.city && <span className="ml-1 font-normal text-gray-400">· {m.saunas.city}</span>}
+                </Link>
+                {m.status === 'pending' && (
+                  <span className="text-xs font-semibold text-yellow-600">⏳ Oczekuje</span>
+                )}
+                {m.status === 'approved' && (
+                  <span className="text-xs font-semibold text-green-600">✓ Aktywny</span>
+                )}
+                {m.status === 'rejected' && (
+                  <span className="text-xs font-semibold text-red-500">✗ Odrzucony</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {pendingRegistrations.length > 0 && (
+            <>
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-500">
+                Oczekujące rezerwacje ({pendingRegistrations.length})
+              </h3>
+              <div className="space-y-3">
+                {pendingRegistrations.map((reg) => {
+                  const ev = reg.sauna_events
+                  return (
+                    <div key={reg.id} className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-800">{reg._userName}</p>
+                          <p className="mt-0.5 text-xs text-gray-500">
+                            <Link href={`/events/${ev?.id}`} className="hover:underline">
+                              🔥 {ev?.title}
+                            </Link>
+                            {ev?.event_date && <span className="ml-1">· {ev.event_date.substring(0, 10)}</span>}
+                          </p>
+                          <p className="mt-0.5 text-xs text-gray-400">
+                            Zgłoszono: {new Date(reg.created_at).toLocaleDateString('pl-PL')}
+                          </p>
+                        </div>
+                        <RegistrationModerationActions registrationId={reg.id} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {approvedSaunas.length > 0 && pendingRegistrations.length === 0 && (
+            <p className="text-sm text-gray-500">Brak oczekujących rezerwacji.</p>
+          )}
+        </section>
+      )}
+
       {/* Ulubione sauny */}
       <section className="mb-6 rounded-3xl border bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-bold">♥ Ulubione sauny</h2>
@@ -114,7 +227,7 @@ export default async function ProfilePage() {
           </p>
         ) : (
           <div className="space-y-3">
-            {favorites.map((fav: any) => {
+            {favorites.map((fav) => {
               const sauna = fav.saunas
               return (
                 <Link
@@ -156,7 +269,7 @@ export default async function ProfilePage() {
           </p>
         ) : (
           <div className="space-y-3">
-            {upcomingEvents.map((interest: any) => {
+            {upcomingEvents.map((interest) => {
               const ev = interest.sauna_events
               const sauna = ev?.saunas
               return (

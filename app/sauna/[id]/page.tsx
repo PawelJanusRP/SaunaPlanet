@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import AddReviewForm from '@/components/AddReviewForm'
 import Navbar from '@/components/Navbar'
-import { toggleFavoriteSauna } from '@/app/(main)/profile/actions'
+import { toggleFavoriteSauna, requestManagerRole } from '@/app/(main)/profile/actions'
 
 export default async function SaunaPage({
   params,
@@ -57,8 +57,9 @@ export default async function SaunaPage({
         .eq('status', 'approved')
     : { data: [] }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mastersByEvent = (eventMasters ?? []).reduce<Record<string, any[]>>(
-    (acc, item: any) => {
+    (acc, item) => {
       if (!acc[item.event_id]) acc[item.event_id] = []
       acc[item.event_id].push(item)
       return acc
@@ -72,21 +73,26 @@ export default async function SaunaPage({
     .eq('status', 'approved')
 
   const activeMastersRaw = (saunaMastersRaw ?? []).filter(
-    (item: any) => item.sauna_events?.sauna_id === id
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (item) => (item as any).sauna_events?.sauna_id === id
   )
   const activeMasters = Array.from(
-    new Map(activeMastersRaw.map((item: any) => [item.sauna_masters?.id, item])).values()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    new Map(activeMastersRaw.map((item) => [(item as any).sauna_masters?.id, item])).values()
   )
 
-  const isFavorited = user
-    ? (await supabase
-        .from('user_favorites')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('sauna_id', id)
-        .maybeSingle()
-      ).data !== null
-    : false
+  const [isFavoritedResult, managerStatusResult] = await Promise.all([
+    user
+      ? supabase.from('user_favorites').select('id').eq('user_id', user.id).eq('sauna_id', id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    user
+      ? supabase.from('sauna_managers').select('status').eq('user_id', user.id).eq('sauna_id', id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+
+  const isFavorited = isFavoritedResult.data !== null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const managerStatus: string | null = (managerStatusResult.data as any)?.status ?? null
 
   const averageRating =
     reviews && reviews.length > 0
@@ -96,6 +102,7 @@ export default async function SaunaPage({
   const mainImage = photos?.[0]?.image_url ?? sauna.cover_image_url
 
   const toggleFavoriteAction = toggleFavoriteSauna.bind(null, id)
+  const requestManagerAction = requestManagerRole.bind(null, id)
 
   return (
     <>
@@ -108,20 +115,42 @@ export default async function SaunaPage({
         <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-3xl font-bold">{sauna.name}</h1>
 
-          {user && (
-            <form action={toggleFavoriteAction}>
-              <button
-                type="submit"
-                className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
-                  isFavorited
-                    ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
-                    : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                {isFavorited ? '♥ Ulubiona' : '♡ Dodaj do ulubionych'}
-              </button>
-            </form>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {user && (
+              <form action={toggleFavoriteAction}>
+                <button
+                  type="submit"
+                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+                    isFavorited
+                      ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100'
+                      : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  {isFavorited ? '♥ Ulubiona' : '♡ Dodaj do ulubionych'}
+                </button>
+              </form>
+            )}
+            {user && managerStatus === null && (
+              <form action={requestManagerAction}>
+                <button
+                  type="submit"
+                  className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+                >
+                  🏢 Zostań managerem
+                </button>
+              </form>
+            )}
+            {user && managerStatus === 'pending' && (
+              <span className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700">
+                ⏳ Wniosek managera oczekuje
+              </span>
+            )}
+            {user && managerStatus === 'approved' && (
+              <span className="rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+                ✓ Manager obiektu
+              </span>
+            )}
+          </div>
         </div>
 
         {averageRating && (
@@ -161,8 +190,9 @@ export default async function SaunaPage({
             <div className="text-sm text-gray-600">Brak przypisanych saunamistrzów.</div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
-              {activeMasters.map((item: any, index: number) => {
-                const master = item.sauna_masters
+              {activeMasters.map((item, index) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const master = (item as any).sauna_masters
                 return (
                   <Link
                     key={index}
@@ -220,7 +250,7 @@ export default async function SaunaPage({
                   <div className="mt-3">
                     {(mastersByEvent[event.id] ?? []).length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {(mastersByEvent[event.id] ?? []).map((item: any) => (
+                        {(mastersByEvent[event.id] ?? []).map((item) => (
                           <Link
                             key={item.sauna_masters?.id}
                             href={`/masters/${item.sauna_masters?.id}`}

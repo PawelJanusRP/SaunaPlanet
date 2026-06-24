@@ -25,6 +25,22 @@ export async function toggleFavoriteSauna(saunaId: string) {
   revalidatePath('/profile')
 }
 
+export async function requestManagerRole(saunaId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const { error } = await supabase
+    .from('sauna_managers')
+    .insert({ user_id: user.id, sauna_id: saunaId, status: 'pending' })
+
+  if (error) {
+    if (error.code === '23505') throw new Error('Już złożyłeś wniosek dla tej sauny')
+    throw new Error(error.message)
+  }
+  revalidatePath(`/sauna/${saunaId}`)
+}
+
 export async function toggleEventInterest(eventId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
