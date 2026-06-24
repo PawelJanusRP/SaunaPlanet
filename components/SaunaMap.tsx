@@ -1298,6 +1298,7 @@ useEffect(() => {
                 <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Odkrywaj</p>
                 <Link href="/events" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Wydarzenia</Link>
                 <Link href="/masters" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Saunamistrzowie</Link>
+                <Link href="/sauny" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Sauny</Link>
               </div>
 
               {user && (
