@@ -152,18 +152,16 @@ function MapCenterController({
 function MapResizeGuard() {
   const map = useMap()
   useEffect(() => {
-    // Double rAF: waits past browser layout phase so container has real dimensions.
-    // 800ms timeout: waits for MarkerClusterGroup chunkedLoading to finish adding
-    // markers before invalidating — otherwise markers are positioned on a 0×0 map.
+    // Double rAF: waits past browser layout phase so the container
+    // has real dimensions before Leaflet calculates layer positions.
+    // No timeout — calling invalidateSize mid-render disrupts marker positioning.
     let r1: number, r2: number
     r1 = requestAnimationFrame(() => {
       r2 = requestAnimationFrame(() => map.invalidateSize({ animate: false }))
     })
-    const t = setTimeout(() => map.invalidateSize({ animate: false }), 800)
     return () => {
       cancelAnimationFrame(r1)
       cancelAnimationFrame(r2)
-      clearTimeout(t)
     }
   }, [map])
   return null
@@ -1080,7 +1078,7 @@ useEffect(() => {
             </Popup>
           )}
 
-          <MarkerClusterGroup chunkedLoading maxClusterRadius={60}>
+          <MarkerClusterGroup maxClusterRadius={60}>
             {visibleItems.map((item) => (
               <Marker
                 key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
