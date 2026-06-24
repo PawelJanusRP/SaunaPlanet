@@ -49,24 +49,12 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
     setSaving(true)
     try {
       const supabase = createClient()
+      const newId = crypto.randomUUID()
 
-      const { data: inserted, error: insertError } = await supabase
-        .from('sauna_masters')
-        .insert({
-          name: name.trim(),
-          level,
-          bio: bio.trim() || null,
-          home_sauna_id: homeSaunaId || null,
-          status: 'approved',
-        })
-        .select('id')
-        .single()
-
-      if (insertError) throw insertError
-
-      if (avatarFile && inserted?.id) {
+      let avatarUrl: string | null = null
+      if (avatarFile) {
         const ext = avatarFile.name.split('.').pop() || 'jpg'
-        const path = `${inserted.id}/${Date.now()}.${ext}`
+        const path = `${newId}/${Date.now()}.${ext}`
 
         const { error: uploadError } = await supabase.storage
           .from('master-avatars')
@@ -78,13 +66,20 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
           .from('master-avatars')
           .getPublicUrl(path)
 
-        const { error: updateError } = await supabase
-          .from('sauna_masters')
-          .update({ avatar_url: urlData.publicUrl })
-          .eq('id', inserted.id)
-
-        if (updateError) throw updateError
+        avatarUrl = urlData.publicUrl
       }
+
+      const { error: insertError } = await supabase.from('sauna_masters').insert({
+        id: newId,
+        name: name.trim(),
+        level,
+        bio: bio.trim() || null,
+        home_sauna_id: homeSaunaId || null,
+        avatar_url: avatarUrl,
+        status: 'approved',
+      })
+
+      if (insertError) throw insertError
 
       toast.success('Saunamistrz dodany')
       handleClose()
