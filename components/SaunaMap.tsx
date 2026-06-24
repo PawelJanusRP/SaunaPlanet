@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
@@ -576,6 +577,7 @@ const roleBadge: Record<string, string> = {
 
 export default function SaunaMap() {
   const { user, role } = useAuth()
+  const router = useRouter()
   const [items, setItems] = useState<Sauna[]>([])
   const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
@@ -881,26 +883,7 @@ useEffect(() => {
         <div
 		key={event.event_id}
 		className="cursor-pointer rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
-		onClick={() => {
-			const sauna = items.find(
-			(s) => s.id === event.sauna_id
-			)
-		
-			if (!sauna) return
-		
-			setSelectedSauna(sauna)
-		
-			setSelectedLocation([
-			sauna.latitude,
-			sauna.longitude,
-			])
-		
-			const marker = markerRefs.current[sauna.id]
-		
-			if (marker) {
-			marker.openPopup()
-			}
-		}}
+		onClick={() => router.push(`/events/${event.event_id}`)}
 		>
           <div className="font-semibold text-orange-700">
             🔥 {event.title}

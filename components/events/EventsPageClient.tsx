@@ -30,10 +30,6 @@ export default function EventsPageClient({
       )
     : []
 
-console.log('SELECTED DATE:', selectedDate)
-console.log('EVENTS:', events)
-console.log('SELECTED EVENTS:', selectedEvents)
-
   return (
     <>
       <div className="mb-8">
@@ -59,7 +55,7 @@ console.log('SELECTED EVENTS:', selectedEvents)
               {selectedEvents.map((event) => (
                 <Link
                   key={event.event_id}
-                  href={`/sauna/${event.sauna_id}`}
+                  href={`/events/${event.event_id}`}
                   className="block rounded-xl bg-white p-3 shadow-sm hover:bg-orange-100"
                 >
                   <div className="font-bold text-orange-700">
