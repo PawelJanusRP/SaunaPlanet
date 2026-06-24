@@ -149,6 +149,17 @@ function MapCenterController({
   return null
 }
 
+function ClusterRefresher({ trigger }: { trigger: number }) {
+  const map = useMap()
+  useEffect(() => {
+    if (trigger === 0) return
+    // MarkerClusterGroup needs a moveend event to repaint after programmatic
+    // data updates (setItems). Without it, clusters are computed but not rendered.
+    map.fire('moveend')
+  }, [trigger, map])
+  return null
+}
+
 function MapResizeGuard() {
   const map = useMap()
   useEffect(() => {
@@ -602,6 +613,7 @@ export default function SaunaMap() {
   const [radiusKm, setRadiusKm] = useState(1000)
   const [onlyWithEvents, setOnlyWithEvents] = useState(false)
   const [mapMode, setMapMode] = useState<'saunas' | 'events' | 'all'>('all')
+  const [clusterRefreshKey, setClusterRefreshKey] = useState(0)
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
 
@@ -701,6 +713,7 @@ export default function SaunaMap() {
 	  }))
 	)
     setLoading(false)
+    setClusterRefreshKey((k) => k + 1)
   }
 
   async function centerOnUserLocation() {
@@ -1105,11 +1118,12 @@ useEffect(() => {
 					onAddPhoto={(itemId) => setUploadItemId(itemId)}
 					onEdit={(item) => setEditingSauna(item)}
 					onAddEvent={(item) => setEventSauna(item)}
-				  />					
+				  />
                 </Popup>
               </Marker>
             ))}
           </MarkerClusterGroup>
+          <ClusterRefresher trigger={clusterRefreshKey} />
         </MapContainer>
 
         <div
