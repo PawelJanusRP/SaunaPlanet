@@ -532,7 +532,53 @@ Dependencies:
 * SP-004 (sauna masters)
 * SP-002 (reviews)
 
-See also: SP-016 (affiliations), Phase 7 (Verification and Authority)
+See also: SP-016 (affiliations), Phase 7 (Verification and Authority), SP-021
+
+---
+
+# SP-021 Rating Parameters Admin Panel (BACKLOG)
+
+Status: PLANNED
+
+Description:
+
+Admin panel section for configuring parameters used in the sauna master
+rating algorithm (SP-020) and potentially other platform ranking formulas.
+Allows tuning without code changes or direct database access.
+
+Proposed parameters:
+
+* recency decay factor — how much older events are discounted (e.g. half-life in days)
+* minimum event threshold — minimum number of events before a rating is published
+* event weight source — toggle between sauna_reviews vs. event_ratings as input
+* rating visibility threshold — minimum computed score to display publicly
+* satellite intensity scale — min/max rating values mapped to visual ring intensity
+
+Proposed implementation:
+
+* platform_settings table: key-value store (key TEXT, value JSONB, updated_at, updated_by)
+* RLS: readable by all authenticated users, writable by admin only
+* admin panel "Parametry rankingu" tab — form rendered from settings schema
+* rating computation reads from platform_settings at query time (no hardcoded constants)
+
+Proposed schema:
+
+```sql
+CREATE TABLE platform_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  updated_by UUID REFERENCES auth.users(id)
+);
+```
+
+Dependencies:
+
+* SP-020 (sauna master ratings — defines which parameters are needed)
+* SP-012 (roles — admin-only write access)
+
+See also: SP-020
 
 ---
 
@@ -565,3 +611,4 @@ Planned:
 * Recurring events
 * Sauna master affiliations (SP-016)
 * Sauna master ratings from event aggregation (SP-020)
+* Rating parameters admin panel (SP-021)
