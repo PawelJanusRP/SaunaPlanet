@@ -190,10 +190,15 @@ export default async function EventPage({
               </p>
             )}
             {saunaHistoricalRating && (
-              <p className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs text-orange-700">
-                Poprzednie eventy w tej saunie: <span className="font-semibold">⭐ {saunaHistoricalRating.avg.toFixed(1)}</span>
-                <span className="ml-1 text-orange-500">({saunaHistoricalRating.count} {saunaHistoricalRating.count === 1 ? 'ocena' : saunaHistoricalRating.count < 5 ? 'oceny' : 'ocen'})</span>
-              </p>
+              <Link
+                href={`/sauna/${sauna.id}/reviews`}
+                className="flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-1.5 text-xs text-orange-700 hover:bg-orange-100 transition-colors"
+              >
+                <span>Poprzednie eventy w tej saunie:</span>
+                <span className="font-semibold">⭐ {saunaHistoricalRating.avg.toFixed(1)}</span>
+                <span className="text-orange-500">({saunaHistoricalRating.count} {saunaHistoricalRating.count === 1 ? 'ocena' : saunaHistoricalRating.count < 5 ? 'oceny' : 'ocen'})</span>
+                <span className="ml-auto text-orange-400">→</span>
+              </Link>
             )}
           </div>
 
