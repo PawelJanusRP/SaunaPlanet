@@ -33,6 +33,20 @@ export default async function ProfilePage() {
   ])
 
   const favorites = (favoritesRaw ?? []) as any[]
+
+  const favSaunaIds = favorites.map((f) => f.sauna_id).filter(Boolean)
+  const { data: favPhotosRaw } = favSaunaIds.length > 0
+    ? await supabase
+        .from('sauna_photos')
+        .select('sauna_id, image_url')
+        .in('sauna_id', favSaunaIds)
+        .order('created_at', { ascending: true })
+    : { data: [] }
+
+  const firstFavPhoto: Record<string, string> = {}
+  for (const p of favPhotosRaw ?? []) {
+    if (!firstFavPhoto[p.sauna_id]) firstFavPhoto[p.sauna_id] = p.image_url
+  }
   const upcomingEvents = ((interestsRaw ?? []) as any[]).filter(
     (i) => i.sauna_events?.event_date >= today
   )
@@ -93,9 +107,9 @@ export default async function ProfilePage() {
                   href={`/sauna/${sauna?.id}`}
                   className="flex items-center gap-3 rounded-2xl border p-3 hover:bg-orange-50 transition-colors"
                 >
-                  {sauna?.cover_image_url ? (
+                  {(firstFavPhoto[fav.sauna_id] ?? sauna?.cover_image_url) ? (
                     <img
-                      src={sauna.cover_image_url}
+                      src={firstFavPhoto[fav.sauna_id] ?? sauna.cover_image_url}
                       alt={sauna.name}
                       className="h-14 w-14 shrink-0 rounded-xl object-cover"
                     />
