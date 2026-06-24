@@ -1091,7 +1091,7 @@ useEffect(() => {
                   markerRefs.current[item.id] = ref
                 }}
               >
-                <Popup>
+                <Popup autoPan={false}>
                   <SaunaPopup
 					sauna={item}
 					onAddPhoto={(itemId) => setUploadItemId(itemId)}

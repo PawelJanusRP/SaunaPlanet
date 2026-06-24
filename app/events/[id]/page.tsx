@@ -57,15 +57,24 @@ export default async function EventPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const photos = (photosRaw ?? []) as any[]
 
-  const isGoing = user
-    ? (await supabase
-        .from('user_event_interests')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('event_id', id)
-        .maybeSingle()
-      ).data !== null
-    : false
+  const [isGoingResult, goingCountResult] = await Promise.all([
+    user
+      ? supabase
+          .from('user_event_interests')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('event_id', id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from('user_event_interests')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', id)
+      .eq('status', 'going'),
+  ])
+
+  const isGoing = isGoingResult.data !== null
+  const goingCount = goingCountResult.count ?? 0
 
   const dateFormatted = ev.event_date
     ? new Date(ev.event_date).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -123,20 +132,27 @@ export default async function EventPage({
             <p className="mt-4 text-gray-700 leading-relaxed">{ev.description}</p>
           )}
 
-          {user && (
-            <form action={toggleInterestAction} className="mt-5">
-              <button
-                type="submit"
-                className={`w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
-                  isGoing
-                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                    : 'bg-orange-600 text-white hover:bg-orange-700'
-                }`}
-              >
-                {isGoing ? '✓ Idę na to wydarzenie' : 'Idę →'}
-              </button>
-            </form>
-          )}
+          <div className="mt-5 flex items-center gap-3">
+            {user && (
+              <form action={toggleInterestAction} className="flex-1">
+                <button
+                  type="submit"
+                  className={`w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
+                    isGoing
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-orange-600 text-white hover:bg-orange-700'
+                  }`}
+                >
+                  {isGoing ? '✓ Idę na to wydarzenie' : 'Idę →'}
+                </button>
+              </form>
+            )}
+            {goingCount > 0 && (
+              <p className="shrink-0 text-sm text-gray-500">
+                {goingCount} {goingCount === 1 ? 'osoba idzie' : goingCount < 5 ? 'osoby idą' : 'osób idzie'}
+              </p>
+            )}
+          </div>
         </section>
 
         {/* Saunamistrzowie */}
