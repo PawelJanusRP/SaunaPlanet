@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import ChangePasswordForm from '@/components/ChangePasswordForm'
 
 const roleLabels: Record<string, string> = {
   user: 'Użytkownik',
@@ -87,6 +88,8 @@ export default async function ProfilePage() {
             <span className="font-mono text-xs text-gray-400">{user.id}</span>
           </div>
         </div>
+
+        <ChangePasswordForm />
       </section>
 
       {/* Ulubione sauny */}
