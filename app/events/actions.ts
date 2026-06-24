@@ -52,3 +52,58 @@ export async function removeEventMaster(eventId: string, masterId: string) {
   if (error) throw new Error(error.message)
   revalidatePath(`/events/${eventId}`)
 }
+
+export async function addEventReview(eventId: string, rating: number, comment: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const { error } = await supabase
+    .from('event_reviews')
+    .insert({ event_id: eventId, user_id: user.id, rating, comment: comment.trim() || null })
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}`)
+}
+
+export async function deleteEventReview(reviewId: string, eventId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const { error } = await supabase
+    .from('event_reviews')
+    .delete()
+    .eq('id', reviewId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}`)
+}
+
+export async function addEventComment(eventId: string, comment: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+  if (!comment.trim()) throw new Error('Komentarz nie może być pusty')
+
+  const { error } = await supabase
+    .from('event_comments')
+    .insert({ event_id: eventId, user_id: user.id, comment: comment.trim() })
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}`)
+}
+
+export async function deleteEventComment(commentId: string, eventId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const { error } = await supabase
+    .from('event_comments')
+    .delete()
+    .eq('id', commentId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath(`/events/${eventId}`)
+}

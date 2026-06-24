@@ -4,8 +4,11 @@ import EditEventForm from '@/components/EditEventForm'
 import AddEventMasterForm from '@/components/AddEventMasterForm'
 import RemoveEventMasterButton from '@/components/RemoveEventMasterButton'
 import UploadEventPhotoButton from '@/components/UploadEventPhotoButton'
+import EventReviewForm from '@/components/EventReviewForm'
+import EventCommentForm from '@/components/EventCommentForm'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { toggleEventInterest } from '@/app/(main)/profile/actions'
+import { deleteEventReview, deleteEventComment } from '@/app/events/actions'
 
 export default async function EventPage({
   params,
@@ -38,6 +41,8 @@ export default async function EventPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ev = eventData as any
   const sauna = ev.saunas
+  const today = new Date().toISOString().split('T')[0]
+  const isPast = ev.event_date < today
 
   const { data: eventMastersRaw } = await supabase
     .from('sauna_event_masters')
@@ -57,24 +62,77 @@ export default async function EventPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const photos = (photosRaw ?? []) as any[]
 
-  const [isGoingResult, goingCountResult] = await Promise.all([
+  // Reviews (past) / Comments (upcoming) + going count — all parallel
+  const [
+    isGoingResult,
+    goingCountResult,
+    reviewsResult,
+    commentsResult,
+  ] = await Promise.all([
     user
-      ? supabase
-          .from('user_event_interests')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('event_id', id)
-          .maybeSingle()
+      ? supabase.from('user_event_interests').select('id').eq('user_id', user.id).eq('event_id', id).maybeSingle()
       : Promise.resolve({ data: null }),
-    supabase
-      .from('user_event_interests')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', id)
-      .eq('status', 'going'),
+    supabase.from('user_event_interests').select('id', { count: 'exact', head: true }).eq('event_id', id).eq('status', 'going'),
+    isPast
+      ? supabase.from('event_reviews').select('id, rating, comment, created_at, user_id').eq('event_id', id).order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] }),
+    !isPast
+      ? supabase.from('event_comments').select('id, comment, created_at, user_id').eq('event_id', id).order('created_at', { ascending: true })
+      : Promise.resolve({ data: [] }),
   ])
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const reviews = (reviewsResult.data ?? []) as any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const comments = (commentsResult.data ?? []) as any[]
   const isGoing = isGoingResult.data !== null
   const goingCount = goingCountResult.count ?? 0
+
+  // Resolve display names for review/comment authors
+  const authorIds = [...new Set([...reviews, ...comments].map((r) => r.user_id))]
+  const { data: authorProfiles } = authorIds.length > 0
+    ? await supabase.from('profiles').select('id, first_name, last_name').in('id', authorIds)
+    : { data: [] }
+  const nameById: Record<string, string> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const p of (authorProfiles ?? []) as any[]) {
+    const name = [p.first_name, p.last_name].filter(Boolean).join(' ')
+    nameById[p.id] = name || 'Użytkownik'
+  }
+
+  // Historical event rating for this sauna (shown on upcoming event pages)
+  let saunaHistoricalRating: { avg: number; count: number } | null = null
+  if (!isPast && sauna?.id) {
+    const { data: pastEventIds } = await supabase
+      .from('sauna_events')
+      .select('id')
+      .eq('sauna_id', sauna.id)
+      .lt('event_date', today)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ids = (pastEventIds ?? []).map((e: any) => e.id)
+    if (ids.length > 0) {
+      const { data: histReviews } = await supabase
+        .from('event_reviews')
+        .select('rating')
+        .in('event_id', ids)
+
+      if (histReviews && histReviews.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const avg = histReviews.reduce((s: number, r: any) => s + r.rating, 0) / histReviews.length
+        saunaHistoricalRating = { avg, count: histReviews.length }
+      }
+    }
+  }
+
+  // Avg rating for past event — reviews is already any[], cast is safe
+  const avgReview = isPast && reviews.length > 0
+    ? reviews.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviews.length
+    : null
+
+  const userAlreadyReviewed = isPast && user
+    ? reviews.some((r: { user_id: string }) => r.user_id === user.id)
+    : false
 
   const dateFormatted = ev.event_date
     ? new Date(ev.event_date).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -126,33 +184,46 @@ export default async function EventPage({
                 {String(ev.price).includes('zł') ? ev.price : `${ev.price} zł`}
               </span></p>
             )}
+            {avgReview !== null && (
+              <p>⭐ <span className="font-semibold">{avgReview.toFixed(1)}</span>
+                <span className="ml-1 text-gray-400">({reviews.length} {reviews.length === 1 ? 'ocena' : reviews.length < 5 ? 'oceny' : 'ocen'})</span>
+              </p>
+            )}
+            {saunaHistoricalRating && (
+              <p className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs text-orange-700">
+                Poprzednie eventy w tej saunie: <span className="font-semibold">⭐ {saunaHistoricalRating.avg.toFixed(1)}</span>
+                <span className="ml-1 text-orange-500">({saunaHistoricalRating.count} {saunaHistoricalRating.count === 1 ? 'ocena' : saunaHistoricalRating.count < 5 ? 'oceny' : 'ocen'})</span>
+              </p>
+            )}
           </div>
 
           {ev.description && (
             <p className="mt-4 text-gray-700 leading-relaxed">{ev.description}</p>
           )}
 
-          <div className="mt-5 flex items-center gap-3">
-            {user && (
-              <form action={toggleInterestAction} className="flex-1">
-                <button
-                  type="submit"
-                  className={`w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
-                    isGoing
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-orange-600 text-white hover:bg-orange-700'
-                  }`}
-                >
-                  {isGoing ? '✓ Idę na to wydarzenie' : 'Idę →'}
-                </button>
-              </form>
-            )}
-            {goingCount > 0 && (
-              <p className="shrink-0 text-sm text-gray-500">
-                {goingCount} {goingCount === 1 ? 'osoba idzie' : goingCount < 5 ? 'osoby idą' : 'osób idzie'}
-              </p>
-            )}
-          </div>
+          {!isPast && (
+            <div className="mt-5 flex items-center gap-3">
+              {user && (
+                <form action={toggleInterestAction} className="flex-1">
+                  <button
+                    type="submit"
+                    className={`w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
+                      isGoing
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                        : 'bg-orange-600 text-white hover:bg-orange-700'
+                    }`}
+                  >
+                    {isGoing ? '✓ Idę na to wydarzenie' : 'Idę →'}
+                  </button>
+                </form>
+              )}
+              {goingCount > 0 && (
+                <p className="shrink-0 text-sm text-gray-500">
+                  {goingCount} {goingCount === 1 ? 'osoba idzie' : goingCount < 5 ? 'osoby idą' : 'osób idzie'}
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Saunamistrzowie */}
@@ -216,6 +287,102 @@ export default async function EventPage({
             </div>
           )}
         </section>
+
+        {/* Komentarze (nadchodzące) */}
+        {!isPast && (
+          <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-bold">💬 Komentarze</h2>
+
+            {user && (
+              <div className="mb-5">
+                <EventCommentForm eventId={id} />
+              </div>
+            )}
+
+            {comments.length === 0 ? (
+              <p className="text-sm text-gray-500">Brak komentarzy. Bądź pierwszy!</p>
+            ) : (
+              <div className="space-y-3">
+                {comments.map((c) => {
+                  const canDelete = isEditor || c.user_id === user?.id
+                  const deleteAction = deleteEventComment.bind(null, c.id, id)
+                  return (
+                    <div key={c.id} className="rounded-xl bg-gray-50 px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-500">
+                            {nameById[c.user_id] ?? 'Użytkownik'}
+                            <span className="ml-2 font-normal text-gray-400">
+                              {new Date(c.created_at).toLocaleDateString('pl-PL')}
+                            </span>
+                          </p>
+                          <p className="mt-1 text-sm text-gray-700">{c.comment}</p>
+                        </div>
+                        {canDelete && (
+                          <form action={deleteAction}>
+                            <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-600">Usuń</button>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Oceny (minione) */}
+        {isPast && (
+          <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-bold">⭐ Oceny</h2>
+
+            {user && !userAlreadyReviewed && (
+              <div className="mb-5 rounded-xl bg-orange-50 p-4">
+                <p className="mb-3 text-sm font-medium text-orange-700">Byłeś na tym evencie? Oceń go!</p>
+                <EventReviewForm eventId={id} />
+              </div>
+            )}
+
+            {user && userAlreadyReviewed && (
+              <p className="mb-4 text-sm text-green-700">✓ Już oceniłeś to wydarzenie.</p>
+            )}
+
+            {reviews.length === 0 ? (
+              <p className="text-sm text-gray-500">Brak ocen.</p>
+            ) : (
+              <div className="space-y-3">
+                {reviews.map((r) => {
+                  const canDelete = isEditor || r.user_id === user?.id
+                  const deleteAction = deleteEventReview.bind(null, r.id, id)
+                  return (
+                    <div key={r.id} className="rounded-xl bg-gray-50 px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-gray-500">
+                            {nameById[r.user_id] ?? 'Użytkownik'}
+                            <span className="ml-2 font-normal text-gray-400">
+                              {new Date(r.created_at).toLocaleDateString('pl-PL')}
+                            </span>
+                          </p>
+                          <p className="mt-0.5 text-sm font-semibold text-yellow-600">
+                            {'⭐'.repeat(r.rating)}
+                          </p>
+                          {r.comment && <p className="mt-1 text-sm text-gray-700">{r.comment}</p>}
+                        </div>
+                        {canDelete && (
+                          <form action={deleteAction}>
+                            <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-600">Usuń</button>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </>
   )
