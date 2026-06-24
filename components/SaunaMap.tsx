@@ -878,29 +878,10 @@ useEffect(() => {
 
     <div className="space-y-2">
       {upcomingEvents.map((event) => (
-        <div
+        <Link
 		key={event.event_id}
-		className="cursor-pointer rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
-		onClick={() => {
-			const sauna = items.find(
-			(s) => s.id === event.sauna_id
-			)
-		
-			if (!sauna) return
-		
-			setSelectedSauna(sauna)
-		
-			setSelectedLocation([
-			sauna.latitude,
-			sauna.longitude,
-			])
-		
-			const marker = markerRefs.current[sauna.id]
-		
-			if (marker) {
-			marker.openPopup()
-			}
-		}}
+		href={`/events/${event.event_id}`}
+		className="block rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
 		>
           <div className="font-semibold text-orange-700">
             🔥 {event.title}
@@ -922,7 +903,7 @@ useEffect(() => {
               {event.price.includes('zł') ? event.price : `${event.price} zł`}
             </div>
           )}
-        </div>
+        </Link>
       ))}
     </div>
   </div>
