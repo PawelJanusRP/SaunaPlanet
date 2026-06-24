@@ -39,7 +39,7 @@ Milestones:
 
 # Phase 2 - Accounts and Security
 
-Status: IN PROGRESS
+Status: COMPLETED
 
 Goal:
 
@@ -71,7 +71,7 @@ Users can create accounts and securely interact with platform content.
 
 # Phase 3 - Administration
 
-Status: PLANNED
+Status: IN PROGRESS
 
 Goal:
 
