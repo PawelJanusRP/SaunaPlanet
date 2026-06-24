@@ -49,7 +49,7 @@ Actions (app/(main)/admin/actions.ts):
 
 # SP-020 Mój profil i ulubione
 
-Status: PLANNED
+Status: DONE
 
 Zakres:
 
@@ -66,7 +66,7 @@ Proponowane tabele:
 
 # SP-021 Recenzje i komentarze eventów
 
-Status: PLANNED
+Status: DONE
 
 Zakres:
 

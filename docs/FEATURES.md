@@ -502,55 +502,128 @@ Related database objects:
 
 ---
 
-# SP-020 Sauna Master Ratings (BACKLOG)
+# SP-020 User Favorites and Event Interests
+
+Status: DONE
+
+Implemented:
+
+* logged-in user can mark a sauna as favourite (toggle button on /sauna/[id])
+* logged-in user can mark an event as "Idę" (toggle button on /events/[id])
+* /profile page shows: favourite saunas with thumbnail, upcoming events the user is going to
+* thumbnail resolved from sauna_photos (Supabase-hosted), falls back to cover_image_url
+* going count displayed on event page with correct Polish plural forms
+* schema compatible with future reservations (status field on user_event_interests)
+
+Related database objects:
+
+* user_favorites (user_id, sauna_id, created_at)
+* user_event_interests (user_id, event_id, status, created_at)
+
+Related files:
+
+* app/(main)/profile/actions.ts (toggleFavoriteSauna, toggleEventInterest)
+* app/(main)/profile/page.tsx
+* app/sauna/[id]/page.tsx
+* app/events/[id]/page.tsx
+
+---
+
+# SP-021 Event Reviews and Comments
+
+Status: DONE
+
+Implemented:
+
+**Post-event reviews:**
+
+* logged-in user can rate a past event (1–5 stars) + optional text comment
+* review form visible only when event_date < today
+* one review per user per event (enforced by UNIQUE constraint)
+* average rating shown in event header
+* EventReviewForm: fixed-width star buttons (opacity toggle) — no layout shift on hover
+
+**Pre-event comments:**
+
+* logged-in user can add a text comment to a future event (no stars)
+* comment form visible only when event_date >= today
+* comments visible to all; author + date shown
+
+**Historical sauna rating:**
+
+* on upcoming event page: aggregate rating of past events at the same sauna
+* displayed as a clickable badge linking to /sauna/[id]/reviews
+
+**Sauna reviews listing page:**
+
+* /sauna/[id]/reviews — all reviews from past events at a sauna
+* sorted by event date descending
+* each card shows: event name (link to /events/[id]), date, star rating, comment, author
+
+**Delete:**
+
+* author or admin/moderator can delete own review or comment
+
+Related database objects:
+
+* event_reviews (id, event_id, user_id, rating INT 1-5, comment TEXT, created_at)
+* event_comments (id, event_id, user_id, comment TEXT, created_at)
+
+Related files:
+
+* app/events/actions.ts (addEventReview, deleteEventReview, addEventComment, deleteEventComment)
+* app/events/[id]/page.tsx
+* app/sauna/[id]/reviews/page.tsx
+* components/EventReviewForm.tsx
+* components/EventCommentForm.tsx
+
+---
+
+# SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED
 
 Description:
 
-Rating system for sauna masters derived from aggregate ratings of events
-in which they participate — no separate review form needed.
+Ranking system for saunas and sauna masters based on aggregated event reviews.
 
 Design considerations:
 
-* master rating = weighted average of event ratings where the master is assigned
-* event rating = average of all sauna reviews submitted for events at the linked sauna
-  (or dedicated event_ratings table if introduced in the future)
+* sauna ranking: average of sauna_reviews + event_reviews for events at that sauna
+* sauna master ranking: weighted average of event_reviews for events where master is assigned
+* dedicated /ranking page or section on map
+* badges: Top 10, Best Master of the Month
 * master profile page displays computed rating and contributing event count
-* masters list page can be sorted by rating
 * rating visible as satellite ring intensity or badge on map
 
 Open questions:
 
-* source of truth: reuse sauna_reviews or introduce event_ratings table?
-* weighting: equal weight per event or weighted by recency?
+* weighting: equal per event or weighted by recency?
 * minimum threshold: require N events before displaying rating?
 
 Dependencies:
 
-* SP-001 (events)
-* SP-004 (sauna masters)
-* SP-002 (reviews)
+* SP-001 (events), SP-002 (reviews), SP-004 (masters), SP-021 (event reviews)
 
-See also: SP-016 (affiliations), Phase 7 (Verification and Authority), SP-021
+See also: SP-016 (affiliations), SP-027 (rating parameters)
 
 ---
 
-# SP-021 Rating Parameters Admin Panel (BACKLOG)
+# SP-027 Rating Parameters Admin Panel (BACKLOG)
 
 Status: PLANNED
 
 Description:
 
 Admin panel section for configuring parameters used in the sauna master
-rating algorithm (SP-020) and potentially other platform ranking formulas.
+rating algorithm (SP-023) and potentially other platform ranking formulas.
 Allows tuning without code changes or direct database access.
 
 Proposed parameters:
 
 * recency decay factor — how much older events are discounted (e.g. half-life in days)
 * minimum event threshold — minimum number of events before a rating is published
-* event weight source — toggle between sauna_reviews vs. event_ratings as input
+* event weight source — toggle between sauna_reviews vs. event_reviews as input
 * rating visibility threshold — minimum computed score to display publicly
 * satellite intensity scale — min/max rating values mapped to visual ring intensity
 
@@ -575,10 +648,10 @@ CREATE TABLE platform_settings (
 
 Dependencies:
 
-* SP-020 (sauna master ratings — defines which parameters are needed)
+* SP-023 (rankings — defines which parameters are needed)
 * SP-012 (roles — admin-only write access)
 
-See also: SP-020
+See also: SP-023
 
 ---
 
@@ -601,14 +674,16 @@ Completed:
 * Certificate system with dictionary and moderation (SP-017)
 * Event detail page with masters, photos, inline editing (SP-018)
 * Sauny list page with thumbnails, ratings, city filter (SP-019)
+* User favorites and event interests — /profile (SP-020)
+* Event reviews (post-event) + comments (pre-event) + sauna reviews page (SP-021)
 
 Planned:
 
-* Bookings
-* Payments
-* Private Saunas
+* Bookings (SP-022)
+* Payments (SP-024)
+* Private Saunas (SP-025)
 * Verification
 * Recurring events
-* Sauna master affiliations (SP-016)
-* Sauna master ratings from event aggregation (SP-020)
-* Rating parameters admin panel (SP-021)
+* Sauna master affiliations (SP-016, SP-026)
+* Sauna and master rankings (SP-023)
+* Rating parameters admin panel (SP-027)

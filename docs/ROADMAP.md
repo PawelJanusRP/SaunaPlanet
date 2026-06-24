@@ -71,7 +71,7 @@ Users can create accounts and securely interact with platform content.
 
 # Phase 3 - Administration
 
-Status: IN PROGRESS
+Status: COMPLETED
 
 Goal:
 
@@ -86,13 +86,10 @@ Delivered:
 * event detail page with inline admin editing (SP-018)
 * event photos management (SP-018)
 * sauna list page with thumbnails, ratings, city filter (SP-019)
-
-Remaining:
-
-* facility management (edit/delete from admin panel)
-* event moderation (approve/reject events)
-* review moderation
-* image moderation
+* admin users tab: name/email display, role assignment (SP-012 enhancement)
+* facility management (edit/delete from admin panel) — SP-019
+* event moderation (approve/reject events) — SP-019
+* review moderation — SP-019
 
 Success criteria:
 
@@ -102,21 +99,26 @@ Most content can be managed without direct database access.
 
 # Phase 4 - Event Platform
 
-Status: PLANNED
+Status: IN PROGRESS
 
 Goal:
 
 Transform events into first-class platform objects.
 
-Features:
+Delivered:
+
+* user event interests — "Idę" toggle with going count (SP-020)
+* post-event star ratings + pre-event comments (SP-021)
+* historical sauna rating from past events shown on event page (SP-021)
+* sauna event reviews listing page /sauna/[id]/reviews (SP-021)
+
+Remaining:
 
 * recurring events
 * advanced calendar
-* attendance limits
-* waiting lists
-* event categories
-* event filtering
-* sauna master ratings derived from event ratings (SP-020)
+* attendance limits and waiting lists — reservations (SP-022)
+* event categories and filtering
+* sauna and master rankings derived from event reviews (SP-023)
 
 Success criteria:
 
