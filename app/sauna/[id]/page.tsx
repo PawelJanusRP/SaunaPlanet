@@ -233,24 +233,24 @@ export default async function SaunaPage({
           <div className="space-y-3">
             {events.map((event) => (
               <div key={event.id} className="rounded-xl bg-white p-3 shadow-sm">
-                <div className="font-bold">{event.title}</div>
+                <Link href={`/events/${event.id}`} className="block hover:opacity-80">
+                  <div className="font-bold text-orange-700">{event.title}</div>
 
-                <div className="text-sm text-gray-500">
-                  {event.event_date?.substring(0, 10)}
-                  {event.event_time ? ` ${event.event_time.substring(0, 5)}` : ''}
-                </div>
-
-                {event.price && (
-                  <div className="mt-1 text-sm font-semibold text-orange-700">
-                    {event.price.includes('zł') ? event.price : `${event.price} zł`}
+                  <div className="text-sm text-gray-500">
+                    {event.event_date?.substring(0, 10)}
+                    {event.event_time ? ` ${event.event_time.substring(0, 5)}` : ''}
                   </div>
-                )}
 
-				{event.description && (
-				<p className="mt-2 text-sm text-gray-700">
-					{event.description}
-				</p>
-				)}
+                  {event.price && (
+                    <div className="mt-1 text-sm font-semibold text-orange-700">
+                      {event.price.includes('zł') ? event.price : `${event.price} zł`}
+                    </div>
+                  )}
+
+                  {event.description && (
+                    <p className="mt-2 text-sm text-gray-700">{event.description}</p>
+                  )}
+                </Link>
 
 				<div className="mt-3">
 				  {(mastersByEvent[event.id] ?? []).length > 0 ? (

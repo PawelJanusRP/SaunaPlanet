@@ -18,7 +18,6 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
@@ -577,7 +576,6 @@ const roleBadge: Record<string, string> = {
 
 export default function SaunaMap() {
   const { user, role } = useAuth()
-  const router = useRouter()
   const [items, setItems] = useState<Sauna[]>([])
   const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
@@ -880,10 +878,10 @@ useEffect(() => {
 
     <div className="space-y-2">
       {upcomingEvents.map((event) => (
-        <div
+        <Link
 		key={event.event_id}
-		className="cursor-pointer rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
-		onClick={() => router.push(`/events/${event.event_id}`)}
+		href={`/events/${event.event_id}`}
+		className="block rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
 		>
           <div className="font-semibold text-orange-700">
             🔥 {event.title}
@@ -905,7 +903,7 @@ useEffect(() => {
               {event.price.includes('zł') ? event.price : `${event.price} zł`}
             </div>
           )}
-        </div>
+        </Link>
       ))}
     </div>
   </div>
