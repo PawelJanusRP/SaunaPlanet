@@ -16,7 +16,7 @@ export default async function SaunyPage() {
 
   const { data: saunas } = await supabase
     .from('saunas')
-    .select('id, name, city, category, cover_image_url, avg_rating, status')
+    .select('id, name, city, category, cover_image_url, status')
     .eq('status', 'active')
     .order('name')
 
@@ -72,11 +72,6 @@ export default async function SaunyPage() {
                         <p className="mt-0.5 text-sm text-gray-500">
                           {CATEGORY_LABELS[s!.category] ?? s!.category}
                         </p>
-                        {s!.avg_rating && (
-                          <p className="mt-1 text-sm font-semibold text-yellow-600">
-                            ⭐ {Number(s!.avg_rating).toFixed(1)}
-                          </p>
-                        )}
                       </div>
                     </Link>
                   ))}
