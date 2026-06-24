@@ -365,6 +365,32 @@ Related database objects:
 
 ---
 
+# SP-017 Certificate System
+
+Status: DONE
+
+Branch: feature/SP-017-certificates
+
+Scope:
+
+* certificate_types dictionary table managed by admin
+* master_certificates table with moderation workflow (pending/approved/rejected)
+* Seed: 23 certificate types across 7 categories (certifications, PL championship, Battle of Gladiators, Aufguss WM, Modern Classic Cup, cups, other)
+* "Inny certyfikat" with free-text field stored in notes
+* AddCertificateModal on master profile (admin → approved, user → pending)
+* Master profile: certificates grouped by category, pending visible to admin only
+* Admin panel: "Certyfikaty" tab for pending moderation (approve/reject)
+* Admin panel: "Słownik certyfikatów" tab for CRUD on certificate_types
+* master_credentials table preserved (backward compat)
+
+Related database objects:
+
+* certificate_types
+* master_certificates
+* RLS policies on both tables
+
+---
+
 # SP-016 Sauna Master Affiliations (BACKLOG)
 
 Status: PLANNED
@@ -424,6 +450,7 @@ Completed:
 * Roles and permissions
 * Admin panel (submissions + users + master moderation)
 * Sauna master registration workflow (SP-015)
+* Certificate system with dictionary and moderation (SP-017)
 
 Planned:
 

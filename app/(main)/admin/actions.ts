@@ -83,3 +83,55 @@ export async function rejectMaster(masterId: string, note?: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin')
 }
+
+export async function approveCertificate(certId: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('master_certificates')
+    .update({ status: 'approved' })
+    .eq('id', certId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
+export async function rejectCertificate(certId: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('master_certificates')
+    .update({ status: 'rejected' })
+    .eq('id', certId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
+export async function addCertificateType(name: string, category: string) {
+  await assertAdmin()
+  if (!name.trim() || !category.trim()) throw new Error('Podaj nazwę i kategorię')
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('certificate_types')
+    .insert({ name: name.trim(), category: category.trim() })
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
+export async function toggleCertificateType(id: string, isActive: boolean) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('certificate_types')
+    .update({ is_active: isActive })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
