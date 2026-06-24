@@ -137,6 +137,54 @@ Zakres:
 
 ---
 
+# SP-026 Przypisywanie saunamistrzów do saun (wiele do wielu, role)
+
+Status: PLANNED
+
+Zakres:
+
+* saunamistrz może być przypisany do wielu saun z określoną rolą per sauna
+* zastępuje obecne podejście `home_sauna_id` (jeden rekord)
+* role w relacji: `resident` (stały), `guest` (gościnny), `owner` (właściciel)
+* status per relacja: `pending / approved / rejected`
+* admin/moderator zarządza przypisaniami z panelu admina
+
+Proponowana tabela:
+
+```sql
+CREATE TABLE sauna_master_affiliations (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  master_id   UUID NOT NULL REFERENCES sauna_masters(id) ON DELETE CASCADE,
+  sauna_id    UUID NOT NULL REFERENCES saunas(id) ON DELETE CASCADE,
+  role        TEXT NOT NULL DEFAULT 'resident',  -- resident | guest | owner
+  is_primary  BOOLEAN DEFAULT false,             -- główna sauna mistrza
+  status      TEXT NOT NULL DEFAULT 'pending',   -- pending | approved | rejected
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (master_id, sauna_id)
+);
+```
+
+Migracja:
+
+* istniejące wartości `sauna_masters.home_sauna_id` → wiersze w tej tabeli z `role='resident', is_primary=true, status='approved'`
+* `home_sauna_id` można zachować tymczasowo dla backward compat, potem usunąć
+
+RLS:
+
+* INSERT: admin/moderator lub sam saunamistrz (własne przypisania → pending)
+* UPDATE/DELETE: admin/moderator
+* SELECT: publiczne dla approved
+
+UI:
+
+* profil saunamistrza → lista saun z rolą i statusem
+* strona sauny → lista saunamistrzów z rolą
+* panel admina → zakładka "Przypisania" z moderacją pending
+
+Zobacz też: FEATURES.md SP-016
+
+---
+
 # SP-025 Sauny prywatne (marketplace)
 
 Status: PLANNED

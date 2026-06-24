@@ -5,6 +5,7 @@ import AddEventMasterForm from '@/components/AddEventMasterForm'
 import RemoveEventMasterButton from '@/components/RemoveEventMasterButton'
 import UploadEventPhotoButton from '@/components/UploadEventPhotoButton'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { toggleEventInterest } from '@/app/(main)/profile/actions'
 
 export default async function EventPage({
   params,
@@ -15,6 +16,7 @@ export default async function EventPage({
   const supabase = await createClient()
   const role = await getCurrentUserRole()
   const isEditor = role === 'admin' || role === 'moderator'
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: eventData } = await supabase
     .from('sauna_events')
@@ -55,9 +57,21 @@ export default async function EventPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const photos = (photosRaw ?? []) as any[]
 
+  const isGoing = user
+    ? (await supabase
+        .from('user_event_interests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('event_id', id)
+        .maybeSingle()
+      ).data !== null
+    : false
+
   const dateFormatted = ev.event_date
     ? new Date(ev.event_date).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : null
+
+  const toggleInterestAction = toggleEventInterest.bind(null, id)
 
   return (
     <>
@@ -107,6 +121,21 @@ export default async function EventPage({
 
           {ev.description && (
             <p className="mt-4 text-gray-700 leading-relaxed">{ev.description}</p>
+          )}
+
+          {user && (
+            <form action={toggleInterestAction} className="mt-5">
+              <button
+                type="submit"
+                className={`w-full rounded-xl py-3 text-sm font-semibold transition-colors ${
+                  isGoing
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                    : 'bg-orange-600 text-white hover:bg-orange-700'
+                }`}
+              >
+                {isGoing ? '✓ Idę na to wydarzenie' : 'Idę →'}
+              </button>
+            </form>
           )}
         </section>
 
