@@ -37,9 +37,11 @@ export default function EventReviewForm({ eventId }: { eventId: string }) {
             onClick={() => setRating(star)}
             onMouseEnter={() => setHovered(star)}
             onMouseLeave={() => setHovered(0)}
-            className="text-2xl transition-transform active:scale-110"
+            className={`text-2xl transition-opacity active:scale-110 ${
+              star <= (hovered || rating) ? 'opacity-100' : 'opacity-25'
+            }`}
           >
-            {star <= (hovered || rating) ? '⭐' : '☆'}
+            ⭐
           </button>
         ))}
       </div>
