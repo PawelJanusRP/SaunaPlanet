@@ -208,3 +208,20 @@ export async function deleteReviewAdmin(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin')
 }
+
+export async function updateUserRole(userId: string, newRole: 'user' | 'moderator' | 'admin') {
+  const role = await getCurrentUserRole()
+  if (role !== 'admin') throw new Error('Tylko administrator może zmieniać role')
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.id === userId) throw new Error('Nie możesz zmienić własnej roli')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role: newRole })
+    .eq('id', userId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}

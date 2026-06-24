@@ -8,6 +8,7 @@ import ManageCertificateTypes from '@/components/ManageCertificateTypes'
 import EditSaunaAdminForm from '@/components/EditSaunaAdminForm'
 import EventModerationActions from '@/components/EventModerationActions'
 import DeleteReviewButton from '@/components/DeleteReviewButton'
+import UserRoleSelector from '@/components/UserRoleSelector'
 
 const statusLabel: Record<string, { label: string; className: string }> = {
   pending:   { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
@@ -49,7 +50,7 @@ export default async function AdminPage({
     { data: events },
     { data: reviews },
   ] = await Promise.all([
-    supabase.from('profiles').select('id, role, created_at').order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, role, first_name, last_name, email, created_at').order('created_at', { ascending: false }),
     supabase.from('sauna_submissions').select('*').order('created_at', { ascending: false }),
     supabase.from('sauna_masters').select('id, name, level, bio, created_at').eq('status', 'pending').order('created_at', { ascending: false }),
     supabase
@@ -323,34 +324,36 @@ export default async function AdminPage({
 
       {/* Users tab */}
       {activeTab === 'users' && (
-        <section className="rounded-3xl border bg-white p-6 shadow-sm">
+        <section className="space-y-3">
           {!profiles || profiles.length === 0 ? (
-            <p className="text-sm text-gray-500">Brak użytkowników.</p>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak użytkowników.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-gray-500">
-                    <th className="pb-2 pr-4 font-medium">ID</th>
-                    <th className="pb-2 pr-4 font-medium">Rola</th>
-                    <th className="pb-2 font-medium">Data rejestracji</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {profiles.map((p) => (
-                    <tr key={p.id}>
-                      <td className="py-2 pr-4 font-mono text-xs text-gray-400">{p.id.substring(0, 8)}…</td>
-                      <td className="py-2 pr-4">
-                        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${roleStyle[p.role] ?? roleStyle.user}`}>
-                          {p.role}
-                        </span>
-                      </td>
-                      <td className="py-2 text-gray-500">{new Date(p.created_at).toLocaleDateString('pl-PL')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (profiles as any[]).map((p) => {
+              const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ')
+              const isCurrentUser = p.id === user.id
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-4 rounded-2xl border bg-white px-5 py-4 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="font-semibold leading-tight">
+                      {fullName || <span className="text-gray-400 italic">Brak nazwy</span>}
+                      {isCurrentUser && <span className="ml-2 text-xs text-gray-400">(Ty)</span>}
+                    </p>
+                    {p.email && (
+                      <p className="mt-0.5 truncate text-sm text-gray-500">{p.email}</p>
+                    )}
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {new Date(p.created_at).toLocaleDateString('pl-PL')}
+                    </p>
+                  </div>
+                  <UserRoleSelector
+                    userId={p.id}
+                    currentRole={p.role ?? 'user'}
+                    isCurrentUser={isCurrentUser}
+                  />
+                </div>
+              )
+            })
           )}
         </section>
       )}

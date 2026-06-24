@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import ChangePasswordForm from '@/components/ChangePasswordForm'
+import EditProfileNameForm from '@/components/EditProfileNameForm'
 
 const roleLabels: Record<string, string> = {
   user: 'Użytkownik',
@@ -19,6 +20,12 @@ export default async function ProfilePage() {
 
   const role = await getCurrentUserRole()
   const today = new Date().toISOString().split('T')[0]
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('first_name, last_name')
+    .eq('id', user.id)
+    .single()
 
   const [{ data: favoritesRaw }, { data: interestsRaw }] = await Promise.all([
     supabase
@@ -88,6 +95,11 @@ export default async function ProfilePage() {
             <span className="font-mono text-xs text-gray-400">{user.id}</span>
           </div>
         </div>
+
+        <EditProfileNameForm
+          firstName={profile?.first_name ?? ''}
+          lastName={profile?.last_name ?? ''}
+        />
 
         <ChangePasswordForm />
       </section>
