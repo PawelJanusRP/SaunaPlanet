@@ -236,17 +236,15 @@ export async function rejectManagerRequest(managerId: string) {
 }
 
 export async function updateUserRole(userId: string, newRole: 'user' | 'moderator' | 'admin') {
-  const role = await getCurrentUserRole()
-  if (role !== 'admin') throw new Error('Tylko administrator może zmieniać role')
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.id === userId) throw new Error('Nie możesz zmienić własnej roli')
+  if (!user) throw new Error('Musisz być zalogowany')
+  if (user.id === userId) throw new Error('Nie możesz zmienić własnej roli')
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ role: newRole })
-    .eq('id', userId)
+  const { error } = await supabase.rpc('admin_update_user_role', {
+    target_user_id: userId,
+    new_role: newRole,
+  })
 
   if (error) throw new Error(error.message)
   revalidatePath('/admin')

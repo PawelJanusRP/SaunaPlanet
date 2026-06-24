@@ -52,7 +52,7 @@ export default async function AdminPage({
     { data: reviews },
     { data: pendingManagers },
   ] = await Promise.all([
-    supabase.from('profiles').select('id, role, first_name, last_name, email, created_at').order('created_at', { ascending: false }),
+    supabase.rpc('admin_get_users'),
     supabase.from('sauna_submissions').select('*').order('created_at', { ascending: false }),
     supabase.from('sauna_masters').select('id, name, level, bio, created_at').eq('status', 'pending').order('created_at', { ascending: false }),
     supabase
