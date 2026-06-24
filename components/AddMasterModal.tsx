@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -9,23 +9,36 @@ type Sauna = { id: string; name: string }
 
 export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
   const router = useRouter()
+  const fileRef = useRef<HTMLInputElement | null>(null)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [level, setLevel] = useState('certified')
   const [bio, setBio] = useState('')
   const [homeSaunaId, setHomeSaunaId] = useState('')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
   function reset() {
     setName('')
     setLevel('certified')
     setBio('')
     setHomeSaunaId('')
+    setAvatarFile(null)
+    setAvatarPreview(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   function handleClose() {
     setOpen(false)
     reset()
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
   }
 
   async function handleSubmit() {
@@ -36,14 +49,43 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
     setSaving(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('sauna_masters').insert({
-        name: name.trim(),
-        level,
-        bio: bio.trim() || null,
-        home_sauna_id: homeSaunaId || null,
-        status: 'approved',
-      })
-      if (error) throw error
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('sauna_masters')
+        .insert({
+          name: name.trim(),
+          level,
+          bio: bio.trim() || null,
+          home_sauna_id: homeSaunaId || null,
+          status: 'approved',
+        })
+        .select('id')
+        .single()
+
+      if (insertError) throw insertError
+
+      if (avatarFile && inserted?.id) {
+        const ext = avatarFile.name.split('.').pop() || 'jpg'
+        const path = `${inserted.id}/${Date.now()}.${ext}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('master-avatars')
+          .upload(path, avatarFile)
+
+        if (uploadError) throw uploadError
+
+        const { data: urlData } = supabase.storage
+          .from('master-avatars')
+          .getPublicUrl(path)
+
+        const { error: updateError } = await supabase
+          .from('sauna_masters')
+          .update({ avatar_url: urlData.publicUrl })
+          .eq('id', inserted.id)
+
+        if (updateError) throw updateError
+      }
+
       toast.success('Saunamistrz dodany')
       handleClose()
       router.refresh()
@@ -74,6 +116,34 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
         </div>
 
         <div className="space-y-3">
+          {/* Avatar */}
+          <div className="flex flex-col items-center gap-2">
+            {avatarPreview ? (
+              <img
+                src={avatarPreview}
+                alt="Podgląd awatara"
+                className="h-20 w-20 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 text-3xl">
+                🧖
+              </div>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <label
+              onClick={() => fileRef.current?.click()}
+              className="cursor-pointer rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+            >
+              📷 {avatarPreview ? 'Zmień zdjęcie' : 'Dodaj zdjęcie'}
+            </label>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700">Imię i nazwisko *</label>
             <input
