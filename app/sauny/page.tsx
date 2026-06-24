@@ -49,7 +49,7 @@ export default async function SaunyPage() {
 
   const saunas = (saunasRaw ?? []).map((s) => ({
     ...s,
-    thumbnail: s.cover_image_url ?? firstPhoto[s.id] ?? null,
+    thumbnail: firstPhoto[s.id] ?? s.cover_image_url ?? null,
     avgRating: ratingCount[s.id] ? ratingSum[s.id]! / ratingCount[s.id]! : null,
     reviewCount: ratingCount[s.id] ?? 0,
   }))
