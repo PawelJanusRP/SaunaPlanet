@@ -56,3 +56,30 @@ export async function rejectSubmission(submissionId: string, note: string) {
 
   revalidatePath('/admin')
 }
+
+export async function approveMaster(masterId: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('sauna_masters')
+    .update({ status: 'approved' })
+    .eq('id', masterId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+  revalidatePath('/masters')
+}
+
+export async function rejectMaster(masterId: string, note?: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('sauna_masters')
+    .update({ status: 'rejected' })
+    .eq('id', masterId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}

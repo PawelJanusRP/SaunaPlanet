@@ -40,21 +40,27 @@ export default async function MasterPage({
     .eq('master_id', id)
     .order('created_at', { ascending: false })
 
-	const { data: upcomingEvents } = await supabase
-	.from('sauna_event_masters')
-	.select(`
-		role,
-		status,
-		sauna_events (
-		id,
-		title,
-		event_date,
-		event_time,
-		sauna_id
-		)
-	`)
-	.eq('master_id', id)
-	.eq('status', 'approved')
+  const { data: allEvents } = await supabase
+    .from('sauna_event_masters')
+    .select(`
+      role,
+      status,
+      sauna_events (
+        id,
+        title,
+        event_date,
+        event_time,
+        sauna_id
+      )
+    `)
+    .eq('master_id', id)
+    .eq('status', 'approved')
+
+  const today = new Date().toISOString().substring(0, 10)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getDate = (item: any) => item.sauna_events?.event_date ?? ''
+  const upcomingEvents = (allEvents ?? []).filter((i) => getDate(i) >= today).sort((a, b) => getDate(a) > getDate(b) ? 1 : -1)
+  const pastEvents = (allEvents ?? []).filter((i) => getDate(i) < today).sort((a, b) => getDate(a) > getDate(b) ? -1 : 1)
 	
   return (
     <>
@@ -151,42 +157,44 @@ export default async function MasterPage({
           </div>
         )}
       </section>
-	  <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
-  <h2 className="mb-4 text-2xl font-bold">
-    🔥 Najbliższe wydarzenia
-  </h2>
+      <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-2xl font-bold">🔥 Najbliższe wydarzenia</h2>
 
-  {!upcomingEvents || upcomingEvents.length === 0 ? (
-    <div className="text-gray-500">
-      Brak przypisanych wydarzeń.
-    </div>
-  ) : (
-    <div className="space-y-3">
-      {upcomingEvents.map((item: any, index) => {
-        const event = item.sauna_events
-
-        return (
-          <div
-            key={index}
-            className="rounded-xl bg-orange-50 p-3"
-          >
-            <div className="font-bold text-orange-700">
-              🔥 {event?.title}
-            </div>
-
-            <div className="text-sm text-gray-500">
-              {event?.event_date?.substring(0, 10)}
-            </div>
-
-            <div className="text-sm">
-              Rola: {item.role}
-            </div>
+        {upcomingEvents.length === 0 ? (
+          <div className="text-gray-500">Brak nadchodzących wydarzeń.</div>
+        ) : (
+          <div className="space-y-3">
+            {upcomingEvents.map((item: any, index: number) => {
+              const event = item.sauna_events
+              return (
+                <div key={index} className="rounded-xl bg-orange-50 p-3">
+                  <div className="font-bold text-orange-700">🔥 {event?.title}</div>
+                  <div className="text-sm text-gray-500">{event?.event_date?.substring(0, 10)}</div>
+                  <div className="text-sm">Rola: {item.role}</div>
+                </div>
+              )
+            })}
           </div>
-        )
-      })}
-    </div>
-  )}
-</section>
+        )}
+      </section>
+
+      {pastEvents.length > 0 && (
+        <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-2xl font-bold text-gray-600">📅 Poprzednie wydarzenia</h2>
+          <div className="space-y-3">
+            {pastEvents.map((item: any, index: number) => {
+              const event = item.sauna_events
+              return (
+                <div key={index} className="rounded-xl bg-gray-50 p-3">
+                  <div className="font-bold text-gray-700">🔥 {event?.title}</div>
+                  <div className="text-sm text-gray-500">{event?.event_date?.substring(0, 10)}</div>
+                  <div className="text-sm text-gray-500">Rola: {item.role}</div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
 
     </main>

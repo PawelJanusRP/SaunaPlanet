@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import SubmissionActions from '@/components/SubmissionActions'
+import MasterModerationActions from '@/components/MasterModerationActions'
 
 const statusLabel: Record<string, { label: string; className: string }> = {
   pending:  { label: 'Oczekuje',    className: 'bg-yellow-100 text-yellow-700' },
@@ -31,7 +32,7 @@ export default async function AdminPage({
   const { tab } = await searchParams
   const activeTab = tab ?? 'submissions'
 
-  const [{ data: profiles }, { data: submissions }] = await Promise.all([
+  const [{ data: profiles }, { data: submissions }, { data: pendingMasters }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, role, created_at')
@@ -40,9 +41,15 @@ export default async function AdminPage({
       .from('sauna_submissions')
       .select('*')
       .order('created_at', { ascending: false }),
+    supabase
+      .from('sauna_masters')
+      .select('id, name, level, bio, created_at')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
   ])
 
   const pending = submissions?.filter((s) => s.status === 'pending') ?? []
+  const pendingMasterCount = pendingMasters?.length ?? 0
 
   return (
     <main className="mx-auto max-w-5xl p-4">
@@ -52,9 +59,9 @@ export default async function AdminPage({
 
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Panel administracyjny</h1>
-        {pending.length > 0 && (
+        {(pending.length > 0 || pendingMasterCount > 0) && (
           <span className="rounded-full bg-yellow-500 px-2.5 py-0.5 text-sm font-bold text-white">
-            {pending.length} oczekuje
+            {pending.length + pendingMasterCount} oczekuje
           </span>
         )}
       </div>
@@ -63,6 +70,7 @@ export default async function AdminPage({
       <div className="mb-6 flex gap-2 border-b">
         {[
           { id: 'submissions', label: `Zgłoszenia (${submissions?.length ?? 0})` },
+          { id: 'masters', label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
           { id: 'users', label: `Użytkownicy (${profiles?.length ?? 0})` },
         ].map(({ id, label }) => (
           <Link
@@ -130,6 +138,42 @@ export default async function AdminPage({
                 </div>
               )
             })
+          )}
+        </section>
+      )}
+
+      {/* Masters tab */}
+      {activeTab === 'masters' && (
+        <section className="space-y-4">
+          {!pendingMasters || pendingMasters.length === 0 ? (
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">
+              Brak oczekujących zgłoszeń saunamistrzów.
+            </div>
+          ) : (
+            pendingMasters.map((m) => (
+              <div key={m.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-lg font-bold">{m.name}</div>
+                    {m.level && (
+                      <div className="mt-0.5 text-sm text-gray-500">Poziom: {m.level}</div>
+                    )}
+                  </div>
+                  <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
+                    Oczekuje
+                  </span>
+                </div>
+
+                {m.bio && (
+                  <p className="mb-3 text-sm text-gray-600">{m.bio}</p>
+                )}
+
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span>{new Date(m.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  <MasterModerationActions masterId={m.id} />
+                </div>
+              </div>
+            ))
           )}
         </section>
       )}

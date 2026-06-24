@@ -342,6 +342,59 @@ This is considered a strategic differentiator for SaunaPlanet.
 
 ---
 
+# SP-015 Sauna Master Registration Workflow
+
+Status: IN PROGRESS
+
+Branch: feature/SP-015-master-registration
+
+Scope:
+
+* Ścieżka 1: Admin creates master profile from /masters page (standalone, no event required)
+* Ścieżka 2: Authenticated user submits "Zostań saunamistrzem" self-registration form (pending → admin approves)
+* Ścieżka 3: Existing flow from sauna detail page (preserved unchanged)
+* Schema: home_sauna_id added to sauna_masters (primary sauna without event dependency)
+* Schema: status field added to sauna_masters (pending / approved / rejected)
+* /masters page grouping updated to use home_sauna_id (replaces event-derived grouping)
+* Admin panel: review and approve pending master profiles
+
+Related database objects:
+
+* sauna_masters (home_sauna_id, status)
+* RLS policies update
+
+---
+
+# SP-016 Sauna Master Affiliations (BACKLOG)
+
+Status: PLANNED
+
+Description:
+
+Replace home_sauna_id single-column approach with a dedicated affiliations table.
+Enables masters to be formally associated with multiple sauna facilities with role/status per affiliation.
+
+Proposed schema:
+
+```sql
+CREATE TABLE sauna_master_affiliations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  master_id UUID NOT NULL REFERENCES sauna_masters(id) ON DELETE CASCADE,
+  sauna_id UUID NOT NULL REFERENCES saunas(id) ON DELETE CASCADE,
+  is_primary BOOLEAN DEFAULT false,
+  role TEXT DEFAULT 'resident',
+  status TEXT DEFAULT 'approved',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(master_id, sauna_id)
+);
+```
+
+Migration note:
+
+Migrate existing home_sauna_id values into this table when implementing.
+
+---
+
 # Verification Workflow
 
 Status: PLANNED
