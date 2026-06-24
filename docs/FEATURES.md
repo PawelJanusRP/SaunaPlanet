@@ -344,7 +344,7 @@ This is considered a strategic differentiator for SaunaPlanet.
 
 # SP-015 Sauna Master Registration Workflow
 
-Status: IN PROGRESS
+Status: DONE
 
 Branch: feature/SP-015-master-registration
 
@@ -420,6 +420,10 @@ Completed:
 * Sauna Masters
 * Satellites
 * Documentation
+* Authentication
+* Roles and permissions
+* Admin panel (submissions + users + master moderation)
+* Sauna master registration workflow (SP-015)
 
 Planned:
 
