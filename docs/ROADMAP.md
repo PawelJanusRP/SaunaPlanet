@@ -85,6 +85,7 @@ Delivered:
 * certificate moderation and dictionary management (SP-017)
 * event detail page with inline admin editing (SP-018)
 * event photos management (SP-018)
+* sauna list page with thumbnails, ratings, city filter (SP-019)
 
 Remaining:
 
@@ -115,6 +116,7 @@ Features:
 * waiting lists
 * event categories
 * event filtering
+* sauna master ratings derived from event ratings (SP-020)
 
 Success criteria:
 

@@ -472,6 +472,70 @@ Future scope:
 
 ---
 
+# SP-019 Sauny Page
+
+Status: DONE
+
+Route:
+
+/sauny
+
+Implemented:
+
+* full sauna list page accessible from burger menu
+* thumbnail (first photo from sauna_photos, fallback to cover_image_url)
+* average star rating and review count per sauna
+* saunas grouped by city with section headers
+* city dropdown filter — selecting a city limits list to that city only
+* sauna count updates dynamically with active filter
+
+Related components:
+
+* app/sauny/page.tsx (server component — data fetching)
+* components/SaunyClient.tsx (client component — filtering logic)
+
+Related database objects:
+
+* saunas
+* sauna_photos
+* sauna_reviews
+
+---
+
+# SP-020 Sauna Master Ratings (BACKLOG)
+
+Status: PLANNED
+
+Description:
+
+Rating system for sauna masters derived from aggregate ratings of events
+in which they participate — no separate review form needed.
+
+Design considerations:
+
+* master rating = weighted average of event ratings where the master is assigned
+* event rating = average of all sauna reviews submitted for events at the linked sauna
+  (or dedicated event_ratings table if introduced in the future)
+* master profile page displays computed rating and contributing event count
+* masters list page can be sorted by rating
+* rating visible as satellite ring intensity or badge on map
+
+Open questions:
+
+* source of truth: reuse sauna_reviews or introduce event_ratings table?
+* weighting: equal weight per event or weighted by recency?
+* minimum threshold: require N events before displaying rating?
+
+Dependencies:
+
+* SP-001 (events)
+* SP-004 (sauna masters)
+* SP-002 (reviews)
+
+See also: SP-016 (affiliations), Phase 7 (Verification and Authority)
+
+---
+
 # Feature Summary
 
 Completed:
@@ -490,6 +554,7 @@ Completed:
 * Sauna master registration workflow (SP-015)
 * Certificate system with dictionary and moderation (SP-017)
 * Event detail page with masters, photos, inline editing (SP-018)
+* Sauny list page with thumbnails, ratings, city filter (SP-019)
 
 Planned:
 
@@ -499,3 +564,4 @@ Planned:
 * Verification
 * Recurring events
 * Sauna master affiliations (SP-016)
+* Sauna master ratings from event aggregation (SP-020)
