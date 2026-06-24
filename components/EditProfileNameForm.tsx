@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -11,9 +12,12 @@ export default function EditProfileNameForm({
   firstName: string
   lastName: string
 }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [first, setFirst] = useState(firstName)
   const [last, setLast] = useState(lastName)
+  const [savedFirst, setSavedFirst] = useState(firstName)
+  const [savedLast, setSavedLast] = useState(lastName)
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
@@ -32,12 +36,15 @@ export default function EditProfileNameForm({
         toast.error('Błąd zapisu')
       } else {
         toast.success('Dane zaktualizowane')
+        setSavedFirst(first.trim())
+        setSavedLast(last.trim())
         setOpen(false)
+        router.refresh()
       }
     })
   }
 
-  const displayName = [firstName, lastName].filter(Boolean).join(' ')
+  const displayName = [savedFirst, savedLast].filter(Boolean).join(' ')
 
   return (
     <div className="mt-4 border-t pt-4">
