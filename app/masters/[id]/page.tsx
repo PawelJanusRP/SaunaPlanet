@@ -189,11 +189,11 @@ export default async function MasterPage({
               {upcomingEvents.map((item: any, index: number) => {
                 const event = item.sauna_events
                 return (
-                  <div key={index} className="rounded-xl bg-orange-50 p-3">
+                  <Link key={index} href={`/events/${event?.id}`} className="block rounded-xl bg-orange-50 p-3 hover:bg-orange-100 transition-colors">
                     <div className="font-bold text-orange-700">🔥 {event?.title}</div>
                     <div className="text-sm text-gray-500">{event?.event_date?.substring(0, 10)}</div>
                     <div className="text-sm">Rola: {item.role}</div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
@@ -207,11 +207,11 @@ export default async function MasterPage({
               {pastEvents.map((item: any, index: number) => {
                 const event = item.sauna_events
                 return (
-                  <div key={index} className="rounded-xl bg-gray-50 p-3">
+                  <Link key={index} href={`/events/${event?.id}`} className="block rounded-xl bg-gray-50 p-3 hover:bg-gray-100 transition-colors">
                     <div className="font-bold text-gray-700">🔥 {event?.title}</div>
                     <div className="text-sm text-gray-500">{event?.event_date?.substring(0, 10)}</div>
                     <div className="text-sm text-gray-500">Rola: {item.role}</div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
