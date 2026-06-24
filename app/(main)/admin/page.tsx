@@ -5,11 +5,16 @@ import SubmissionActions from '@/components/SubmissionActions'
 import MasterModerationActions from '@/components/MasterModerationActions'
 import CertificateModerationActions from '@/components/CertificateModerationActions'
 import ManageCertificateTypes from '@/components/ManageCertificateTypes'
+import EditSaunaAdminForm from '@/components/EditSaunaAdminForm'
+import EventModerationActions from '@/components/EventModerationActions'
+import DeleteReviewButton from '@/components/DeleteReviewButton'
 
 const statusLabel: Record<string, { label: string; className: string }> = {
-  pending:  { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: 'Zatwierdzona', className: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Odrzucona',    className: 'bg-red-100 text-red-700' },
+  pending:   { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
+  active:    { label: 'Aktywna',      className: 'bg-green-100 text-green-700' },
+  approved:  { label: 'Zatwierdzona', className: 'bg-green-100 text-green-700' },
+  rejected:  { label: 'Odrzucona',    className: 'bg-red-100 text-red-700' },
+  inactive:  { label: 'Nieaktywna',   className: 'bg-gray-100 text-gray-500' },
 }
 
 const roleStyle: Record<string, string> = {
@@ -40,6 +45,9 @@ export default async function AdminPage({
     { data: pendingMasters },
     { data: pendingCertificates },
     { data: certTypes },
+    { data: saunas },
+    { data: events },
+    { data: reviews },
   ] = await Promise.all([
     supabase.from('profiles').select('id, role, created_at').order('created_at', { ascending: false }),
     supabase.from('sauna_submissions').select('*').order('created_at', { ascending: false }),
@@ -50,6 +58,18 @@ export default async function AdminPage({
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
     supabase.from('certificate_types').select('id, name, category, is_active, sort_order').order('sort_order'),
+    supabase
+      .from('saunas')
+      .select('id, name, city, category, status, description, website')
+      .order('name'),
+    supabase
+      .from('sauna_events')
+      .select('id, title, event_date, status, sauna_id, saunas(name)')
+      .order('event_date', { ascending: false }),
+    supabase
+      .from('sauna_reviews')
+      .select('id, rating, review_text, author_name, created_at, sauna_id, saunas(name)')
+      .order('created_at', { ascending: false }),
   ])
 
   const pending = submissions?.filter((s) => s.status === 'pending') ?? []
@@ -59,6 +79,9 @@ export default async function AdminPage({
 
   const tabs = [
     { id: 'submissions', label: `Zgłoszenia (${submissions?.length ?? 0})` },
+    { id: 'sauny',       label: `Sauny (${saunas?.length ?? 0})` },
+    { id: 'eventy',      label: `Eventy (${events?.length ?? 0})` },
+    { id: 'recenzje',    label: `Recenzje (${reviews?.length ?? 0})` },
     { id: 'masters',     label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
     { id: 'certyfikaty', label: `Certyfikaty${pendingCertCount > 0 ? ` (${pendingCertCount})` : ''}` },
     { id: 'slownik',     label: 'Słownik certyfikatów' },
@@ -131,6 +154,104 @@ export default async function AdminPage({
                 </div>
               )
             })
+          )}
+        </section>
+      )}
+
+      {/* Sauny tab */}
+      {activeTab === 'sauny' && (
+        <section className="space-y-3">
+          {!saunas || saunas.length === 0 ? (
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak saun.</div>
+          ) : (
+            saunas.map((s) => {
+              const st = statusLabel[s.status] ?? statusLabel.pending
+              return (
+                <div key={s.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link href={`/sauna/${s.id}`} className="text-base font-bold hover:underline">
+                        {s.name}
+                      </Link>
+                      <div className="mt-0.5 text-sm text-gray-500">
+                        {s.city && <span>{s.city} · </span>}
+                        <span>{s.category}</span>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
+                      <EditSaunaAdminForm sauna={s} />
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </section>
+      )}
+
+      {/* Eventy tab */}
+      {activeTab === 'eventy' && (
+        <section className="space-y-3">
+          {!events || events.length === 0 ? (
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak eventów.</div>
+          ) : (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (events as any[]).map((e) => {
+              const st = statusLabel[e.status] ?? statusLabel.pending
+              return (
+                <div key={e.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                  <div className="mb-3 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <Link href={`/events/${e.id}`} className="font-bold hover:underline">
+                        {e.title}
+                      </Link>
+                      <div className="mt-0.5 text-sm text-gray-500">
+                        {e.event_date?.substring(0, 10)}
+                        {e.saunas?.name && <span> · {e.saunas.name}</span>}
+                      </div>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span>{new Date(e.event_date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <EventModerationActions eventId={e.id} status={e.status} />
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </section>
+      )}
+
+      {/* Recenzje tab */}
+      {activeTab === 'recenzje' && (
+        <section className="space-y-3">
+          {!reviews || reviews.length === 0 ? (
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak recenzji.</div>
+          ) : (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (reviews as any[]).map((r) => (
+              <div key={r.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                <div className="mb-2 flex items-start justify-between gap-4">
+                  <div>
+                    <div className="font-semibold">
+                      {'⭐'.repeat(r.rating)} <span className="text-gray-700">{r.author_name}</span>
+                    </div>
+                    {r.saunas?.name && (
+                      <div className="mt-0.5 text-sm text-gray-500">
+                        <Link href={`/sauna/${r.sauna_id}`} className="hover:underline">{r.saunas.name}</Link>
+                      </div>
+                    )}
+                  </div>
+                  <DeleteReviewButton reviewId={r.id} />
+                </div>
+                {r.review_text && <p className="text-sm text-gray-600">{r.review_text}</p>}
+                <div className="mt-2 text-xs text-gray-400">
+                  {new Date(r.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              </div>
+            ))
           )}
         </section>
       )}

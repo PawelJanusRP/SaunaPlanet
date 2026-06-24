@@ -135,3 +135,76 @@ export async function toggleCertificateType(id: string, isActive: boolean) {
   if (error) throw new Error(error.message)
   revalidatePath('/admin')
 }
+
+export async function updateSaunaAdmin(
+  id: string,
+  data: {
+    name: string
+    city: string | null
+    description: string | null
+    website: string | null
+    category: string
+    status: string
+  }
+) {
+  await assertAdmin()
+  if (!data.name.trim()) throw new Error('Nazwa jest wymagana')
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('saunas')
+    .update({
+      name: data.name.trim(),
+      city: data.city?.trim() || null,
+      description: data.description?.trim() || null,
+      website: data.website?.trim() || null,
+      category: data.category,
+      status: data.status,
+    })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+  revalidatePath(`/sauna/${id}`)
+}
+
+export async function deleteSaunaAdmin(id: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('saunas').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
+export async function updateEventStatusAdmin(id: string, status: 'active' | 'rejected') {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('sauna_events')
+    .update({ status })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+  revalidatePath(`/events/${id}`)
+}
+
+export async function deleteEventAdmin(id: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('sauna_events').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
+
+export async function deleteReviewAdmin(id: string) {
+  await assertAdmin()
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('sauna_reviews').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin')
+}
