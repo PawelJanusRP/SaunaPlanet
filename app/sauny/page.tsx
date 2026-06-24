@@ -14,28 +14,45 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default async function SaunyPage() {
   const supabase = await createClient()
 
-  const { data: raw } = await supabase
-    .from('saunas')
-    .select(`
-      id, name, city, category, cover_image_url, status,
-      sauna_photos(image_url),
-      sauna_reviews(rating)
-    `)
-    .eq('status', 'active')
-    .order('name')
+  const [
+    { data: saunasRaw },
+    { data: photosRaw },
+    { data: reviewsRaw },
+  ] = await Promise.all([
+    supabase
+      .from('saunas')
+      .select('id, name, city, category, cover_image_url, status')
+      .eq('status', 'active')
+      .order('name'),
+    supabase
+      .from('sauna_photos')
+      .select('sauna_id, image_url')
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('sauna_reviews')
+      .select('sauna_id, rating'),
+  ])
 
-  const saunas = (raw ?? []).map((s) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const photos = (s as any).sauna_photos as { image_url: string }[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const reviews = (s as any).sauna_reviews as { rating: number }[]
-    const thumbnail = s.cover_image_url ?? photos?.[0]?.image_url ?? null
-    const avgRating =
-      reviews && reviews.length > 0
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-        : null
-    return { ...s, thumbnail, avgRating, reviewCount: reviews?.length ?? 0 }
-  })
+  // first photo per sauna
+  const firstPhoto: Record<string, string> = {}
+  for (const p of photosRaw ?? []) {
+    if (!firstPhoto[p.sauna_id]) firstPhoto[p.sauna_id] = p.image_url
+  }
+
+  // avg rating per sauna
+  const ratingSum: Record<string, number> = {}
+  const ratingCount: Record<string, number> = {}
+  for (const r of reviewsRaw ?? []) {
+    ratingSum[r.sauna_id] = (ratingSum[r.sauna_id] ?? 0) + r.rating
+    ratingCount[r.sauna_id] = (ratingCount[r.sauna_id] ?? 0) + 1
+  }
+
+  const saunas = (saunasRaw ?? []).map((s) => ({
+    ...s,
+    thumbnail: s.cover_image_url ?? firstPhoto[s.id] ?? null,
+    avgRating: ratingCount[s.id] ? ratingSum[s.id]! / ratingCount[s.id]! : null,
+    reviewCount: ratingCount[s.id] ?? 0,
+  }))
 
   const grouped = saunas.reduce<Record<string, typeof saunas>>((acc, s) => {
     const city = s.city || 'Inne'
@@ -89,12 +106,12 @@ export default async function SaunyPage() {
                         <p className="mt-0.5 text-sm text-gray-500">
                           {CATEGORY_LABELS[s.category] ?? s.category}
                         </p>
-                        {s.avgRating !== null ? (
+                        {s.avgRating !== null && (
                           <p className="mt-1 text-sm font-semibold text-yellow-600">
                             ⭐ {s.avgRating.toFixed(1)}
                             <span className="ml-1 font-normal text-gray-400">({s.reviewCount})</span>
                           </p>
-                        ) : null}
+                        )}
                       </div>
                     </Link>
                   ))}
