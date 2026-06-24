@@ -36,7 +36,6 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="theme-color" content="#000000" />
-        <link rel="icon" href="/icons/icon-192.png" />
       </head>
       <body>
         <AuthProvider>
