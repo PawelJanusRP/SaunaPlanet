@@ -20,11 +20,13 @@ export default function BecomeMasterForm() {
     setSaving(true)
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
       const { error } = await supabase.from('sauna_masters').insert({
         name: name.trim(),
         level,
         bio: bio.trim() || null,
         status: 'pending',
+        user_id: user?.id ?? null,
       })
       if (error) throw error
       setSubmitted(true)

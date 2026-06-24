@@ -385,13 +385,13 @@ export default async function AdminPage({
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (profiles as any[]).map((p) => {
-              const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ')
+              const displayName = p.master_name || [p.first_name, p.last_name].filter(Boolean).join(' ')
               const isCurrentUser = p.id === user.id
               return (
                 <div key={p.id} className="flex items-center justify-between gap-4 rounded-2xl border bg-white px-5 py-4 shadow-sm">
                   <div className="min-w-0">
                     <p className="font-semibold leading-tight">
-                      {fullName || <span className="text-gray-400 italic">Brak nazwy</span>}
+                      {displayName || <span className="text-gray-400 italic">Brak nazwy</span>}
                       {isCurrentUser && <span className="ml-2 text-xs text-gray-400">(Ty)</span>}
                     </p>
                     {p.email && (
