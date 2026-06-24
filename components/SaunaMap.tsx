@@ -152,7 +152,12 @@ function MapCenterController({
 function MapResizeGuard() {
   const map = useMap()
   useEffect(() => {
-    map.invalidateSize()
+    // Delay allows the container to get proper dimensions before invalidating.
+    // pageshow handles browser back/forward cache (bfcache) restores.
+    const invalidate = () => setTimeout(() => map.invalidateSize(), 200)
+    invalidate()
+    window.addEventListener('pageshow', invalidate)
+    return () => window.removeEventListener('pageshow', invalidate)
   }, [map])
   return null
 }
