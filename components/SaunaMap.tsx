@@ -152,12 +152,19 @@ function MapCenterController({
 function MapResizeGuard() {
   const map = useMap()
   useEffect(() => {
-    // Delay allows the container to get proper dimensions before invalidating.
-    // pageshow handles browser back/forward cache (bfcache) restores.
-    const invalidate = () => setTimeout(() => map.invalidateSize(), 200)
-    invalidate()
-    window.addEventListener('pageshow', invalidate)
-    return () => window.removeEventListener('pageshow', invalidate)
+    // Double rAF: waits past browser layout phase so container has real dimensions.
+    // 800ms timeout: waits for MarkerClusterGroup chunkedLoading to finish adding
+    // markers before invalidating — otherwise markers are positioned on a 0×0 map.
+    let r1: number, r2: number
+    r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => map.invalidateSize({ animate: false }))
+    })
+    const t = setTimeout(() => map.invalidateSize({ animate: false }), 800)
+    return () => {
+      cancelAnimationFrame(r1)
+      cancelAnimationFrame(r2)
+      clearTimeout(t)
+    }
   }, [map])
   return null
 }
