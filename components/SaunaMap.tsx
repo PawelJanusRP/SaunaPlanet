@@ -503,33 +503,28 @@ function SaunaPopup({
 		
 			<div className="space-y-2">
 			{events.slice(0, 3).map((event) => (
-				<div
+				<Link
 				key={event.id}
-				className="rounded-lg bg-white p-2 text-xs"
+				href={`/events/${event.id}`}
+				className="block rounded-lg bg-white p-2 text-xs hover:bg-orange-100"
 				>
-				<div className="font-semibold">
+				<div className="font-semibold text-orange-700">
 					{event.title}
 				</div>
-		
+
 				<div className="text-gray-500">
 				{event.event_date.substring(0, 10)}
 				{event.event_time
 					? ` ${event.event_time.substring(0, 5)}`
 					: ''}
 				</div>
-		
+
 				{event.price && (
-					<div className="text-orange-700">
-					{event.price && (
-					<div className="text-orange-700 font-semibold">
-						{event.price.includes('zł')
-						? event.price
-						: `${event.price} zł`}
-					</div>
-)}
+					<div className="font-semibold text-orange-700">
+						{event.price.includes('zł') ? event.price : `${event.price} zł`}
 					</div>
 				)}
-				</div>
+				</Link>
 			))}
 			</div>
 		</div>
