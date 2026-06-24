@@ -286,3 +286,102 @@ Fixed:
 
 * uses correct sauna update logic
 * UI messages updated to sauna terminology
+
+---
+
+# Leaflet Map — Marker Icons Disappearing After Load
+
+Status: Fixed (commit after SP-018)
+
+## Symptom
+
+After page load or client-side navigation back to the map, marker icons appeared briefly then disappeared. Clicking anywhere on the map brought them back.
+
+## Root Cause
+
+Two separate issues compounded each other:
+
+**1. Stale map container dimensions after Next.js client-side navigation**
+
+When navigating back to the map route, the Leaflet container had stale cached dimensions (0×0 from the previous unmount). Leaflet positioned all marker layers based on those wrong dimensions. `map.invalidateSize()` recalculates the container size and fixes tile/marker positioning.
+
+**2. Double data load from auto-geolocation**
+
+`useEffect([userLocation, radiusKm])` triggers `loadSaunas()`. On mount, the effect fires once with the fallback center (Poznan). Then the browser Geolocation API resolves and calls `setUserLocation(gpsCoords)`, triggering a second `loadSaunas()`.
+
+The second `setItems(newData)` caused `MarkerClusterGroup` to rebuild its internal layer tree. The Leaflet.markercluster plugin computes new cluster positions but does not repaint DOM automatically — it waits for a map event (`moveend`, `zoomend`, `viewreset`) to trigger `_onMoveEnd`. In our case no such event was fired, leaving the cluster in a computed-but-not-rendered state: markers invisible until any user interaction (click) triggered a repaint.
+
+## What Did NOT Work
+
+* Adding a 800ms `setTimeout` to `invalidateSize` — fired mid-cluster-render, scrambling marker positions.
+* Removing `chunkedLoading` from `MarkerClusterGroup` — made rendering synchronous but did not fix the visibility issue.
+* Replacing `invalidateSize` with double `requestAnimationFrame` — timing still wrong.
+* `map.fire('moveend')` in a `ClusterRefresher` component — the event was processed before react-leaflet finished reconciling the new marker children; cluster refreshed against incomplete state.
+
+## Fix Applied
+
+**`MapResizeGuard` (in `components/SaunaMap.tsx`)**
+
+Restored to the original simple form from commit `85d4f34`:
+
+```tsx
+function MapResizeGuard() {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+  }, [map])
+  return null
+}
+```
+
+Synchronous `invalidateSize()` on mount ensures correct container dimensions for tile and marker positioning after navigation.
+
+**`MarkerClusterGroup` remount via `key` prop**
+
+```tsx
+const [clusterRefreshKey, setClusterRefreshKey] = useState(0)
+
+// in loadSaunas(), after setItems(data):
+setClusterRefreshKey((k) => k + 1)
+
+// in JSX:
+<MarkerClusterGroup key={clusterRefreshKey} chunkedLoading maxClusterRadius={60}>
+```
+
+When `clusterRefreshKey` increments, React fully unmounts and remounts `MarkerClusterGroup`, creating a fresh Leaflet.markercluster instance initialized with the current `visibleItems`. The fresh cluster correctly positions and renders all markers without needing any event to trigger a repaint.
+
+`chunkedLoading` is kept to avoid blocking the main thread when adding many markers.
+
+## Important Rules for Future Modifications
+
+* Do NOT add delays (`setTimeout`, `requestAnimationFrame`) to `invalidateSize` — timing relative to marker rendering is fragile.
+* Do NOT remove `chunkedLoading` without a specific reason.
+* Do NOT replace `key={clusterRefreshKey}` with event-based refresh (`map.fire(...)`) — the cluster's `_onMoveEnd` guard (`_inZoomAnimation` check) can silently skip the repaint.
+* The `clusterRefreshKey` must be incremented AFTER `setItems` so both state updates batch into a single React render.
+
+---
+
+# Leaflet Map — Blank Tiles After Back-Navigation
+
+Status: Fixed (commit `85d4f34`)
+
+## Symptom
+
+Navigating away from the map page (e.g., to a sauna or event detail page) and pressing Back caused the map to render as a blank grey area with no tiles.
+
+## Root Cause
+
+Next.js App Router performs client-side route transitions without full page reload. When the map component remounts, the Leaflet container `div` initially reports 0×0 dimensions (CSS has not been applied yet from the previous mount's perspective). Leaflet caches these wrong dimensions and never requests tile images for the correct viewport.
+
+## Fix
+
+`MapResizeGuard` component calls `map.invalidateSize()` on mount (synchronously in `useEffect`). Leaflet recalculates the container dimensions, fires `moveend`, and requests tiles for the correct viewport.
+
+The component must live **inside** `MapContainer` (uses `useMap()` hook):
+
+```tsx
+<MapContainer ...>
+  <MapResizeGuard />
+  ...
+</MapContainer>
+```

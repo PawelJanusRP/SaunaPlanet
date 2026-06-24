@@ -391,6 +391,44 @@ Related database objects:
 
 ---
 
+# SP-018 Event Detail Page
+
+Status: DONE
+
+Route:
+
+/events/[id]
+
+Scope:
+
+* dedicated event page with full event info (title, date, time, price, description)
+* linked sauna displayed with navigation to /sauna/[id]
+* assigned sauna masters with avatars, roles, links to /masters/[id]
+* admin/moderator: inline event editing (EditEventForm)
+* admin/moderator: add sauna master to event (AddEventMasterForm)
+* admin/moderator: remove sauna master from event (RemoveEventMasterButton)
+* event photos gallery (event_photos table, event-photos storage bucket)
+* admin/moderator: upload event photos (UploadEventPhotoButton)
+* navigation to /events/[id] from: map popup, map sidebar, events calendar, sauna detail page
+
+Related components:
+
+* app/events/[id]/page.tsx (server component)
+* app/events/actions.ts (server actions: updateEvent, removeEventMaster)
+* components/EditEventForm.tsx
+* components/AddEventMasterForm.tsx
+* components/RemoveEventMasterButton.tsx
+* components/UploadEventPhotoButton.tsx
+
+Related database objects:
+
+* sauna_events
+* sauna_event_masters
+* event_photos
+* Storage: event-photos (public bucket)
+
+---
+
 # SP-016 Sauna Master Affiliations (BACKLOG)
 
 Status: PLANNED
@@ -451,14 +489,13 @@ Completed:
 * Admin panel (submissions + users + master moderation)
 * Sauna master registration workflow (SP-015)
 * Certificate system with dictionary and moderation (SP-017)
+* Event detail page with masters, photos, inline editing (SP-018)
 
 Planned:
 
-* Authentication
-* Accounts
-* Roles
-* Admin Panel
 * Bookings
 * Payments
 * Private Saunas
 * Verification
+* Recurring events
+* Sauna master affiliations (SP-016)

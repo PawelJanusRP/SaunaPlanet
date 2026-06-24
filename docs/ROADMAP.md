@@ -77,13 +77,20 @@ Goal:
 
 Provide management tools.
 
-Features:
+Delivered:
 
-* admin dashboard
-* facility management
-* event moderation
+* admin dashboard (SP-012, SP-015, SP-017)
+* sauna submission workflow
+* sauna master moderation (pending / approved / rejected)
+* certificate moderation and dictionary management (SP-017)
+* event detail page with inline admin editing (SP-018)
+* event photos management (SP-018)
+
+Remaining:
+
+* facility management (edit/delete from admin panel)
+* event moderation (approve/reject events)
 * review moderation
-* user moderation
 * image moderation
 
 Success criteria:

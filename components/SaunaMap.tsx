@@ -149,31 +149,10 @@ function MapCenterController({
   return null
 }
 
-function ClusterRefresher({ trigger }: { trigger: number }) {
-  const map = useMap()
-  useEffect(() => {
-    if (trigger === 0) return
-    // MarkerClusterGroup needs a moveend event to repaint after programmatic
-    // data updates (setItems). Without it, clusters are computed but not rendered.
-    map.fire('moveend')
-  }, [trigger, map])
-  return null
-}
-
 function MapResizeGuard() {
   const map = useMap()
   useEffect(() => {
-    // Double rAF: waits past browser layout phase so the container
-    // has real dimensions before Leaflet calculates layer positions.
-    // No timeout — calling invalidateSize mid-render disrupts marker positioning.
-    let r1: number, r2: number
-    r1 = requestAnimationFrame(() => {
-      r2 = requestAnimationFrame(() => map.invalidateSize({ animate: false }))
-    })
-    return () => {
-      cancelAnimationFrame(r1)
-      cancelAnimationFrame(r2)
-    }
+    map.invalidateSize()
   }, [map])
   return null
 }
@@ -1091,7 +1070,7 @@ useEffect(() => {
             </Popup>
           )}
 
-          <MarkerClusterGroup maxClusterRadius={60}>
+          <MarkerClusterGroup key={clusterRefreshKey} chunkedLoading maxClusterRadius={60}>
             {visibleItems.map((item) => (
               <Marker
                 key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
@@ -1123,7 +1102,6 @@ useEffect(() => {
               </Marker>
             ))}
           </MarkerClusterGroup>
-          <ClusterRefresher trigger={clusterRefreshKey} />
         </MapContainer>
 
         <div
