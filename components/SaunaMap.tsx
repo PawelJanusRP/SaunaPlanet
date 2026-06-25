@@ -1019,6 +1019,7 @@ useEffect(() => {
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            detectRetina={true}
           />
 
           <MapResizeGuard />
