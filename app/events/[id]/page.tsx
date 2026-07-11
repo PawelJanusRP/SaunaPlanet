@@ -105,7 +105,7 @@ export default async function EventPage({
   // Resolve display names for review/comment authors
   const authorIds = [...new Set([...reviews, ...comments].map((r) => r.user_id))]
   const { data: authorProfiles } = authorIds.length > 0
-    ? await supabase.from('profiles').select('id, first_name, last_name').in('id', authorIds)
+    ? await supabase.from('public_profiles').select('id, first_name, last_name').in('id', authorIds)
     : { data: [] }
   const nameById: Record<string, string> = {}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

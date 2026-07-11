@@ -60,13 +60,13 @@ export default async function OwnerReservationsPage({
       const regUserIds = [...new Set(registrations.map((r) => r.user_id))]
       if (regUserIds.length > 0) {
         const { data: regProfiles } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, email')
+          .from('public_profiles')
+          .select('id, first_name, last_name')
           .in('id', regUserIds)
         const regNameById: Record<string, string> = {}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const p of (regProfiles ?? []) as any[]) {
-          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || 'Użytkownik'
+          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Użytkownik'
         }
         registrations = registrations.map((r) => ({ ...r, _userName: regNameById[r.user_id] ?? 'Użytkownik' }))
       }

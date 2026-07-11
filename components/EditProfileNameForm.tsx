@@ -27,12 +27,15 @@ export default function EditProfileNameForm({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { error } = await supabase
+      // .select() verifies a row was actually written — an update silently
+      // filtered out by RLS returns no error but also no rows.
+      const { data, error } = await supabase
         .from('profiles')
         .update({ first_name: first.trim() || null, last_name: last.trim() || null })
         .eq('id', user.id)
+        .select('id')
 
-      if (error) {
+      if (error || !data || data.length === 0) {
         toast.error('Błąd zapisu')
       } else {
         toast.success('Dane zaktualizowane')

@@ -134,7 +134,7 @@ Tables (from SQL history + code usage):
 | `sauna_masters` | Master profiles (level, status pending/approved/rejected, `home_sauna_id`) |
 | `sauna_event_masters` | Event↔master junction with approval workflow |
 | `master_certificates` + `certificate_types` | Certification registry + dictionary (supersedes legacy `master_credentials`) |
-| `profiles` | Auth bridge; `role` check: user/moderator/admin; also `first_name`, `last_name`, `email` (live DB, 2026-06-24 — not in repo SQL); auto-created by trigger `on_auth_user_created` → `handle_new_user()` |
+| `profiles` | Auth bridge; `role` check: user/moderator/admin; also `first_name`, `last_name`, `email` (live DB, 2026-06-24 — not in repo SQL); auto-created by trigger `on_auth_user_created` → `handle_new_user()`. RLS: SELECT own row + admin; UPDATE own row limited to name columns via column grants; cross-user display names read through the `public_profiles` view (id + names only, definer) — see `supabase/2026-07-11_profiles_name_rls.sql` |
 | `user_favorites` | Unique (user_id, sauna_id) |
 | `user_event_interests` | Unique (user_id, event_id), status 'going' |
 | `sauna_submissions` | User-submitted facilities, admin approval |
