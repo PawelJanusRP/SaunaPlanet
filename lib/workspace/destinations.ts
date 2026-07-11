@@ -12,9 +12,10 @@ import type { WorkspaceAccess, WorkspaceDestination } from './types'
  * - master-studio: an approved `sauna_masters` profile linked to the account,
  * - admin: global role admin/moderator (existing Navbar behaviour).
  *
- * Owner Workspace and Master Studio routes do not exist yet, so they carry
- * `status: 'planned'` and are excluded from rendering until their routes
- * ship — the config represents them without exposing broken links.
+ * Routes that do not exist yet carry `status: 'planned'` and are excluded
+ * from rendering until they ship — the config represents them without
+ * exposing broken links. Owner Workspace became available in SP-033;
+ * Master Studio remains planned.
  */
 export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
   {
@@ -28,7 +29,7 @@ export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
     key: 'owner-workspace',
     label: 'Panel obiektu',
     href: '/workspace',
-    status: 'planned',
+    status: 'available',
     isVisible: (access) => access.isAuthenticated && access.hasApprovedSaunaMembership,
   },
   {

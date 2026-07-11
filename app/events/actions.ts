@@ -120,6 +120,8 @@ export async function updateRegistrationStatus(registrationId: string, status: '
 
   if (error) throw new Error(error.message)
   revalidatePath('/profile')
+  revalidatePath('/workspace')
+  revalidatePath('/workspace/reservations')
   revalidatePath(`/events/${registrationId}`)
 }
 

@@ -74,8 +74,10 @@ Authoritative sources: `docs/FEATURES.md` (detailed, mostly current), `docs/BACK
 | `/events/[id]` | Server | Event detail: registration, comments/reviews, masters (459 lines — largest page) | No |
 | `/masters` | Server | Masters directory grouped by home sauna | No |
 | `/masters/[id]` | Server | Master profile: certs, events | No |
-| `/(main)/profile` | Server | Personal Workspace dashboard on the shared Workspace Shell: Today queue (manager approvals), managed saunas, upcoming events, favourites, activity (SP-032) | Logged in |
+| `/(main)/profile` | Server | Personal Workspace dashboard on the shared Workspace Shell: Today queue (own events today), upcoming events, favourites, activity; links to Owner Workspace for managers (SP-032, manager features moved out in SP-033) | Logged in |
 | `/(main)/profile/details`, `/favorites`, `/reviews`, `/events`, `/settings` | Server | Personal Workspace modules (nav config in `lib/workspace/personal.ts`) | Logged in |
+| `/(main)/workspace` | Server | Owner Workspace dashboard on the shared Workspace Shell: facility context switcher, Today queue (pending registrations), managed facilities, upcoming events, quick actions (SP-033) | Logged in |
+| `/(main)/workspace/reservations`, `/events` | Server | Owner Workspace modules scoped by the active facility context (nav config in `lib/workspace/owner.ts`) | Logged in |
 | `/(main)/submit` | Server | Sauna submission form | Logged in |
 | `/(main)/admin` | Server | 9-tab admin panel (417 lines) | admin/moderator |
 | `/auth/login`, `/register`, `/reset-password`, `/update-password` | Client | Auth forms | No |
@@ -106,7 +108,7 @@ Major modules:
 |--------|---------|-------|
 | Map (HIGH RISK) | `components/SaunaMap.tsx` | **1,352 lines**, 20+ useState, realtime subscriptions, clustering, satellites, filters, 7 modal orchestrations. Protected area per CLAUDE.md. |
 | Auth context | `components/AuthProvider.tsx` | React Context: user + role (from `profiles`) + `WorkspaceAccess` snapshot (approved `sauna_managers` membership, linked `sauna_masters` profile) — drives workspace navigation visibility only |
-| Workspace infrastructure (SP-031/032) | `components/workspace/*`, `lib/workspace/*` | Shared Workspace Shell (breadcrumbs, header, responsive nav, Today-queue slot), avatar-menu hub, config-driven destinations and per-workspace nav; Personal Workspace at `/profile` is the reference implementation |
+| Workspace infrastructure (SP-031/032/033) | `components/workspace/*`, `lib/workspace/*` | Shared Workspace Shell (breadcrumbs, header, responsive nav, Today-queue slot), avatar-menu hub, config-driven destinations and per-workspace nav; generic active-context model (`lib/workspace/context.ts` + `WorkspaceContextSwitcher`); Personal Workspace at `/profile` and Owner Workspace at `/workspace` (scope resolution in `lib/workspace/ownerServer.ts`) |
 | Supabase clients | `lib/supabase/client.ts` (browser singleton), `lib/supabase/server.ts` (SSR + `getCurrentUserRole()`), `lib/supabase.ts` (**legacy re-export singleton, used only by SaunaMap**) |
 | Reservation helpers | `lib/reservationTime.ts`, `components/ReservationBadge.tsx` | Countdown formatting |
 | Moderation actions UI | `components/*ModerationActions.tsx`, `SubmissionActions.tsx`, `ManagerApprovalActions.tsx`, `RegistrationModerationActions.tsx` | ~6 near-identical approve/reject components (duplication) |
