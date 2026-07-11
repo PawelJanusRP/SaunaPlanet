@@ -55,6 +55,8 @@ DONE (as of this audit):
 | SP-020 | User favorites (saunas) + event interests ("Idę" toggle with going count) |
 | SP-021 | Event reviews (post-event stars) + pre-event comments + `/sauna/[id]/reviews` |
 | SP-022 | Event reservations ("Zapisz się", `event_registrations`, `max_participants`, sauna manager approval role) — **committed but BACKLOG.md still says PLANNED (stale)** |
+| SP-031/032/033 | Shared Workspace infrastructure, Personal Workspace (/profile), Owner Workspace (/workspace) with active facility context |
+| SP-034 | Owner event management — create/edit/delete events from /workspace/events via manager-scoped server actions (`createEvent`/`updateEvent`/`deleteEvent`); additive `sauna_events` RLS for approved `sauna_managers` (`supabase/2026-07-11_sp034_owner_events_rls.sql`, applied manually) |
 
 PLANNED: SP-016/SP-026 (master↔sauna affiliations), SP-023 (rankings), SP-024 (payments), SP-025 (private saunas marketplace), SP-027 (rating parameters admin panel), SP-029 (PWA installability), SP-030 (native app, Expo).
 
@@ -77,7 +79,7 @@ Authoritative sources: `docs/FEATURES.md` (detailed, mostly current), `docs/BACK
 | `/(main)/profile` | Server | Personal Workspace dashboard on the shared Workspace Shell: Today queue (own events today), upcoming events, favourites, activity; links to Owner Workspace for managers (SP-032, manager features moved out in SP-033) | Logged in |
 | `/(main)/profile/details`, `/favorites`, `/reviews`, `/events`, `/settings` | Server | Personal Workspace modules (nav config in `lib/workspace/personal.ts`) | Logged in |
 | `/(main)/workspace` | Server | Owner Workspace dashboard on the shared Workspace Shell: facility context switcher, Today queue (pending registrations), managed facilities, upcoming events, quick actions (SP-033) | Logged in |
-| `/(main)/workspace/reservations`, `/events` | Server | Owner Workspace modules scoped by the active facility context (nav config in `lib/workspace/owner.ts`) | Logged in |
+| `/(main)/workspace/reservations`, `/events` | Server | Owner Workspace modules scoped by the active facility context (nav config in `lib/workspace/owner.ts`); `/workspace/events` includes owner event CRUD (SP-034) — creation requires a concrete facility context | Logged in |
 | `/(main)/submit` | Server | Sauna submission form | Logged in |
 | `/(main)/admin` | Server | 9-tab admin panel (417 lines) | admin/moderator |
 | `/auth/login`, `/register`, `/reset-password`, `/update-password` | Client | Auth forms | No |
@@ -268,7 +270,7 @@ Medium:
 | Agent/dev rules | `CLAUDE.md` (root, primary), `AGENTS.md`, `docs/AGENT_WORKFLOW.md` |
 | Map & discovery | `components/SaunaMap.tsx` (protected), `components/SaunyClient.tsx`, `app/page.tsx`, `app/sauny/page.tsx` |
 | Sauna detail & reviews | `app/sauna/[id]/page.tsx`, `app/sauna/[id]/reviews/page.tsx`, `components/AddReviewForm.tsx` |
-| Events | `app/events/page.tsx`, `app/events/[id]/page.tsx`, `app/events/actions.ts`, `components/events/*`, `components/AddEventModal.tsx`, `EditEventForm.tsx` |
+| Events | `app/events/page.tsx`, `app/events/[id]/page.tsx`, `app/events/actions.ts`, `components/events/*`, `components/AddEventModal.tsx`, `EditEventForm.tsx`, `DeleteEventButton.tsx`; owner CRUD: `app/(main)/workspace/events/page.tsx`, `components/workspace/OwnerCreateEventButton.tsx`, `supabase/2026-07-11_sp034_owner_events_rls.sql` |
 | Event reviews/comments (SP-021) | `app/events/actions.ts`, `components/EventReviewForm.tsx`, `EventCommentForm.tsx` |
 | Reservations (SP-022) | `app/events/actions.ts` (`registerForEvent`, `updateRegistrationStatus`), `components/RegistrationModerationActions.tsx`, `ReservationBadge.tsx`, `lib/reservationTime.ts`, `app/(main)/profile/page.tsx` (manager panel) |
 | Masters & certificates | `app/masters/*`, `components/AddMasterModal.tsx`, `AddMasterToSaunaModal.tsx`, `BecomeMasterForm.tsx`, `AddCertificateModal.tsx`, `ManageCertificateTypes.tsx`, `UploadAvatarButton.tsx` |

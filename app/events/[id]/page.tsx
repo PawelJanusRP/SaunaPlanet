@@ -176,6 +176,7 @@ export default async function EventPage({
                 event_time={ev.event_time ?? null}
                 price={ev.price ?? null}
                 description={ev.description ?? null}
+                max_participants={ev.max_participants ?? null}
               />
             )}
           </div>

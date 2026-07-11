@@ -673,6 +673,33 @@ See docs/PLATFORM_WORKSPACES.md §4 for the design reference.
 
 ---
 
+# SP-034 Owner Event Management
+
+Status: DONE
+
+Implemented:
+
+* owners/managers create, edit and delete events of their own facilities from /workspace/events — the platform no longer requires admin data entry for facility events (USER_MODEL §6.8)
+* event creation requires a concrete facility: the selected context, or the account's only facility; in the "All facilities" aggregate with 2+ facilities the page explains that a specific facility must be selected — no create action is offered
+* server actions createEvent / updateEvent / deleteEvent (app/events/actions.ts) authorize as "admin/moderator OR approved sauna_managers member of the event's facility"; WorkspaceContext is presentation-only and never used for authorization
+* RLS extension (supabase/2026-07-11_sp034_owner_events_rls.sql, run manually): is_sauna_staff() helper + additive INSERT/UPDATE/DELETE policies on sauna_events for approved facility staff; existing admin policies unchanged
+* updateEvent/deleteEvent detect an RLS mismatch (0 affected rows) and report it as an authorization error instead of silently succeeding
+* AddEventModal switched from a direct client-side insert to the createEvent server action — one creation path for the admin map flow and the Owner Workspace; gains a max_participants field
+* EditEventForm gains a max_participants field (existing SP-022 column driving reservation capacity); reused unchanged on /events/[id] and per event row in /workspace/events
+* past events stay read-only in the workspace (reviews history; "cancel, not delete" semantics per PLATFORM_WORKSPACES §6 remain future work)
+
+Related files:
+
+* app/(main)/workspace/events/page.tsx
+* app/events/actions.ts
+* components/AddEventModal.tsx
+* components/EditEventForm.tsx
+* components/DeleteEventButton.tsx
+* components/workspace/OwnerCreateEventButton.tsx
+* supabase/2026-07-11_sp034_owner_events_rls.sql
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED
@@ -773,6 +800,7 @@ Completed:
 * Shared Workspace infrastructure — shell, hub, config-driven navigation (SP-031)
 * Personal Workspace — dashboard + profile modules on the shared shell (SP-032)
 * Owner Workspace — facility context, dashboard, reservations, events (SP-033)
+* Owner event management — create/edit/delete from the Owner Workspace (SP-034)
 
 Planned:
 

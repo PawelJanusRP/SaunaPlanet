@@ -1,10 +1,13 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import EditEventForm from '@/components/EditEventForm'
+import DeleteEventButton from '@/components/DeleteEventButton'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
 import WorkspaceSection from '@/components/workspace/WorkspaceSection'
 import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState'
 import WorkspaceContextSwitcher from '@/components/workspace/WorkspaceContextSwitcher'
+import OwnerCreateEventButton from '@/components/workspace/OwnerCreateEventButton'
 import { workspaceContextLabel } from '@/lib/workspace/context'
 import {
   OWNER_ALL_FACILITIES_LABEL,
@@ -39,7 +42,7 @@ export default async function OwnerEventsPage({
   if (activeSaunaIds.length > 0) {
     const { data: eventsRaw } = await supabase
       .from('sauna_events')
-      .select('id, title, event_date, event_time, price, sauna_id, saunas(name, city)')
+      .select('id, title, event_date, event_time, price, description, max_participants, sauna_id, saunas(name, city)')
       .in('sauna_id', activeSaunaIds)
       .order('event_date', { ascending: false })
 
@@ -52,13 +55,20 @@ export default async function OwnerEventsPage({
     .sort((a, b) => (a.event_date < b.event_date ? -1 : 1))
   const past = events.filter((ev) => ev.event_date < today).slice(0, PAST_PREVIEW_LIMIT)
 
+  // Creating an event requires a concrete facility (SP-034): the selected
+  // context, or the account's only facility. With "All facilities" and more
+  // than one option there is no target — the page says so instead.
+  const createTarget =
+    context.scope === 'one'
+      ? context.option
+      : options.length === 1
+        ? options[0]
+        : null
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function EventRow({ event }: { event: any }) {
+  function EventInfo({ event }: { event: any }) {
     return (
-      <Link
-        href={`/events/${event.id}`}
-        className="block rounded-2xl border p-4 transition-colors hover:bg-orange-50"
-      >
+      <Link href={`/events/${event.id}`} className="block hover:opacity-80">
         <p className="font-bold text-orange-700">{event.title}</p>
         <p className="mt-0.5 text-sm text-gray-500">
           {event.event_date?.substring(0, 10)}
@@ -97,17 +107,48 @@ export default async function OwnerEventsPage({
       }
     >
       <div className="space-y-4 sm:space-y-6">
+        {options.length > 0 && (
+          createTarget ? (
+            <div className="flex justify-end">
+              <OwnerCreateEventButton saunaId={createTarget.id} saunaName={createTarget.label} />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+              Aby dodać wydarzenie, wybierz konkretny obiekt w przełączniku powyżej —
+              wydarzenie zawsze należy do jednego obiektu.
+            </div>
+          )
+        )}
+
         <WorkspaceSection title={`🔥 Nadchodzące (${upcoming.length})`}>
           {upcoming.length === 0 ? (
             <WorkspaceEmptyState
               icon="🔥"
               title="Brak nadchodzących wydarzeń"
-              description="Wydarzenia Twoich obiektów pojawią się tutaj."
+              description={
+                createTarget
+                  ? 'Dodaj pierwsze wydarzenie dla swojego obiektu.'
+                  : 'Wydarzenia Twoich obiektów pojawią się tutaj.'
+              }
             />
           ) : (
             <div className="space-y-3">
               {upcoming.map((ev) => (
-                <EventRow key={ev.id} event={ev} />
+                <div key={ev.id} className="rounded-2xl border p-4">
+                  <EventInfo event={ev} />
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
+                    <EditEventForm
+                      eventId={ev.id}
+                      title={ev.title}
+                      event_date={ev.event_date}
+                      event_time={ev.event_time ?? null}
+                      price={ev.price ?? null}
+                      description={ev.description ?? null}
+                      max_participants={ev.max_participants ?? null}
+                    />
+                    <DeleteEventButton eventId={ev.id} eventTitle={ev.title} />
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -122,7 +163,9 @@ export default async function OwnerEventsPage({
           ) : (
             <div className="space-y-3">
               {past.map((ev) => (
-                <EventRow key={ev.id} event={ev} />
+                <div key={ev.id} className="rounded-2xl border p-4 transition-colors hover:bg-orange-50">
+                  <EventInfo event={ev} />
+                </div>
               ))}
             </div>
           )}

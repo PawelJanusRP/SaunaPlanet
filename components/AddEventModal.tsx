@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { createEvent } from '@/app/events/actions'
 
 type AddEventModalProps = {
   saunaId: string
@@ -21,6 +21,7 @@ export default function AddEventModal({
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [price, setPrice] = useState('')
+  const [maxParticipants, setMaxParticipants] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -39,25 +40,23 @@ export default function AddEventModal({
 
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.from('sauna_events').insert({
-      sauna_id: saunaId,
-      title: title.trim(),
-      event_date: eventDate,
-      event_time: eventTime || null,
-      price: price.trim() || null,
-      description: description.trim() || null,
-      status: 'active',
-    })
-
-    setLoading(false)
-
-    if (error) {
-      console.error(error)
-      toast.error('Nie udało się dodać eventu')
+    try {
+      await createEvent(saunaId, {
+        title,
+        event_date: eventDate,
+        event_time: eventTime || null,
+        price: price || null,
+        description: description || null,
+        max_participants: maxParticipants ? Number(maxParticipants) : null,
+      })
+    } catch (e) {
+      setLoading(false)
+      console.error(e)
+      toast.error(e instanceof Error ? e.message : 'Nie udało się dodać eventu')
       return
     }
 
+    setLoading(false)
     toast.success('Dodano event')
     await onAdded()
     onClose()
@@ -104,12 +103,23 @@ export default function AddEventModal({
             />
           </div>
 
-          <input
-            className="w-full rounded-xl border p-3 text-sm"
-            placeholder="Cena, np. 120 zł / w cenie biletu"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="w-full rounded-xl border p-3 text-sm"
+              placeholder="Cena, np. 120 zł"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+
+            <input
+              type="number"
+              min={1}
+              className="w-full rounded-xl border p-3 text-sm"
+              placeholder="Limit miejsc"
+              value={maxParticipants}
+              onChange={(e) => setMaxParticipants(e.target.value)}
+            />
+          </div>
 
           <textarea
             className="min-h-28 w-full rounded-xl border p-3 text-sm"
