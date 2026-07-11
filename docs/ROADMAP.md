@@ -128,8 +128,9 @@ Remaining:
   model
 * **Sauna Sessions (SP-036)** — Sessions as a first-class entity independent
   from Events (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may
-  contain many Sessions; a Session is owned by one master at one facility —
-  see docs/EVENT_SESSION_MODEL.md)
+  contain many Sessions; a Session happens at exactly one facility and may
+  have one or more masters — session ↔ master is many-to-many, lead
+  conductor required — see docs/EVENT_SESSION_MODEL.md §3)
 * recurring events
 * advanced calendar
 * waiting lists and reservation lifecycle completion (cancellation

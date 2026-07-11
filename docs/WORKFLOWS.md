@@ -365,10 +365,13 @@ shareable rituals bring their own audiences to the platform. Sessions are
 FACILITY ↔ EVENT ↔ SESSION ↔ SAUNA MASTER
 ```
 
-An Event may contain multiple Sessions; a Session is owned by one master
-(the lead conductor/creator) at one facility, may exist standalone, and may
-have additional conductors (EVENT_SESSION_MODEL §3). A verified master
-always creates and manages their own sessions.
+An Event may contain multiple Sessions. A Session happens at exactly one
+facility and may have **one or more masters — the session ↔ master
+relationship is many-to-many** (1..n conductors with roles: lead required,
+plus support/guest; team Aufguss shows and championship duos are the normal
+festival case — EVENT_SESSION_MODEL §3). Accountability stays singular: the
+creator/lead conductor answers for the session. A verified master always
+creates and manages their own sessions.
 
 **Actors:** Sauna Master (creator, default lead conductor); Facility
 (consent when required); Event organizer (for proposals into events).

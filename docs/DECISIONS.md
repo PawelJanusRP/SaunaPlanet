@@ -572,7 +572,9 @@ Decision:
    * **SP-036 — Sauna Sessions**: Sessions as a first-class entity
      independent from Events, per docs/EVENT_SESSION_MODEL.md
      (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may contain many
-     Sessions; a Session is owned by one master at one facility).
+     Sessions; a Session is anchored at exactly one facility and its
+     relationship to masters is **many-to-many** — 1..n conductors with
+     roles, lead required).
 
 Reasoning:
 
