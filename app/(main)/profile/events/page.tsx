@@ -34,7 +34,7 @@ export default async function PersonalEventsPage() {
       .order('created_at', { ascending: false }),
     supabase
       .from('user_event_interests')
-      .select('event_id, status, sauna_events(id, title, event_date, event_time, sauna_id, saunas(name, city))')
+      .select('event_id, status, sauna_events(id, title, event_date, event_time, price, sauna_id, saunas(name, city))')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false }),
   ])
@@ -64,6 +64,11 @@ export default async function PersonalEventsPage() {
             {sauna && (
               <p className="mt-0.5 text-sm text-gray-400">
                 {sauna.name}{sauna.city ? ` · ${sauna.city}` : ''}
+              </p>
+            )}
+            {event?.price && (
+              <p className="mt-1 text-sm font-semibold text-orange-700">
+                {String(event.price).includes('zł') ? event.price : `${event.price} zł`}
               </p>
             )}
           </div>

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import type { GlobalRole, WorkspaceAccess } from '@/lib/workspace/types'
-import { GUEST_ACCESS } from '@/lib/workspace/destinations'
+import { AUTHENTICATED_BASE_ACCESS, GUEST_ACCESS } from '@/lib/workspace/destinations'
 
 type UserRole = GlobalRole | null
 
@@ -33,6 +33,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   async function loadUserAndRole(userId: string) {
+    // Session is already known to be valid: expose the base authenticated
+    // access immediately so the workspace hub does not flash empty while the
+    // role/membership queries below resolve. Never downgrades an already
+    // resolved snapshot (avoids admin links blinking on token refresh).
+    setAccess((prev) => (prev.isAuthenticated ? prev : AUTHENTICATED_BASE_ACCESS))
+
     const supabase = createClient()
     const [{ data: profile }, { count: membershipCount }, { count: masterCount }] =
       await Promise.all([

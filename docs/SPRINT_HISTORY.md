@@ -16,8 +16,8 @@ Chronological record of sprint execution. For scope details of each sprint see
 | SP-025 | Planned     | —                                 | —         | Private saunas (marketplace) |
 | SP-026 | Planned     | —                                 | —         | Sauna master ↔ sauna assignments (many-to-many, roles) |
 | SP-030 | Planned     | —                                 | —         | Native Mobile App (Expo) |
-| SP-031 | Completed   | `feature/sp-031-workspace-shell`  | `0000e77` | Shared Workspace Infrastructure — reusable shell, avatar-menu hub, WorkspaceAccess snapshot (see `docs/PLATFORM_WORKSPACES.md`) |
-| SP-032 | Completed   | `feature/sp-031-workspace-shell`  | —         | Personal Workspace Foundation — /profile rebuilt on the shared shell: dashboard, details, favorites, reviews, events, settings; reference implementation for Owner Workspace and Master Studio |
+| SP-031 | In Review   | `feature/sp-031-workspace-shell`  | `0000e77` | Shared Workspace Infrastructure — reusable shell, avatar-menu hub, WorkspaceAccess snapshot (see `docs/PLATFORM_WORKSPACES.md`) |
+| SP-032 | In Review   | `feature/sp-031-workspace-shell`  | `465e3d7` | Personal Workspace Foundation — /profile rebuilt on the shared shell: dashboard, details, favorites, reviews, events, settings; reference implementation for Owner Workspace and Master Studio |
 
 Sprints prior to SP-019 (SP-012 through SP-018: roles and permissions, RLS
 hardening, submission moderation, master registration, certificates, event

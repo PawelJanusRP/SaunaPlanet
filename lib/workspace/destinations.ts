@@ -55,6 +55,19 @@ export const GUEST_ACCESS: WorkspaceAccess = {
   hasLinkedMasterProfile: false,
 }
 
+/**
+ * Optimistic snapshot used while role/membership queries are still resolving
+ * for a known-authenticated session. Grants nothing beyond what every
+ * authenticated user gets (the Personal Workspace destination); admin,
+ * owner and master visibility stays off until the real snapshot arrives.
+ */
+export const AUTHENTICATED_BASE_ACCESS: WorkspaceAccess = {
+  isAuthenticated: true,
+  role: null,
+  hasApprovedSaunaMembership: false,
+  hasLinkedMasterProfile: false,
+}
+
 /** Destinations the user may both see and navigate to (planned routes excluded). */
 export function getVisibleWorkspaceDestinations(
   access: WorkspaceAccess
