@@ -579,6 +579,100 @@ Related files:
 
 ---
 
+# SP-031 Shared Workspace Infrastructure
+
+Status: DONE
+
+Implemented:
+
+* reusable Workspace Shell (breadcrumbs, header with title/subtitle/context/actions, shared navigation, Today-queue slot, content area)
+* single navigation definition rendered in two responsive variants: horizontal chips (mobile) and sidebar (desktop)
+* workspace hub in the avatar menu (Navbar): Profile → Owner Workspace → Master Studio → Admin, driven by configuration
+* WorkspaceAccess snapshot in AuthProvider: global role + approved sauna_managers membership + linked sauna_masters profile (navigation visibility only — enforcement stays in RLS/server actions)
+* Owner Workspace and Master Studio registered as `planned` destinations (never rendered as links until their routes exist)
+* no new authorization model — visibility derives from the existing role model only
+
+Related files:
+
+* components/workspace/WorkspaceShell.tsx
+* components/workspace/WorkspaceNav.tsx
+* components/workspace/WorkspaceBreadcrumbs.tsx
+* components/workspace/TodayQueue.tsx
+* components/workspace/AvatarMenu.tsx
+* lib/workspace/types.ts
+* lib/workspace/destinations.ts
+* components/AuthProvider.tsx
+* components/Navbar.tsx
+
+See docs/PLATFORM_WORKSPACES.md for the design reference.
+
+---
+
+# SP-032 Personal Workspace Foundation
+
+Status: DONE
+
+Implemented:
+
+* Personal Workspace (/profile) rebuilt on the shared Workspace Shell — reference implementation for Owner Workspace and Master Studio
+* configuration-driven navigation (lib/workspace/personal.ts): Pulpit, Profil, Ulubione, Recenzje, Wydarzenia, Ustawienia
+* Personal Dashboard (/profile): welcome header, Today queue, upcoming events, favourites preview, recent activity (own reviews); manager-oriented sections (pending registrations queue, managed saunas) moved to the Owner Workspace in SP-033
+* /profile/details — name editing (existing EditProfileNameForm) + planned identity fields (avatar, bio, location, languages, public profile) rendered as consistent "coming soon" rows, never as fake data
+* /profile/favorites — full favourites list with thumbnails
+* /profile/reviews — own sauna reviews and event reviews
+* /profile/events — own reservations with status + followed ("Idę") events
+* /profile/settings — account data, role badge, password change (existing ChangePasswordForm), notifications placeholder
+* consistent empty states via WorkspaceEmptyState; reusable dashboard sections via WorkspaceSection
+
+Related files:
+
+* app/(main)/profile/page.tsx
+* app/(main)/profile/details/page.tsx
+* app/(main)/profile/favorites/page.tsx
+* app/(main)/profile/reviews/page.tsx
+* app/(main)/profile/events/page.tsx
+* app/(main)/profile/settings/page.tsx
+* components/workspace/WorkspaceSection.tsx
+* components/workspace/WorkspaceEmptyState.tsx
+* lib/workspace/personal.ts
+
+---
+
+# SP-033 Owner Workspace Foundation
+
+Status: DONE
+
+Implemented:
+
+* Owner Workspace ("Panel obiektu") at /workspace on the shared Workspace Shell — first business workspace, validates the multi-workspace architecture
+* configuration-driven navigation (lib/workspace/owner.ts): Pulpit, Rezerwacje, Wydarzenia — one definition for mobile chips and desktop sidebar
+* generic active-context model (lib/workspace/context.ts): "All facilities" aggregate or a single facility, carried in the `context` query param; unknown/foreign ids fall back to the aggregate; reusable for future workspace types
+* WorkspaceContextSwitcher — generic client control that rewrites the context param on the current pathname (shown only with 2+ approved facilities)
+* server-side scope resolution (lib/workspace/ownerServer.ts): one place answering "which facilities does this account operate and which are in scope" — every /workspace page consumes the resolved scope, no per-module filters
+* Owner Dashboard (/workspace): Today queue (pending event registrations, migrated from the personal dashboard), managed facilities with membership status, upcoming events, quick actions
+* /workspace/reservations — pending registration moderation (existing RegistrationModerationActions) + recently resolved registrations
+* /workspace/events — upcoming and past events of the facilities in scope
+* Personal Workspace cleanup: manager queue and managed-sauna list removed from /profile; personal Today queue now shows the user's own events today; managers see a link card to the Owner Workspace
+* avatar-menu hub destination `owner-workspace` switched from `planned` to `available` (visible with approved sauna_managers membership, as configured in SP-031)
+* no new authorization model — data access unchanged (RLS + explicit user_id filters + existing server actions)
+
+Related files:
+
+* app/(main)/workspace/page.tsx
+* app/(main)/workspace/reservations/page.tsx
+* app/(main)/workspace/events/page.tsx
+* components/workspace/WorkspaceContextSwitcher.tsx
+* lib/workspace/context.ts
+* lib/workspace/owner.ts
+* lib/workspace/ownerServer.ts
+* lib/workspace/destinations.ts
+* app/(main)/profile/page.tsx
+* app/events/actions.ts
+
+See docs/PLATFORM_WORKSPACES.md §4 for the design reference.
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED
@@ -676,6 +770,9 @@ Completed:
 * Sauny list page with thumbnails, ratings, city filter (SP-019)
 * User favorites and event interests — /profile (SP-020)
 * Event reviews (post-event) + comments (pre-event) + sauna reviews page (SP-021)
+* Shared Workspace infrastructure — shell, hub, config-driven navigation (SP-031)
+* Personal Workspace — dashboard + profile modules on the shared shell (SP-032)
+* Owner Workspace — facility context, dashboard, reservations, events (SP-033)
 
 Planned:
 

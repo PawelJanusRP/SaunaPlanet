@@ -99,6 +99,18 @@ export default async function SaunaPage({
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : null
 
+  // Resolve review author names from profiles; stored author_name is only a
+  // fallback for legacy rows without user_id (older rows may hold an email).
+  const reviewAuthorIds = [...new Set((reviews ?? []).map((r) => r.user_id).filter(Boolean))]
+  const { data: reviewAuthorsRaw } = reviewAuthorIds.length > 0
+    ? await supabase.from('public_profiles').select('id, first_name, last_name').in('id', reviewAuthorIds)
+    : { data: [] }
+  const reviewNameById: Record<string, string> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const p of (reviewAuthorsRaw ?? []) as any[]) {
+    reviewNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Użytkownik'
+  }
+
   const mainImage = photos?.[0]?.image_url ?? sauna.cover_image_url
 
   const toggleFavoriteAction = toggleFavoriteSauna.bind(null, id)
@@ -293,7 +305,10 @@ export default async function SaunaPage({
               {reviews.map((review) => (
                 <div key={review.id} className="rounded-xl bg-gray-50 p-3">
                   <div className="font-semibold">
-                    {'⭐'.repeat(review.rating)} — {review.author_name}
+                    {'⭐'.repeat(review.rating)} —{' '}
+                    {review.user_id
+                      ? (reviewNameById[review.user_id] ?? 'Użytkownik')
+                      : review.author_name}
                   </div>
                   {review.review_text && (
                     <p className="mt-2 text-sm text-gray-700">{review.review_text}</p>

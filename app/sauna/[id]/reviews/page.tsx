@@ -56,7 +56,7 @@ export default async function SaunaReviewsPage({
   // Resolve author names
   const authorIds = [...new Set(reviews.map((r) => r.user_id))]
   const { data: profilesRaw } = authorIds.length > 0
-    ? await supabase.from('profiles').select('id, first_name, last_name').in('id', authorIds)
+    ? await supabase.from('public_profiles').select('id, first_name, last_name').in('id', authorIds)
     : { data: [] }
   const nameById: Record<string, string> = {}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

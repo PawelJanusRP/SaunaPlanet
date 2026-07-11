@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
+import AvatarMenu from './workspace/AvatarMenu'
 
 const roleLabel: Record<string, string> = {
   admin: 'Administrator',
@@ -21,7 +22,6 @@ const roleBadge: Record<string, string> = {
 export default function Navbar() {
   const { user, role, loading } = useAuth()
   const router = useRouter()
-  const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
   function close() { setOpen(false) }
@@ -105,14 +105,11 @@ export default function Navbar() {
             </>
           )}
 
-          {/* Account links */}
+          {/* Account links — workspace hub (SP-031) + non-workspace links */}
           {user && (
             <div className="border-b px-5 py-3 space-y-1">
-              <NavItem href="/profile" onClick={close}>Mój profil</NavItem>
+              <AvatarMenu onNavigate={close} />
               <NavItem href="/submit" onClick={close}>Zgłoś saunę</NavItem>
-              {(role === 'admin' || role === 'moderator') && (
-                <NavItem href="/admin" onClick={close} badge="Admin">Panel admina</NavItem>
-              )}
             </div>
           )}
 

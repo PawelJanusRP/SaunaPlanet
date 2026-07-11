@@ -74,7 +74,10 @@ Authoritative sources: `docs/FEATURES.md` (detailed, mostly current), `docs/BACK
 | `/events/[id]` | Server | Event detail: registration, comments/reviews, masters (459 lines — largest page) | No |
 | `/masters` | Server | Masters directory grouped by home sauna | No |
 | `/masters/[id]` | Server | Master profile: certs, events | No |
-| `/(main)/profile` | Server | User dashboard: favorites, interests, registrations, manager panel | Logged in |
+| `/(main)/profile` | Server | Personal Workspace dashboard on the shared Workspace Shell: Today queue (own events today), upcoming events, favourites, activity; links to Owner Workspace for managers (SP-032, manager features moved out in SP-033) | Logged in |
+| `/(main)/profile/details`, `/favorites`, `/reviews`, `/events`, `/settings` | Server | Personal Workspace modules (nav config in `lib/workspace/personal.ts`) | Logged in |
+| `/(main)/workspace` | Server | Owner Workspace dashboard on the shared Workspace Shell: facility context switcher, Today queue (pending registrations), managed facilities, upcoming events, quick actions (SP-033) | Logged in |
+| `/(main)/workspace/reservations`, `/events` | Server | Owner Workspace modules scoped by the active facility context (nav config in `lib/workspace/owner.ts`) | Logged in |
 | `/(main)/submit` | Server | Sauna submission form | Logged in |
 | `/(main)/admin` | Server | 9-tab admin panel (417 lines) | admin/moderator |
 | `/auth/login`, `/register`, `/reset-password`, `/update-password` | Client | Auth forms | No |
@@ -104,7 +107,8 @@ Major modules:
 | Module | File(s) | Notes |
 |--------|---------|-------|
 | Map (HIGH RISK) | `components/SaunaMap.tsx` | **1,352 lines**, 20+ useState, realtime subscriptions, clustering, satellites, filters, 7 modal orchestrations. Protected area per CLAUDE.md. |
-| Auth context | `components/AuthProvider.tsx` | React Context: user + role (fetched from `profiles`) |
+| Auth context | `components/AuthProvider.tsx` | React Context: user + role (from `profiles`) + `WorkspaceAccess` snapshot (approved `sauna_managers` membership, linked `sauna_masters` profile) — drives workspace navigation visibility only |
+| Workspace infrastructure (SP-031/032/033) | `components/workspace/*`, `lib/workspace/*` | Shared Workspace Shell (breadcrumbs, header, responsive nav, Today-queue slot), avatar-menu hub, config-driven destinations and per-workspace nav; generic active-context model (`lib/workspace/context.ts` + `WorkspaceContextSwitcher`); Personal Workspace at `/profile` and Owner Workspace at `/workspace` (scope resolution in `lib/workspace/ownerServer.ts`) |
 | Supabase clients | `lib/supabase/client.ts` (browser singleton), `lib/supabase/server.ts` (SSR + `getCurrentUserRole()`), `lib/supabase.ts` (**legacy re-export singleton, used only by SaunaMap**) |
 | Reservation helpers | `lib/reservationTime.ts`, `components/ReservationBadge.tsx` | Countdown formatting |
 | Moderation actions UI | `components/*ModerationActions.tsx`, `SubmissionActions.tsx`, `ManagerApprovalActions.tsx`, `RegistrationModerationActions.tsx` | ~6 near-identical approve/reject components (duplication) |
@@ -130,7 +134,7 @@ Tables (from SQL history + code usage):
 | `sauna_masters` | Master profiles (level, status pending/approved/rejected, `home_sauna_id`) |
 | `sauna_event_masters` | Event↔master junction with approval workflow |
 | `master_certificates` + `certificate_types` | Certification registry + dictionary (supersedes legacy `master_credentials`) |
-| `profiles` | Auth bridge; `role` check: user/moderator/admin; also `first_name`, `last_name`, `email` (live DB, 2026-06-24 — not in repo SQL); auto-created by trigger `on_auth_user_created` → `handle_new_user()` |
+| `profiles` | Auth bridge; `role` check: user/moderator/admin; also `first_name`, `last_name`, `email` (live DB, 2026-06-24 — not in repo SQL); auto-created by trigger `on_auth_user_created` → `handle_new_user()`. RLS: SELECT own row + admin; UPDATE own row limited to name columns via column grants; cross-user display names read through the `public_profiles` view (id + names only, definer) — see `supabase/2026-07-11_profiles_name_rls.sql` |
 | `user_favorites` | Unique (user_id, sauna_id) |
 | `user_event_interests` | Unique (user_id, event_id), status 'going' |
 | `sauna_submissions` | User-submitted facilities, admin approval |
