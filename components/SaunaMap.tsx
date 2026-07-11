@@ -149,6 +149,24 @@ function MapCenterController({
   return null
 }
 
+// Centers the map on a clicked marker at the current zoom. Separate from
+// MapFocusController (sidebar selection: flyTo zoom 16) and from popup
+// autoPan (disabled — it caused popup flicker).
+function MapPanController({
+  target,
+}: {
+  target: { center: [number, number]; n: number } | null
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!target) return
+    map.panTo(target.center, { animate: true, duration: 0.4 })
+  }, [target, map])
+
+  return null
+}
+
 function MapResizeGuard() {
   const map = useMap()
   useEffect(() => {
@@ -584,6 +602,7 @@ export default function SaunaMap() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [userLocation, setUserLocation] = useState<[number, number]>(fallbackCenter)
   const [centerTrigger, setCenterTrigger] = useState(0)
+  const [panTarget, setPanTarget] = useState<{ center: [number, number]; n: number } | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<[number, number]>(fallbackCenter)
   const [showAddForm, setShowAddForm] = useState(false)
   const [contextMenuLocation, setContextMenuLocation] = useState<[number, number] | null>(null)
@@ -1025,6 +1044,7 @@ useEffect(() => {
           <MapResizeGuard />
           <MapFocusController selectedSauna={selectedSauna} />
           <MapCenterController center={userLocation} trigger={centerTrigger} />
+          <MapPanController target={panTarget} />
 
           <MapClickHandler
             onSelect={(lat, lng) => setSelectedLocation([lat, lng])}
@@ -1086,6 +1106,10 @@ useEffect(() => {
                 eventHandlers={{
                   click: () => {
                     setShowAddForm(false)
+                    setPanTarget((prev) => ({
+                      center: [item.latitude, item.longitude],
+                      n: (prev?.n ?? 0) + 1,
+                    }))
                   },
                 }}
                 ref={(ref) => {
