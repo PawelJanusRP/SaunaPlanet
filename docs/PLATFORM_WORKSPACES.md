@@ -290,7 +290,7 @@ The creator's content surface:
 * Upcoming schedule: sessions I conduct (own + invited) and events I'm in
   the lineup of, chronological; conflicts warned (EVENT_SESSION_MODEL §3).
 * Per session: edit, cancel (notifies registrants), registrations queue,
-  **Share** (§5.2), photos.
+  **Share** (section below), photos.
 * (Future) recurrence templates: "every Thursday 20:00" stamping independent
   instances (EVENT_SESSION_MODEL §14.1).
 
@@ -326,10 +326,12 @@ pending badge visible only to self/moderation; evidence attachment (future).
 
 ### Affiliations
 
-Facilities I'm affiliated with (home sauna highlighted): request affiliation,
-accept facility invitations, leave. Affiliation = standing consent to publish
-sessions there (USER_MODEL Q11) — the Studio states this plainly, because it
-is the master's main reason to affiliate.
+Facilities I'm affiliated with (primary affiliation highlighted): request
+affiliation, accept facility invitations, leave. Affiliation = standing
+consent to publish sessions there (USER_MODEL Q11) — the Studio states this
+plainly, because it is the master's main reason to affiliate. This section
+renders the affiliation model of §5.2 — it is core Studio architecture, not
+an add-on.
 
 ### Followers & Audience (future)
 
@@ -349,6 +351,48 @@ capability unlocks.
 Sessions conducted (month/quarter), registrations and fill rate, profile
 views, share-link conversion ("your Instagram link brought 41 people" — the
 number that proves J8 to the master), rating trend. (Future) earnings.
+
+## 5.2 The Affiliation Model (core architecture — Decision 016)
+
+The single `home_sauna_id` on the master profile is a **temporary
+transitional solution**. The Master Studio is built on its replacement — a
+first-class, reusable business relationship:
+
+```
+SAUNA MASTER ↔ MASTER AFFILIATION ↔ SAUNA FACILITY
+```
+
+An affiliation is not a foreign key with a label; it is the object that
+carries the master↔facility relationship's whole lifecycle. The product
+model (no database columns defined yet) — an affiliation may define, among
+other things:
+
+| Aspect | Meaning |
+|---|---|
+| **Status** | the standard lifecycle: requested/invited → approved → ended (consistent with USER_MODEL §1.4 — every elevation is a workflow) |
+| **Type** | the nature of the relationship: resident master, guest, alumni… (dictionary, extensible) |
+| **Primary affiliation** | exactly one affiliation may be primary — the successor of "home sauna" for display, defaults and map grouping |
+| **Start/end dates** | affiliations are historical facts, not just current state — the master's career timeline reads from them |
+| **Verification** | (future, Phase 7) the facility or platform confirms the relationship is real — trust signal on the public profile |
+| **Permission to publish sessions** | the operational core: an approved affiliation is standing consent to publish sessions at the facility without per-session approval (USER_MODEL Q11) |
+| **Permission to create events** | whether the master may propose/publish events for this facility beyond the default Decision 015 rules |
+| **Future trust level** | graded trust as history accumulates — a lever for auto-approval, rankings and (much later) revenue splits |
+
+Design rules:
+
+* **One relationship object, both directions.** Master requests / facility
+  invites — both land in the same affiliation record with provenance
+  (who initiated, who approved), like the manager membership model
+  (USER_MODEL §3.2).
+* **Affiliation is consent infrastructure.** Session publication (W-08),
+  event proposals (W-09, Decision 015) and satellite/home presentation all
+  *read* affiliations; none of them redefine the relationship locally.
+* **`home_sauna_id` retires as the primary model in SP-035** — kept readable
+  during transition, migrated into primary affiliations, then removed. No
+  new feature may depend on it.
+* Both workspaces surface the same records: the Studio's Affiliations
+  section (master side) and the Owner Workspace Team section (facility
+  side, PLATFORM_WORKSPACES §4.2) are two views of one relationship.
 
 ---
 

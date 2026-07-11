@@ -58,7 +58,7 @@ DONE (as of this audit):
 | SP-031/032/033 | Shared Workspace infrastructure, Personal Workspace (/profile), Owner Workspace (/workspace) with active facility context |
 | SP-034 | Owner event management — create/edit/delete events from /workspace/events via manager-scoped server actions (`createEvent`/`updateEvent`/`deleteEvent`); additive `sauna_events` RLS for approved `sauna_managers` (`supabase/2026-07-11_sp034_owner_events_rls.sql`, applied manually) |
 
-PLANNED: SP-016/SP-026 (master↔sauna affiliations), SP-023 (rankings), SP-024 (payments), SP-025 (private saunas marketplace), SP-027 (rating parameters admin panel), SP-029 (PWA installability), SP-030 (native app, Expo).
+PLANNED: SP-035 (Master Studio Foundation — absorbs SP-016 affiliations, Decision 016), SP-036 (Sauna Sessions), SP-026 (master↔event assignments handshake), SP-023 (rankings), SP-024 (payments), SP-025 (private saunas marketplace), SP-027 (rating parameters admin panel), SP-029 (PWA installability), SP-030 (native app, Expo).
 
 Authoritative sources: `docs/FEATURES.md` (detailed, mostly current), `docs/BACKLOG.md` (Polish, partially stale), `docs/ROADMAP.md` (phases).
 
@@ -180,7 +180,7 @@ Authoritative sources: live Supabase project (primary), `supabase/all_scripts_hi
 | `docs/USER_MODEL.md` | Authoritative user/persona/ownership/permission model (2026-07-11); reference for all auth/ownership/reservation/marketplace/payment features |
 | `docs/EVENT_SESSION_MODEL.md` | Authoritative Event vs Session model (2026-07-11, Decision 014): session = atom, event = container; organizers, map pulse hierarchy, reservations, future payments |
 | `docs/PLATFORM_WORKSPACES.md` | Authoritative design reference for Owner/Manager Workspace and Master Studio (2026-07-11): workspace hub, section maps, object-capability matrix, MVP scope, mobile-first workflows |
-| `docs/WORKFLOWS.md` | Authoritative central reference for business workflows (2026-07-11): 15 workflows (W-01…W-15) with actors/triggers/flows/status, workflow loops and dependencies, future-workflow list; sprint planning starts here |
+| `docs/WORKFLOWS.md` | Authoritative central reference for business workflows (2026-07-11): 16 workflows (W-01…W-16) with actors/triggers/flows/status, workflow loops and dependencies, future-workflow list; sprint planning starts here |
 | `docs/FEATURES.md` | Detailed, mostly current (21 DONE, 8 PLANNED) |
 | `docs/BACKLOG.md` | Polish; **stale statuses** (SP-022 says PLANNED though implemented; SP-019 says IN PROGRESS) |
 | `docs/KNOWN_ISSUES.md` | Useful map-bug postmortems; **stale**: claims "Authentication: NOT IMPLEMENTED" (SP-011 is DONE) |

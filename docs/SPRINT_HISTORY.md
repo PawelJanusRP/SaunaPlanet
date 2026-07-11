@@ -20,6 +20,8 @@ Chronological record of sprint execution. For scope details of each sprint see
 | SP-032 | Completed   | `feature/sp-031-workspace-shell`  | `465e3d7` | Personal Workspace Foundation — /profile rebuilt on the shared shell: dashboard, details, favorites, reviews, events, settings; reference implementation for Owner Workspace and Master Studio |
 | SP-033 | Completed   | `feature/sp-033-owner-workspace`  | `8047212` | Owner Workspace Foundation — /workspace on the shared shell: active facility context (all/one), dashboard, reservations and events modules; manager functionality migrated out of the Personal Workspace |
 | SP-034 | In Review   | `feature/sp-034-owner-events`     | —         | Owner Event Management — create/edit/delete events from the Owner Workspace within the active facility context; manager-scoped server actions + additive sauna_events RLS (SQL to apply manually) |
+| SP-035 | Planned     | —                                 | —         | Master Studio Foundation — Master Workspace on the shared shell, Sauna Master profile, profile integrity fixes, affiliation model (absorbs SP-016, Decision 016), retirement of home-sauna as the primary model |
+| SP-036 | Planned     | —                                 | —         | Sauna Sessions — Sessions as a first-class entity independent from Events (Facility ↔ Event ↔ Session ↔ Master; see docs/EVENT_SESSION_MODEL.md) |
 
 Sprints prior to SP-019 (SP-012 through SP-018: roles and permissions, RLS
 hardening, submission moderation, master registration, certificates, event
@@ -36,6 +38,11 @@ some of them are already scoped as planned initiatives in `docs/BACKLOG.md`
 (rankings, payments, private saunas, master assignments, native mobile app),
 while others are held back for future planning and history reconstruction.
 None of them have started implementation.
+
+**SP-016 (master↔sauna affiliations)** was absorbed into **SP-035 Master
+Studio Foundation** (Decision 016) — the identifier stays valid in older
+references, but the work is delivered inside SP-035, not as a standalone
+sprint.
 
 The project intentionally continues with **SP-031** because the Workspace
 initiative (`docs/PLATFORM_WORKSPACES.md`) became a separate architectural

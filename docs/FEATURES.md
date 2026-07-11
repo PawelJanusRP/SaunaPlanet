@@ -429,33 +429,31 @@ Related database objects:
 
 ---
 
-# SP-016 Sauna Master Affiliations (BACKLOG)
+# SP-016 Sauna Master Affiliations (ABSORBED INTO SP-035)
 
-Status: PLANNED
+Status: PLANNED — delivered as part of **SP-035 Master Studio Foundation**
+(Decision 016). Not a standalone sprint.
 
 Description:
 
-Replace home_sauna_id single-column approach with a dedicated affiliations table.
-Enables masters to be formally associated with multiple sauna facilities with role/status per affiliation.
+Replace the transitional home_sauna_id single-column approach with a
+first-class affiliation relationship:
 
-Proposed schema:
-
-```sql
-CREATE TABLE sauna_master_affiliations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  master_id UUID NOT NULL REFERENCES sauna_masters(id) ON DELETE CASCADE,
-  sauna_id UUID NOT NULL REFERENCES saunas(id) ON DELETE CASCADE,
-  is_primary BOOLEAN DEFAULT false,
-  role TEXT DEFAULT 'resident',
-  status TEXT DEFAULT 'approved',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(master_id, sauna_id)
-);
 ```
+Sauna Master ↔ Master Affiliation ↔ Sauna Facility
+```
+
+The affiliation may define: status, type, primary affiliation, start/end
+dates, verification, permission to publish sessions, permission to create
+events, future trust level. Authoritative product model:
+docs/PLATFORM_WORKSPACES.md §5.2. No database columns are defined yet — the
+earlier schema sketch recorded here was removed as premature; the schema is
+designed at SP-035 implementation time from the product model.
 
 Migration note:
 
-Migrate existing home_sauna_id values into this table when implementing.
+Migrate existing home_sauna_id values into primary affiliations when
+implementing; home_sauna_id stays readable during transition, then retires.
 
 ---
 
@@ -804,12 +802,14 @@ Completed:
 
 Planned:
 
+* Master Studio Foundation — Master Workspace, profile integrity fixes, affiliation model, home-sauna retirement (SP-035; absorbs SP-016)
+* Sauna Sessions — first-class Session entity independent from Events (SP-036)
 * Bookings (SP-022)
 * Payments (SP-024)
 * Private Saunas (SP-025)
 * Verification
 * Recurring events
-* Sauna master affiliations (SP-016, SP-026)
+* Sauna master ↔ event assignments, two-sided handshake (SP-026)
 * Sauna and master rankings (SP-023)
 * Rating parameters admin panel (SP-027)
 * Native Mobile App — Expo, 3 phases: Architecture → Android → iOS (SP-030)

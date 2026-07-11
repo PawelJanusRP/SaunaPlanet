@@ -29,7 +29,7 @@ Workflow index:
 | W-05 | Owner manages facilities | Partial |
 | W-06 | Owner creates an event | Implemented (SP-034) |
 | W-07 | Sauna Master onboarding | Implemented (verification badge future) |
-| W-08 | Sauna Master creates a session | Future |
+| W-08 | Sauna Master creates a session | Future (planned: SP-036) |
 | W-09 | Sauna Master creates an event | Future (Decision 015) |
 | W-10 | Owner invites a Sauna Master | Partial (admin-side only) |
 | W-11 | Sauna Master applies to an event | Future |
@@ -37,6 +37,7 @@ Workflow index:
 | W-13 | Contacting a Sauna Master | Future |
 | W-14 | Reservation moderation | Implemented (notifications future) |
 | W-15 | Administration | Implemented (disputes/audit future) |
+| W-16 | Sauna Master affiliation | Future (planned: SP-035, Decision 016) |
 
 ---
 
@@ -336,11 +337,12 @@ Registration → master application (bio, level) → PENDING
 * Level changes go through moderation (level implies certification).
 
 **Future extensions:** Master Studio as the professional home
-(PLATFORM_WORKSPACES §5), verified badge (Phase 7 — verification distinct
-from certification), affiliations with facilities (SP-016; affiliation =
-standing consent to publish sessions there), enforced 1:1 user↔profile
-integrity and own-profile-only editing (USER_MODEL MVP §6.1 — security
-precondition for all master self-service).
+(PLATFORM_WORKSPACES §5 — planned as SP-035), verified badge (Phase 7 —
+verification distinct from certification), affiliations with facilities
+(W-16, part of SP-035; affiliation = standing consent to publish sessions
+there), enforced 1:1 user↔profile integrity and own-profile-only editing
+(USER_MODEL MVP §6.1 — security precondition for all master self-service,
+in scope of SP-035).
 
 **Related workspaces:** Master Studio (future); Admin (moderation queues).
 
@@ -351,13 +353,22 @@ certificate_types, profiles.
 
 # W-08 · Sauna Master creates a session
 
-**Status:** Future — the G13 model gap; step 1–2 of the
-EVENT_SESSION_MODEL adoption path.
+**Status:** Future — **planned as SP-036 (Sauna Sessions)**, after SP-035
+delivers affiliations (W-16) and profile integrity; the G13 model gap;
+step 1–2 of the EVENT_SESSION_MODEL adoption path.
 
 **Purpose:** the J8 acquisition loop: masters as content creators whose
 shareable rituals bring their own audiences to the platform. Sessions are
-first-class entities — a verified master always creates and manages their
-own sessions.
+**first-class entities independent from Events**:
+
+```
+FACILITY ↔ EVENT ↔ SESSION ↔ SAUNA MASTER
+```
+
+An Event may contain multiple Sessions; a Session is owned by one master
+(the lead conductor/creator) at one facility, may exist standalone, and may
+have additional conductors (EVENT_SESSION_MODEL §3). A verified master
+always creates and manages their own sessions.
 
 **Actors:** Sauna Master (creator, default lead conductor); Facility
 (consent when required); Event organizer (for proposals into events).
@@ -497,7 +508,7 @@ Owner Workspace → event → Invite Sauna Master
   one-sided).
 * Per-session conducting invitations once sessions exist (lead/support
   roles).
-* Affiliation invitation (facility ↔ master standing relationship, SP-016)
+* Affiliation invitation (facility ↔ master standing relationship, W-16)
   — a separate, longer-lived handshake than a single event.
 
 **Future extensions:** invitation notifications (push deep-link to the
@@ -735,6 +746,64 @@ sauna_submissions, sauna_managers, master_certificates.
 
 ---
 
+# W-16 · Sauna Master affiliation
+
+**Status:** Future — **planned as SP-035 (Master Studio Foundation)**;
+core Studio architecture, not an add-on (Decision 016; model:
+PLATFORM_WORKSPACES §5.2).
+
+**Purpose:** establish the standing master↔facility relationship that the
+rest of the master economy reads: it replaces the transitional "home sauna"
+concept and carries consent (session publication, event creation),
+presentation (primary affiliation) and — later — verification and trust.
+
+```
+SAUNA MASTER ↔ MASTER AFFILIATION ↔ SAUNA FACILITY
+```
+
+**Actors:** Sauna Master, Facility Owner/Manager — either side may
+initiate; the other side always consents explicitly.
+
+**Trigger:** master requests affiliation (Studio → Affiliations), or the
+facility invites a master (Owner Workspace → Team).
+
+**Main flow:**
+
+```
+Request or invitation → affiliation PENDING
+  → other side approves (Today Queue on the respective side)
+  → AFFILIATION ACTIVE:
+      · standing consent to publish sessions at the facility (W-08)
+      · appears in the Studio (Affiliations) and the facility Team roster
+      · one affiliation may be marked PRIMARY (successor of home sauna)
+  → either side may end the affiliation (end date recorded — history kept)
+```
+
+**Alternative flows:**
+
+* Declined request/invitation (with reason).
+* Changing the primary affiliation (master's choice among active ones).
+* Migration: existing `home_sauna_id` values become primary affiliations;
+  the column stays readable during transition, then retires (no new feature
+  may depend on it).
+
+**Model highlights (product level, no schema):** status, type (resident /
+guest / alumni…), primary flag, start/end dates, verification (Phase 7),
+permission to publish sessions, permission to create events, future trust
+level — see PLATFORM_WORKSPACES §5.2 for the full table.
+
+**Future extensions:** facility-verified badges on public profiles, trust
+levels feeding auto-approvals and rankings, revenue-split defaults for
+master-organized happenings at the affiliated venue (Q12–Q13 era).
+
+**Related workspaces:** Master Studio (Affiliations), Owner Workspace
+(Team).
+
+**Related entities:** sauna_masters, saunas, (future) master affiliations;
+today's transitional `home_sauna_id`.
+
+---
+
 # Workflow Relationships
 
 The workflows form the platform's loops:
@@ -744,6 +813,7 @@ DISCOVERY LOOP (demand):    W-01 → W-02 → W-14 → attendance → W-03 → W
 MASTER GROWTH LOOP (J8):    W-07 → W-08 → share link → new users → W-01/W-02
 SUPPLY LOOP:                W-04 → W-05 → W-06 → W-02/W-14
 TALENT LOOP:                W-10 ⟷ W-11 (two directions of the same handshake)
+                            anchored by W-16 (standing affiliation),
                             fed by W-12 (discovery) and W-13 (contact)
 TRUST LOOP:                 W-03 + W-15 feed ratings, rankings, verification
 ```
@@ -752,7 +822,12 @@ Dependencies worth respecting in planning:
 
 * W-08/W-09/W-11 (master self-service) depend on the master-profile
   integrity fixes (USER_MODEL §6.1–6.2) and the session/organizer model
-  (G13) — security and model first, features second.
+  (G13) — security and model first, features second. The planned sequence
+  encodes this: **SP-035** (Master Studio Foundation: integrity fixes +
+  W-16 affiliations, retiring home-sauna as the primary model) →
+  **SP-036** (Sauna Sessions: W-08), per Decision 016.
+* W-16 is consent infrastructure for W-08 and W-09 — affiliation state
+  decides where a master publishes without per-object approval.
 * W-14's value is capped until notifications exist: a silently resolved
   reservation breaks W-02's promise.
 * W-04 (ownership) is the attachment point for everything money-related;

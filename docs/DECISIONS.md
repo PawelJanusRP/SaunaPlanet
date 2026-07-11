@@ -532,6 +532,70 @@ Impact:
 
 ---
 
+# Decision 016
+
+Title:
+
+Affiliations are the master↔facility model; "home sauna" is transitional.
+SP-016 folds into the Master Studio roadmap (SP-035), Sessions follow (SP-036).
+
+Date:
+
+2026-07-11
+
+Decision:
+
+1. The conceptual model `Sauna Master → home_sauna_id` is a **temporary
+   transitional solution**. The long-term model is a first-class, reusable
+   business relationship:
+
+   ```
+   Sauna Master ↔ Master Affiliation ↔ Sauna Facility
+   ```
+
+   An affiliation may define, among other things: status, type, primary
+   affiliation, start/end dates, verification, permission to publish sauna
+   sessions, permission to create events, and a future trust level. Product
+   model only — no database columns are defined yet
+   (docs/PLATFORM_WORKSPACES.md §5.2).
+
+2. Affiliations are **not an isolated sprint**. The planned SP-016
+   initiative folds into the Master Studio roadmap as a core part of its
+   architecture. SP-016 remains a permanent identifier in past references
+   (SPRINT_HISTORY numbering rule) but will be delivered inside SP-035.
+
+3. Roadmap:
+   * **SP-035 — Master Studio Foundation**: Master Workspace on the shared
+     shell, Sauna Master profile, profile integrity fixes (USER_MODEL
+     §6.1–6.2), the affiliation model (formerly SP-016), removal of the
+     home-sauna concept as the primary model.
+   * **SP-036 — Sauna Sessions**: Sessions as a first-class entity
+     independent from Events, per docs/EVENT_SESSION_MODEL.md
+     (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may contain many
+     Sessions; a Session is owned by one master at one facility).
+
+Reasoning:
+
+Affiliation is the consent backbone of the master economy: it decides where
+a master may publish sessions without per-session approval (USER_MODEL Q11),
+feeds satellite/home presentation, and later carries verification and trust.
+Shipping it as a standalone table without the Master Studio would create a
+relationship nobody can see or manage; shipping the Studio without it would
+rebuild home_sauna_id's dead end. They are one architecture.
+
+Impact:
+
+* PLATFORM_WORKSPACES §5.2 defines the affiliation product model; the
+  Studio's Affiliations section renders it.
+* home_sauna_id remains readable for backward compatibility during
+  transition but stops being the primary model in SP-035.
+* Workflow reference: docs/WORKFLOWS.md W-16 (affiliation), W-08 (sessions,
+  planned as SP-036).
+* Sequencing: profile integrity fixes precede all master self-service
+  (security precondition).
+
+---
+
 # Guiding Principle
 
 Whenever there is uncertainty between two approaches, prefer the one that strengthens:
