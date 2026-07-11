@@ -579,6 +579,65 @@ Related files:
 
 ---
 
+# SP-031 Shared Workspace Infrastructure
+
+Status: DONE
+
+Implemented:
+
+* reusable Workspace Shell (breadcrumbs, header with title/subtitle/context/actions, shared navigation, Today-queue slot, content area)
+* single navigation definition rendered in two responsive variants: horizontal chips (mobile) and sidebar (desktop)
+* workspace hub in the avatar menu (Navbar): Profile → Owner Workspace → Master Studio → Admin, driven by configuration
+* WorkspaceAccess snapshot in AuthProvider: global role + approved sauna_managers membership + linked sauna_masters profile (navigation visibility only — enforcement stays in RLS/server actions)
+* Owner Workspace and Master Studio registered as `planned` destinations (never rendered as links until their routes exist)
+* no new authorization model — visibility derives from the existing role model only
+
+Related files:
+
+* components/workspace/WorkspaceShell.tsx
+* components/workspace/WorkspaceNav.tsx
+* components/workspace/WorkspaceBreadcrumbs.tsx
+* components/workspace/TodayQueue.tsx
+* components/workspace/AvatarMenu.tsx
+* lib/workspace/types.ts
+* lib/workspace/destinations.ts
+* components/AuthProvider.tsx
+* components/Navbar.tsx
+
+See docs/PLATFORM_WORKSPACES.md for the design reference.
+
+---
+
+# SP-032 Personal Workspace Foundation
+
+Status: DONE
+
+Implemented:
+
+* Personal Workspace (/profile) rebuilt on the shared Workspace Shell — reference implementation for Owner Workspace and Master Studio
+* configuration-driven navigation (lib/workspace/personal.ts): Pulpit, Profil, Ulubione, Recenzje, Wydarzenia, Ustawienia
+* Personal Dashboard (/profile): welcome header, Today queue (pending registrations for managed saunas), managed saunas, upcoming events, favourites preview, recent activity (own reviews)
+* /profile/details — name editing (existing EditProfileNameForm) + planned identity fields (avatar, bio, location, languages, public profile) rendered as consistent "coming soon" rows, never as fake data
+* /profile/favorites — full favourites list with thumbnails
+* /profile/reviews — own sauna reviews and event reviews
+* /profile/events — own reservations with status + followed ("Idę") events
+* /profile/settings — account data, role badge, password change (existing ChangePasswordForm), notifications placeholder
+* consistent empty states via WorkspaceEmptyState; reusable dashboard sections via WorkspaceSection
+
+Related files:
+
+* app/(main)/profile/page.tsx
+* app/(main)/profile/details/page.tsx
+* app/(main)/profile/favorites/page.tsx
+* app/(main)/profile/reviews/page.tsx
+* app/(main)/profile/events/page.tsx
+* app/(main)/profile/settings/page.tsx
+* components/workspace/WorkspaceSection.tsx
+* components/workspace/WorkspaceEmptyState.tsx
+* lib/workspace/personal.ts
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED
@@ -676,6 +735,8 @@ Completed:
 * Sauny list page with thumbnails, ratings, city filter (SP-019)
 * User favorites and event interests — /profile (SP-020)
 * Event reviews (post-event) + comments (pre-event) + sauna reviews page (SP-021)
+* Shared Workspace infrastructure — shell, hub, config-driven navigation (SP-031)
+* Personal Workspace — dashboard + profile modules on the shared shell (SP-032)
 
 Planned:
 
