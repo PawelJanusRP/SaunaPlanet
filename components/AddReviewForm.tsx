@@ -35,11 +35,23 @@ export default function AddReviewForm({
     setSaving(true)
 
     const supabase = createClient()
+
+    // author_name is NOT NULL and shown publicly — store the display name,
+    // never the email. Live rendering resolves names via public_profiles;
+    // the stored value covers legacy paths (admin panel).
+    const { data: profile } = await supabase
+      .from('public_profiles')
+      .select('first_name, last_name')
+      .eq('id', user!.id)
+      .maybeSingle()
+    const displayName =
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Użytkownik'
+
     const { error } = await supabase
       .from('sauna_reviews')
       .insert([{
         sauna_id: saunaId,
-        author_name: user!.email ?? 'Użytkownik',
+        author_name: displayName,
         rating,
         review_text: reviewText,
         user_id: user!.id,
