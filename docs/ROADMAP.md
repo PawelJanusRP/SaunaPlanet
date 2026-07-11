@@ -284,6 +284,31 @@ Long-term priority:
 
 ---
 
+# Mobile Roadmap
+
+SaunaPlanet is a mobile-first product. The mobile strategy runs in parallel with the main platform phases.
+
+## Short-term (PWA / Responsive)
+
+* improve responsive web experience on mobile
+* optimize map interaction on mobile
+* support camera-based photo uploads
+* support location-based sauna discovery
+
+## Medium-term (PWA+)
+
+* make SaunaPlanet installable as a PWA
+* improve offline / poor-network behavior
+* add push notifications for events and favourite sauna masters
+
+## Long-term (Native App)
+
+* build native mobile app using React Native / Expo
+* reuse Supabase backend
+* reuse product model: Sauna → Event → Sauna Master
+
+---
+
 # Guiding Principle
 
 SaunaPlanet should evolve from:

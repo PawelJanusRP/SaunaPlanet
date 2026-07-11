@@ -687,3 +687,4 @@ Planned:
 * Sauna master affiliations (SP-016, SP-026)
 * Sauna and master rankings (SP-023)
 * Rating parameters admin panel (SP-027)
+* Native Mobile App — Expo, 3 phases: Architecture → Android → iOS (SP-030)

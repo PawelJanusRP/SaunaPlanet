@@ -341,6 +341,139 @@ Avoid country-specific assumptions in future designs.
 
 ---
 
+# Decision 011
+
+Title:
+
+Sessions and Events are distinct kinds of happenings.
+
+Date:
+
+2026-07-11
+
+Decision:
+
+The platform distinguishes two kinds of happenings sharing one infrastructure:
+
+* Session (seans/rytuał) — a sauna ritual led by a sauna master. The master is
+  the organizer, promotes the session via SaunaPlanet links on social media,
+  appears as a satellite of the sauna, and confirms registrations. Not
+  separately ticketed (part of facility admission); registration manages
+  capacity only. Pulses distinctly on the map.
+* Event — a larger production (sauna night, festival, competition), organized
+  by the facility (owner/manager) and separately ticketed. Performing masters
+  are assigned. Pulses distinctly on the map (existing event highlight).
+
+Reasoning:
+
+Sauna masters can be event organizers — but for sessions, not for ticketed
+events. Sessions turn masters into an acquisition channel: a master inviting
+their own social-media audience brings new users with every session. Events
+remain the monetization anchor (payee = facility owner).
+
+Impact:
+
+* The happenings data model needs a kind distinction and organizer attribution.
+* Session registrations are confirmed by the organizing master; event
+  registrations by facility staff.
+* Map must visually distinguish session pulsing from event pulsing
+  (SaunaMap.tsx — protected area).
+* Full model: docs/USER_MODEL.md §1.6, journey J8.
+
+---
+
+# Decision 012
+
+Title:
+
+Reviews do not require confirmed registration or attendance.
+
+Date:
+
+2026-07-11
+
+Decision:
+
+Any logged-in user may review a past happening. No confirmed registration,
+check-in or attendance proof is required.
+
+Reasoning:
+
+Most attendees currently register offline; attendance-gating would silence the
+majority of genuine reviewers. Attendance-gating remains the ready remedy if
+review abuse appears once reservations are universal.
+
+Impact:
+
+Current SP-021 behaviour is confirmed as intended. See docs/USER_MODEL.md §8.0.2.
+
+---
+
+# Decision 013
+
+Title:
+
+No self-reviews by owners, managers or organizers.
+
+Date:
+
+2026-07-11
+
+Decision:
+
+Owners and managers must not review their own facility or its happenings.
+Corollary adopted in USER_MODEL.md: organizers (masters for their sessions)
+must not review their own happenings.
+
+Reasoning:
+
+Conflict of interest undermines the trust the review system exists to create.
+
+Impact:
+
+Requires enforcement once ownership/management relationships are queryable at
+review time. See docs/USER_MODEL.md §8.0.3 and MVP item §6.11.
+
+---
+
+# Decision 014
+
+Title:
+
+The Session is the atom; the Event is a container.
+
+Date:
+
+2026-07-11
+
+Decision:
+
+A Session is an individual sauna ritual (master(s) + facility + time + theme +
+capacity) — not a smaller Event. An Event is a larger organized occurrence
+that may contain many Sessions; a Session belongs to at most one Event and may
+exist standalone. Events may be organized by a facility or by a sauna master;
+Sessions are created by masters (primary case) or facility staff, always with
+two-sided consent. Reservations target exactly one object (Event XOR Session);
+the organizer of the reserved object confirms them. On the map, Event presence
+pulses dominantly and Session presence pulses softer; one pulse per marker,
+Event > Session; master satellites represent any confirmed future presence
+(generalizing Decision 004).
+
+Reasoning:
+
+Modeling the ritual itself is a core differentiator: it turns masters into
+content creators with shareable schedules (acquisition), answers the mobile
+killer query ("what ritual tonight near me"), and creates a monetization
+ladder (free sessions → event tickets → premium/paid sessions later).
+
+Impact:
+
+Refines Decision 011 and USER_MODEL.md §1.6 (containment instead of two
+parallel kinds; master-organized events allowed, paid ones gated on the master
+payout model). Authoritative model: docs/EVENT_SESSION_MODEL.md.
+
+---
+
 # Guiding Principle
 
 Whenever there is uncertainty between two approaches, prefer the one that strengthens:

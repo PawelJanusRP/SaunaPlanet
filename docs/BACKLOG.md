@@ -185,6 +185,44 @@ Zobacz też: FEATURES.md SP-016
 
 ---
 
+# SP-030 Native Mobile App (Expo)
+
+Status: PLANNED
+
+Goal:
+
+Build a native mobile app reusing the SaunaPlanet Supabase backend and product model.
+
+## Phase 1 — Architecture and Foundation
+
+* Expo project setup (monorepo or separate repo)
+* shared API layer — Supabase client reused from web
+* shared authentication — Supabase Auth with Expo SecureStore
+* navigation structure (Expo Router)
+* design tokens / shared styles
+
+## Phase 2 — Android
+
+* Android release build
+* Google Play Store submission
+* core screens: map, sauna detail, events, profile
+* push notifications (Expo Notifications)
+
+## Phase 3 — iOS
+
+* iOS release build
+* Apple App Store submission
+* feature parity with Android
+
+Dependencies:
+
+* SP-029 (PWA installability — baseline UX patterns before native)
+* Supabase backend (shared across web and native)
+
+See also: Mobile Roadmap in docs/ROADMAP.md
+
+---
+
 # SP-025 Sauny prywatne (marketplace)
 
 Status: PLANNED
