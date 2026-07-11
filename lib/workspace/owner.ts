@@ -16,6 +16,7 @@ const OWNER_NAV_BASE: WorkspaceNavItem[] = [
   { key: 'dashboard', label: 'Pulpit', href: '/workspace' },
   { key: 'reservations', label: 'Rezerwacje', href: '/workspace/reservations' },
   { key: 'events', label: 'Wydarzenia', href: '/workspace/events' },
+  { key: 'team', label: 'Zespół', href: '/workspace/team' },
 ]
 
 /** Single nav definition (mobile chips + desktop sidebar) carrying the context. */

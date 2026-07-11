@@ -28,7 +28,13 @@ export default function BecomeMasterForm() {
         status: 'pending',
         user_id: user?.id ?? null,
       })
-      if (error) throw error
+      if (error) {
+        // unique index on sauna_masters.user_id (SP-035): one profile per account
+        if (error.code === '23505' || error.message.includes('sauna_masters_user_id_unique')) {
+          throw new Error('To konto ma już profil saunamistrza')
+        }
+        throw error
+      }
       setSubmitted(true)
       setOpen(false)
     } catch (e) {

@@ -32,6 +32,11 @@ export default async function MasterPage({
     .eq('id', id)
     .single()
 
+  // SP-035: profile controls belong to the linked account and moderation.
+  // RLS enforces the same boundary; this only mirrors it in the UI.
+  const isOwnProfile = !!master && !!user && master.user_id === user.id
+  const canManageProfile = isAdmin || isOwnProfile
+
   if (!master) {
     return (
       <main className="p-6">
@@ -101,7 +106,9 @@ export default async function MasterPage({
               ) : (
                 <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-5xl">🧖</div>
               )}
-              <UploadAvatarButton masterId={id} currentAvatarUrl={master.avatar_url} />
+              {canManageProfile && (
+                <UploadAvatarButton masterId={id} currentAvatarUrl={master.avatar_url} />
+              )}
             </div>
 
             <div>
@@ -112,12 +119,15 @@ export default async function MasterPage({
               {master.level && (
                 <div className="mt-1 text-sm font-semibold text-gray-500">{master.level}</div>
               )}
-              <EditSaunaMasterModal
-                masterId={id}
-                currentName={master.name}
-                currentLevel={master.level ?? null}
-                currentBio={master.bio ?? null}
-              />
+              {canManageProfile && (
+                <EditSaunaMasterModal
+                  masterId={id}
+                  currentName={master.name}
+                  currentLevel={master.level ?? null}
+                  currentBio={master.bio ?? null}
+                  canEditLevel={isAdmin}
+                />
+              )}
             </div>
           </div>
 
@@ -176,7 +186,7 @@ export default async function MasterPage({
             </div>
           )}
 
-          {!!user && <AddCertificateModal masterId={id} isAdmin={isAdmin} />}
+          {canManageProfile && <AddCertificateModal masterId={id} isAdmin={isAdmin} />}
         </section>
 
         {/* Najbliższe wydarzenia */}

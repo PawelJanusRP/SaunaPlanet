@@ -10,11 +10,14 @@ export default function EditSaunaMasterModal({
   currentName,
   currentLevel,
   currentBio,
+  canEditLevel = false,
 }: {
   masterId: string
   currentName: string
   currentLevel: string | null
   currentBio: string | null
+  /** Level implies certification — editable by moderation only (USER_MODEL §2.4). */
+  canEditLevel?: boolean
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -41,16 +44,21 @@ export default function EditSaunaMasterModal({
 
     try {
       const supabase = createClient()
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('sauna_masters')
         .update({
           name: name.trim(),
-          level,
+          ...(canEditLevel ? { level } : {}),
           bio: bio.trim() || null,
         })
         .eq('id', masterId)
+        .select('id')
 
       if (error) throw error
+      // RLS mismatch updates 0 rows without an error — fail loud instead
+      if (!updated || updated.length === 0) {
+        throw new Error('Brak uprawnień do edycji tego profilu')
+      }
 
       toast.success('Profil zaktualizowany')
       setOpen(false)
@@ -94,21 +102,28 @@ export default function EditSaunaMasterModal({
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-gray-700">
-                  Poziom
-                </label>
-                <select
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  className="w-full rounded-xl border p-2 text-sm"
-                >
-                  <option value="master">Master</option>
-                  <option value="senior">Senior</option>
-                  <option value="certified">Certified</option>
-                  <option value="guest">Guest</option>
-                </select>
-              </div>
+              {canEditLevel ? (
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    Poziom
+                  </label>
+                  <select
+                    value={level}
+                    onChange={(e) => setLevel(e.target.value)}
+                    className="w-full rounded-xl border p-2 text-sm"
+                  >
+                    <option value="master">Master</option>
+                    <option value="senior">Senior</option>
+                    <option value="certified">Certified</option>
+                    <option value="guest">Guest</option>
+                  </select>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">
+                  Poziom: <span className="font-semibold capitalize">{level}</span> — zmienia go
+                  moderacja (poziom wynika z certyfikacji).
+                </p>
+              )}
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-gray-700">
