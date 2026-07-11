@@ -698,6 +698,34 @@ Related files:
 
 ---
 
+# SP-035 Master Studio Foundation
+
+Status: IN REVIEW (branch `feature/sp-035-master-studio`)
+
+Implemented:
+
+* Master Studio ("Studio") at /studio on the shared Workspace Shell: config-driven navigation (lib/workspace/master.ts — Pulpit, Profil, Afiliacje, Ustawienia), scope resolution in lib/workspace/masterServer.ts, avatar-menu destination switched to available (visible with an approved linked master profile)
+* dashboard with Today queue (facility invitations resolved inline), honest profile/affiliation status, primary affiliation and next actions; accounts without a profile / pending / rejected see a minimal shared shell (StudioAccessNotice)
+* profile integrity (USER_MODEL G4): partial unique index on sauna_masters.user_id (1:1 account↔profile), deterministic own-row/moderation INSERT+UPDATE policies replacing the open USING(true), trigger freezing privileged columns (level, status, user_id, home_sauna_id) for non-moderation writers; UI aligned — /masters/[id] controls render only for the linked account or moderation, level editable by moderation only
+* first-class master_affiliations (Decision 016, W-16): pending/approved/rejected/ended lifecycle, one model for both directions (initiated_by: master|facility), is_primary (home-sauna successor), provenance (created_by/resolved_by), duplicate open relationships blocked by partial unique index; DB is the boundary — RLS + transition trigger (receiving side resolves, initiator withdraws, either side ends, master picks primary); no ownership role in affiliations
+* affiliation self-service: Studio side (request, respond to invitations, withdraw, end, set primary) and Owner Workspace **Team** module (/workspace/team) on the existing facility context (requests approve/reject, invitations withdraw, active end, invite form requiring a concrete facility)
+* home_sauna_id: transitional only — read as legacy display data, frozen against non-moderation writes, never used for authorization; automatic migration to affiliations deliberately deferred (would grant future session-publication consent without facility consent)
+* SQL to apply manually: supabase/2026-07-11_sp035_master_studio.sql
+
+Deferred to SP-036+: sauna sessions, master event proposals, event-specific invitations, affiliation types/verification/trust levels, notifications.
+
+Related files:
+
+* app/(main)/studio/page.tsx, profile/page.tsx, affiliations/page.tsx, settings/page.tsx
+* app/(main)/studio/actions.ts
+* app/(main)/workspace/team/page.tsx
+* components/studio/* (6 components)
+* components/workspace/InviteMasterForm.tsx
+* lib/workspace/master.ts, lib/workspace/masterServer.ts
+* supabase/2026-07-11_sp035_master_studio.sql
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED
@@ -799,10 +827,10 @@ Completed:
 * Personal Workspace — dashboard + profile modules on the shared shell (SP-032)
 * Owner Workspace — facility context, dashboard, reservations, events (SP-033)
 * Owner event management — create/edit/delete from the Owner Workspace (SP-034)
+* Master Studio Foundation — Studio workspace, profile integrity, first-class affiliations (SP-035, in review; absorbs SP-016)
 
 Planned:
 
-* Master Studio Foundation — Master Workspace, profile integrity fixes, affiliation model, home-sauna retirement (SP-035; absorbs SP-016)
 * Sauna Sessions — first-class Session entity independent from Events (SP-036)
 * Bookings (SP-022)
 * Payments (SP-024)

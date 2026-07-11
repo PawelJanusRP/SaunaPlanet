@@ -37,7 +37,7 @@ Workflow index:
 | W-13 | Contacting a Sauna Master | Future |
 | W-14 | Reservation moderation | Implemented (notifications future) |
 | W-15 | Administration | Implemented (disputes/audit future) |
-| W-16 | Sauna Master affiliation | Future (planned: SP-035, Decision 016) |
+| W-16 | Sauna Master affiliation | Implemented (SP-035, in review; verification/types/trust future) |
 
 ---
 
@@ -336,13 +336,12 @@ Registration → master application (bio, level) → PENDING
   ("this is me") links them.
 * Level changes go through moderation (level implies certification).
 
-**Future extensions:** Master Studio as the professional home
-(PLATFORM_WORKSPACES §5 — planned as SP-035), verified badge (Phase 7 —
-verification distinct from certification), affiliations with facilities
-(W-16, part of SP-035; affiliation = standing consent to publish sessions
-there), enforced 1:1 user↔profile integrity and own-profile-only editing
-(USER_MODEL MVP §6.1 — security precondition for all master self-service,
-in scope of SP-035).
+**Future extensions:** verified badge (Phase 7 — verification distinct
+from certification), profile claim flow for unlinked legacy profiles.
+Shipped in SP-035 (in review): Master Studio as the professional home
+(PLATFORM_WORKSPACES §5), affiliations with facilities (W-16), enforced
+1:1 user↔profile integrity and own-profile-only editing (USER_MODEL MVP
+§6.1 — the security precondition for all master self-service).
 
 **Related workspaces:** Master Studio (future); Admin (moderation queues).
 
@@ -751,9 +750,11 @@ sauna_submissions, sauna_managers, master_certificates.
 
 # W-16 · Sauna Master affiliation
 
-**Status:** Future — **planned as SP-035 (Master Studio Foundation)**;
-core Studio architecture, not an add-on (Decision 016; model:
-PLATFORM_WORKSPACES §5.2).
+**Status:** Implemented (SP-035, in review — request/invite handshake,
+primary affiliation, ending; requires the SP-035 SQL applied to the DB).
+Affiliation type, verification, start/end-date semantics beyond ended_at
+and trust levels remain future. Core Studio architecture, not an add-on
+(Decision 016; model: PLATFORM_WORKSPACES §5.2).
 
 **Purpose:** establish the standing master↔facility relationship that the
 rest of the master economy reads: it replaces the transitional "home sauna"

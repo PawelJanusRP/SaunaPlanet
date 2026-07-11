@@ -371,8 +371,8 @@ rating, add a freshly won competition certificate.
 | Capability | Status | Classification |
 |---|---|---|
 | Master profiles, levels, certificates, moderation, self-registration | ✅ (SP-004, SP-015, SP-017) | — |
-| Master edits **only own** profile | ❌ **inverted**: RLS `USING (true)` lets *any* authenticated user edit *any* master; the UI edit modal is similarly unscoped | **Missing but required for MVP** (also a critical security bug — REPOSITORY_AUDIT §8.1) |
-| Enforced 1:1 user ↔ master profile (no duplicate profiles per account) | ❌ `user_id` nullable, not unique | **Missing but required for MVP** |
+| Master edits **only own** profile | ✅ SP-035 (in review): own-row/moderation RLS + privileged-column trigger + UI gating — live DB stays open until `2026-07-11_sp035_master_studio.sql` is applied | — |
+| Enforced 1:1 user ↔ master profile (no duplicate profiles per account) | ✅ SP-035 (in review): partial unique index on `user_id` (same SQL file) | — |
 | Claim flow for pre-existing unlinked master profiles ("this is me") | ❌ | Post-MVP |
 | Session organizer capability: create own sessions at affiliated saunas, confirm their registrations (§1.6) | ❌ no kind distinction, no organizer attribution, no master self-service | **Missing but required for MVP** (paired with §6.8 — the J8 acquisition loop depends on it) |
 | Distinct map visualization: session pulse vs event pulse + organizer satellite | ❌ | Post-MVP (data model ships first; `SaunaMap.tsx` is a protected area — implement carefully) |
@@ -687,9 +687,9 @@ REPOSITORY_AUDIT §5. No redesign here — gaps only.
 | G1 | **No ownership representation at all**: no `owner_id` on `saunas`, no role column on `sauna_managers` | The Owner persona cannot exist; payouts and private listings have no attachment point; audit §9.1 predicts an RLS redesign if postponed |
 | G2 | `sauna_managers` has no `role`, `invited_by`, `approved_by`, or invitation semantics — only self-application + admin approval | Blocks owner-driven staffing and audit; only admins scale the manager base |
 | G3 | Manager permissions enforced only in server actions; RLS for `event_registrations`/`sauna_managers` unknown (tables absent from repo SQL) — and the general schema source-of-truth problem: **no migrations directory** | DB is not the security boundary; the proposed model can't even be verified against RLS that isn't in version control |
-| G4 | `sauna_masters.user_id` nullable **and not unique**; RLS on UPDATE is `USING (true)` | One account can create unlimited master profiles; anyone can edit anyone's master profile — Layer 3 integrity broken (critical, REPOSITORY_AUDIT §8.1) |
+| G4 | ~~`sauna_masters.user_id` nullable and not unique; RLS on UPDATE is `USING (true)`~~ **Closed in SP-035** (unique partial index + own-row/moderation policies + privileged-column trigger; apply `2026-07-11_sp035_master_studio.sql`) | Layer 3 integrity restored once the script runs on the live DB |
 | G5 | No `created_by` on `sauna_events` (or on `saunas`) | No creator attribution → no "manager edits own sauna's events" policy possible; no accountability trail |
-| G6 | No affiliations table (SP-016 planned); single `home_sauna_id` | Master↔multi-sauna relationship unsupported (known, already specced) |
+| G6 | ~~No affiliations table; single `home_sauna_id`~~ **Closed in SP-035** (`master_affiliations` with two-direction lifecycle; `home_sauna_id` frozen as legacy display data, migration deferred) | Master↔multi-sauna relationship supported once the SP-035 script runs |
 | G7 | `profiles` carries `first_name/last_name/email` (live DB, 2026-06-24) but no avatar; the columns exist only in the live schema, not in versioned SQL | Identity surface mostly covered; remaining gap is schema provenance (part of G3) and avatars (minor) |
 | G8 | No verification fields anywhere (`verified_at/by` on saunas/masters), no evidence storage for claims | Ownership claims (§3.2) and Phase 7 verification have nowhere to record outcomes |
 | G9 | No invitations table / no email-redeemable grants | Invitation direction of §3.2 unsupported |
