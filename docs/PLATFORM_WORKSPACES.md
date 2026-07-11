@@ -6,9 +6,11 @@ Studio"). Read together with:
 
 * `docs/USER_MODEL.md` — personas, ownership model, permission model
 * `docs/EVENT_SESSION_MODEL.md` — Event/Session semantics, reservations, map
+* `docs/WORKFLOWS.md` — the business workflows themselves (actors, triggers,
+  flows, status) — the central reference for sprint planning
 
-Where those documents define *who may do what*, this document defines *where
-and how they do it*. Conflicts resolve in favour of USER_MODEL (permissions)
+Where those documents define *who may do what* and *which workflow runs*,
+this document defines *where and how they do it*. Conflicts resolve in favour of USER_MODEL (permissions)
 and EVENT_SESSION_MODEL (happening semantics).
 
 Created: 2026-07-11. Product architecture and UX design only — no code, no
@@ -157,8 +159,9 @@ The landing queue, in priority order:
    the highest-frequency action in the entire platform).
 2. Today's and tomorrow's happenings (happening cards; tap → manage).
 3. Pending requests: manager applications (owner only), master session
-   proposals, affiliation requests, masters awaiting session-assignment
-   consent.
+   proposals, **master event proposals awaiting facility approval
+   (Decision 015 — approve / reject / request changes)**, affiliation
+   requests, masters awaiting session-assignment consent.
 4. New reviews since last visit.
 5. Status alerts: facility pending moderation, unverified claim, missing
    photos, (future) expiring payout config.
@@ -439,6 +442,9 @@ its items 6.8/6.9/6.11 and G13 are prerequisites, not repeated here).
 ---
 
 # 8. Ideal Daily Workflows (Part 6)
+
+> These are experiential vignettes — the formal workflow definitions
+> (actors, triggers, flows, status) live in `docs/WORKFLOWS.md`.
 
 **Manager, 8:55, front desk phone:**
 Opens app → badge "Panel obiektu • 7" → Today queue → swipes through 6

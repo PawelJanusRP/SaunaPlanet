@@ -176,10 +176,11 @@ Authoritative sources: live Supabase project (primary), `supabase/all_scripts_hi
 
 | Doc | State |
 |-----|-------|
-| `docs/VISION.md`, `docs/PRODUCT_STRATEGY.md`, `docs/DECISIONS.md` (14 decisions; 011–014 added 2026-07-11: sessions vs events, review eligibility, self-review ban, session-as-atom/event-as-container), `docs/ROADMAP.md` | Current, high quality |
+| `docs/VISION.md`, `docs/PRODUCT_STRATEGY.md`, `docs/DECISIONS.md` (15 decisions; 011–015 added 2026-07-11: sessions vs events, review eligibility, self-review ban, session-as-atom/event-as-container, master event publication by facility management state), `docs/ROADMAP.md` | Current, high quality |
 | `docs/USER_MODEL.md` | Authoritative user/persona/ownership/permission model (2026-07-11); reference for all auth/ownership/reservation/marketplace/payment features |
 | `docs/EVENT_SESSION_MODEL.md` | Authoritative Event vs Session model (2026-07-11, Decision 014): session = atom, event = container; organizers, map pulse hierarchy, reservations, future payments |
 | `docs/PLATFORM_WORKSPACES.md` | Authoritative design reference for Owner/Manager Workspace and Master Studio (2026-07-11): workspace hub, section maps, object-capability matrix, MVP scope, mobile-first workflows |
+| `docs/WORKFLOWS.md` | Authoritative central reference for business workflows (2026-07-11): 15 workflows (W-01…W-15) with actors/triggers/flows/status, workflow loops and dependencies, future-workflow list; sprint planning starts here |
 | `docs/FEATURES.md` | Detailed, mostly current (21 DONE, 8 PLANNED) |
 | `docs/BACKLOG.md` | Polish; **stale statuses** (SP-022 says PLANNED though implemented; SP-019 says IN PROGRESS) |
 | `docs/KNOWN_ISSUES.md` | Useful map-bug postmortems; **stale**: claims "Authentication: NOT IMPLEMENTED" (SP-011 is DONE) |

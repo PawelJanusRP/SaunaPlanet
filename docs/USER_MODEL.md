@@ -769,6 +769,12 @@ attendance requirement otherwise (§8.0.2).
 Canonical journeys the platform must support end-to-end. (Persona-level detail
 in §2; these are the cross-persona flows.)
 
+> **Workflow reference:** step-by-step business workflows (actors, triggers,
+> main/alternative flows, implementation status) live in `docs/WORKFLOWS.md`
+> — the central reference for sprint planning. The journeys below stay as the
+> product-model rationale; WORKFLOWS.md is where their operational detail is
+> maintained, not here.
+
 **J1 — Discover → attend → review (the Core Loop).**
 Guest finds event on map → event page → registers account → "Zapisz się"
 (`pending`) → manager confirms (`confirmed`) → *notification* → attends →

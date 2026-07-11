@@ -474,6 +474,64 @@ payout model). Authoritative model: docs/EVENT_SESSION_MODEL.md.
 
 ---
 
+# Decision 015
+
+Title:
+
+Masters are never blocked by inactive facilities — event publication follows
+facility management state.
+
+Date:
+
+2026-07-11
+
+Decision:
+
+A verified Sauna Master may always create an Event at any facility. What
+happens next depends on whether the facility is actively managed in
+SaunaPlanet:
+
+* **Managed facility** (has an active owner/manager): the master's event is a
+  *proposal* — it enters "Pending Facility Approval", appears in the Owner
+  Workspace Today Queue, and the manager may approve, reject or request
+  changes. Only after approval is the event officially published for that
+  facility ("Published by Facility").
+* **Unmanaged facility** (no active owner/manager): the verified master may
+  publish directly. The event is visibly marked "Published by Sauna Master" so
+  users can distinguish it from an event officially confirmed by the facility.
+
+Sessions are unaffected: a verified master always creates and manages their
+own sessions (Decision 014 consent rules apply).
+
+Intended future event lifecycle (long-term vision, not an implementation
+commitment): Draft → Pending Facility Approval → Pending Admin Review
+(optional) → Published by Facility / Published by Sauna Master → Rejected /
+Cancelled.
+
+Reasoning:
+
+Most facilities were imported (PTS) and have no active manager; requiring
+facility consent unconditionally would block exactly the masters whose
+activity makes the platform alive (journey J8). At the same time, a managed
+facility must keep authority over what is officially published in its name.
+Publication attribution ("by Facility" vs "by Sauna Master") preserves user
+trust in both cases.
+
+Impact:
+
+* Event creator, organizer, facility, participating masters, publication
+  status and approval status are **independent concepts** — never a single
+  role or a single column of meaning.
+* Refines docs/EVENT_SESSION_MODEL.md §2.1 (facility consent becomes
+  conditional on the facility being managed) and adds the publication
+  lifecycle (§2.3 there).
+* Workflow reference: docs/WORKFLOWS.md (W-09).
+* When a previously unmanaged facility gains an owner (claim flow), existing
+  "Published by Sauna Master" events remain valid; the new owner gains the
+  normal approval authority for future proposals.
+
+---
+
 # Guiding Principle
 
 Whenever there is uncertainty between two approaches, prefer the one that strengthens:
