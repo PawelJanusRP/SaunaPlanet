@@ -179,6 +179,7 @@ Authoritative sources: live Supabase project (primary), `supabase/all_scripts_hi
 
 | Doc | State |
 |-----|-------|
+| `docs/CURRENT_STATE.md` | Canonical handover document (2026-07-12): project status, architecture summary, sprint state, in-review work, domain model, key decisions, next steps — read before this audit in a new session |
 | `docs/VISION.md`, `docs/PRODUCT_STRATEGY.md`, `docs/DECISIONS.md` (15 decisions; 011–015 added 2026-07-11: sessions vs events, review eligibility, self-review ban, session-as-atom/event-as-container, master event publication by facility management state), `docs/ROADMAP.md` | Current, high quality |
 | `docs/USER_MODEL.md` | Authoritative user/persona/ownership/permission model (2026-07-11); reference for all auth/ownership/reservation/marketplace/payment features |
 | `docs/EVENT_SESSION_MODEL.md` | Authoritative Event vs Session model (2026-07-11, Decision 014): session = atom, event = container; organizers, map pulse hierarchy, reservations, future payments |
