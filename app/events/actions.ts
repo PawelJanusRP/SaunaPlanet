@@ -3,9 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 
-async function assertEditor() {
+async function assertAdmin() {
   const role = await getCurrentUserRole()
-  if (role !== 'admin' && role !== 'moderator') {
+  if (role !== 'admin') {
     throw new Error('Brak uprawnień')
   }
 }
@@ -13,17 +13,20 @@ async function assertEditor() {
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
 
 /**
- * SP-034: event management is allowed for admins/moderators and for approved
- * facility staff (sauna_managers) of the event's sauna. Same authorization
- * pattern as updateRegistrationStatus; RLS on sauna_events enforces the same
- * rule at the DB layer (supabase/2026-07-11_sp034_owner_events_rls.sql).
+ * SP-034/SP-035: event management is allowed for admins and for approved
+ * facility staff (sauna_managers) of the event's sauna — NOT for platform
+ * moderators. Product decision: facility event operations belong to owners,
+ * approved managers/staff and admins; moderators are responsible for content
+ * quality only and must not manage events merely because they are moderators.
+ * RLS on sauna_events enforces the same rule at the DB layer
+ * (supabase/2026-07-11_sp034_owner_events_rls.sql: is_admin() OR is_sauna_staff()).
  */
 async function assertCanManageSaunaEvents(supabase: SupabaseServerClient, saunaId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Musisz być zalogowany')
 
   const role = await getCurrentUserRole()
-  if (role === 'admin' || role === 'moderator') return
+  if (role === 'admin') return
 
   const { data: mgr } = await supabase
     .from('sauna_managers')
@@ -130,7 +133,10 @@ export async function deleteEvent(id: string) {
 }
 
 export async function removeEventMaster(eventId: string, masterId: string) {
-  await assertEditor()
+  // sauna-event-master assignment/removal is admin-only: the sauna_event_masters
+  // RLS policy is is_admin() (SP-034 did not extend it to staff). Aligning the
+  // action check with RLS — moderators no longer qualify.
+  await assertAdmin()
   const supabase = await createClient()
 
   const { error } = await supabase

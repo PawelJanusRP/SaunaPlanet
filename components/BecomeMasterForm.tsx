@@ -9,7 +9,6 @@ export default function BecomeMasterForm() {
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
-  const [level, setLevel] = useState('certified')
   const [bio, setBio] = useState('')
 
   async function handleSubmit() {
@@ -23,7 +22,11 @@ export default function BecomeMasterForm() {
       const { data: { user } } = await supabase.auth.getUser()
       const { error } = await supabase.from('sauna_masters').insert({
         name: name.trim(),
-        level,
+        // Self-registration must not self-assign a level: level implies a
+        // moderated/certified status (USER_MODEL §2.4). Submit the least
+        // privileged existing level ('guest'); moderation sets the real level
+        // at approval. The DB guard (SP-035 SQL §2d) enforces this independently.
+        level: 'guest',
         bio: bio.trim() || null,
         status: 'pending',
         user_id: user?.id ?? null,
@@ -85,20 +88,6 @@ export default function BecomeMasterForm() {
             placeholder="np. Anna Kowalska"
             className="w-full rounded-xl border bg-white p-2 text-sm"
           />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-700">Poziom</label>
-          <select
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            className="w-full rounded-xl border bg-white p-2 text-sm"
-          >
-            <option value="master">Master</option>
-            <option value="senior">Senior</option>
-            <option value="certified">Certified</option>
-            <option value="guest">Guest</option>
-          </select>
         </div>
 
         <div>

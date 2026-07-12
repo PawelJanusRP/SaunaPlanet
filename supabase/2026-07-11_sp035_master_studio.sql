@@ -126,6 +126,25 @@ create trigger sauna_masters_guard
   before update on public.sauna_masters
   for each row execute function public.guard_master_privileged_columns();
 
+-- 2d. Level on INSERT: the §2c guard is UPDATE-only (it reads OLD), so a
+--     direct API insert could still set an arbitrary level while self-
+--     registering (masters_insert_self allows any level). Pin non-moderation
+--     inserts to the least-privileged level; moderation sets the real level at
+--     approval. Defense-in-depth behind the BecomeMasterForm change.
+create or replace function public.guard_master_insert_level()
+returns trigger as $$
+begin
+  if not public.is_platform_moderator() then
+    new.level := 'guest';
+  end if;
+  return new;
+end $$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists sauna_masters_insert_guard on public.sauna_masters;
+create trigger sauna_masters_insert_guard
+  before insert on public.sauna_masters
+  for each row execute function public.guard_master_insert_level();
+
 -- ============================================================
 -- 3. master_affiliations — first-class relationship (Decision 016, W-16)
 -- ============================================================

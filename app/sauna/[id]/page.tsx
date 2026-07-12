@@ -1,6 +1,6 @@
 import AddEventMasterForm from '@/components/AddEventMasterForm'
 import AddMasterToSaunaModal from '@/components/AddMasterToSaunaModal'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import Link from 'next/link'
 import AddReviewForm from '@/components/AddReviewForm'
 import Navbar from '@/components/Navbar'
@@ -15,6 +15,16 @@ export default async function SaunaPage({
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Gate the master controls to match the RLS enforced after SP-035 (RLS stays
+  // the security boundary; this only hides controls a user cannot use):
+  //  - creating a master profile → sauna_masters insert = is_platform_moderator
+  //    (admin OR moderator),
+  //  - assigning an event master  → sauna_event_masters insert = is_admin
+  //    (admin only; moderators excluded per the event-management decision).
+  const role = await getCurrentUserRole()
+  const isAdmin = role === 'admin'
+  const canManageMasters = role === 'admin' || role === 'moderator'
 
   const [
     { data: sauna },
@@ -227,13 +237,15 @@ export default async function SaunaPage({
             </div>
           )}
 
-          <AddMasterToSaunaModal
-            existingEvents={(events ?? []).map((e) => ({
-              id: e.id,
-              title: e.title,
-              event_date: e.event_date,
-            }))}
-          />
+          {canManageMasters && (
+            <AddMasterToSaunaModal
+              existingEvents={(events ?? []).map((e) => ({
+                id: e.id,
+                title: e.title,
+                event_date: e.event_date,
+              }))}
+            />
+          )}
         </section>
 
         {events && events.length > 0 && (
@@ -287,7 +299,7 @@ export default async function SaunaPage({
                     )}
                   </div>
 
-                  <AddEventMasterForm eventId={event.id} />
+                  {isAdmin && <AddEventMasterForm eventId={event.id} />}
                 </div>
               ))}
             </div>
