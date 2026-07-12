@@ -763,7 +763,13 @@ useEffect(() => {
         setSelectedLocation(coords)
       },
       (error) => {
-        console.error('GEOLOCATION ERROR:', error)
+        // Brak geolokalizacji to normalna sytuacja (odmowa uprawnień, pozycja
+        // niedostępna lub timeout) — nie jest to błąd aplikacji. Mapa pozostaje
+        // na domyślnym środku (fallbackCenter). Logujemy czytelnie i bez alarmu.
+        console.warn(
+          `Geolokalizacja niedostępna (kod ${error.code}): ${error.message}. ` +
+            'Mapa używa domyślnej lokalizacji.'
+        )
       },
       {
         enableHighAccuracy: true,
