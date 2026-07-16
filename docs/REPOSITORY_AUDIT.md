@@ -212,7 +212,7 @@ High:
 4. `SaunaMap.tsx` at 1,352 lines — extreme complexity, regression risk (protected area; decompose carefully per Decision 008).
 5. No tests of any kind; no `error.tsx` boundaries; validation client-side only.
 6. Duplicated `assertAdmin()` in multiple actions files; middleware checks login only.
-7. No shared entity types (`lib/types.ts` missing); category labels defined in 5 places; photo-upload logic tripled; ~6 copy-paste moderation components; repeated modal scaffolding.
+7. Shared entity types: `lib/types.ts` now covers the RPC hot paths (SP-035D); the rest of the item remains — category labels defined in 5 places; photo-upload logic tripled; ~6 copy-paste moderation components; repeated modal scaffolding.
 8. Legacy `lib/supabase.ts` singleton coexists with `lib/supabase/client.ts` (SaunaMap uses the legacy one).
 9. No audit logging for admin actions.
 

@@ -4,7 +4,8 @@ Date: 2026-07-16
 Branch: `feature/sp-035-master-studio`
 Scope: full `npm run lint` + `npm run build` output review (React 19 / Next.js 16 compliance)
 
-Status: **REVIEW ONLY — no fixes applied in this document's commit.**
+Status: **IMPLEMENTED (P1 + P2) — 2026-07-16.** See §6 for the implementation
+record. P3 (items 6–7 in §5) remains open.
 
 ---
 
@@ -142,3 +143,25 @@ After items 1–4 the project reaches **zero lint errors**; remaining warnings a
 * Map behavior, satellite orbits, clustering, realtime semantics (beyond the stale-closure correction, which restores *intended* behavior).
 * The `--webpack` dev flag.
 * Warning-suppression via blanket `eslint-disable` — every remaining warning must be either fixed or documented here as accepted.
+
+---
+
+## 6. Implementation Record (2026-07-16)
+
+Items 1–5 of §5 are implemented. Result: **0 lint errors, 16 warnings** — all
+`@next/next/no-img-element`, split between scheduled work (content pages,
+item 6) and accepted debt (SaunaMap/modals, Category E).
+
+| Item | Resolution |
+|------|------------|
+| A1 realtime stale closure | Realtime handlers call `loadSaunas` through a `useEffectEvent`, so they always see the current `userLocation`/`radiusKm` without resubscribing the channel. A `loadSeqRef` sequence guard makes concurrent loads last-write-wins. |
+| A2 lost rejection note | New moderation-only, append-only audit table `master_moderation_notes` (`supabase/2026-07-16_sp035d_master_moderation_notes.sql` — **run manually in the SQL Editor, after the SP-035 script**). `rejectMaster` persists the note first, then verifies the status update wrote a row (fail-loud). |
+| A3/A4 hooks errors | Fetchers converted to `useCallback`; popup/form loaders moved inside their effects with cancellation flags; the mount/params effect calls the loaders through an inner `load()` and `loadSaunas` yields a microtask before `setLoading`, so no state is set synchronously inside an effect. |
+| A5 debug logging | Removed from `loadSaunas`. |
+| B types | `lib/types.ts` created (`SaunaNearbyRow`, `UpcomingEventRow`, `UpcomingEventSaunaRow`, `EventMasterRow`); all 7 `any` sites typed; `catch (err: unknown)` + narrowing in `UserRoleSelector`. Retires the RPC-payload part of audit §8.7. |
+| C hygiene | Dead `CalendarView` import/`currentDate` removed from `/events`, duplicate `roleStyle` removed from the admin page, `metadata` annotated with `Metadata`. The raw module-scope Supabase client in `app/events/page.tsx` was deliberately left (its replacement changes rendering/caching semantics — separate decision). |
+| `pulseClass` | **Restored** — event markers pulse again (`sauna-event-pulse` re-applied in `createSaunaIcon`). This is a visible map change; revert the single class binding if unwanted. |
+
+Manual verification still required (protected area): map load, radius/location
+change, realtime refresh after adding a sauna/photo, event-marker pulse,
+cluster refresh, master rejection with a note (after the SQL script).
