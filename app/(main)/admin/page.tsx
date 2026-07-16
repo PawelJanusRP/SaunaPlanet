@@ -19,12 +19,6 @@ const statusLabel: Record<string, { label: string; className: string }> = {
   inactive:  { label: 'Nieaktywna',   className: 'bg-gray-100 text-gray-500' },
 }
 
-const roleStyle: Record<string, string> = {
-  admin:     'bg-red-100 text-red-700',
-  moderator: 'bg-orange-100 text-orange-700',
-  user:      'bg-gray-100 text-gray-600',
-}
-
 export default async function AdminPage({
   searchParams,
 }: {

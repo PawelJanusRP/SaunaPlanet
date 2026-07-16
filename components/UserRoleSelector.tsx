@@ -44,8 +44,8 @@ export default function UserRoleSelector({
       try {
         await updateUserRole(userId, newRole)
         toast.success('Rola zaktualizowana')
-      } catch (err: any) {
-        toast.error(err.message ?? 'Błąd zapisu')
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : 'Błąd zapisu')
         setRole(prev)
       }
     })
