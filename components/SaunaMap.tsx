@@ -203,6 +203,8 @@ function getCategoryColor(category: string) {
   }
 }
 
+const EVENT_PULSE_CLASS = 'sauna-event-pulse'
+
 function createSaunaIcon(
   imageUrl: string | null,
   category: string,
@@ -214,7 +216,7 @@ function createSaunaIcon(
   const categoryColor = getCategoryColor(category)
   const size = hasUpcomingEvent ? 60 : 46
   const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
-  const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
+  const pulseClass = hasUpcomingEvent ? EVENT_PULSE_CLASS : ''
   const mastersWithAvatar = (masters ?? []).filter((m) => m != null && m.avatar_url)
 
   const satSize = 40
@@ -321,6 +323,39 @@ function createSaunaIcon(
 		iconSize: [size, size + (avgRating ? 18 : 0)],
 		iconAnchor: [size / 2, size + (avgRating ? 18 : 0)],
 		popupAnchor: [0, -size],
+  })
+}
+
+// leaflet.markercluster ships no TypeScript definitions; this is the subset
+// of L.MarkerCluster the icon factory needs.
+type MarkerClusterLike = {
+  getChildCount(): number
+  getAllChildMarkers(): L.Marker[]
+}
+
+function markerHasEventPulse(marker: L.Marker) {
+  const icon = marker.options.icon
+  return (
+    icon instanceof L.DivIcon &&
+    typeof icon.options.html === 'string' &&
+    icon.options.html.includes(EVENT_PULSE_CLASS)
+  )
+}
+
+// Same markup, classes and size as leaflet.markercluster's
+// _defaultIconCreateFunction, plus the event pulse when at least one child
+// marker pulses. The pulse class goes on the inner div, not the icon root:
+// Leaflet positions the root via an inline transform that the pulse's
+// scale() animation would override.
+function createClusterIcon(cluster: MarkerClusterLike) {
+  const count = cluster.getChildCount()
+  const sizeClass = count < 10 ? 'small' : count < 100 ? 'medium' : 'large'
+  const hasEventChild = cluster.getAllChildMarkers().some(markerHasEventPulse)
+
+  return L.divIcon({
+    html: `<div class="${hasEventChild ? EVENT_PULSE_CLASS : ''}"><span>${count}</span></div>`,
+    className: `marker-cluster marker-cluster-${sizeClass}`,
+    iconSize: L.point(40, 40),
   })
 }
 
@@ -1099,7 +1134,12 @@ export default function SaunaMap() {
             </Popup>
           )}
 
-          <MarkerClusterGroup key={clusterRefreshKey} chunkedLoading maxClusterRadius={60}>
+          <MarkerClusterGroup
+            key={clusterRefreshKey}
+            chunkedLoading
+            maxClusterRadius={60}
+            iconCreateFunction={createClusterIcon}
+          >
             {visibleItems.map((item) => (
               <Marker
                 key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}

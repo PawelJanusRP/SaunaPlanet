@@ -48,3 +48,11 @@ body {
   animation: saunaPulse 1.8s infinite;
   border-radius: 9999px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .sauna-event-pulse {
+    animation: none;
+    /* Keep the event signal without motion */
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.55);
+  }
+}
