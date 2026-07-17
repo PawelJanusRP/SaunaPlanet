@@ -4,6 +4,7 @@ import EditSaunaMasterModal from '@/components/EditSaunaMasterModal'
 import AddCertificateModal from '@/components/AddCertificateModal'
 import Navbar from '@/components/Navbar'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import type { EventMasterRow } from '@/lib/types'
 
 const CATEGORY_LABELS: Record<string, string> = {
   certification:   'Certyfikaty',
@@ -31,6 +32,11 @@ export default async function MasterPage({
     .select('*')
     .eq('id', id)
     .single()
+
+  // SP-035: profile controls belong to the linked account and moderation.
+  // RLS enforces the same boundary; this only mirrors it in the UI.
+  const isOwnProfile = !!master && !!user && master.user_id === user.id
+  const canManageProfile = isAdmin || isOwnProfile
 
   if (!master) {
     return (
@@ -65,11 +71,14 @@ export default async function MasterPage({
     .eq('master_id', id)
     .eq('status', 'approved')
 
+  // The untyped client infers embedded resources as arrays, but PostgREST
+  // returns an object for this many-to-one join (event_id → sauna_events).
+  const eventRows = (allEvents ?? []) as unknown as EventMasterRow[]
+
   const today = new Date().toISOString().substring(0, 10)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getDate = (item: any) => item.sauna_events?.event_date ?? ''
-  const upcomingEvents = (allEvents ?? []).filter((i) => getDate(i) >= today).sort((a, b) => getDate(a) > getDate(b) ? 1 : -1)
-  const pastEvents = (allEvents ?? []).filter((i) => getDate(i) < today).sort((a, b) => getDate(a) > getDate(b) ? -1 : 1)
+  const getDate = (item: EventMasterRow) => item.sauna_events?.event_date ?? ''
+  const upcomingEvents = eventRows.filter((i) => getDate(i) >= today).sort((a, b) => getDate(a) > getDate(b) ? 1 : -1)
+  const pastEvents = eventRows.filter((i) => getDate(i) < today).sort((a, b) => getDate(a) > getDate(b) ? -1 : 1)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const certificates = (certificatesRaw ?? []) as any[]
@@ -101,7 +110,9 @@ export default async function MasterPage({
               ) : (
                 <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-5xl">🧖</div>
               )}
-              <UploadAvatarButton masterId={id} currentAvatarUrl={master.avatar_url} />
+              {canManageProfile && (
+                <UploadAvatarButton masterId={id} currentAvatarUrl={master.avatar_url} />
+              )}
             </div>
 
             <div>
@@ -112,12 +123,15 @@ export default async function MasterPage({
               {master.level && (
                 <div className="mt-1 text-sm font-semibold text-gray-500">{master.level}</div>
               )}
-              <EditSaunaMasterModal
-                masterId={id}
-                currentName={master.name}
-                currentLevel={master.level ?? null}
-                currentBio={master.bio ?? null}
-              />
+              {canManageProfile && (
+                <EditSaunaMasterModal
+                  masterId={id}
+                  currentName={master.name}
+                  currentLevel={master.level ?? null}
+                  currentBio={master.bio ?? null}
+                  canEditLevel={isAdmin}
+                />
+              )}
             </div>
           </div>
 
@@ -176,7 +190,7 @@ export default async function MasterPage({
             </div>
           )}
 
-          {!!user && <AddCertificateModal masterId={id} isAdmin={isAdmin} />}
+          {canManageProfile && <AddCertificateModal masterId={id} isAdmin={isAdmin} />}
         </section>
 
         {/* Najbliższe wydarzenia */}
@@ -186,7 +200,7 @@ export default async function MasterPage({
             <div className="text-gray-500">Brak nadchodzących wydarzeń.</div>
           ) : (
             <div className="space-y-3">
-              {upcomingEvents.map((item: any, index: number) => {
+              {upcomingEvents.map((item, index) => {
                 const event = item.sauna_events
                 return (
                   <Link key={index} href={`/events/${event?.id}`} className="block rounded-xl bg-orange-50 p-3 hover:bg-orange-100 transition-colors">
@@ -204,7 +218,7 @@ export default async function MasterPage({
           <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-2xl font-bold text-gray-600">📅 Poprzednie wydarzenia</h2>
             <div className="space-y-3">
-              {pastEvents.map((item: any, index: number) => {
+              {pastEvents.map((item, index) => {
                 const event = item.sauna_events
                 return (
                   <Link key={index} href={`/events/${event?.id}`} className="block rounded-xl bg-gray-50 p-3 hover:bg-gray-100 transition-colors">

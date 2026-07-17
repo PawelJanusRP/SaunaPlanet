@@ -37,12 +37,17 @@ export default function UploadAvatarButton({
         .from('master-avatars')
         .getPublicUrl(path)
 
-      const { error: dbError } = await supabase
+      const { data: updated, error: dbError } = await supabase
         .from('sauna_masters')
         .update({ avatar_url: data.publicUrl })
         .eq('id', masterId)
+        .select('id')
 
       if (dbError) throw dbError
+      // RLS mismatch updates 0 rows without an error — fail loud instead
+      if (!updated || updated.length === 0) {
+        throw new Error('Brak uprawnień do zmiany avatara tego profilu')
+      }
 
       router.refresh()
       toast.success('Avatar zaktualizowany')

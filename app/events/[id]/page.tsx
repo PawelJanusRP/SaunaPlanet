@@ -18,7 +18,12 @@ export default async function EventPage({
   const { id } = await params
   const supabase = await createClient()
   const role = await getCurrentUserRole()
+  // isEditor gates content moderation (comment/review removal, event photos):
+  // moderators keep these. isAdmin gates facility event management (edit/delete,
+  // master assignment): moderators lose these per the SP-034/SP-035 product
+  // decision — staff manage their events from the Owner Workspace.
   const isEditor = role === 'admin' || role === 'moderator'
+  const isAdmin = role === 'admin'
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: eventData } = await supabase
@@ -168,7 +173,7 @@ export default async function EventPage({
         <section className="rounded-3xl border bg-white p-6 shadow-sm">
           <div className="mb-1 flex flex-wrap items-start justify-between gap-3">
             <h1 className="text-2xl font-bold text-orange-700">🔥 {ev.title}</h1>
-            {isEditor && (
+            {isAdmin && (
               <EditEventForm
                 eventId={id}
                 title={ev.title}
@@ -320,7 +325,7 @@ export default async function EventPage({
                         <p className="text-xs text-gray-500">{item.role}</p>
                       </div>
                     </Link>
-                    {isEditor && (
+                    {isAdmin && (
                       <RemoveEventMasterButton
                         eventId={id}
                         masterId={item.master_id}
@@ -333,7 +338,7 @@ export default async function EventPage({
             </div>
           )}
 
-          {isEditor && <AddEventMasterForm eventId={id} />}
+          {isAdmin && <AddEventMasterForm eventId={id} />}
         </section>
 
         {/* Zdjęcia */}

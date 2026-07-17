@@ -354,6 +354,13 @@ number that proves J8 to the master), rating trend. (Future) earnings.
 
 ## 5.2 The Affiliation Model (core architecture — Decision 016)
 
+> **Implementation status (SP-035, in review):** the minimal form ships as
+> `master_affiliations` — lifecycle (pending/approved/rejected/ended),
+> initiation direction, primary flag, provenance — with the transition
+> rules enforced in the database (RLS + trigger). Type, verification,
+> start/end-date semantics, session/event permissions and trust levels
+> remain future columns, added when their features ship.
+
 The single `home_sauna_id` on the master profile is a **temporary
 transitional solution**. The Master Studio is built on its replacement — a
 first-class, reusable business relationship:

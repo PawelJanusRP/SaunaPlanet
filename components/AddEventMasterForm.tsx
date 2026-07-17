@@ -23,24 +23,30 @@ export default function AddEventMasterForm({
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    loadMasters()
-  }, [])
+    let cancelled = false
 
-  async function loadMasters() {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('sauna_masters')
-      .select('id, name, level')
-      .order('name')
+    async function loadMasters() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('sauna_masters')
+        .select('id, name, level')
+        .order('name')
 
-    if (error) {
-      console.error(error)
-      toast.error('Nie udało się pobrać saunamistrzów')
-      return
+      if (error) {
+        console.error(error)
+        toast.error('Nie udało się pobrać saunamistrzów')
+        return
+      }
+
+      if (!cancelled) setMasters(data ?? [])
     }
 
-    setMasters(data ?? [])
-  }
+    void loadMasters()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function assignMaster() {
     if (!masterId) {

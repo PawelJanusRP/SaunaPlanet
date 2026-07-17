@@ -15,7 +15,7 @@ import type { WorkspaceAccess, WorkspaceDestination } from './types'
  * Routes that do not exist yet carry `status: 'planned'` and are excluded
  * from rendering until they ship — the config represents them without
  * exposing broken links. Owner Workspace became available in SP-033;
- * Master Studio remains planned.
+ * Master Studio in SP-035.
  */
 export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
   {
@@ -36,7 +36,7 @@ export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
     key: 'master-studio',
     label: 'Studio',
     href: '/studio',
-    status: 'planned',
+    status: 'available',
     isVisible: (access) => access.isAuthenticated && access.hasLinkedMasterProfile,
   },
   {

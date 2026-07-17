@@ -57,6 +57,7 @@ DONE (as of this audit):
 | SP-022 | Event reservations ("Zapisz się", `event_registrations`, `max_participants`, sauna manager approval role) — **committed but BACKLOG.md still says PLANNED (stale)** |
 | SP-031/032/033 | Shared Workspace infrastructure, Personal Workspace (/profile), Owner Workspace (/workspace) with active facility context |
 | SP-034 | Owner event management — create/edit/delete events from /workspace/events via manager-scoped server actions (`createEvent`/`updateEvent`/`deleteEvent`); additive `sauna_events` RLS for approved `sauna_managers` (`supabase/2026-07-11_sp034_owner_events_rls.sql`, applied manually) |
+| SP-035 (in review) | Master Studio Foundation — /studio workspace, master profile integrity (unique `user_id` link, own-row RLS, privileged-column trigger), first-class `master_affiliations` with two-direction lifecycle + Owner Workspace Team module (`supabase/2026-07-11_sp035_master_studio.sql`, applied manually) |
 
 PLANNED: SP-035 (Master Studio Foundation — absorbs SP-016 affiliations, Decision 016), SP-036 (Sauna Sessions), SP-026 (master↔event assignments handshake), SP-023 (rankings), SP-024 (payments), SP-025 (private saunas marketplace), SP-027 (rating parameters admin panel), SP-029 (PWA installability), SP-030 (native app, Expo).
 
@@ -79,7 +80,8 @@ Authoritative sources: `docs/FEATURES.md` (detailed, mostly current), `docs/BACK
 | `/(main)/profile` | Server | Personal Workspace dashboard on the shared Workspace Shell: Today queue (own events today), upcoming events, favourites, activity; links to Owner Workspace for managers (SP-032, manager features moved out in SP-033) | Logged in |
 | `/(main)/profile/details`, `/favorites`, `/reviews`, `/events`, `/settings` | Server | Personal Workspace modules (nav config in `lib/workspace/personal.ts`) | Logged in |
 | `/(main)/workspace` | Server | Owner Workspace dashboard on the shared Workspace Shell: facility context switcher, Today queue (pending registrations), managed facilities, upcoming events, quick actions (SP-033) | Logged in |
-| `/(main)/workspace/reservations`, `/events` | Server | Owner Workspace modules scoped by the active facility context (nav config in `lib/workspace/owner.ts`); `/workspace/events` includes owner event CRUD (SP-034) — creation requires a concrete facility context | Logged in |
+| `/(main)/workspace/reservations`, `/events`, `/team` | Server | Owner Workspace modules scoped by the active facility context (nav config in `lib/workspace/owner.ts`); `/workspace/events` includes owner event CRUD (SP-034), `/workspace/team` affiliation requests/invitations/roster (SP-035) — creation/invitation require a concrete facility context | Logged in |
+| `/(main)/studio` + `/profile`, `/affiliations`, `/settings` | Server | Master Studio on the shared Workspace Shell (SP-035): dashboard with invitation Today queue, own-profile editing, affiliation lifecycle (nav config in `lib/workspace/master.ts`, scope in `lib/workspace/masterServer.ts`); minimal shell for missing/pending profiles | Logged in |
 | `/(main)/submit` | Server | Sauna submission form | Logged in |
 | `/(main)/admin` | Server | 9-tab admin panel (417 lines) | admin/moderator |
 | `/auth/login`, `/register`, `/reset-password`, `/update-password` | Client | Auth forms | No |
@@ -144,6 +146,7 @@ Tables (from SQL history + code usage):
 | `pts_import_log` | Import audit trail |
 | `event_reviews`, `event_comments` | SP-021 — **not in repo SQL history** |
 | `event_registrations`, `sauna_managers` | SP-022 — **not in repo SQL history** |
+| `master_affiliations` | SP-035 — master↔facility relationship (status lifecycle, initiated_by, is_primary, provenance); DDL+RLS+triggers in `supabase/2026-07-11_sp035_master_studio.sql` (apply manually) |
 
 RPC functions: `get_saunas_nearby` (PostGIS ST_DWithin/ST_Distance; aggregates photos, ratings, masters jsonb), `get_sauna_events`, `get_upcoming_events`, `get_upcoming_event_saunas`, `get_top_saunas`, `is_admin()` (SECURITY DEFINER), `handle_new_user()` (SECURITY DEFINER trigger fn), `admin_get_users` + `admin_update_user_role` (SECURITY DEFINER, added commit `803c35a` — not in repo SQL history).
 
@@ -176,6 +179,7 @@ Authoritative sources: live Supabase project (primary), `supabase/all_scripts_hi
 
 | Doc | State |
 |-----|-------|
+| `docs/CURRENT_STATE.md` | Canonical handover document (2026-07-12): project status, architecture summary, sprint state, in-review work, domain model, key decisions, next steps — read before this audit in a new session |
 | `docs/VISION.md`, `docs/PRODUCT_STRATEGY.md`, `docs/DECISIONS.md` (15 decisions; 011–015 added 2026-07-11: sessions vs events, review eligibility, self-review ban, session-as-atom/event-as-container, master event publication by facility management state), `docs/ROADMAP.md` | Current, high quality |
 | `docs/USER_MODEL.md` | Authoritative user/persona/ownership/permission model (2026-07-11); reference for all auth/ownership/reservation/marketplace/payment features |
 | `docs/EVENT_SESSION_MODEL.md` | Authoritative Event vs Session model (2026-07-11, Decision 014): session = atom, event = container; organizers, map pulse hierarchy, reservations, future payments |
@@ -199,7 +203,7 @@ Missing entirely: ARCHITECTURE.md (required by Decision 009 but does not exist),
 
 Critical:
 
-1. **Open RLS policy on `sauna_masters` UPDATE** — any authenticated user can modify any master record. Must fix before public launch.
+1. **Open RLS policy on `sauna_masters` UPDATE** — any authenticated user can modify any master record. Fix script prepared in SP-035 (`supabase/2026-07-11_sp035_master_studio.sql`: own-row/moderation policies + unique `user_id` + privileged-column trigger) — **remains open on the live DB until the script is applied**.
 2. **No migration structure** — schema not reproducible from repo; SQL history mixes DDL with destructive test-data statements (TRUNCATE at line ~232, DELETEs/UPDATEs); newest tables (SP-021/022) missing entirely.
 3. **No FK indexes, no pagination** — full-table scans on every relation lookup; `/sauny` computes rating averages in memory from full `sauna_reviews` fetch.
 
@@ -208,7 +212,7 @@ High:
 4. `SaunaMap.tsx` at 1,352 lines — extreme complexity, regression risk (protected area; decompose carefully per Decision 008).
 5. No tests of any kind; no `error.tsx` boundaries; validation client-side only.
 6. Duplicated `assertAdmin()` in multiple actions files; middleware checks login only.
-7. No shared entity types (`lib/types.ts` missing); category labels defined in 5 places; photo-upload logic tripled; ~6 copy-paste moderation components; repeated modal scaffolding.
+7. Shared entity types: `lib/types.ts` now covers the RPC hot paths (SP-035D); the rest of the item remains — category labels defined in 5 places; photo-upload logic tripled; ~6 copy-paste moderation components; repeated modal scaffolding.
 8. Legacy `lib/supabase.ts` singleton coexists with `lib/supabase/client.ts` (SaunaMap uses the legacy one).
 9. No audit logging for admin actions.
 

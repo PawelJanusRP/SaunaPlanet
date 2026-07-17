@@ -1,8 +1,8 @@
 import EventsPageClient from '@/components/events/EventsPageClient'
-import CalendarView from '@/components/events/CalendarView'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import type { UpcomingEventRow } from '@/lib/types'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,8 +11,7 @@ const supabase = createClient(
 
 export default async function EventsPage() {
   const { data: events } = await supabase.rpc('get_upcoming_events')
-  const currentDate = new Date()
-  
+
   return (
     <>
       <Navbar />
@@ -35,7 +34,7 @@ export default async function EventsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {events.map((event: any) => (
+          {events.map((event: UpcomingEventRow) => (
             <Link
               key={event.event_id}
               href={`/sauna/${event.sauna_id}`}

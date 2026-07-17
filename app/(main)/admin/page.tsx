@@ -19,12 +19,6 @@ const statusLabel: Record<string, { label: string; className: string }> = {
   inactive:  { label: 'Nieaktywna',   className: 'bg-gray-100 text-gray-500' },
 }
 
-const roleStyle: Record<string, string> = {
-  admin:     'bg-red-100 text-red-700',
-  moderator: 'bg-orange-100 text-orange-700',
-  user:      'bg-gray-100 text-gray-600',
-}
-
 export default async function AdminPage({
   searchParams,
 }: {
@@ -51,6 +45,7 @@ export default async function AdminPage({
     { data: events },
     { data: reviews },
     { data: pendingManagers },
+    { data: linkedMasters },
   ] = await Promise.all([
     supabase.rpc('admin_get_users'),
     supabase.from('sauna_submissions').select('*').order('created_at', { ascending: false }),
@@ -78,7 +73,20 @@ export default async function AdminPage({
       .select('id, user_id, status, created_at, saunas(id, name, city)')
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
+    // Master moderation status per account for the Users tab. admin_get_users
+    // returns only master_name; the status has to come from the table (the
+    // moderator arm of RLS returns every row here).
+    supabase
+      .from('sauna_masters')
+      .select('user_id, status')
+      .not('user_id', 'is', null),
   ])
+
+  const masterStatusByUserId: Record<string, string> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const m of (linkedMasters ?? []) as any[]) {
+    if (m.user_id) masterStatusByUserId[m.user_id] = m.status
+  }
 
   const pending = submissions?.filter((s) => s.status === 'pending') ?? []
   const pendingMasterCount = pendingMasters?.length ?? 0
@@ -387,6 +395,10 @@ export default async function AdminPage({
             (profiles as any[]).map((p) => {
               const displayName = p.master_name || [p.first_name, p.last_name].filter(Boolean).join(' ')
               const isCurrentUser = p.id === user.id
+              const masterStatus = masterStatusByUserId[p.id]
+              const masterBadge = masterStatus
+                ? statusLabel[masterStatus] ?? { label: masterStatus, className: 'bg-gray-100 text-gray-500' }
+                : null
               return (
                 <div key={p.id} className="flex items-center justify-between gap-4 rounded-2xl border bg-white px-5 py-4 shadow-sm">
                   <div className="min-w-0">
@@ -400,6 +412,13 @@ export default async function AdminPage({
                     <p className="mt-0.5 text-xs text-gray-400">
                       {new Date(p.created_at).toLocaleDateString('pl-PL')}
                     </p>
+                    {masterBadge && (
+                      <p className="mt-1">
+                        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${masterBadge.className}`}>
+                          🧖 Saunamistrz: {masterBadge.label}
+                        </span>
+                      </p>
+                    )}
                   </div>
                   <UserRoleSelector
                     userId={p.id}

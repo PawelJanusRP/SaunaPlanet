@@ -75,12 +75,25 @@ export async function rejectMaster(masterId: string, note?: string) {
   await assertAdmin()
   const supabase = await createClient()
 
-  const { error } = await supabase
+  // Note first: if it fails, nothing has changed yet. Moderation-only
+  // audit table (supabase/2026-07-16_sp035d_master_moderation_notes.sql).
+  const trimmedNote = note?.trim()
+  if (trimmedNote) {
+    const { error: noteError } = await supabase
+      .from('master_moderation_notes')
+      .insert({ master_id: masterId, note: trimmedNote })
+
+    if (noteError) throw new Error(noteError.message)
+  }
+
+  const { data, error } = await supabase
     .from('sauna_masters')
     .update({ status: 'rejected' })
     .eq('id', masterId)
+    .select('id')
 
   if (error) throw new Error(error.message)
+  if (!data || data.length === 0) throw new Error('Nie znaleziono profilu saunamistrza')
   revalidatePath('/admin')
 }
 

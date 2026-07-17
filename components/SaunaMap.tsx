@@ -1,7 +1,7 @@
 'use client'
 
 import { createPortal } from 'react-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -16,6 +16,7 @@ import 'leaflet/dist/leaflet.css'
 
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import type { SaunaNearbyRow, UpcomingEventSaunaRow } from '@/lib/types'
 import { useAuth } from '@/components/AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import AddSaunaForm from '@/components/AddSaunaForm'
@@ -41,32 +42,8 @@ type SaunaEvent = {
   status: string
 }
 
-type Sauna = { 
-  id: string
-  name: string
-  description: string | null
-  category: string
-  latitude: number
-  longitude: number
-  city: string | null
-  voivodeship: string | null
-  website: string | null
-  source: string | null
-  source_url: string | null
-  status: string
-  created_at: string
-  distance_m: number
-  image_urls: string[] | null
-  cover_image_url: string | null
+type Sauna = SaunaNearbyRow & {
   has_upcoming_event?: boolean
-  avg_rating: number | null
-  review_count: number
-  masters?: {
-    id: string
-    name: string
-    avatar_url: string | null
-    level: string | null
-  }[]
 }
 
 type UpcomingEvent = {
@@ -84,9 +61,12 @@ type UpcomingEvent = {
 
 const fallbackCenter: [number, number] = [52.4064, 16.9252]
 
+// Leaflet's default marker images, served locally (public/leaflet/, copied
+// from node_modules/leaflet/dist/images) — no third-party CDN dependency.
 const markerIcon = new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: '/leaflet/marker-icon.png',
+  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+  shadowUrl: '/leaflet/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 })
@@ -226,6 +206,8 @@ function getCategoryColor(category: string) {
   }
 }
 
+const EVENT_PULSE_CLASS = 'sauna-event-pulse'
+
 function createSaunaIcon(
   imageUrl: string | null,
   category: string,
@@ -237,7 +219,7 @@ function createSaunaIcon(
   const categoryColor = getCategoryColor(category)
   const size = hasUpcomingEvent ? 60 : 46
   const borderColor = hasUpcomingEvent ? '#dc2626' : categoryColor
-  const pulseClass = hasUpcomingEvent ? 'sauna-event-pulse' : ''
+  const pulseClass = hasUpcomingEvent ? EVENT_PULSE_CLASS : ''
   const mastersWithAvatar = (masters ?? []).filter((m) => m != null && m.avatar_url)
 
   const satSize = 40
@@ -257,7 +239,7 @@ function createSaunaIcon(
   return L.divIcon({
     className: '',
 		html: `
-		<div class="${hasUpcomingEvent ? 'sauna-event-pulse' : ''}"
+		<div class="${pulseClass}"
 			style="
 				position: relative;
 				width: ${size}px;
@@ -347,6 +329,39 @@ function createSaunaIcon(
   })
 }
 
+// leaflet.markercluster ships no TypeScript definitions; this is the subset
+// of L.MarkerCluster the icon factory needs.
+type MarkerClusterLike = {
+  getChildCount(): number
+  getAllChildMarkers(): L.Marker[]
+}
+
+function markerHasEventPulse(marker: L.Marker) {
+  const icon = marker.options.icon
+  return (
+    icon instanceof L.DivIcon &&
+    typeof icon.options.html === 'string' &&
+    icon.options.html.includes(EVENT_PULSE_CLASS)
+  )
+}
+
+// Same markup, classes and size as leaflet.markercluster's
+// _defaultIconCreateFunction, plus the event pulse when at least one child
+// marker pulses. The pulse class goes on the inner div, not the icon root:
+// Leaflet positions the root via an inline transform that the pulse's
+// scale() animation would override.
+function createClusterIcon(cluster: MarkerClusterLike) {
+  const count = cluster.getChildCount()
+  const sizeClass = count < 10 ? 'small' : count < 100 ? 'medium' : 'large'
+  const hasEventChild = cluster.getAllChildMarkers().some(markerHasEventPulse)
+
+  return L.divIcon({
+    html: `<div class="${hasEventChild ? EVENT_PULSE_CLASS : ''}"><span>${count}</span></div>`,
+    className: `marker-cluster marker-cluster-${sizeClass}`,
+    iconSize: L.point(40, 40),
+  })
+}
+
 function SaunaPopup({
   sauna,
   onAddPhoto,
@@ -363,21 +378,27 @@ function SaunaPopup({
   const [events, setEvents] = useState<SaunaEvent[]>([])
 
   useEffect(() => {
-    loadEvents()
-  }, [sauna.id])
+    let cancelled = false
 
-  async function loadEvents() {
-    const { data, error } = await supabase.rpc('get_sauna_events', {
-      sauna_uuid: sauna.id,
-    })
+    async function loadEvents() {
+      const { data, error } = await supabase.rpc('get_sauna_events', {
+        sauna_uuid: sauna.id,
+      })
 
-    if (error) {
-      console.error('LOAD EVENTS ERROR:', error)
-      return
+      if (error) {
+        console.error('LOAD EVENTS ERROR:', error)
+        return
+      }
+
+      if (!cancelled) setEvents(data ?? [])
     }
 
-    setEvents(data ?? [])
-  }
+    void loadEvents()
+
+    return () => {
+      cancelled = true
+    }
+  }, [sauna.id])
 
   const images = sauna.image_urls?.length
     ? sauna.image_urls
@@ -614,6 +635,7 @@ export default function SaunaMap() {
   const [clusterRefreshKey, setClusterRefreshKey] = useState(0)
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
+  const loadSeqRef = useRef(0)
 
   const visibleItems = items.filter((item) => {
 	  if (mapMode === 'events' && !item.has_upcoming_event) {
@@ -652,32 +674,40 @@ export default function SaunaMap() {
   return true
   })
   
-  async function loadUpcomingEvents() {
-  const { data, error } = await supabase.rpc(
-    'get_upcoming_events'
-  )
+  const loadUpcomingEvents = useCallback(async () => {
+    const { data, error } = await supabase.rpc('get_upcoming_events')
 
-  if (error) {
-    console.error('LOAD EVENTS ERROR:', error)
-    return
-  }
-  
-  console.log('UPCOMING EVENTS:', data)
-  
-  setUpcomingEvents(data ?? [])
-}
+    if (error) {
+      console.error('LOAD EVENTS ERROR:', error)
+      return
+    }
 
-  async function loadTopSaunas() {
+    setUpcomingEvents(data ?? [])
+  }, [])
+
+  const loadTopSaunas = useCallback(async () => {
     const { data, error } = await supabase.rpc('get_top_saunas')
-  
+
     if (error) {
       console.error('LOAD TOP SAUNAS ERROR:', error)
       return
     }
-  
-  setTopSaunas(data ?? [])
-}
-  async function loadSaunas() {
+
+    setTopSaunas(data ?? [])
+  }, [])
+
+  const loadSaunas = useCallback(async () => {
+    // Concurrent calls (mount effect, realtime events, form callbacks) can
+    // resolve out of order; only the most recent call may write state.
+    const seq = ++loadSeqRef.current
+    const isCurrent = () => loadSeqRef.current === seq
+
+    // Yield a microtask so setLoading below runs as an async callback, never
+    // synchronously inside the effects that call this loader
+    // (react-hooks/set-state-in-effect).
+    await Promise.resolve()
+    if (!isCurrent()) return
+
     setLoading(true)
 
     const { data, error } = await supabase.rpc('get_saunas_nearby', {
@@ -685,10 +715,8 @@ export default function SaunaMap() {
       user_lng: userLocation[1],
       radius_m: radiusKm * 1000,
     })
-	
-	console.log(
-		data?.find((s: any) => s.image_urls?.length > 0)
-)
+
+    if (!isCurrent()) return
 
     if (error) {
       console.error(error)
@@ -696,23 +724,26 @@ export default function SaunaMap() {
       setLoading(false)
       return
     }
-	const { data: eventSaunas } = await supabase.rpc(
-  'get_upcoming_event_saunas'
-)
 
-	const eventIds = new Set(
-	  (eventSaunas ?? []).map((e: any) => e.sauna_id)
-)
+    const { data: eventSaunas } = await supabase.rpc(
+      'get_upcoming_event_saunas'
+    )
+
+    if (!isCurrent()) return
+
+    const eventIds = new Set(
+      (eventSaunas ?? []).map((e: UpcomingEventSaunaRow) => e.sauna_id)
+    )
 
     setItems(
-	  (data ?? []).map((sauna: any) => ({
-		...sauna,
-		has_upcoming_event: eventIds.has(sauna.id),
-	  }))
-	)
+      (data ?? []).map((sauna: SaunaNearbyRow) => ({
+        ...sauna,
+        has_upcoming_event: eventIds.has(sauna.id),
+      }))
+    )
     setLoading(false)
     setClusterRefreshKey((k) => k + 1)
-  }
+  }, [userLocation, radiusKm])
 
   async function centerOnUserLocation() {
     if (!navigator.geolocation) {
@@ -743,11 +774,13 @@ export default function SaunaMap() {
     )
   }
 
-useEffect(() => {
-  loadSaunas()
-  loadTopSaunas()
-  loadUpcomingEvents()
-}, [userLocation, radiusKm])
+  useEffect(() => {
+    async function load() {
+      await Promise.all([loadSaunas(), loadTopSaunas(), loadUpcomingEvents()])
+    }
+
+    void load()
+  }, [loadSaunas, loadTopSaunas, loadUpcomingEvents])
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -763,7 +796,13 @@ useEffect(() => {
         setSelectedLocation(coords)
       },
       (error) => {
-        console.error('GEOLOCATION ERROR:', error)
+        // Brak geolokalizacji to normalna sytuacja (odmowa uprawnień, pozycja
+        // niedostępna lub timeout) — nie jest to błąd aplikacji. Mapa pozostaje
+        // na domyślnym środku (fallbackCenter). Logujemy czytelnie i bez alarmu.
+        console.warn(
+          `Geolokalizacja niedostępna (kod ${error.code}): ${error.message}. ` +
+            'Mapa używa domyślnej lokalizacji.'
+        )
       },
       {
         enableHighAccuracy: true,
@@ -771,6 +810,13 @@ useEffect(() => {
       }
     )
   }, [])
+
+  // Effect Event: realtime callbacks always see the current loadSaunas
+  // (current location/radius) without resubscribing the channel on every
+  // location or radius change.
+  const onRealtimeChange = useEffectEvent(() => {
+    void loadSaunas()
+  })
 
   useEffect(() => {
     const channel = supabase
@@ -782,8 +828,8 @@ useEffect(() => {
           schema: 'public',
           table: 'saunas',
         },
-        async () => {
-          await loadSaunas()
+        () => {
+          onRealtimeChange()
         }
       )
       .on(
@@ -793,8 +839,8 @@ useEffect(() => {
           schema: 'public',
           table: 'sauna_photos',
         },
-        async () => {
-          await loadSaunas()
+        () => {
+          onRealtimeChange()
         }
       )
       .subscribe()
@@ -1091,7 +1137,12 @@ useEffect(() => {
             </Popup>
           )}
 
-          <MarkerClusterGroup key={clusterRefreshKey} chunkedLoading maxClusterRadius={60}>
+          <MarkerClusterGroup
+            key={clusterRefreshKey}
+            chunkedLoading
+            maxClusterRadius={60}
+            iconCreateFunction={createClusterIcon}
+          >
             {visibleItems.map((item) => (
               <Marker
                 key={`${item.id}-${item.image_urls?.length ?? 0}-${item.status}`}
