@@ -61,9 +61,12 @@ type UpcomingEvent = {
 
 const fallbackCenter: [number, number] = [52.4064, 16.9252]
 
+// Leaflet's default marker images, served locally (public/leaflet/, copied
+// from node_modules/leaflet/dist/images) — no third-party CDN dependency.
 const markerIcon = new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: '/leaflet/marker-icon.png',
+  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+  shadowUrl: '/leaflet/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 })
