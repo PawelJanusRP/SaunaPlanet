@@ -60,8 +60,7 @@ architecture** (design reference: `docs/PLATFORM_WORKSPACES.md`):
   profile) that drives navigation visibility only.
 * **Personal Workspace** at `/profile` (SP-032) — the reference
   implementation; **Owner Workspace** at `/workspace` (SP-033/034) with active
-  facility context; **Master Studio** at `/studio` (SP-035, in review — see
-  below).
+  facility context; **Master Studio** at `/studio` (SP-035).
 * **Supabase + authorization** — three data-access patterns (client queries,
   ~25+ server actions, RPCs). Authorization is enforced server-side by
   **Server Actions + RLS**; the database is the boundary. RLS philosophy:
@@ -94,38 +93,33 @@ Merged into `main` (details: `docs/SPRINT_HISTORY.md`, `docs/FEATURES.md`):
 * **SP-032** — Personal Workspace: `/profile` rebuilt on the shared shell.
 * **SP-033** — Owner Workspace foundation: `/workspace` with active facility
   context; manager features migrated out of the Personal Workspace.
+* **SP-034 — Owner Event Management**: create/edit/delete events from
+  `/workspace/events` via manager-scoped server actions, within the active
+  facility context. Merged 2026-07-17 (`8bda515`).
+* **SP-035 — Master Studio Foundation** (incl. **SP-035D** code-quality
+  implementation): `/studio` on the shared shell (dashboard with invitation
+  Today queue, own-profile editing, affiliations); master profile integrity
+  (unique `sauna_masters.user_id` link, own-row RLS replacing the open
+  `USING(true)` policy, privileged-column trigger); first-class
+  `master_affiliations` with a two-direction lifecycle (W-16); Owner
+  Workspace **Team** module (`/workspace/team`); moderation status
+  visibility on `/masters` and admin Users; master rejection notes
+  (`master_moderation_notes`); event-pulse on map clusters. `home_sauna_id`
+  is frozen as legacy display data. Merged 2026-07-17 (`47b400c`). Full
+  scope: `docs/FEATURES.md` §SP-035, `docs/CODE_QUALITY_REVIEW.md`.
+
+The SP-034/SP-035 SQL scripts (`supabase/2026-07-11_sp034_owner_events_rls.sql`,
+`2026-07-11_sp035_master_studio.sql`, `2026-07-12_sp035_master_insert_level_guard.sql`,
+`2026-07-16_sp035d_master_moderation_notes.sql`,
+`2026-07-17_sp035d_masters_select_rls.sql`) were applied manually to the live
+Supabase project and runtime-verified before the merge (2026-07-17).
 
 ---
 
 ## In Review
 
-Current feature branch: **`feature/sp-035-master-studio`** — it stacks two
-unmerged sprints (SP-035 was built on top of the SP-034 branch):
-
-* **SP-034 — Owner Event Management**: create/edit/delete events from
-  `/workspace/events` via manager-scoped server actions, within the active
-  facility context.
-* **SP-035 — Master Studio Foundation**: `/studio` on the shared shell
-  (dashboard with invitation Today queue, own-profile editing, affiliations);
-  master profile integrity (unique `sauna_masters.user_id` link, own-row RLS
-  replacing the open `USING(true)` policy, privileged-column trigger);
-  first-class `master_affiliations` with a two-direction lifecycle (W-16);
-  Owner Workspace **Team** module (`/workspace/team`). `home_sauna_id` is
-  frozen as legacy display data. Full scope: `docs/FEATURES.md` §SP-035.
-
-Required SQL (no migrations directory — apply manually to the live Supabase
-project, in order):
-
-1. `supabase/2026-07-11_sp034_owner_events_rls.sql`
-2. `supabase/2026-07-11_sp035_master_studio.sql`
-
-Known blockers before merge:
-
-* both SQL scripts must be applied to the live database — until then the
-  critical open `sauna_masters` UPDATE policy remains exploitable
-  (REPOSITORY_AUDIT §8, item 1);
-* runtime verification of the Studio and Team flows against the live schema;
-* code review of the stacked branch.
+Nothing — `main` is the current state; the next sprint (SP-036 Sauna
+Sessions) has not started.
 
 ---
 
@@ -142,7 +136,7 @@ permissions: `docs/USER_MODEL.md`):
 * **Reservation** — `event_registrations` (seat limits, manager approval)
 * **Review** — `sauna_reviews`, `event_reviews`, `event_comments`
 * **Favorite / Interest** — `user_favorites`, `user_event_interests`
-* **Affiliation** — `master_affiliations` (SP-035, in review; Decision 016)
+* **Affiliation** — `master_affiliations` (SP-035; Decision 016)
 
 Planned, not yet implemented:
 
