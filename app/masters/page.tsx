@@ -12,8 +12,16 @@ type Master = {
   avatar_url: string | null
   bio: string | null
   rating: number | null
+  status: string
   home_sauna_id: string | null
   saunas: Sauna | null
+}
+
+// Non-approved profiles reach this page only for moderation (query filter +
+// RLS keep them away from the public); the chip keeps them distinguishable.
+const statusBadge: Record<string, { label: string; className: string }> = {
+  pending:  { label: 'Oczekuje',  className: 'bg-yellow-100 text-yellow-700' },
+  rejected: { label: 'Odrzucony', className: 'bg-red-100 text-red-700' },
 }
 
 export default async function MastersPage() {
@@ -24,11 +32,17 @@ export default async function MastersPage() {
   const isAdmin = role === 'admin' || role === 'moderator'
   const isLoggedIn = !!user
 
+  // Public directory shows approved profiles only (PLATFORM_WORKSPACES §5:
+  // pending/rejected are visible to self and moderation, never publicly).
+  // RLS enforces the same boundary; the filter keeps the page correct for
+  // moderators too, who can read every row.
+  const mastersQuery = supabase
+    .from('sauna_masters')
+    .select('id, name, avatar_url, bio, rating, status, home_sauna_id, saunas:home_sauna_id(id, name)')
+    .order('name')
+
   const [{ data: mastersRaw }, { data: saunasRaw }] = await Promise.all([
-    supabase
-      .from('sauna_masters')
-      .select('id, name, avatar_url, bio, rating, home_sauna_id, saunas:home_sauna_id(id, name)')
-      .order('name'),
+    isAdmin ? mastersQuery : mastersQuery.eq('status', 'approved'),
     isAdmin
       ? supabase.from('saunas').select('id, name').order('name')
       : Promise.resolve({ data: [] }),
@@ -125,7 +139,18 @@ function MasterCard({ master }: { master: Master }) {
           </div>
         )}
         <div>
-          <div className="font-bold">{master.name}</div>
+          <div className="font-bold">
+            {master.name}
+            {master.status !== 'approved' && (
+              <span
+                className={`ml-2 inline-block rounded-full px-2 py-0.5 align-middle text-xs font-semibold ${
+                  statusBadge[master.status]?.className ?? 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {statusBadge[master.status]?.label ?? master.status}
+              </span>
+            )}
+          </div>
           <div className="text-sm text-gray-500">⭐ {Number(master.rating ?? 0).toFixed(1)}</div>
         </div>
       </div>
