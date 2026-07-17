@@ -10,33 +10,123 @@ async function assertEditor() {
   }
 }
 
-export async function updateEvent(
-  id: string,
-  data: {
-    title: string
-    event_date: string
-    event_time: string | null
-    price: string | null
-    description: string | null
-  }
-) {
-  await assertEditor()
-  if (!data.title.trim() || !data.event_date) throw new Error('Tytuł i data są wymagane')
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
 
-  const supabase = await createClient()
-  const { error } = await supabase
+/**
+ * SP-034: event management is allowed for admins/moderators and for approved
+ * facility staff (sauna_managers) of the event's sauna. Same authorization
+ * pattern as updateRegistrationStatus; RLS on sauna_events enforces the same
+ * rule at the DB layer (supabase/2026-07-11_sp034_owner_events_rls.sql).
+ */
+async function assertCanManageSaunaEvents(supabase: SupabaseServerClient, saunaId: string) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  const role = await getCurrentUserRole()
+  if (role === 'admin' || role === 'moderator') return
+
+  const { data: mgr } = await supabase
+    .from('sauna_managers')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('sauna_id', saunaId)
+    .eq('status', 'approved')
+    .maybeSingle()
+  if (!mgr) throw new Error('Brak uprawnień')
+}
+
+async function getEventSaunaId(supabase: SupabaseServerClient, eventId: string): Promise<string> {
+  const { data: ev } = await supabase
     .from('sauna_events')
-    .update({
-      title: data.title.trim(),
-      event_date: data.event_date,
-      event_time: data.event_time || null,
-      price: data.price?.trim() || null,
-      description: data.description?.trim() || null,
-    })
-    .eq('id', id)
+    .select('sauna_id')
+    .eq('id', eventId)
+    .single()
+  if (!ev?.sauna_id) throw new Error('Nie znaleziono eventu')
+  return ev.sauna_id
+}
+
+export type EventFormData = {
+  title: string
+  event_date: string
+  event_time: string | null
+  price: string | null
+  description: string | null
+  max_participants?: number | null
+}
+
+function eventRowFromForm(data: EventFormData) {
+  if (!data.title.trim() || !data.event_date) throw new Error('Tytuł i data są wymagane')
+  const maxParticipants =
+    data.max_participants !== undefined && data.max_participants !== null
+      ? Math.floor(data.max_participants)
+      : null
+  if (maxParticipants !== null && maxParticipants < 1) {
+    throw new Error('Limit miejsc musi być większy od zera')
+  }
+  return {
+    title: data.title.trim(),
+    event_date: data.event_date,
+    event_time: data.event_time || null,
+    price: data.price?.trim() || null,
+    description: data.description?.trim() || null,
+    ...(data.max_participants !== undefined ? { max_participants: maxParticipants } : {}),
+  }
+}
+
+function revalidateEventSurfaces(eventId: string, saunaId: string) {
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath('/events')
+  revalidatePath(`/sauna/${saunaId}`)
+  revalidatePath('/workspace')
+  revalidatePath('/workspace/events')
+}
+
+export async function createEvent(saunaId: string, data: EventFormData) {
+  const supabase = await createClient()
+  await assertCanManageSaunaEvents(supabase, saunaId)
+
+  const { data: created, error } = await supabase
+    .from('sauna_events')
+    .insert({ sauna_id: saunaId, status: 'active', ...eventRowFromForm(data) })
+    .select('id')
+    .single()
 
   if (error) throw new Error(error.message)
-  revalidatePath(`/events/${id}`)
+  revalidateEventSurfaces(created.id, saunaId)
+}
+
+export async function updateEvent(id: string, data: EventFormData) {
+  const supabase = await createClient()
+  const saunaId = await getEventSaunaId(supabase, id)
+  await assertCanManageSaunaEvents(supabase, saunaId)
+
+  // .select() so an RLS mismatch (0 rows) surfaces as an error instead of a
+  // silent no-op — matters until the SP-034 policies are applied to the DB.
+  const { data: updated, error } = await supabase
+    .from('sauna_events')
+    .update(eventRowFromForm(data))
+    .eq('id', id)
+    .select('id')
+
+  if (error) throw new Error(error.message)
+  if (!updated || updated.length === 0) throw new Error('Brak uprawnień do edycji tego wydarzenia')
+  revalidateEventSurfaces(id, saunaId)
+}
+
+export async function deleteEvent(id: string) {
+  const supabase = await createClient()
+  const saunaId = await getEventSaunaId(supabase, id)
+  await assertCanManageSaunaEvents(supabase, saunaId)
+
+  const { data: deleted, error } = await supabase
+    .from('sauna_events')
+    .delete()
+    .eq('id', id)
+    .select('id')
+
+  if (error) throw new Error(error.message)
+  if (!deleted || deleted.length === 0) throw new Error('Brak uprawnień do usunięcia tego wydarzenia')
+  revalidateEventSurfaces(id, saunaId)
 }
 
 export async function removeEventMaster(eventId: string, masterId: string) {

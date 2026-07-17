@@ -97,9 +97,14 @@ Rules:
 * Every Event has exactly **one organizer of record**: a facility *or* a
   master. (A manager never organizes in their own name — they act for the
   facility; this keeps the future payee unambiguous.)
-* A master-organized Event held at a facility requires **facility consent**
-  (the facility hosts it). Consent is a workflow (`pending → approved`),
-  consistent with USER_MODEL §1.4.
+* A master-organized Event held at a **managed** facility requires **facility
+  consent** (the facility hosts it). Consent is a workflow
+  (`pending → approved`), consistent with USER_MODEL §1.4; the facility may
+  approve, reject or request changes (Decision 015, §2.3 below).
+* At an **unmanaged** facility (no active owner/manager in SaunaPlanet) a
+  *verified* master publishes directly; the event is visibly attributed
+  "Published by Sauna Master" (§2.3). A master is never blocked from
+  organizing merely because the facility is not active on the platform.
 * **Money constraint:** master-organized Events may be *paid* only after the
   master-payout model exists (USER_MODEL Q12–Q13). Until then master-organized
   Events are free-admission. The model supports paid ones from day one; the
@@ -126,7 +131,49 @@ Consent rules (all reuse the pending→approved pattern):
 | Facility staff creates Session and assigns a master | the master (two-sided handshake — nobody conducts without consent, mirroring `sauna_event_masters`) |
 | Event organizer adds Session to own Event at own facility | nobody (self) |
 
-## 2.3 Promotion links
+## 2.3 Publication workflow and statuses (Decision 015)
+
+Event publication follows the facility's management state. The step-by-step
+workflow lives in `docs/WORKFLOWS.md` (W-09); this section defines the model.
+
+```
+Verified Sauna Master → Create Event → Select Facility
+        │
+        ├─ facility HAS an active owner/manager
+        │    → Pending Facility Approval
+        │       (Owner Workspace Today Queue: approve / reject / request changes)
+        │    → approved → PUBLISHED BY FACILITY
+        │
+        └─ facility has NO active owner/manager
+             → PUBLISHED BY SAUNA MASTER
+               (visibly distinct from a facility-confirmed event)
+```
+
+Intended long-term lifecycle (product vision — not an implementation
+commitment; today's implementation knows only `active`/`rejected`):
+
+| Status | Meaning |
+|---|---|
+| **Draft** | being composed; visible only to the creator |
+| **Pending Facility Approval** | master's proposal awaiting the managed facility's decision |
+| **Pending Admin Review** *(optional)* | platform-level moderation gate, per policy |
+| **Published by Facility** | officially confirmed by the facility (facility-created, or master proposal approved) |
+| **Published by Sauna Master** | published directly by a verified master at an unmanaged facility |
+| **Rejected** | declined by the facility (or moderation), with reason |
+| **Cancelled** | withdrawn after publication (cascade per §3; never deletion of history) |
+
+Independence principle: **creator, organizer, facility, participating
+masters, publication status and approval status are independent concepts** —
+they must never collapse into a single role or flag. (Example: a facility
+manager may *create* an event whose *organizer of record* is the facility;
+a master may be *creator and organizer* of an event *at* a facility they do
+not manage, with the facility only *approving*.)
+
+When an unmanaged facility later gains an owner (claim flow, USER_MODEL J2),
+existing "Published by Sauna Master" events remain valid; the new owner gains
+approval authority for future proposals only.
+
+## 2.4 Promotion links
 
 Both Events and Sessions have **canonical, share-first URLs** — a master must
 be able to post "my Friday ritual → link" or "our festival → link" on social

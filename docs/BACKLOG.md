@@ -139,7 +139,12 @@ Zakres:
 
 # SP-026 Przypisywanie saunamistrzów do saun (wiele do wielu, role)
 
-Status: PLANNED
+Status: PLANNED — **część afiliacyjna wchłonięta przez SP-035 Master Studio
+Foundation (Decision 016)**; aktualny model produktowy afiliacji:
+PLATFORM_WORKSPACES §5.2 (bez definiowania kolumn — poniższy szkic tabeli
+jest historyczny i zostanie zaprojektowany na nowo przy implementacji).
+Uwaga: rola `owner` w szkicu poniżej jest nieaktualna — własność obiektu
+żyje w relacji membership (USER_MODEL §3), nigdy w afiliacji mistrza.
 
 Zakres:
 

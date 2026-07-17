@@ -474,6 +474,130 @@ payout model). Authoritative model: docs/EVENT_SESSION_MODEL.md.
 
 ---
 
+# Decision 015
+
+Title:
+
+Masters are never blocked by inactive facilities — event publication follows
+facility management state.
+
+Date:
+
+2026-07-11
+
+Decision:
+
+A verified Sauna Master may always create an Event at any facility. What
+happens next depends on whether the facility is actively managed in
+SaunaPlanet:
+
+* **Managed facility** (has an active owner/manager): the master's event is a
+  *proposal* — it enters "Pending Facility Approval", appears in the Owner
+  Workspace Today Queue, and the manager may approve, reject or request
+  changes. Only after approval is the event officially published for that
+  facility ("Published by Facility").
+* **Unmanaged facility** (no active owner/manager): the verified master may
+  publish directly. The event is visibly marked "Published by Sauna Master" so
+  users can distinguish it from an event officially confirmed by the facility.
+
+Sessions are unaffected: a verified master always creates and manages their
+own sessions (Decision 014 consent rules apply).
+
+Intended future event lifecycle (long-term vision, not an implementation
+commitment): Draft → Pending Facility Approval → Pending Admin Review
+(optional) → Published by Facility / Published by Sauna Master → Rejected /
+Cancelled.
+
+Reasoning:
+
+Most facilities were imported (PTS) and have no active manager; requiring
+facility consent unconditionally would block exactly the masters whose
+activity makes the platform alive (journey J8). At the same time, a managed
+facility must keep authority over what is officially published in its name.
+Publication attribution ("by Facility" vs "by Sauna Master") preserves user
+trust in both cases.
+
+Impact:
+
+* Event creator, organizer, facility, participating masters, publication
+  status and approval status are **independent concepts** — never a single
+  role or a single column of meaning.
+* Refines docs/EVENT_SESSION_MODEL.md §2.1 (facility consent becomes
+  conditional on the facility being managed) and adds the publication
+  lifecycle (§2.3 there).
+* Workflow reference: docs/WORKFLOWS.md (W-09).
+* When a previously unmanaged facility gains an owner (claim flow), existing
+  "Published by Sauna Master" events remain valid; the new owner gains the
+  normal approval authority for future proposals.
+
+---
+
+# Decision 016
+
+Title:
+
+Affiliations are the master↔facility model; "home sauna" is transitional.
+SP-016 folds into the Master Studio roadmap (SP-035), Sessions follow (SP-036).
+
+Date:
+
+2026-07-11
+
+Decision:
+
+1. The conceptual model `Sauna Master → home_sauna_id` is a **temporary
+   transitional solution**. The long-term model is a first-class, reusable
+   business relationship:
+
+   ```
+   Sauna Master ↔ Master Affiliation ↔ Sauna Facility
+   ```
+
+   An affiliation may define, among other things: status, type, primary
+   affiliation, start/end dates, verification, permission to publish sauna
+   sessions, permission to create events, and a future trust level. Product
+   model only — no database columns are defined yet
+   (docs/PLATFORM_WORKSPACES.md §5.2).
+
+2. Affiliations are **not an isolated sprint**. The planned SP-016
+   initiative folds into the Master Studio roadmap as a core part of its
+   architecture. SP-016 remains a permanent identifier in past references
+   (SPRINT_HISTORY numbering rule) but will be delivered inside SP-035.
+
+3. Roadmap:
+   * **SP-035 — Master Studio Foundation**: Master Workspace on the shared
+     shell, Sauna Master profile, profile integrity fixes (USER_MODEL
+     §6.1–6.2), the affiliation model (formerly SP-016), removal of the
+     home-sauna concept as the primary model.
+   * **SP-036 — Sauna Sessions**: Sessions as a first-class entity
+     independent from Events, per docs/EVENT_SESSION_MODEL.md
+     (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may contain many
+     Sessions; a Session is anchored at exactly one facility and its
+     relationship to masters is **many-to-many** — 1..n conductors with
+     roles, lead required).
+
+Reasoning:
+
+Affiliation is the consent backbone of the master economy: it decides where
+a master may publish sessions without per-session approval (USER_MODEL Q11),
+feeds satellite/home presentation, and later carries verification and trust.
+Shipping it as a standalone table without the Master Studio would create a
+relationship nobody can see or manage; shipping the Studio without it would
+rebuild home_sauna_id's dead end. They are one architecture.
+
+Impact:
+
+* PLATFORM_WORKSPACES §5.2 defines the affiliation product model; the
+  Studio's Affiliations section renders it.
+* home_sauna_id remains readable for backward compatibility during
+  transition but stops being the primary model in SP-035.
+* Workflow reference: docs/WORKFLOWS.md W-16 (affiliation), W-08 (sessions,
+  planned as SP-036).
+* Sequencing: profile integrity fixes precede all master self-service
+  (security precondition).
+
+---
+
 # Guiding Principle
 
 Whenever there is uncertainty between two approaches, prefer the one that strengthens:

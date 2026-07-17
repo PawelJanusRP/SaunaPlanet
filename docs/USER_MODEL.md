@@ -377,7 +377,7 @@ rating, add a freshly won competition certificate.
 | Session organizer capability: create own sessions at affiliated saunas, confirm their registrations (§1.6) | ❌ no kind distinction, no organizer attribution, no master self-service | **Missing but required for MVP** (paired with §6.8 — the J8 acquisition loop depends on it) |
 | Distinct map visualization: session pulse vs event pulse + organizer satellite | ❌ | Post-MVP (data model ships first; `SaunaMap.tsx` is a protected area — implement carefully) |
 | Master confirms/declines event assignment (two-sided handshake) | ⚠ `sauna_event_masters.status` exists but masters have no self-service action | Post-MVP |
-| Multi-facility affiliations (SP-016) | ❌ single `home_sauna_id` | Post-MVP (already correctly specified in FEATURES.md) |
+| Multi-facility affiliations (SP-016 → part of SP-035, Decision 016) | ❌ single `home_sauna_id` (transitional) | Post-MVP (model: PLATFORM_WORKSPACES §5.2) |
 | Rankings from event reviews (SP-023) | ❌ | Post-MVP |
 | Followers, verified badge, master marketplace | ❌ | Nice to have |
 
@@ -615,9 +615,11 @@ account owning the sauna (one owning *entity*, several people in the entity)
 — which slots into Layer 2 without changing its shape.
 
 **Can one sauna master belong to multiple saunas?**
-**Yes** — via the affiliations table already specified as SP-016
-(master ↔ sauna, `is_primary` flag, per-affiliation status). `home_sauna_id`
-is the interim single-value version. Independent of affiliations, a master can
+**Yes** — via the affiliation relationship (Master ↔ Master Affiliation ↔
+Facility; status, type, primary flag, dates, consent permissions — full
+product model in PLATFORM_WORKSPACES §5.2, Decision 016; formerly SP-016,
+now part of SP-035 Master Studio Foundation). `home_sauna_id` is the interim
+single-value version, to be retired as the primary model in SP-035. Independent of affiliations, a master can
 be *assigned to events* at any sauna (`sauna_event_masters`) — affiliation is
 "belongs to the house team", assignment is "performs at this event". These are
 different relationships and must stay separate.
@@ -768,6 +770,12 @@ attendance requirement otherwise (§8.0.2).
 
 Canonical journeys the platform must support end-to-end. (Persona-level detail
 in §2; these are the cross-persona flows.)
+
+> **Workflow reference:** step-by-step business workflows (actors, triggers,
+> main/alternative flows, implementation status) live in `docs/WORKFLOWS.md`
+> — the central reference for sprint planning. The journeys below stay as the
+> product-model rationale; WORKFLOWS.md is where their operational detail is
+> maintained, not here.
 
 **J1 — Discover → attend → review (the Core Loop).**
 Guest finds event on map → event page → registers account → "Zapisz się"

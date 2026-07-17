@@ -112,17 +112,36 @@ Delivered:
 * historical sauna rating from past events shown on event page (SP-021)
 * sauna event reviews listing page /sauna/[id]/reviews (SP-021)
 
+Delivered (Workspace track, 2026-07):
+
+* shared Workspace infrastructure — shell, hub, navigation (SP-031)
+* Personal Workspace at /profile (SP-032)
+* Owner Workspace at /workspace with active facility context (SP-033)
+* owner event management from the Owner Workspace (SP-034)
+
 Remaining:
 
+* **Master Studio Foundation (SP-035)** — Master Workspace on the shared
+  shell; Sauna Master profile; profile integrity fixes (own-profile-only
+  editing, unique user↔profile link); the **affiliation model** (formerly
+  SP-016, Decision 016) replacing the home-sauna concept as the primary
+  model
+* **Sauna Sessions (SP-036)** — Sessions as a first-class entity independent
+  from Events (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may
+  contain many Sessions; a Session happens at exactly one facility and may
+  have one or more masters — session ↔ master is many-to-many, lead
+  conductor required — see docs/EVENT_SESSION_MODEL.md §3)
 * recurring events
 * advanced calendar
-* attendance limits and waiting lists — reservations (SP-022)
+* waiting lists and reservation lifecycle completion (cancellation
+  deadlines, notifications)
 * event categories and filtering
 * sauna and master rankings derived from event reviews (SP-023)
 
 Success criteria:
 
-Users can discover and manage events efficiently.
+Users can discover and manage events efficiently; facilities and masters
+operate self-service through their workspaces.
 
 ---
 

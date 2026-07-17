@@ -11,12 +11,20 @@ type Props = {
   event_time: string | null
   price: string | null
   description: string | null
+  max_participants?: number | null
 }
 
-export default function EditEventForm({ eventId, title, event_date, event_time, price, description }: Props) {
+export default function EditEventForm({ eventId, title, event_date, event_time, price, description, max_participants }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [form, setForm] = useState({ title, event_date, event_time: event_time ?? '', price: price ?? '', description: description ?? '' })
+  const [form, setForm] = useState({
+    title,
+    event_date,
+    event_time: event_time ?? '',
+    price: price ?? '',
+    description: description ?? '',
+    max_participants: max_participants != null ? String(max_participants) : '',
+  })
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -31,6 +39,7 @@ export default function EditEventForm({ eventId, title, event_date, event_time, 
           event_time: form.event_time || null,
           price: form.price || null,
           description: form.description || null,
+          max_participants: form.max_participants ? Number(form.max_participants) : null,
         })
         toast.success('Zapisano zmiany')
         setOpen(false)
@@ -52,7 +61,7 @@ export default function EditEventForm({ eventId, title, event_date, event_time, 
   }
 
   return (
-    <div className="mt-4 rounded-2xl border bg-gray-50 p-4 space-y-3">
+    <div className="mt-4 w-full rounded-2xl border bg-gray-50 p-4 space-y-3">
       <p className="text-sm font-bold text-gray-700">Edycja wydarzenia</p>
 
       <div>
@@ -86,15 +95,28 @@ export default function EditEventForm({ eventId, title, event_date, event_time, 
         </div>
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Cena</label>
-        <input
-          type="text"
-          value={form.price}
-          onChange={(e) => set('price', e.target.value)}
-          placeholder="np. 50 zł"
-          className="w-full rounded-xl border px-3 py-2 text-sm"
-        />
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="mb-1 block text-xs font-semibold text-gray-500">Cena</label>
+          <input
+            type="text"
+            value={form.price}
+            onChange={(e) => set('price', e.target.value)}
+            placeholder="np. 50 zł"
+            className="w-full rounded-xl border px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="mb-1 block text-xs font-semibold text-gray-500">Limit miejsc</label>
+          <input
+            type="number"
+            min={1}
+            value={form.max_participants}
+            onChange={(e) => set('max_participants', e.target.value)}
+            placeholder="bez limitu"
+            className="w-full rounded-xl border px-3 py-2 text-sm"
+          />
+        </div>
       </div>
 
       <div>
