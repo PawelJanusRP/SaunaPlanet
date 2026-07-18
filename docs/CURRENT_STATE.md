@@ -181,13 +181,18 @@ Every future sprint must respect these (full reasoning: `docs/DECISIONS.md`):
 Next stages (do not duplicate — see `docs/ROADMAP.md` Phase 4 and
 `docs/BACKLOG.md`):
 
-* **SP-035** — finish review, apply SQL, merge Master Studio Foundation.
-* **SP-036** — Sauna Sessions as a first-class entity
-  (`docs/EVENT_SESSION_MODEL.md`).
-* **SP-037 / SP-038** — not yet scoped; expected to be drawn from the Phase 4
-  remainder (master event proposals W-09, rankings SP-023, reservation
-  lifecycle completion, recurring events). Scope them from `docs/WORKFLOWS.md`
-  before implementation.
+* **SP-036** — Master-Contributed Facilities & Events: community facility
+  submissions with admin moderation, duplicate detection, master event
+  publication paths (`docs/SP036_ARCHITECTURE.md`). Functionally complete
+  2026-07-19 (the bundled-submission UI and URL import were descoped —
+  import moved to SP-038 Smart Facility Import).
+* **SP-037** — Master Event Participation Workflow (W-11): masters request,
+  facility staff moderate, approved masters join lineups/map. In progress.
+* **SP-038 / SP-040 / SP-041** — allocated in `docs/BACKLOG.md` (Smart
+  Facility Import; Architecture Review; Capacity Dashboard).
+* **SP-039** — Sauna Sessions as a first-class entity
+  (`docs/EVENT_SESSION_MODEL.md`); renumbered from the original SP-036/037
+  reservation.
 
 ---
 

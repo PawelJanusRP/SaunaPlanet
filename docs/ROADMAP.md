@@ -126,11 +126,19 @@ Remaining:
   editing, unique user↔profile link); the **affiliation model** (formerly
   SP-016, Decision 016) replacing the home-sauna concept as the primary
   model
-* **Sauna Sessions (SP-036)** — Sessions as a first-class entity independent
+* **Master-Contributed Facilities & Events (SP-036)** — community facility
+  submissions with moderation, duplicate detection, master event paths
+  (docs/SP036_ARCHITECTURE.md); functionally complete 2026-07-19
+* **Master Event Participation (SP-037)** — verified masters request event
+  participation, facility staff moderate, approved masters appear in
+  lineups and on the map (W-11; in progress)
+* **Sauna Sessions (SP-039)** — Sessions as a first-class entity independent
   from Events (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may
   contain many Sessions; a Session happens at exactly one facility and may
   have one or more masters — session ↔ master is many-to-many, lead
-  conductor required — see docs/EVENT_SESSION_MODEL.md §3)
+  conductor required — see docs/EVENT_SESSION_MODEL.md §3); renumbered
+  from SP-036/SP-037 as those numbers were claimed (SP-038/040/041 are
+  allocated in docs/BACKLOG.md)
 * recurring events
 * advanced calendar
 * waiting lists and reservation lifecycle completion (cancellation
