@@ -1,16 +1,31 @@
 -- ============================================================================
--- SP-036 — find_similar_saunas: name-match tuning (rev 2)
+-- SP-036 — find_similar_saunas: name-match tuning (rev 3)
 -- ============================================================================
 -- STATUS: PREPARED, awaiting approval; apply manually in the SQL Editor.
+-- Supersedes rev 1/rev 2 — apply this version once.
 --
--- Rev 2 (2026-07-18): second false positive after rev 1 — "Sauna Testowa"
--- warned about "Obiekt testowy" (similarity of the stripped names is
--- 0.3529, again a hair over 0.35; the shared root is "testow-"). Both
--- observed false positives landed at ~0.353, i.e. the threshold was set
--- razor-thin. Name-arm threshold raised 0.35 → 0.45. Regression checks:
--- "Termy Maltanskie" vs "Termy Maltańskie Poznań" = 0.708 (still warns);
--- short real duplicates of the "X" vs "X <city>" shape score ~0.46+
--- (still warn).
+-- Rev 3 (2026-07-18): reported miss+false-positive pair — submitting
+-- "Termy" NEXT TO Termy Maltańskie matched distant "Tarnowskie Termy"
+-- (0.375, over the rev-1 0.35 threshold) while MISSING the intended
+-- "Termy Maltańskie Poznań" (0.25 — plain trigram similarity punishes the
+-- length difference when the query is one word of a longer name). Plain
+-- thresholds can never fix the miss, so the name arm gains a second path:
+-- pg_trgm word_similarity (similarity to the best-matching word of the
+-- other name) > 0.8 in either direction, gated to <= 5 km — a shared full
+-- word plus close proximity is strong evidence, a shared word across town
+-- is none. Distance, not the word score, is the discriminator
+-- (word_similarity('termy', 'tarnowskie termy') is also 1.0).
+--
+-- Rev 2 (2026-07-18): "Sauna Testowa" vs "Obiekt testowy" — stripped-name
+-- similarity 0.3529, a hair over 0.35; threshold raised to 0.45.
+-- Rev 1 (2026-07-18): domain stopword strip + 25 km gate (Pawłowice case).
+--
+-- Matrix after rev 3 (name arm):
+--   "Termy" vs "Termy Maltańskie Poznań", nearby      → word 1.0, <=5 km ✓ warns
+--   "Termy" vs "Tarnowskie Termy", ~15 km             → distance ✗       no warn
+--   "Termy Maltanskie" vs "Termy Maltańskie Poznań"   → strict 0.708     ✓ warns
+--   "Sauna Testowa" vs "Obiekt testowy"               → 0.353 / word 0.6 no warn
+--   "Sauna testowa" vs "Sauna&Spa" (far)              → stopwords+dist   no warn
 --
 -- Bug (reported 2026-07-18): submitting "Sauna testowa" in Poznań warned
 -- about "Sauna&Spa" in Pawłowice (hundreds of km away). Root cause:
@@ -72,19 +87,38 @@ as $$
       end as distance_m,
       array_remove(array[
         case when p.q_name is not null
-                  and extensions.similarity(
-                    coalesce(
-                      nullif(trim(regexp_replace(lower(s.name),
-                        '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')), ''),
-                      lower(s.name)),
-                    coalesce(p.q_name_res, lower(p.q_name))) > 0.45
-                  -- same-area gate: applies only when both sides have coords
-                  and (p_lat is null or p_lng is null
-                       or s.latitude is null or s.longitude is null
-                       or public.st_dwithin(
-                         public.st_makepoint(s.longitude, s.latitude)::public.geography,
-                         public.st_makepoint(p_lng, p_lat)::public.geography,
-                         25000))
+                  and (
+                    -- path A: strict trigram similarity of stripped names
+                    -- ("X" vs "X <city>" variants, typos) within 25 km
+                    (extensions.similarity(
+                       coalesce(
+                         nullif(trim(regexp_replace(lower(s.name),
+                           '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')), ''),
+                         lower(s.name)),
+                       coalesce(p.q_name_res, lower(p.q_name))) > 0.45
+                     and (p_lat is null or p_lng is null
+                          or s.latitude is null or s.longitude is null
+                          or public.st_dwithin(
+                            public.st_makepoint(s.longitude, s.latitude)::public.geography,
+                            public.st_makepoint(p_lng, p_lat)::public.geography,
+                            25000)))
+                    or
+                    -- path B: shared full word + tight proximity (a short
+                    -- generic query naming an existing facility nearby);
+                    -- requires coordinates on BOTH sides by design
+                    (p_lat is not null and p_lng is not null
+                     and s.latitude is not null and s.longitude is not null
+                     and greatest(
+                           extensions.word_similarity(
+                             coalesce(p.q_name_res, lower(p.q_name)), lower(s.name)),
+                           extensions.word_similarity(
+                             lower(s.name), coalesce(p.q_name_res, lower(p.q_name)))
+                         ) > 0.8
+                     and public.st_dwithin(
+                       public.st_makepoint(s.longitude, s.latitude)::public.geography,
+                       public.st_makepoint(p_lng, p_lat)::public.geography,
+                       5000))
+                  )
              then 'name' end,
         case when p_lat is not null and p_lng is not null
                   and s.latitude is not null and s.longitude is not null
@@ -139,9 +173,17 @@ $$;
 --        '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')));
 --    -- expect ~0.7
 --
--- 3. End-to-end: repeat the map-form scenario ("Sauna Testowa", Poznań) —
---    neither Sauna&Spa (Pawłowice) nor Obiekt testowy may warn; a
---    submission named "Obiekt testowy 2" nearby SHOULD still warn.
+-- 3. Word-path checks:
+--    select extensions.word_similarity('termy', 'termy maltańskie poznań');
+--    -- expect 1.0 (path B fires when within 5 km)
+--    select extensions.word_similarity('testowa', 'obiekt testowy');
+--    -- expect ~0.6 (below 0.8 — no match)
+--
+-- 4. End-to-end from the map form:
+--    a) "Termy" pinned near Termy Maltańskie → warns about (and centers
+--       on) Termy Maltańskie Poznań; Tarnowskie Termy absent.
+--    b) "Sauna Testowa" in Poznań → no warning.
+--    c) "Obiekt testowy 2" near Obiekt testowy → warns and centers on it.
 --
 -- ROLLBACK: re-run section 5 of 2026-07-18_sp036_master_facilities.sql
 -- (the previous function body).
