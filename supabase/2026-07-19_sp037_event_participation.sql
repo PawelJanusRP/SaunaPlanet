@@ -100,8 +100,15 @@ returns boolean as $$
   )
 $$ language sql security definer stable set search_path = '';
 
-revoke all on function public.is_event_staff(uuid) from public, anon;
-grant execute on function public.is_event_staff(uuid) to authenticated;
+revoke all on function public.is_event_staff(uuid) from public;
+-- IMPORTANT (post-apply incident, 2026-07-19): anon MUST keep EXECUTE.
+-- RLS policies run in the caller's context, and this helper is referenced
+-- by the SELECT policy below — revoking it from anon made every anonymous
+-- read of sauna_event_masters (including the public map RPC, which joins
+-- the table) fail with "permission denied for function is_event_staff".
+-- Hotfixed live with this grant. For anon the function merely returns
+-- false (auth.uid() is null) — nothing is exposed.
+grant execute on function public.is_event_staff(uuid) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 3. Deterministic policy replacement on sauna_event_masters.
