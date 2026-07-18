@@ -1,7 +1,16 @@
 -- ============================================================================
--- SP-036 — find_similar_saunas: name-match tuning
+-- SP-036 — find_similar_saunas: name-match tuning (rev 2)
 -- ============================================================================
 -- STATUS: PREPARED, awaiting approval; apply manually in the SQL Editor.
+--
+-- Rev 2 (2026-07-18): second false positive after rev 1 — "Sauna Testowa"
+-- warned about "Obiekt testowy" (similarity of the stripped names is
+-- 0.3529, again a hair over 0.35; the shared root is "testow-"). Both
+-- observed false positives landed at ~0.353, i.e. the threshold was set
+-- razor-thin. Name-arm threshold raised 0.35 → 0.45. Regression checks:
+-- "Termy Maltanskie" vs "Termy Maltańskie Poznań" = 0.708 (still warns);
+-- short real duplicates of the "X" vs "X <city>" shape score ~0.46+
+-- (still warn).
 --
 -- Bug (reported 2026-07-18): submitting "Sauna testowa" in Poznań warned
 -- about "Sauna&Spa" in Pawłowice (hundreds of km away). Root cause:
@@ -68,7 +77,7 @@ as $$
                       nullif(trim(regexp_replace(lower(s.name),
                         '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')), ''),
                       lower(s.name)),
-                    coalesce(p.q_name_res, lower(p.q_name))) > 0.35
+                    coalesce(p.q_name_res, lower(p.q_name))) > 0.45
                   -- same-area gate: applies only when both sides have coords
                   and (p_lat is null or p_lng is null
                        or s.latitude is null or s.longitude is null
@@ -113,13 +122,14 @@ $$;
 -- VERIFICATION (SQL Editor; the auth.uid() gate hides rows for the postgres
 -- role, so test the internals directly):
 --
--- 1. Reported case must NOT name-match any more:
+-- 1. Both reported false positives must stay below the 0.45 threshold:
+--    select extensions.similarity('testowa', 'obiekt testowy');  -- ~0.353
 --    select extensions.similarity(
 --      trim(regexp_replace(lower('Sauna testowa'),
 --        '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')),
 --      trim(regexp_replace(lower('Sauna&Spa'),
 --        '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')));
---    -- expect well below 0.35
+--    -- expect well below 0.45
 --
 -- 2. Real duplicate must still match:
 --    select extensions.similarity(
@@ -129,8 +139,9 @@ $$;
 --        '\m(sauna|sauny|spa|wellness)\M', ' ', 'g')));
 --    -- expect ~0.7
 --
--- 3. End-to-end: repeat the map-form scenario ("Sauna testowa", Poznań) —
---    the Sauna&Spa (Pawłowice) warning must be gone.
+-- 3. End-to-end: repeat the map-form scenario ("Sauna Testowa", Poznań) —
+--    neither Sauna&Spa (Pawłowice) nor Obiekt testowy may warn; a
+--    submission named "Obiekt testowy 2" nearby SHOULD still warn.
 --
 -- ROLLBACK: re-run section 5 of 2026-07-18_sp036_master_facilities.sql
 -- (the previous function body).
