@@ -303,9 +303,18 @@ Long-term priority:
 
 ---
 
-# Platform Operations (future infrastructure sprint)
+# Platform Operations (future infrastructure sprints)
 
-**Platform Capacity & System Health Dashboard** (backlog: SP-040 in
+**SP-040 — Architecture, Performance & Scalability Review** (full scope:
+docs/BACKLOG.md) — a comprehensive, evidence-based technical review
+(database, map at 10x/100x datasets, images, frontend, Next.js
+architecture, network, realtime, mobile readiness, cost modeling at
+100→100k users, security, SEO, accessibility) to run **before significant
+user growth and before the native mobile app (SP-030)**. Review only — the
+deliverable is a P1–P4 optimization roadmap, with nothing implemented
+during the sprint itself.
+
+**SP-041 — Platform Capacity & System Health Dashboard** (full scope:
 docs/BACKLOG.md) — a privileged `/admin/system` section fed by a scheduled
 collector writing `system_metrics_snapshots` (never direct browser calls to
 infrastructure providers): platform health, database/storage capacity and

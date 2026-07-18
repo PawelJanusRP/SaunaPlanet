@@ -242,11 +242,73 @@ Zakres:
 
 ---
 
-# SP-040 Platform Capacity & System Health Dashboard
+# SP-040 Architecture, Performance & Scalability Review
 
-Status: PLANNED (recorded 2026-07-18; sprint number provisional — SP-037 is
-reserved for Sauna Sessions). Documentation/backlog entry only — nothing is
-implemented, no migrations exist.
+Status: PLANNED (recorded 2026-07-18). This is an **architecture review
+sprint, not a feature sprint** — no optimizations are implemented during
+it; the deliverable is an evidence-based optimization roadmap.
+
+## Goal
+
+Perform a comprehensive technical review of SaunaPlanet before significant
+user growth and before starting the native mobile application (SP-030).
+Identify bottlenecks, unnecessary infrastructure costs, scalability risks,
+architectural debt and optimization opportunities while the product is
+still relatively small. **No assumptions** — every recommendation must be
+supported by measurements, profiling or code inspection.
+
+## Areas to review
+
+1. **Database** — every major query: unnecessary `SELECT *`, missing
+   indexes, inefficient joins, PostGIS optimization opportunities, RLS
+   overhead, RPC opportunities, `EXPLAIN ANALYZE` results, future scaling
+   risks.
+2. **Map performance** — marker loading, viewport queries, clustering,
+   lazy loading; estimate expected behaviour at 500 / 2,000 / 10,000+ /
+   50,000+ saunas.
+3. **Images** — storage usage, transfer, thumbnails, responsive images,
+   WebP/AVIF, CDN caching, upload pipeline.
+4. **Frontend performance** — React rendering, memoization, server/client
+   boundaries, bundle size, lazy loading, route performance, hydration
+   cost.
+5. **Next.js architecture** — caching, ISR, dynamic rendering, Server
+   Components, Route Handlers, opportunities for Edge rendering.
+6. **Network usage** — payload sizes, API calls, duplicated requests,
+   unnecessary downloads, browser caching.
+7. **Realtime** — which features truly require realtime; identify
+   candidates for polling or delayed refresh instead.
+8. **Mobile readiness** — evaluate the architecture for the future React
+   Native app: reusable domain logic, validation, API layer;
+   Next.js-specific code that should be extracted.
+9. **Infrastructure costs** — model expected resource usage and operating
+   costs at ~100 / 1,000 / 10,000 / 100,000 users across database,
+   storage, bandwidth, Vercel, Supabase.
+10. **Security** — another security review; verify recent changes have not
+    introduced regressions.
+11. **SEO** — metadata, structured data, indexing, performance, sitemap,
+    discoverability.
+12. **Accessibility** — keyboard navigation, screen readers, color
+    contrast, mobile usability.
+
+## Deliverables
+
+A comprehensive architecture review document. Every finding includes:
+description, measured impact, priority, implementation effort, expected
+benefit. Every recommendation classified:
+
+* **P1** — implement immediately
+* **P2** — before large public launch
+* **P3** — before 10× growth
+* **P4** — long-term improvement
+
+---
+
+# SP-041 Platform Capacity & System Health Dashboard
+
+Status: PLANNED (recorded 2026-07-18; renumbered from the provisional
+SP-040 when the Architecture Review sprint claimed that number).
+Documentation/backlog entry only — nothing is implemented, no migrations
+exist.
 
 ## Motivation
 
