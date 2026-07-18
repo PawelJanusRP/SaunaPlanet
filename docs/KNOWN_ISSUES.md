@@ -16,6 +16,25 @@ Many systems were implemented incrementally and have already been debugged.
 
 # SECURITY BACKLOG (high priority)
 
+## master_affiliations exposes auth-user UUIDs on public rows
+
+Status: Open — recorded during the 2026-07-19 SP-037 review; deliberately
+NOT fixed in SP-037 (out of scope).
+
+Approved `master_affiliations` rows are publicly selectable (SP-035
+policy: `status = 'approved' OR …`), and the table carries `created_by`
+and `resolved_by` — raw `auth.users` UUIDs. RLS is row-level, not
+column-level, so PostgREST `select=*` returns those UUIDs to anonymous
+callers for every approved affiliation.
+
+Required follow-up (separate migration): move the audit columns behind a
+non-public surface — either column-level grants (fragile with
+PostgREST `select=*`), a public view without the audit columns, or a
+separate decision-log table — mirroring the SP-037 decision that dropped
+`created_by` from `sauna_event_masters` for exactly this reason.
+
+---
+
 ## event_registrations UPDATE policy lacks an explicit WITH CHECK
 
 Status: Open — found in the 2026-07-18 SP-036 production audit; deliberately

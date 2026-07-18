@@ -17,9 +17,15 @@
 
 begin;
 
--- 1. Remove workflow-specific trigger
+-- 1. Remove workflow-specific triggers
 drop trigger if exists sauna_event_masters_guard on public.sauna_event_masters;
 drop function if exists public.guard_event_master_columns();
+-- NOTE: the INSERT normalization trigger (rev 3) is deliberately KEPT —
+-- the "approved ⇔ trusted approved_at + defined role" invariant is a
+-- security/data-quality property independent of the participation
+-- workflow, and the admin direct-assignment tool relies on it staying
+-- consistent. Drop sauna_event_masters_insert_guard only in a full
+-- decommission.
 
 -- 2. Remove workflow policies; keep hardened SELECT + admin set
 drop policy if exists event_masters_insert_request on public.sauna_event_masters;

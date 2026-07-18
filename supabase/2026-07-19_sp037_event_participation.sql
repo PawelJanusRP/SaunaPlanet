@@ -43,6 +43,25 @@
 --      approving); approved/rejected rows have immutable roles for every
 --      actor — historical role corrections use the same admin
 --      delete + re-insert repair path.
+--
+-- REVIEW REV 3 (2026-07-19) — final boundary conditions:
+--   * INSERT-time normalization trigger added: approved rows ALWAYS get a
+--     trusted approved_at := now() (caller-supplied values are
+--     overwritten) and MUST carry a non-null role; non-approved rows are
+--     normalized to approved_at = NULL and role = NULL. This keeps the
+--     admin direct-assignment tool working unchanged while enforcing the
+--     invariant "approved ⇔ trusted timestamp + defined role".
+--   * pending → approved REQUIRES a non-null role (loud error otherwise);
+--     pending → rejected forces role = NULL and approved_at = NULL; an
+--     attempted role assignment during rejection fails loudly at the
+--     role gate.
+--   * Admin resolution does NOT require event-staff membership: the
+--     UPDATE policies are OR-ed (is_admin OR is_event_staff) and the
+--     transition guard accepts is_event_staff OR is_platform_moderator.
+--   * Role vocabulary note: live values are lead / assistant / guest
+--     (probe 2026-07-19: 17/2/1). The trigger enforces role IS NOT NULL
+--     for approved rows; value-set enforcement stays app-level for now
+--     (no CHECK), so existing admin tools cannot break on wording.
 -- ============================================================================
 
 begin;
@@ -183,11 +202,17 @@ begin
               or public.is_platform_moderator()) then
         raise exception 'Zgłoszenie rozstrzyga obsada obiektu lub moderacja';
       end if;
-      -- trusted timestamp logic
+      -- trusted timestamp + role logic
       if new.status = 'approved' then
+        if new.role is null then
+          raise exception 'Zatwierdzenie wymaga nadania roli';
+        end if;
         new.approved_at := now();
       else
+        -- rejection never assigns anything: an attempted role change is
+        -- already refused by the role gate above; normalize both fields
         new.approved_at := null;
+        new.role := null;
       end if;
     else
       raise exception 'Niedozwolona zmiana statusu zgłoszenia (% -> %)',
@@ -204,6 +229,37 @@ drop trigger if exists sauna_event_masters_guard on public.sauna_event_masters;
 create trigger sauna_event_masters_guard
   before update on public.sauna_event_masters
   for each row execute function public.guard_event_master_columns();
+
+-- ---------------------------------------------------------------------------
+-- 5. INSERT normalization trigger (rev 3) — the "approved ⇔ trusted
+--    approved_at + defined role" invariant holds from the moment a row is
+--    born, for every insert path:
+--    * status='approved' (admin direct assignment): approved_at is FORCED
+--      to now() — a caller-supplied timestamp cannot survive — and a
+--      non-null role is required;
+--    * any other status: approved_at and role are normalized to NULL
+--      (pending requests and any future non-approved inserts carry
+--      neither a timestamp nor a role).
+-- ---------------------------------------------------------------------------
+create or replace function public.normalize_event_master_insert()
+returns trigger as $$
+begin
+  if new.status = 'approved' then
+    if new.role is null then
+      raise exception 'Zatwierdzone przypisanie wymaga nadania roli';
+    end if;
+    new.approved_at := now();
+  else
+    new.approved_at := null;
+    new.role := null;
+  end if;
+  return new;
+end $$ language plpgsql security definer set search_path = '';
+
+drop trigger if exists sauna_event_masters_insert_guard on public.sauna_event_masters;
+create trigger sauna_event_masters_insert_guard
+  before insert on public.sauna_event_masters
+  for each row execute function public.normalize_event_master_insert();
 
 commit;
 
@@ -234,10 +290,33 @@ commit;
 --   role → RLS violation; duplicate request for the same event → unique
 --   violation; DELETE own pending → OK; UPDATE own row → no row matched
 --   (no policy).
--- V6. As staff of the event's sauna: UPDATE pending → approved (with role)
---   sets approved_at automatically; → rejected clears approved_at and
---   refuses a role change; approved → pending → exception; changing
---   approved_at or role alone (no transition) → exception — ALSO when
---   executed as admin (uniform machine, no moderation bypass; identity
---   repair = admin DELETE + re-INSERT).
+-- V6. As staff of the event's sauna: UPDATE pending → approved WITH a role
+--   → approved_at set automatically; pending → approved WITHOUT a role →
+--   exception 'Zatwierdzenie wymaga nadania roli'; pending → rejected →
+--   approved_at NULL and role NULL (attempted role value in the same
+--   statement → exception at the role gate); approved → pending →
+--   exception; changing approved_at or role alone (no transition) →
+--   exception; UPDATE of an already approved/rejected row → refused.
+-- V7. Admin boundary cases (SQL Editor with an admin JWT or via the app):
+--   a) direct INSERT status='approved' with role → row created,
+--      approved_at = trusted now() even if the INSERT supplied
+--      approved_at='2020-01-01' (caller value cannot survive);
+--   b) direct INSERT status='approved' WITHOUT role → exception;
+--   c) direct INSERT status='pending' with role+approved_at supplied →
+--      row created with role NULL and approved_at NULL (normalized);
+--   d) admin NOT affiliated with the event's sauna resolves a pending
+--      request → allowed (policy is_admin OR is_event_staff; guard
+--      accepts is_platform_moderator);
+--   e) admin UPDATE of an approved row's role (no transition) →
+--      exception (uniform machine; repair = DELETE + re-INSERT).
+-- V8. Invariant sweep (read-only, after any test data):
+--   select count(*) from public.sauna_event_masters
+--   where (status = 'approved' and (approved_at is null or role is null))
+--      or (status <> 'approved' and approved_at is not null);
+--   -- must be 0
+--
+-- EXECUTION ORDER: V1 → V2 → V3 (inventory, data, structure: read-only)
+-- → V4/V4b (anon probes via PostgREST) → V7a–c (admin inserts; creates
+-- test rows) → V5 (master request/withdrawal) → V6 + V7d–e (resolution
+-- paths) → V8 (invariant sweep) → cleanup: delete test rows as admin.
 -- ============================================================================
