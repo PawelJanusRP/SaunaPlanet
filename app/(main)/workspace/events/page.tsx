@@ -8,6 +8,7 @@ import WorkspaceSection from '@/components/workspace/WorkspaceSection'
 import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState'
 import WorkspaceContextSwitcher from '@/components/workspace/WorkspaceContextSwitcher'
 import OwnerCreateEventButton from '@/components/workspace/OwnerCreateEventButton'
+import ParticipationModerationActions from '@/components/workspace/ParticipationModerationActions'
 import { workspaceContextLabel } from '@/lib/workspace/context'
 import {
   OWNER_ALL_FACILITIES_LABEL,
@@ -54,6 +55,22 @@ export default async function OwnerEventsPage({
     .filter((ev) => ev.event_date >= today)
     .sort((a, b) => (a.event_date < b.event_date ? -1 : 1))
   const past = events.filter((ev) => ev.event_date < today).slice(0, PAST_PREVIEW_LIMIT)
+
+  // SP-037: pending master participation requests for the facilities in
+  // scope. RLS (is_event_staff arm) already limits visibility; the inner
+  // join filter keeps the list within the active context.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let participationRequests: any[] = []
+  if (activeSaunaIds.length > 0) {
+    const { data: requestsRaw } = await supabase
+      .from('sauna_event_masters')
+      .select('id, created_at, sauna_events!inner(id, title, event_date, sauna_id, saunas(name)), sauna_masters(id, name, avatar_url, level)')
+      .eq('status', 'pending')
+      .in('sauna_events.sauna_id', activeSaunaIds)
+      .order('created_at', { ascending: true })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    participationRequests = (requestsRaw ?? []) as any[]
+  }
 
   // Creating an event requires a concrete facility (SP-034): the selected
   // context, or the account's only facility. With "All facilities" and more
@@ -118,6 +135,52 @@ export default async function OwnerEventsPage({
               wydarzenie zawsze należy do jednego obiektu.
             </div>
           )
+        )}
+
+        {participationRequests.length > 0 && (
+          <WorkspaceSection title={`🧖 Zgłoszenia saunamistrzów (${participationRequests.length})`}>
+            <div className="space-y-3">
+              {participationRequests.map((r) => (
+                <div key={r.id} className="rounded-2xl border border-yellow-200 bg-yellow-50/40 p-4">
+                  <div className="flex items-center gap-3">
+                    {r.sauna_masters?.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.sauna_masters.avatar_url}
+                        alt={r.sauna_masters.name}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-lg">🧖</div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-800">
+                        <Link href={`/masters/${r.sauna_masters?.id}`} className="hover:underline">
+                          {r.sauna_masters?.name ?? 'Saunamistrz'}
+                        </Link>
+                        {r.sauna_masters?.level && (
+                          <span className="ml-2 text-xs font-normal text-gray-400">{r.sauna_masters.level}</span>
+                        )}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        chce wystąpić:{' '}
+                        <Link href={`/events/${r.sauna_events?.id}`} className="font-medium hover:underline">
+                          {r.sauna_events?.title}
+                        </Link>
+                        {' · '}{r.sauna_events?.event_date?.substring(0, 10)}
+                        {context.scope === 'all' && r.sauna_events?.saunas?.name && (
+                          <> · {r.sauna_events.saunas.name}</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 border-t pt-3">
+                    <ParticipationModerationActions assignmentId={r.id} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </WorkspaceSection>
         )}
 
         <WorkspaceSection title={`🔥 Nadchodzące (${upcoming.length})`}>

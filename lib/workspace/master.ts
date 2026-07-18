@@ -14,6 +14,7 @@ export const MASTER_STUDIO_HOME = '/studio'
 export const MASTER_NAV: WorkspaceNavItem[] = [
   { key: 'dashboard', label: 'Pulpit', href: '/studio' },
   { key: 'profile', label: 'Profil', href: '/studio/profile' },
+  { key: 'events', label: 'Wystąpienia', href: '/studio/events' },
   { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
   { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
 ]
@@ -39,4 +40,11 @@ export const AFFILIATION_STATUS_LABELS: Record<string, string> = {
   approved: '✓ Aktywna',
   rejected: '✗ Odrzucona',
   ended: '— Zakończona',
+}
+
+/** SP-037: sauna_event_masters statuses as seen by the master. */
+export const PARTICIPATION_STATUS_LABELS: Record<string, string> = {
+  pending: '⏳ Oczekuje na decyzję obiektu',
+  approved: '✓ Występujesz',
+  rejected: '✗ Odrzucone',
 }

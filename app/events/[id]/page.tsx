@@ -6,6 +6,7 @@ import RemoveEventMasterButton from '@/components/RemoveEventMasterButton'
 import UploadEventPhotoButton from '@/components/UploadEventPhotoButton'
 import EventReviewForm from '@/components/EventReviewForm'
 import EventCommentForm from '@/components/EventCommentForm'
+import EventParticipationControls from '@/components/EventParticipationControls'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { toggleEventInterest } from '@/app/(main)/profile/actions'
 import { deleteEventReview, deleteEventComment, registerForEvent, cancelRegistration } from '@/app/events/actions'
@@ -57,6 +58,30 @@ export default async function EventPage({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const eventMasters = (eventMastersRaw ?? []) as any[]
+
+  // SP-037: the viewer's own master profile + participation state for this
+  // event (RLS shows masters their own rows in every status).
+  let ownMaster: { id: string } | null = null
+  let ownAssignment: { id: string; status: string; role: string | null } | null = null
+  if (user && !isPast && ev.status === 'active') {
+    const { data: ownMasterRaw } = await supabase
+      .from('sauna_masters')
+      .select('id, status')
+      .eq('user_id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    if (ownMasterRaw) {
+      ownMaster = { id: ownMasterRaw.id }
+      const { data: assignmentRaw } = await supabase
+        .from('sauna_event_masters')
+        .select('id, status, role')
+        .eq('event_id', id)
+        .eq('master_id', ownMasterRaw.id)
+        .maybeSingle()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ownAssignment = (assignmentRaw as any) ?? null
+    }
+  }
 
   const { data: photosRaw } = await supabase
     .from('event_photos')
@@ -335,6 +360,12 @@ export default async function EventPage({
                   </div>
                 )
               })}
+            </div>
+          )}
+
+          {ownMaster && (
+            <div className="mt-4 border-t pt-4">
+              <EventParticipationControls eventId={id} assignment={ownAssignment} />
             </div>
           )}
 

@@ -21,7 +21,7 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
  * RLS on sauna_events enforces the same rule at the DB layer
  * (supabase/2026-07-11_sp034_owner_events_rls.sql: is_admin() OR is_sauna_staff()).
  */
-async function assertCanManageSaunaEvents(supabase: SupabaseServerClient, saunaId: string) {
+export async function assertCanManageSaunaEvents(supabase: SupabaseServerClient, saunaId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Musisz być zalogowany')
 
