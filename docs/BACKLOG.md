@@ -242,6 +242,87 @@ Zakres:
 
 ---
 
+# SP-038 Smart Facility Import (Universal Import Engine)
+
+Status: PLANNED (recorded 2026-07-18). Roadmap/backlog entry only — no
+implementation now. **Supersedes the "URL-assisted submission" phase
+originally sketched as SP-036 slice 4** (docs/SP036_ARCHITECTURE.md §1.3,
+§9.4 phase 4 — deliberately detachable there; the honest-constraints
+analysis of FB/IG extraction in §1.3 remains the reference).
+
+## Goal
+
+Reduce the effort required to contribute new sauna facilities: paste a
+link → receive a pre-filled submission form. Extends the moderated SP-036
+submission workflow — **every imported facility goes through the existing
+moderation process; nothing becomes public without approval.**
+
+## Initial supported sources (priority order)
+
+1. Official website
+2. Facebook page
+3. Google Maps place
+4. Instagram profile (where feasible)
+
+The architecture must make adding future providers easy without
+redesigning the system.
+
+## Import workflow
+
+```
+"Import facility" → paste URL → automatic provider detection
+  → fetch publicly available metadata → extract available information
+  → duplicate detection → editable preview → user reviews/edits
+  → submit → existing SP-036 moderation workflow
+```
+
+## Candidate fields
+
+facility name, short description, address, city, coordinates (when
+available), website, Facebook URL, Instagram URL, phone, email, opening
+hours, profile image, gallery candidates, categories, tags. Only import
+information that is publicly available and legally usable.
+
+## Duplicate detection
+
+Execute the existing detection (find_similar_saunas) before submission;
+show possible duplicates; allow the user to continue; the final decision
+remains with moderators.
+
+## Architecture — provider-based import pipeline
+
+```
+Import Provider → Normalize → Validation → Duplicate Detection
+  → Editable Preview → Existing Submission Pipeline
+```
+
+Each provider implements the same interface. Future extensions the design
+must not preclude: Booking, TripAdvisor, Yelp (where applicable),
+OpenStreetMap, structured metadata (schema.org / JSON-LD), AI-assisted
+extraction from arbitrary websites.
+
+## UX
+
+Never present raw imported data — always an editable review step before
+submission; clearly indicate which fields were automatically imported.
+
+## Security
+
+Do not bypass moderation or validation; do not create facilities
+automatically; do not grant ownership or management rights. (Carry over
+the SP-036 §1.3/§4.4 requirements: SSRF guard, timeouts, size caps,
+decoded-image validation and re-encode, rate limiting, import_log audit —
+the import_log table from the SP-036 migration is the intended audit
+sink.)
+
+## Deliverables
+
+Provider-based import architecture, reusable import engine, initial
+provider implementations, documentation for adding future providers,
+complete integration with the SP-036 submission workflow.
+
+---
+
 # SP-040 Architecture, Performance & Scalability Review
 
 Status: PLANNED (recorded 2026-07-18). This is an **architecture review

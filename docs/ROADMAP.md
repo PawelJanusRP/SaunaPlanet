@@ -137,6 +137,10 @@ Remaining:
   deadlines, notifications)
 * event categories and filtering
 * sauna and master rankings derived from event reviews (SP-023)
+* **Smart Facility Import (SP-038)** — universal provider-based import
+  engine (website / Facebook / Google Maps / Instagram → pre-filled,
+  always-moderated submission; supersedes the SP-036 slice-4 URL-import
+  sketch; full scope: docs/BACKLOG.md)
 
 Success criteria:
 
