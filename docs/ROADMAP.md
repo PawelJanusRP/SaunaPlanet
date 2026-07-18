@@ -303,6 +303,18 @@ Long-term priority:
 
 ---
 
+# Platform Operations (future infrastructure sprint)
+
+**Platform Capacity & System Health Dashboard** (backlog: SP-040 in
+docs/BACKLOG.md) — a privileged `/admin/system` section fed by a scheduled
+collector writing `system_metrics_snapshots` (never direct browser calls to
+infrastructure providers): platform health, database/storage capacity and
+growth forecasts, traffic, product metrics, configurable alert thresholds
+(60% Watch / 75% Warning / 90% Critical). Recorded 2026-07-18 so proactive
+capacity planning is not forgotten before production growth demands it.
+
+---
+
 # Mobile Roadmap
 
 SaunaPlanet is a mobile-first product. The mobile strategy runs in parallel with the main platform phases.

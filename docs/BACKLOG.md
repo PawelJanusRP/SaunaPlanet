@@ -239,3 +239,73 @@ Zakres:
 * rezerwacje z płatnością
 * recenzje
 * oddzielna kategoria na mapie
+
+---
+
+# SP-040 Platform Capacity & System Health Dashboard
+
+Status: PLANNED (recorded 2026-07-18; sprint number provisional — SP-037 is
+reserved for Sauna Sessions). Documentation/backlog entry only — nothing is
+implemented, no migrations exist.
+
+## Motivation
+
+SaunaPlanet should proactively monitor platform capacity and infrastructure
+usage before production growth requires emergency scaling. The goal is not
+only observability, but **operational decision support**. The platform
+should clearly answer:
+
+* How healthy is the system?
+* Which resource is becoming the bottleneck?
+* How much capacity remains?
+* When should we scale or optimize?
+* Are users currently experiencing degradation?
+
+## Scope (future sprint)
+
+New administration section: **`/admin/system`** — privileged administrators
+only. The dashboard should eventually include:
+
+**Platform Health** — overall system status (healthy / warning / critical),
+last refresh timestamp.
+
+**Database** — database size, growth trend, active connections, connection
+limit usage, slow queries, storage growth, estimated capacity exhaustion.
+
+**Storage** — storage usage, image count, monthly transfer, growth trend,
+estimated exhaustion.
+
+**Traffic** — requests, active users, response times (p95), error rates,
+API health.
+
+**Product Metrics** — users, saunas, events, reviews, photos, pending
+moderation queue, reservations, realtime connections.
+
+**Forecasts** — trends instead of only current values: remaining capacity,
+estimated limit date, weekly growth, monthly growth.
+
+**Alerts** — configurable thresholds; suggested defaults: 60% → Watch,
+75% → Warning, 90% → Critical. Future notification channels: email, admin
+notifications, optional Discord/Slack.
+
+## Architecture notes
+
+The dashboard must NOT query infrastructure providers directly from the
+browser. Data flows through a scheduled collector and a snapshot table:
+
+```
+Infrastructure Providers (Vercel / Supabase / internal metrics)
+        ↓
+scheduled collector
+        ↓
+system_metrics_snapshots
+        ↓
+Admin Dashboard (/admin/system)
+```
+
+Access: privileged administrators only (admin role; RLS + server-side
+checks, consistent with the platform's Server Actions + RLS boundary).
+
+Implementation candidates when scoped: Vercel Cron for the collector,
+Supabase `pg_stat_*` views and the Supabase/Vercel management APIs as
+sources, existing admin panel as the UI shell.
