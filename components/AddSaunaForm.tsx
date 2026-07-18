@@ -25,11 +25,14 @@ export default function AddItemForm({
   onClose,
   latitude,
   longitude,
+  onCenterOnDuplicate,
 }: {
   onAdded: () => void
   onClose: () => void
   latitude: number | undefined
   longitude: number | undefined
+  /** Pan the map to a duplicate candidate so the user can compare places. */
+  onCenterOnDuplicate?: (lat: number, lng: number) => void
 }) {
   const { user, loading: authLoading } = useAuth()
   const [name, setName] = useState('')
@@ -41,6 +44,10 @@ export default function AddItemForm({
   // Duplicate warning state: null = not checked yet; [] = checked, clean.
   // Warn-only by contract — the user can always proceed.
   const [duplicates, setDuplicates] = useState<SimilarFacility[] | null>(null)
+  // Coordinates of duplicate candidates, fetched client-side under RLS —
+  // resolves only for active saunas and the caller's own pending rows, so
+  // other users' pending submissions stay location-private.
+  const [dupCoords, setDupCoords] = useState<Record<string, [number, number]>>({})
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -95,6 +102,28 @@ export default function AddItemForm({
         })
         if (matches.length > 0) {
           setDuplicates(matches)
+          // Resolve candidate coordinates and center the map on the top
+          // match so the user can visually compare locations.
+          const supabase = createClient()
+          const { data: coordRows } = await supabase
+            .from('saunas')
+            .select('id, latitude, longitude')
+            .in('id', matches.map((m) => m.id))
+          const coords: Record<string, [number, number]> = {}
+          for (const row of (coordRows ?? []) as {
+            id: string
+            latitude: number | null
+            longitude: number | null
+          }[]) {
+            if (row.latitude != null && row.longitude != null) {
+              coords[row.id] = [row.latitude, row.longitude]
+            }
+          }
+          setDupCoords(coords)
+          const first = matches.find((m) => coords[m.id])
+          if (first && onCenterOnDuplicate) {
+            onCenterOnDuplicate(...coords[first.id])
+          }
           setLoading(false)
           return // show the warning; user resubmits to proceed
         }
@@ -136,6 +165,7 @@ export default function AddItemForm({
       setCity('')
       setPhoto(null)
       setDuplicates(null)
+      setDupCoords({})
       if (fileInputRef.current) fileInputRef.current.value = ''
 
       onAdded()
@@ -199,6 +229,7 @@ export default function AddItemForm({
         onChange={(e) => {
           setName(e.target.value)
           setDuplicates(null) // name changed → re-check duplicates
+          setDupCoords({})
         }}
       />
 
@@ -298,7 +329,19 @@ className="
           <ul className="mb-1 space-y-0.5 text-xs text-yellow-800">
             {duplicates.map((d) => (
               <li key={d.id}>
-                • {d.name}
+                {dupCoords[d.id] ? (
+                  <button
+                    type="button"
+                    className="underline decoration-dotted underline-offset-2"
+                    onClick={() =>
+                      onCenterOnDuplicate?.(...(dupCoords[d.id] as [number, number]))
+                    }
+                  >
+                    📍 {d.name}
+                  </button>
+                ) : (
+                  <span>• {d.name}</span>
+                )}
                 {d.city && ` (${d.city})`}
                 {d.status === 'pending' && ' — czeka na moderację'}
                 {d.distance_m !== null && d.distance_m < 1000 &&

@@ -1315,13 +1315,17 @@ export default function SaunaMap() {
         {showAddForm && (
           <AddSaunaForm
             onAdded={async () => {
+              // The form owns success messaging (pending vs active differ
+              // since SP-036) — no extra toast here.
               await loadSaunas()
-              toast.success('Dodano saunę')
               setShowAddForm(false)
             }}
             onClose={() => setShowAddForm(false)}
             latitude={selectedLocation[0]}
             longitude={selectedLocation[1]}
+            onCenterOnDuplicate={(lat, lng) =>
+              setPanTarget({ center: [lat, lng], n: Date.now() })
+            }
           />
         )}
       </div>
