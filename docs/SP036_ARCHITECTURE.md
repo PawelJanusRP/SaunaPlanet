@@ -1,7 +1,9 @@
 # SP-036 — Master-Contributed Facilities & Events: Architecture Proposal
 
 Status: **PROPOSED — awaiting review. No code has been written.**
-Date: 2026-07-18. Branch: `feature/sp-036-master-facilities`.
+Date: 2026-07-18 (rev. 2 — facility submission opened to all authenticated
+users per Paweł's correction of 2026-07-18; see §1.4).
+Branch: `feature/sp-036-master-facilities`.
 
 Binding inputs: the SP-036 sprint brief (Paweł, 2026-07-18), Decision 015
 (master publication paths), Decision 016 (affiliations), W-09 in
@@ -15,14 +17,25 @@ Binding inputs: the SP-036 sprint brief (Paweł, 2026-07-18), Decision 015
 ### 1.1 What the sprint changes
 
 Today the platform assumes facility events are created by facility staff
-(`sauna_managers`, SP-034). Verified sauna masters — the community's most
-active contributors — cannot add facilities through a moderated path and
-cannot publish events at all. SP-036 turns verified masters into **trusted
-catalogue contributors** without touching the ownership model:
+(`sauna_managers`, SP-034). The community's most active contributors cannot
+add facilities through a moderated path (the map form performs an
+unmoderated direct insert), and verified sauna masters cannot publish events
+at all. SP-036 makes the community the engine of catalogue growth without
+touching the ownership model:
 
-* masters submit facilities → **admin moderation** → public catalogue grows;
+* **every authenticated user** submits facilities → mandatory
+  **admin/moderator moderation** (`pending` → `active`) → the map grows as
+  fast as the community contributes, with quality control;
+* the submitter may **edit their own pending submission** until it is
+  resolved; after approval, authorship grants **no** editing or management
+  rights and never creates a `sauna_managers` relationship — the standard
+  "Become a manager" workflow remains the only path to management;
+* **event rights are separate from submission rights**: a regular user who
+  submits a facility gains no event capabilities;
 * **any** verified master (not only the submitter) publishes events at
-  approved facilities that have **no approved manager**;
+  approved facilities that have **no approved manager**; a verified master
+  may also create an event **together with** their own facility submission
+  (the event goes live only when the facility is approved);
 * once a facility gains an approved manager, **future** master events require
   manager approval; already-published events stay published;
 * submitting a facility grants **nothing** beyond an audit trail.
@@ -32,11 +45,15 @@ catalogue contributors** without touching the ownership model:
 * **W-09 already specifies this flow** (including the "manager arrives later"
   rule). This sprint moves W-09 from Future to Implemented (partial — the
   "request changes" alternative flow and admin review gate stay future).
-* **USER_MODEL §4.1 must be amended**: the capability matrix currently gives
-  masters ⬜ for "Create/edit events". New row semantics: master may
-  create events Ⓢ (at approved unmanaged facilities → published immediately
-  as master events; at managed facilities → pending manager approval), and
-  edit/delete Ⓢ own organized events. Recorded as **Decision 017**.
+* **USER_MODEL §4.1 must be amended** for events only: the capability matrix
+  currently gives masters ⬜ for "Create/edit events". New row semantics:
+  master may create events Ⓢ (at approved unmanaged facilities → published
+  immediately as master events; at managed facilities → pending manager
+  approval), and edit/delete Ⓢ own organized events. Recorded as
+  **Decision 017**. The "Submit sauna" row (✅ for every authenticated user)
+  is **already correct** in the matrix — this sprint finally makes the
+  implementation honor it through a moderated path instead of the current
+  unmoderated direct insert.
 * **Affiliations are NOT the permission gate here** — deliberate correction
   of the earlier session sketch. An `approved` affiliation semantically means
   *facility consent* (the transition trigger enforces that the facility side
@@ -70,15 +87,38 @@ graceful degradation to an empty manual form** — never a promise. All
 extracted values are editable suggestions; nothing publishes automatically.
 This matches the brief ("confidence should be treated as uncertain").
 
+### 1.4 SP-036 permission matrix (authoritative for this sprint)
+
+✅ allowed · Ⓢ within scope · ⬜ no. "Mod" = moderator/admin.
+
+| Capability | Guest | User | Verified Master | Approved Manager | Mod |
+|---|---|---|---|---|---|
+| Submit facility (→ `pending`) | ⬜ | ✅ | ✅ | ✅ | ✅ (may set `active` directly) |
+| Edit facility while own submission is `pending` | ⬜ | Ⓢ own | Ⓢ own | Ⓢ own | ✅ |
+| See a `pending` facility | ⬜ | Ⓢ own | Ⓢ own | Ⓢ own | ✅ |
+| Approve/reject facility (`pending`→`active`/`rejected`) | ⬜ | ⬜ | ⬜ | ⬜ | ✅ |
+| Edit/manage an `active` facility | ⬜ | ⬜ | ⬜ | Ⓢ own sauna (existing scope) | ✅ |
+| Create event at managed facility | ⬜ | ⬜ | Ⓢ → `pending` (path C) | Ⓢ own sauna → `active` (path A) | ✅ |
+| Create event at approved unmanaged facility | ⬜ | ⬜ | ✅ → `active` (path B) | n/a | ✅ |
+| Create event bundled with own facility submission | ⬜ | ⬜ | Ⓢ own submission → `pending` until facility approved | n/a | ✅ |
+| Approve/reject master event proposal | ⬜ | ⬜ | ⬜ | Ⓢ own sauna | ✅ |
+| Edit/delete own organized event | ⬜ | ⬜ | Ⓢ own | Ⓢ own sauna (existing) | ✅ |
+| Upload facility photo (`source='user'`) | ⬜ | ✅ active saunas; Ⓢ own pending submission | same as User | same + own sauna | ✅ |
+| Become manager (standard workflow) | ⬜ | ✅ | ✅ | n/a | approves |
+
+Explicit non-grants (from the correction): facility submission never
+creates a `sauna_managers` row, never grants editing rights after approval,
+and never grants event rights to non-masters.
+
 ---
 
 ## 2. Proposed Architecture (overview)
 
 ```
-                     ┌────────────────────────────────────────────┐
-                     │ Master Studio: "Dodaj obiekt" / "Organizuj" │
-                     └────────────┬───────────────────────────────┘
-             paste URL (optional) │
+   Entry points (any authenticated user):
+   map form (kept, rewired) · /submit page · Master Studio "Dodaj obiekt"
+                                  │
+             paste URL (optional) │  (URL-assisted prefill available to all)
         ┌─────────────────────────▼────────────┐
         │ extractFacilityDraft(url)  [action]  │  fetch+parse OG/JSON-LD,
         │  → draft fields + confidence + log   │  SSRF-guarded, rate-limited
@@ -89,12 +129,18 @@ This matches the brief ("confidence should be treated as uncertain").
         │ + find_similar_saunas() dedup warning │
         └─────────────────────────┬────────────┘
                 submit            ▼
-        saunas INSERT status='pending', created_by=auth.uid()
-        (+ optional imported preview photo, source='imported')
+        submitFacility [server action — NO client-side insert]
+        → saunas INSERT status='pending', created_by=auth.uid()
+          (+ optional photo: user upload, or imported preview)
+          (+ verified master only: optional bundled event, status='pending')
                                   ▼
-        Admin panel → Sauny (pending filter) → approve ('active') / reject
+        submitter may edit own pending submission until resolved
                                   ▼
-        Any verified master → create event at the facility
+        Admin panel → Sauny (pending queue) → approve ('active') / reject
+          approve also activates the submitter-master's bundled events
+          (facility unmanaged at approval ⇒ path B semantics)
+                                  ▼
+        Any verified master → create event at the approved facility
             ├─ unmanaged → sauna_events status='active',
             │              organizer_master_id = own master profile
             └─ managed   → status='pending' → Owner Workspace queue
@@ -125,7 +171,7 @@ alter table public.saunas
 * `created_by` — **audit only**, never an authorization source (brief:
   "the submitter is remembered only for audit purposes").
 * Reuses existing columns from the PTS-import era: `source`
-  (new value `'master_submission'` / `'url_import'`), `source_url`, `phone`,
+  (new values `'user_submission'` / `'url_import'`), `source_url`, `phone`,
   `address`, `website`, `city`, `cover_image_url`. **No new field columns
   needed.**
 * `status` gains the value `'pending'` (and `'rejected'`) alongside
@@ -220,10 +266,16 @@ Matching signals (any hit returns the row, with reasons):
   enabling it is part of the migration and flagged for approval. Fallback
   if declined: `lower(name) ILIKE` containment only (weaker).
 
-Runs as `stable` invoker-rights over active + pending saunas (the caller is
-authenticated; pending visibility for dedup purposes is acceptable — names
-of pending submissions warn against double submission). UI **warns, never
-blocks**; the admin remains the final authority. Event duplicate detection
+Callable by **every authenticated user** (it now guards the universal
+submission flow, not a master-only flow). It must see active **and pending**
+saunas to warn against double submission of something already in the
+moderation queue — since the tightened `saunas` SELECT policy hides other
+users' pending rows, the RPC runs as **SECURITY DEFINER** and returns only
+a minimal disclosure set for pending matches (name, city, distance,
+`status='pending'` marker — no address/contact details). UI **warns, never
+blocks**; the admin remains the final authority and sees full duplicate
+context in the moderation queue (nearby/similar existing facilities listed
+next to each pending submission). Event duplicate detection
 needs no RPC: a plain query for the facility's upcoming events (±1 day,
 same organizer or similar title computed client-side) rendered as a warning
 list inside the event form.
@@ -243,13 +295,29 @@ pattern: drop unknown, create deterministic):
 | Command | Policy |
 |---|---|
 | SELECT | `status = 'active' or created_by = auth.uid() or is_platform_moderator()` |
-| INSERT | `is_admin()` **or** (`is_verified_master(auth.uid())` and `status = 'pending'` and `created_by = auth.uid()`) |
-| UPDATE | `is_admin()` (unchanged; creator-edit-while-pending is an open question, §6 Q2) |
+| INSERT | `is_platform_moderator()` **or** (`auth.uid() is not null` and `status = 'pending'` and `created_by = auth.uid()`) |
+| UPDATE | `is_platform_moderator()` **or** (`created_by = auth.uid()` and `status = 'pending'`, double-checked in WITH CHECK) |
 | DELETE | `is_admin()` (unchanged) |
+
+* **INSERT is open to every authenticated user** (per the correction) but
+  *only* as `pending` and *only* as themselves — the current live hole
+  (client-side insert of `active` facilities) is closed because no
+  non-moderation path can produce an `active` row.
+* **UPDATE allows submitter self-edits while pending.** A new trigger
+  `saunas_guard` (BEFORE UPDATE, SP-035 guard pattern) makes `status`,
+  `created_by` and `pts_*` columns immutable for non-moderation callers —
+  the submitter can fix a typo but can never self-approve, reassign
+  authorship or touch PTS certification data. Only
+  `is_platform_moderator()` may set `status = 'active'` (admin **or
+  moderator**, per the correction — note this widens facility status
+  moderation from today's `is_admin()`-only policies to moderators, which
+  matches the admin-panel reality and USER_MODEL §4.1 "moderation queues").
+* SELECT keeps pending facilities invisible to the public and to other
+  users; only the submitter and moderation see them (correction rule 3).
 
 Consequences reviewed: map RPC unaffected (filters active); `/sauny`,
 sauna detail page and favorites join only ever surface active saunas or the
-caller's own pending row; the admin tab reads via `is_admin()` arm.
+caller's own pending row; the admin tab reads via the moderation arm.
 `'inactive'` saunas become invisible to the public — this is the *intended*
 meaning of inactive and will be verified against live data before rollout.
 
@@ -260,10 +328,22 @@ Additive policies (existing `events_*` and SP-034 `events_*_staff` stay):
 * **INSERT (master)** — WITH CHECK:
   `is_verified_master_owner(organizer_master_id)`
   `and created_by = auth.uid()`
-  `and exists (select 1 from saunas s where s.id = sauna_id and s.status = 'active')`
-  `and ((not is_sauna_managed(sauna_id) and status = 'active') or (is_sauna_managed(sauna_id) and status = 'pending'))`
+  `and (`
+  `  -- approved facility: normal A/B/C routing`
+  `  (exists (select 1 from saunas s where s.id = sauna_id and s.status = 'active')`
+  `   and ((not is_sauna_managed(sauna_id) and status = 'active')`
+  `        or (is_sauna_managed(sauna_id) and status = 'pending')))`
+  `  -- bundled with OWN pending facility submission: always pending`
+  `  or (exists (select 1 from saunas s where s.id = sauna_id`
+  `              and s.status = 'pending' and s.created_by = auth.uid())`
+  `      and status = 'pending')`
+  `)`
   — the **status routing rule lives in the database**, not only in the
-  action: a master cannot self-publish at a managed facility.
+  action: a master cannot self-publish at a managed facility, and an event
+  bundled with a facility submission cannot go live before the facility
+  does. Bundled events are activated by the facility-approval action
+  (moderation context), inheriting path B semantics because the freshly
+  approved facility is by definition unmanaged.
 * **UPDATE/DELETE (master)** — USING and WITH CHECK
   `is_verified_master_owner(organizer_master_id)` — masters manage only
   their own organized events.
@@ -283,18 +363,38 @@ today's `pending` admin-moderated events.)
 ### 4.3 `sauna_photos` — deterministic policies + import path
 
 Live drift again (client-side inserts work despite admin-only repo
-policies). Replacement set: SELECT public; INSERT
-`is_admin() or is_sauna_staff(sauna_id) or (auth.uid() is not null and source = 'user')`
-for active saunas, plus creator/master inserts for their own pending
-submission's preview; imported photos (`source='imported'`) are inserted
-exclusively by the server action. DELETE `is_admin() or is_sauna_staff(sauna_id)`.
-Exact final wording after live verification (§7 step 0).
+policies). Replacement set:
+
+* SELECT — public (unchanged; photo visibility follows facility visibility
+  in the UI, and a pending facility's page is reachable only by its
+  submitter and moderation).
+* INSERT — `is_platform_moderator() or is_sauna_staff(sauna_id)` **or**
+  (`auth.uid() is not null and source = 'user' and` the target sauna is
+  `active` **or** is the caller's **own pending submission**
+  (`status='pending' and created_by = auth.uid()`)) — every authenticated
+  user keeps today's ability to add photos to public saunas and can
+  photograph their own submission before approval; `source` and
+  `source_url` are pinned by WITH CHECK (`source='user'`, `source_url`
+  null) for non-moderation callers.
+* Imported photos (`source='imported'`, `source_url` set) are inserted
+  exclusively by the `submitFacility` server action (SECURITY DEFINER
+  helper or service context) — never from the client.
+* DELETE — `is_platform_moderator() or is_sauna_staff(sauna_id)`.
+
+Storage (`sauna-images` bucket): the anon INSERT policy is replaced with
+authenticated-only INSERT; imported images are written server-side under an
+`imported/{sauna_id}/` prefix so provenance is visible in the object path
+as well as in `sauna_photos.source`. Exact final wording after live
+verification (§7 step 0).
 
 ### 4.4 Security posture summary
 
 * Nothing is weakened; two MVP-era permissive surfaces (saunas INSERT,
   sauna_photos INSERT — plus the anon `sauna-images` storage INSERT policy)
-  are **closed** and replaced with deterministic rules.
+  are **closed** and replaced with deterministic rules. Facility INSERT
+  stays open to every authenticated user — but pending-only, self-only,
+  moderated: broader participation with a *stronger* security boundary
+  than today.
 * Every new capability is enforced in **both** server actions and RLS, with
   a trigger guarding transitions — the same defense-in-depth pattern as
   SP-034/SP-035.
@@ -308,17 +408,23 @@ Exact final wording after live verification (§7 step 0).
 
 ## 5. Workflow Diagrams
 
-### 5.1 Facility contribution (W-09 prerequisite)
+### 5.1 Facility contribution (every authenticated user)
 
 ```
-Verified master → "Dodaj obiekt" (Studio or map)
+Authenticated user (any role) → "Dodaj obiekt" (map form / /submit / Studio)
    → optional: paste URL → extractFacilityDraft → prefilled form
    → find_similar_saunas → duplicate warning (non-blocking)
-   → INSERT saunas: status='pending', created_by, source, source_url
-     (+ optional preview photo, source='imported')
-   → Admin panel "Sauny" (pending) → approve → status='active'
-                                   → reject  → status='rejected'
-   → pending/rejected visible only to submitter (own submissions view) + moderation
+   → submitFacility [server action]: saunas INSERT status='pending',
+     created_by, source, source_url
+     (+ optional photo: user upload source='user', or imported preview)
+     (+ verified master only: optional bundled event, status='pending')
+   → submitter edits own pending submission freely (status immutable to them)
+   → Admin panel "Sauny" (pending queue) → approve → status='active'
+        (+ activates the submitter-master's bundled pending events)
+                                          → reject  → status='rejected'
+   → pending/rejected visible only to submitter + moderation
+   → after approval: NO editing rights, NO sauna_managers row, NO event
+     rights for non-masters; "Become a manager" remains the standard path
 ```
 
 ### 5.2 Event publication — three paths
@@ -339,6 +445,13 @@ C  Verified master + facility active + managed
         → approve → status='active' (still labelled master-organized)
         → reject  → status='rejected' (visible to organizer in Studio)
    → Admin tab "Eventy" remains the superset pending view (final authority)
+
+B' Bundled: verified master + OWN facility submission still pending
+   → event created with the submission, status='pending'
+   → invisible everywhere public (facility hidden, event not 'active')
+   → facility approved → event auto-activates (path B: unmanaged facility)
+   → facility rejected → event stays 'pending', orphaned-hidden; master may
+     delete it (own-event rights)
 ```
 
 ### 5.3 Facility becomes managed later
@@ -360,9 +473,12 @@ Manager approved (existing flow) →
    remain (history is history); every new create/edit re-checks
    `is_verified_master_owner` → blocked. Their pending proposals can still
    be resolved by staff/admin.
-3. **Events at non-active facilities are impossible** — INSERT requires the
-   facility to be `active`, so a rejected/pending facility can never have
-   events (no orphan states).
+3. **Events at non-active facilities** — impossible, with exactly one
+   controlled exception: a verified master's bundled event on their **own**
+   pending submission, which is forced to `pending` and can only be
+   activated by the facility-approval action. A rejected facility therefore
+   never has visible events; its bundled `pending` events are unreachable
+   from any public query and deletable by their organizer.
 4. **Rejected event** → final in this sprint; the master creates a new one
    ("request changes" loop is a W-09 future extension). Rejected proposals
    are visible in the master's Studio list with status.
@@ -388,9 +504,16 @@ Manager approved (existing flow) →
     lists the other event including its organizer; publishing both remains
     allowed (real venues do host parallel happenings).
 12. **Map button gating** — "🔥 Dodaj event" shows for admins, approved
-    staff of that sauna, and verified masters; "➕ Dodaj obiekt" (map) for
-    verified masters routes to the pending flow; plain users keep the
-    `/submit` moderated path (map free-insert hole closed, §4.1).
+    staff of that sauna, and verified masters. "➕ Dodaj obiekt" on the map
+    stays available to **every authenticated user** (correction: the map
+    form remains an entry point) but is rewired to the `submitFacility`
+    server action — the client-side `active` insert is removed entirely.
+13. **Moderation queue volume** — opening submission to all users raises
+    queue volume; the pending queue gets a badge count in the admin tab and
+    each entry shows its dedup context to make triage fast. If volume ever
+    exceeds admin capacity, a per-user submission rate limit (e.g. 5
+    pending at a time) is a one-line policy addition — noted, not
+    implemented.
 
 ---
 
@@ -408,7 +531,8 @@ repo dump is known-stale; two tables aren't in it at all).
 fully additive except the deterministic policy replacement (SP-035 DO-block
 pattern), idempotent (`if not exists` / drop-then-create policies), applied
 manually by Paweł per the established process. Includes: columns (§3.1–3.3),
-`import_log`, helpers, dedup RPC, `pg_trgm`, policies, trigger.
+`import_log`, helpers, dedup RPC, `pg_trgm`, policies, and both guard
+triggers (`saunas_guard`, `sauna_events_guard`).
 
 **Step 2 — verification probes after apply** (anon sees no pending saunas;
 master insert routes statuses correctly; staff approval transition works;
@@ -424,16 +548,19 @@ No data backfill, no destructive change anywhere.
 
 1. **`pg_trgm` extension** — approve enabling it for name-similarity dedup?
    (Standard Supabase extension; fallback is a weaker ILIKE heuristic.)
-2. **Creator edit-while-pending** — may the submitting master edit their own
-   facility while it awaits moderation? (Recommended: yes, via a
-   creator-update policy guarded by a status-immutability trigger; small
-   extra scope.)
-3. **Map form for regular users** — confirm closing the live free-insert
-   hole by routing non-master users to the `/submit` moderated flow
-   (recommended; strictly speaking a behavior change for regular users).
-4. **Imported images stance** — accept copying one og:image preview per
+2. **Imported images stance** — accept copying one og:image preview per
    import (provenance recorded, removable on request), or skip image import
    entirely in this sprint?
+3. **Legacy `sauna_submissions` path** — the new flow writes pending rows
+   directly into `saunas`, making the separate `sauna_submissions` table
+   redundant. Proposal: `/submit` and the map form both switch to
+   `submitFacility`; the admin "Zgłoszenia" tab remains read-only until its
+   existing pending rows are drained, then retires. Confirm?
+
+Resolved by the 2026-07-18 correction (previously Q2/Q3): the submitter
+**does** edit their own pending submission (all users, not only masters);
+the map form **stays** as an entry point for everyone, rewired to the
+moderated server-side workflow.
 
 ---
 
@@ -444,20 +571,25 @@ No data backfill, no destructive change anywhere.
 | Area | Files (planned) |
 |---|---|
 | Import engine | `lib/import/extract.ts` (OG/JSON-LD parser, SSRF guard), `lib/import/sources.ts` (per-source heuristics) |
-| Facility actions | `app/(main)/studio/facilityActions.ts` — `extractFacilityDraft`, `submitFacility` (insert + preview image + log) |
-| Studio UI | "Dodaj obiekt" page + form (URL paste → prefill → dedup warnings), "Moje zgłoszenia" list; "Organizuj" event form (facility picker limited to active saunas) |
+| Facility actions | `app/saunas/actions.ts` (shared, not Studio-scoped — the flow serves all users): `extractFacilityDraft`, `submitFacility` (insert + photo + optional bundled master event + log), `updateOwnPendingFacility` |
+| Submission UI | one shared facility form component (URL paste → prefill → dedup warnings) used by the map form, `/submit` and Studio "Dodaj obiekt"; "Moje zgłoszenia" list (Personal Workspace section — all users, not Studio-only); master-only bundled-event step in the same form |
 | Event flow | master branch in `createEvent` (status routing returned as `{error}` values, per the fd67891 pattern), organizer badge component, duplicate-warning list in event forms |
 | Owner queue | "Propozycje" section in `/workspace/events` (approve/reject via staff-scoped actions) |
+| Admin queue | pending filter + badge count + per-entry dedup context in the "Sauny" tab; `approveSauna` action (activates facility + bundled events); "Zgłoszenia" tab frozen read-only (legacy drain, §8 Q3) |
 | SQL | `supabase/2026-07-XX_sp036_master_facilities.sql` + step-0 probe script |
 
 ### 9.2 Modified code
 
-`AddSaunaForm` (pending status, created_by, dedup warning, routing by
-role), `SaunaMap` (button gating only — protected area, minimal diff),
+`AddSaunaForm` (rewired to `submitFacility` — client-side insert removed;
+pending messaging; dedup warning; master bundled-event step),
+`SubmitSaunaForm` / `/submit` (switched from `sauna_submissions` to the
+same shared flow), `SaunaMap` (event-button gating only — protected area,
+minimal diff; the facility button stays for all authenticated users),
 `AddEventModal` (organizer path + duplicates), `app/events/actions.ts`
 (`createEvent` routing, `registerForEvent` guard, update/delete master
-arms), admin Sauny tab (pending filter — reuses existing moderation UI),
-`/events` + event page + popup (organizer badge).
+arms), admin Sauny tab (pending queue — reuses existing moderation UI),
+`/events` + event page + popup (organizer badge), `/profile` ("Moje
+zgłoszenia" section).
 
 ### 9.3 Documentation updates (end of sprint)
 
