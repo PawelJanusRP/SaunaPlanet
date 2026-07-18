@@ -290,6 +290,21 @@ create trigger sauna_event_masters_insert_guard
   before insert on public.sauna_event_masters
   for each row execute function public.normalize_event_master_insert();
 
+-- ---------------------------------------------------------------------------
+-- 6. One-time historical backfill (found by V8 on production, 2026-07-19):
+--    all 20 pre-invariant approved rows had approved_at = NULL (the admin
+--    tools never wrote the column). created_at is the best available
+--    historical truth for the approval moment of a direct assignment.
+--    The uniform guard (deliberately) blocks approved_at edits even for
+--    postgres, so this uses the explicit repair procedure: disable the
+--    trigger for the statement, re-enable immediately. Idempotent.
+-- ---------------------------------------------------------------------------
+alter table public.sauna_event_masters disable trigger sauna_event_masters_guard;
+update public.sauna_event_masters
+   set approved_at = created_at
+ where status = 'approved' and approved_at is null;
+alter table public.sauna_event_masters enable trigger sauna_event_masters_guard;
+
 commit;
 
 -- ============================================================================
