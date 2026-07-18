@@ -35,7 +35,11 @@ async function assertCanManageSaunaEvents(supabase: SupabaseServerClient, saunaI
     .eq('sauna_id', saunaId)
     .eq('status', 'approved')
     .maybeSingle()
-  if (!mgr) throw new Error('Brak uprawnień')
+  if (!mgr) {
+    throw new Error(
+      'Brak uprawnień — eventy tego obiektu może dodawać tylko zatwierdzona obsada (właściciel/manager) lub administrator'
+    )
+  }
 }
 
 async function getEventSaunaId(supabase: SupabaseServerClient, eventId: string): Promise<string> {
@@ -84,18 +88,32 @@ function revalidateEventSurfaces(eventId: string, saunaId: string) {
   revalidatePath('/workspace/events')
 }
 
-export async function createEvent(saunaId: string, data: EventFormData) {
-  const supabase = await createClient()
-  await assertCanManageSaunaEvents(supabase, saunaId)
+/**
+ * Expected failures (missing permissions, validation, RLS) are RETURNED as
+ * { error } instead of thrown: Next.js strips thrown server-action error
+ * messages in production builds, so the client would only see a generic
+ * "Server Components render" digest message instead of the real reason.
+ */
+export async function createEvent(
+  saunaId: string,
+  data: EventFormData
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient()
+    await assertCanManageSaunaEvents(supabase, saunaId)
 
-  const { data: created, error } = await supabase
-    .from('sauna_events')
-    .insert({ sauna_id: saunaId, status: 'active', ...eventRowFromForm(data) })
-    .select('id')
-    .single()
+    const { data: created, error } = await supabase
+      .from('sauna_events')
+      .insert({ sauna_id: saunaId, status: 'active', ...eventRowFromForm(data) })
+      .select('id')
+      .single()
 
-  if (error) throw new Error(error.message)
-  revalidateEventSurfaces(created.id, saunaId)
+    if (error) throw new Error(error.message)
+    revalidateEventSurfaces(created.id, saunaId)
+    return {}
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Nie udało się dodać eventu' }
+  }
 }
 
 export async function updateEvent(id: string, data: EventFormData) {

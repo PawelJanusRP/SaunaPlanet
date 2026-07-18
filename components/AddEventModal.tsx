@@ -41,7 +41,7 @@ export default function AddEventModal({
     setLoading(true)
 
     try {
-      await createEvent(saunaId, {
+      const result = await createEvent(saunaId, {
         title,
         event_date: eventDate,
         event_time: eventTime || null,
@@ -49,10 +49,17 @@ export default function AddEventModal({
         description: description || null,
         max_participants: maxParticipants ? Number(maxParticipants) : null,
       })
+      if (result?.error) {
+        setLoading(false)
+        toast.error(result.error)
+        return
+      }
     } catch (e) {
+      // Only unexpected transport failures land here — expected errors come
+      // back as result.error (prod strips thrown server-action messages).
       setLoading(false)
       console.error(e)
-      toast.error(e instanceof Error ? e.message : 'Nie udało się dodać eventu')
+      toast.error('Nie udało się dodać eventu')
       return
     }
 
