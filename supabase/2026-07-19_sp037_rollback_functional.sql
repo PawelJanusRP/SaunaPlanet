@@ -1,6 +1,11 @@
 -- ============================================================================
--- SP-037 FUNCTIONAL ROLLBACK — disables the master participation workflow
--- while PRESERVING the security improvements.
+-- SP-037 FUNCTIONAL WORKFLOW ROLLBACK — PRESERVING DATA-INTEGRITY HARDENING
+-- ============================================================================
+-- This is a *functional workflow rollback preserving data-integrity
+-- hardening*: it disables the master participation workflow (requests,
+-- staff resolution, withdrawal) but intentionally KEEPS the INSERT
+-- normalization trigger and the tightened SELECT — those are security /
+-- data-quality properties independent of the workflow.
 -- ============================================================================
 -- Target state: masters can no longer request or withdraw, staff can no
 -- longer resolve; the administrative direct-assignment workflow keeps

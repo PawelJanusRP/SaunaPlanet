@@ -58,10 +58,18 @@
 --   * Admin resolution does NOT require event-staff membership: the
 --     UPDATE policies are OR-ed (is_admin OR is_event_staff) and the
 --     transition guard accepts is_event_staff OR is_platform_moderator.
---   * Role vocabulary note: live values are lead / assistant / guest
---     (probe 2026-07-19: 17/2/1). The trigger enforces role IS NOT NULL
---     for approved rows; value-set enforcement stays app-level for now
---     (no CHECK), so existing admin tools cannot break on wording.
+--   * Role vocabulary: ENFORCED IN TRUSTED DATABASE LOGIC (rev 4) —
+--     approved rows require role IN ('lead','assistant','guest') at both
+--     INSERT normalization and pending → approved resolution; any other
+--     value fails loudly. pending/rejected rows keep role IS NULL.
+--     Compatible with production data (probe 2026-07-19: all 20 rows use
+--     exactly these values — lead 17 / assistant 2 / guest 1).
+--   * Moderator semantics (rev 4): resolution = event staff (own events)
+--     or ADMIN (any request). A non-admin platform moderator has NO
+--     UPDATE policy on this table (policies are is_admin OR
+--     is_event_staff — row access is the gate, not the trigger) and the
+--     trigger's transition check now uses is_admin() as well, keeping
+--     both layers identical.
 -- ============================================================================
 
 begin;
@@ -198,14 +206,22 @@ begin
 
   if new.status is distinct from old.status then
     if old.status = 'pending' and new.status in ('approved', 'rejected') then
-      if not (public.is_event_staff(old.event_id)
-              or public.is_platform_moderator()) then
-        raise exception 'Zgłoszenie rozstrzyga obsada obiektu lub moderacja';
+      -- Resolution contract: event staff for their own events, admins for
+      -- any request. Deliberately is_admin(), NOT is_platform_moderator()
+      -- — a non-admin moderator must not gain event-management rights
+      -- (SP-034 decision). The UPDATE policies (is_admin OR
+      -- is_event_staff) enforce the same contract at the row-access
+      -- layer; this check keeps both layers identical.
+      if not (public.is_event_staff(old.event_id) or public.is_admin()) then
+        raise exception 'Zgłoszenie rozstrzyga obsada obiektu lub administrator';
       end if;
-      -- trusted timestamp + role logic
+      -- trusted timestamp + role logic (vocabulary enforced in trusted
+      -- database logic, mirroring the INSERT normalization trigger)
       if new.status = 'approved' then
-        if new.role is null then
-          raise exception 'Zatwierdzenie wymaga nadania roli';
+        if new.role is null
+           or new.role not in ('lead', 'assistant', 'guest') then
+          raise exception
+            'Zatwierdzenie wymaga roli: lead, assistant lub guest';
         end if;
         new.approved_at := now();
       else
@@ -245,8 +261,14 @@ create or replace function public.normalize_event_master_insert()
 returns trigger as $$
 begin
   if new.status = 'approved' then
-    if new.role is null then
-      raise exception 'Zatwierdzone przypisanie wymaga nadania roli';
+    -- Role vocabulary is enforced HERE, in trusted database logic — the
+    -- UI/TypeScript/server-action layers are convenience, not the
+    -- boundary (staff can call the API directly). Probe 2026-07-19: all
+    -- 20 existing rows already use exactly these values.
+    if new.role is null
+       or new.role not in ('lead', 'assistant', 'guest') then
+      raise exception
+        'Zatwierdzone przypisanie wymaga roli: lead, assistant lub guest';
     end if;
     new.approved_at := now();
   else
@@ -298,17 +320,28 @@ commit;
 --   exception; changing approved_at or role alone (no transition) →
 --   exception; UPDATE of an already approved/rejected row → refused.
 -- V7. Admin boundary cases (SQL Editor with an admin JWT or via the app):
---   a) direct INSERT status='approved' with role → row created,
+--   a) direct INSERT status='approved' with role='lead' → row created,
 --      approved_at = trusted now() even if the INSERT supplied
---      approved_at='2020-01-01' (caller value cannot survive);
+--      approved_at='2020-01-01' (caller value cannot survive); repeat
+--      with role='assistant' and role='guest' → both accepted;
 --   b) direct INSERT status='approved' WITHOUT role → exception;
+--      direct INSERT status='approved' with role='dj' (or any value
+--      outside lead/assistant/guest) → exception with the vocabulary
+--      message;
 --   c) direct INSERT status='pending' with role+approved_at supplied →
 --      row created with role NULL and approved_at NULL (normalized);
 --   d) admin NOT affiliated with the event's sauna resolves a pending
 --      request → allowed (policy is_admin OR is_event_staff; guard
---      accepts is_platform_moderator);
+--      uses the same pair);
 --   e) admin UPDATE of an approved row's role (no transition) →
---      exception (uniform machine; repair = DELETE + re-INSERT).
+--      exception (uniform machine; repair = DELETE + re-INSERT);
+--   f) approval attempt with role='master_of_ceremony' (invalid) →
+--      exception; approval with role='guest' → succeeds;
+--   g) as a MODERATOR who is neither admin nor staff of the event's
+--      sauna: UPDATE pending → approved → 0 rows affected / refused at
+--      the POLICY layer (no UPDATE policy matches — the moderator never
+--      reaches the trigger), confirming moderators gain no generic
+--      event-management rights.
 -- V8. Invariant sweep (read-only, after any test data):
 --   select count(*) from public.sauna_event_masters
 --   where (status = 'approved' and (approved_at is null or role is null))
