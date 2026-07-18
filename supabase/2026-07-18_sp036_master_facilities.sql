@@ -343,10 +343,22 @@ end $$;
 
 create policy events_select on public.sauna_events
   for select using (true);
+-- INVARIANT (approved 2026-07-18): bundled_with_submission = true is
+-- producible ONLY by the controlled bundled submission path — the master
+-- arm's B' branch below (own pending facility + status 'pending'). The
+-- staff arm explicitly pins it to false; the admin arm is moderation and
+-- therefore trusted. After INSERT the flag is immutable for everyone
+-- except moderation (sauna_events_guard). Note the invariant holds at the
+-- database boundary itself: even a direct PostgREST call bypassing the
+-- server action can only produce bundled=true under exactly the controlled
+-- conditions.
 create policy events_insert_admin on public.sauna_events
   for insert with check (public.is_admin());
 create policy events_insert_staff on public.sauna_events
-  for insert with check (public.is_sauna_staff(sauna_id));
+  for insert with check (
+    public.is_sauna_staff(sauna_id)
+    and bundled_with_submission = false
+  );
 create policy events_insert_master on public.sauna_events
   for insert with check (
     organizer_master_id is not null
