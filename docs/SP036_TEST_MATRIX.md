@@ -29,6 +29,20 @@ cannot be bypassed by any client.
 | 14 | Photo upload to own pending submission works; imported stays impossible from client | RLS INSERT | ⏳/✅ | Manual: map-form submission with photo → photo row created. Client `source='imported'` insert → blocked (policy pins `source='user'`; verified in policy inventory V1) |
 | 15 | Duplicate warning shows candidates, never blocks | action + UI | 🔶 provisional | pg_trgm confirmed in `extensions` (V5 ✅); direct `similarity()` run confirmed (Termy Maltańskie 0.708). Full V7 through `find_similar_saunas` as an authenticated user still pending — the UI degrades to "no warnings" on RPC failure and never blocks submission |
 
+## Slice 2 — facility moderation manual checklist
+
+Prerequisite: at least one pending submission exists (create one as a
+regular user via the map form or /submit).
+
+| # | Case | Steps | Expected |
+|---|---|---|---|
+| M1 | Pending list | Admin → Sauny tab | Pending submissions appear FIRST, highlighted, with submitter name, date, coordinates, description; tab label shows "· N oczekuje"; header badge includes pending facilities |
+| M2 | Approve | Click "Zatwierdź" on a pending entry | Toast "Obiekt zatwierdzony"; entry loses pending state; sauna appears on the map/`/sauny`; submitter sees "Zatwierdzona" chip on /submit |
+| M3 | Reject | Click "Odrzuć" on a pending entry | Toast "Zgłoszenie odrzucone"; sauna never appears publicly; submitter sees "Odrzucona" chip on /submit |
+| M4 | Bundled event activation | (Requires slice 3+ bundled submission; until then verify via SQL: pending sauna + bundled pending event) → approve | Approve toast reports "aktywowano eventy: N"; only bundled, non-expired events of approved masters activate; ordinary pending events untouched |
+| M5 | Unauthorized access | Open /admin as regular user / anon | Redirect away (existing admin gate); calling approveFacility/rejectFacility directly → "Brak uprawnień"; RPC as anon → permission denied (S13 ✅) |
+| M6 | Duplicate warning visibility | Submit a near-duplicate of an existing sauna, open admin | Pending entry shows "⚠️ Możliwe duplikaty" with names + match reasons; active duplicates link to their pages; decision stays manual (no auto-action exists) |
+
 ## Manual pass to run after deploy (10 minutes)
 
 1. As anon: open map → "Dodaj saunę" → login prompt visible.

@@ -10,6 +10,7 @@ import EventModerationActions from '@/components/EventModerationActions'
 import DeleteReviewButton from '@/components/DeleteReviewButton'
 import UserRoleSelector from '@/components/UserRoleSelector'
 import ManagerApprovalActions from '@/components/ManagerApprovalActions'
+import FacilityModerationActions from '@/components/FacilityModerationActions'
 
 const statusLabel: Record<string, { label: string; className: string }> = {
   pending:   { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
@@ -58,7 +59,7 @@ export default async function AdminPage({
     supabase.from('certificate_types').select('id, name, category, is_active, sort_order').order('sort_order'),
     supabase
       .from('saunas')
-      .select('id, name, city, category, status, description, website')
+      .select('id, name, city, category, status, description, website, latitude, longitude, created_by, created_at')
       .order('name'),
     supabase
       .from('sauna_events')
@@ -92,11 +93,67 @@ export default async function AdminPage({
   const pendingMasterCount = pendingMasters?.length ?? 0
   const pendingCertCount = pendingCertificates?.length ?? 0
   const pendingManagerCount = pendingManagers?.length ?? 0
-  const totalPending = pending.length + pendingMasterCount + pendingCertCount + pendingManagerCount
 
-  // Resolve manager user names
+  // SP-036 slice 2: pending facility submissions surface first in the
+  // Sauny tab with full moderation context (submitter, duplicates,
+  // bundled events).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const managerUserIds = [...new Set((pendingManagers ?? []).map((m: any) => m.user_id))]
+  const saunaRows = (saunas ?? []) as any[]
+  const pendingSaunas = saunaRows.filter((s) => s.status === 'pending')
+  const sortedSaunas = [
+    ...pendingSaunas,
+    ...saunaRows.filter((s) => s.status !== 'pending'),
+  ]
+  const pendingSaunaCount = pendingSaunas.length
+  const totalPending =
+    pending.length + pendingMasterCount + pendingCertCount +
+    pendingManagerCount + pendingSaunaCount
+
+  const pendingSaunaIds = pendingSaunas.map((s) => s.id)
+  const [{ data: bundledEventsRaw }, duplicateResults] = await Promise.all([
+    pendingSaunaIds.length > 0
+      ? supabase
+          .from('sauna_events')
+          .select('id, title, event_date, sauna_id')
+          .in('sauna_id', pendingSaunaIds)
+          .eq('bundled_with_submission', true)
+      : Promise.resolve({ data: [] }),
+    // Duplicate context per pending submission (warn-only RPC; moderators
+    // make the final call). Failures degrade to no-context server-side.
+    Promise.all(
+      pendingSaunas.map((s) =>
+        supabase
+          .rpc('find_similar_saunas', {
+            p_name: s.name,
+            p_lat: s.latitude,
+            p_lng: s.longitude,
+            p_website: s.website,
+          })
+          .then(({ data }) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ((data ?? []) as any[]).filter((d) => d.id !== s.id)
+          )
+      )
+    ),
+  ])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bundledBySaunaId: Record<string, any[]> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const e of (bundledEventsRaw ?? []) as any[]) {
+    ;(bundledBySaunaId[e.sauna_id] ??= []).push(e)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const duplicatesBySaunaId: Record<string, any[]> = {}
+  pendingSaunas.forEach((s, i) => {
+    duplicatesBySaunaId[s.id] = duplicateResults[i] ?? []
+  })
+
+  // Resolve manager + facility-submitter user names in one lookup
+  const managerUserIds = [...new Set([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(pendingManagers ?? []).map((m: any) => m.user_id),
+    ...pendingSaunas.map((s) => s.created_by).filter(Boolean),
+  ])]
   const { data: managerProfilesRaw } = managerUserIds.length > 0
     ? await supabase.from('profiles').select('id, first_name, last_name, email').in('id', managerUserIds)
     : { data: [] }
@@ -108,7 +165,7 @@ export default async function AdminPage({
 
   const tabs = [
     { id: 'submissions', label: `Zgłoszenia (${submissions?.length ?? 0})` },
-    { id: 'sauny',       label: `Sauny (${saunas?.length ?? 0})` },
+    { id: 'sauny',       label: `Sauny (${saunas?.length ?? 0})${pendingSaunaCount > 0 ? ` · ${pendingSaunaCount} oczekuje` : ''}` },
     { id: 'eventy',      label: `Eventy (${events?.length ?? 0})` },
     { id: 'recenzje',    label: `Recenzje (${reviews?.length ?? 0})` },
     { id: 'masters',     label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
@@ -188,21 +245,33 @@ export default async function AdminPage({
         </section>
       )}
 
-      {/* Sauny tab */}
+      {/* Sauny tab — pending submissions first with moderation context (SP-036) */}
       {activeTab === 'sauny' && (
         <section className="space-y-3">
-          {!saunas || saunas.length === 0 ? (
+          {sortedSaunas.length === 0 ? (
             <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak saun.</div>
           ) : (
-            saunas.map((s) => {
+            sortedSaunas.map((s) => {
               const st = statusLabel[s.status] ?? statusLabel.pending
+              const isPendingSubmission = s.status === 'pending'
+              const duplicates = duplicatesBySaunaId[s.id] ?? []
+              const bundledEvents = bundledBySaunaId[s.id] ?? []
               return (
-                <div key={s.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                <div
+                  key={s.id}
+                  className={`rounded-3xl border bg-white p-5 shadow-sm ${
+                    isPendingSubmission ? 'border-yellow-300 bg-yellow-50/40' : ''
+                  }`}
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <Link href={`/sauna/${s.id}`} className="text-base font-bold hover:underline">
-                        {s.name}
-                      </Link>
+                      {isPendingSubmission ? (
+                        <span className="text-base font-bold">{s.name}</span>
+                      ) : (
+                        <Link href={`/sauna/${s.id}`} className="text-base font-bold hover:underline">
+                          {s.name}
+                        </Link>
+                      )}
                       <div className="mt-0.5 text-sm text-gray-500">
                         {s.city && <span>{s.city} · </span>}
                         <span>{s.category}</span>
@@ -213,6 +282,59 @@ export default async function AdminPage({
                       <EditSaunaAdminForm sauna={s} />
                     </div>
                   </div>
+
+                  {isPendingSubmission && (
+                    <div className="mt-3 space-y-2 border-t pt-3">
+                      <div className="text-xs text-gray-500">
+                        Zgłosił(a):{' '}
+                        <span className="font-medium text-gray-700">
+                          {(s.created_by && managerNameById[s.created_by]) || 'Użytkownik'}
+                        </span>
+                        {s.created_at && (
+                          <span>
+                            {' '}· {new Date(s.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                        )}
+                        {s.latitude != null && s.longitude != null && (
+                          <span> · 📍 {Number(s.latitude).toFixed(5)}, {Number(s.longitude).toFixed(5)}</span>
+                        )}
+                      </div>
+
+                      {s.description && (
+                        <p className="text-sm text-gray-600">{s.description}</p>
+                      )}
+
+                      {bundledEvents.length > 0 && (
+                        <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700">
+                          🔥 Zgłoszenie zawiera {bundledEvents.length === 1 ? 'event saunamistrza' : `eventy saunamistrza: ${bundledEvents.length}`}
+                          {' '}—{' '}
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                          {bundledEvents.map((e: any) => `${e.title} (${String(e.event_date).substring(0, 10)})`).join(', ')}
+                          . Zatwierdzenie obiektu aktywuje kwalifikujące się eventy.
+                        </div>
+                      )}
+
+                      {duplicates.length > 0 && (
+                        <div className="rounded-xl bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+                          ⚠️ Możliwe duplikaty:{' '}
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                          {duplicates.map((d: any) => (
+                            <span key={d.id} className="mr-2">
+                              {d.status === 'active' ? (
+                                <Link href={`/sauna/${d.id}`} className="underline">{d.name}</Link>
+                              ) : (
+                                <span>{d.name} (oczekuje)</span>
+                              )}
+                              {d.city && ` · ${d.city}`}
+                              {d.match_reasons?.length > 0 && ` [${d.match_reasons.join(', ')}]`}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <FacilityModerationActions saunaId={s.id} />
+                    </div>
+                  )}
                 </div>
               )
             })
