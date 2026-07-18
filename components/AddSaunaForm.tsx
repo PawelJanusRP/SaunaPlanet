@@ -102,13 +102,16 @@ export default function AddItemForm({
         })
         if (matches.length > 0) {
           setDuplicates(matches)
-          // Resolve candidate coordinates and center the map on the top
-          // match so the user can visually compare locations.
+          // Resolve coordinates for APPROVED candidates only and center
+          // the map on the nearest one. Pending submissions (even the
+          // caller's own) are excluded from centering/pin links — the map
+          // anchor should always be a confirmed public facility.
           const supabase = createClient()
           const { data: coordRows } = await supabase
             .from('saunas')
             .select('id, latitude, longitude')
             .in('id', matches.map((m) => m.id))
+            .eq('status', 'active')
           const coords: Record<string, [number, number]> = {}
           for (const row of (coordRows ?? []) as {
             id: string
@@ -120,9 +123,15 @@ export default function AddItemForm({
             }
           }
           setDupCoords(coords)
-          const first = matches.find((m) => coords[m.id])
-          if (first && onCenterOnDuplicate) {
-            onCenterOnDuplicate(...coords[first.id])
+          const nearestActive = matches
+            .filter((m) => coords[m.id])
+            .sort(
+              (a, b) =>
+                (a.distance_m ?? Number.POSITIVE_INFINITY) -
+                (b.distance_m ?? Number.POSITIVE_INFINITY)
+            )[0]
+          if (nearestActive && onCenterOnDuplicate) {
+            onCenterOnDuplicate(...coords[nearestActive.id])
           }
           setLoading(false)
           return // show the warning; user resubmits to proceed
