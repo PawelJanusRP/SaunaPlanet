@@ -2,8 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import {
+  submitFacility,
+  findSimilarFacilities,
+  type SimilarFacility,
+} from '@/app/saunas/actions'
 
 const CATEGORIES = [
   { value: 'public_sauna',   label: 'Sauna publiczna' },
@@ -14,7 +18,7 @@ const CATEGORIES = [
   { value: 'other',          label: 'Inne' },
 ]
 
-export default function SubmitSaunaForm({ userId }: { userId: string }) {
+export default function SubmitSaunaForm() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
@@ -26,6 +30,7 @@ export default function SubmitSaunaForm({ userId }: { userId: string }) {
   const [website, setWebsite] = useState('')
   const [lat, setLat] = useState('')
   const [lng, setLng] = useState('')
+  const [duplicates, setDuplicates] = useState<SimilarFacility[] | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,27 +40,48 @@ export default function SubmitSaunaForm({ userId }: { userId: string }) {
       return
     }
 
-    setSaving(true)
-    const supabase = createClient()
+    const latNum = lat ? parseFloat(lat) : null
+    const lngNum = lng ? parseFloat(lng) : null
+    if ((lat && Number.isNaN(latNum)) || (lng && Number.isNaN(lngNum))) {
+      toast.error('Współrzędne muszą być liczbami')
+      return
+    }
 
-    const { error } = await supabase
-      .from('sauna_submissions')
-      .insert({
-        user_id: userId,
+    setSaving(true)
+
+    // Duplicate check (warn-only, once per name). Server-side degradation
+    // to an empty list keeps this from ever blocking a submission.
+    if (duplicates === null) {
+      const { matches } = await findSimilarFacilities({
         name: name.trim(),
-        description: description.trim() || null,
-        city: city.trim() || null,
-        category,
+        lat: latNum,
+        lng: lngNum,
         website: website.trim() || null,
-        latitude: lat ? parseFloat(lat) : null,
-        longitude: lng ? parseFloat(lng) : null,
       })
+      if (matches.length > 0) {
+        setDuplicates(matches)
+        setSaving(false)
+        return
+      }
+      setDuplicates([])
+    }
+
+    // SP-036: single moderated server-side workflow — no client-side
+    // inserts, no writes to the legacy sauna_submissions table.
+    const result = await submitFacility({
+      name,
+      description: description || null,
+      city: city || null,
+      category,
+      website: website || null,
+      latitude: latNum,
+      longitude: lngNum,
+    })
 
     setSaving(false)
 
-    if (error) {
-      toast.error('Nie udało się wysłać zgłoszenia')
-      console.error(error)
+    if (result.error) {
+      toast.error(result.error)
       return
     }
 
@@ -69,7 +95,14 @@ export default function SubmitSaunaForm({ userId }: { userId: string }) {
         <h2 className="mb-2 text-xl font-bold">Zgłoszenie przyjęte!</h2>
         <p className="mb-6 text-sm text-gray-500">
           Dziękujemy. Zgłoszenie trafi do moderacji i po zatwierdzeniu sauna pojawi się na mapie.
+          Status znajdziesz poniżej na tej stronie.
         </p>
+        <button
+          onClick={() => router.refresh()}
+          className="mr-2 rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
+        >
+          Zobacz status zgłoszenia
+        </button>
         <button
           onClick={() => router.push('/')}
           className="rounded-xl bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
@@ -90,7 +123,10 @@ export default function SubmitSaunaForm({ userId }: { userId: string }) {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value)
+              setDuplicates(null)
+            }}
             required
             className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
             placeholder="np. Termy Maltańskie"
@@ -177,12 +213,36 @@ export default function SubmitSaunaForm({ userId }: { userId: string }) {
         </div>
       </div>
 
+      {duplicates !== null && duplicates.length > 0 && (
+        <div className="mt-4 rounded-xl border border-yellow-300 bg-yellow-50 p-3">
+          <p className="mb-1 text-sm font-semibold text-yellow-800">
+            ⚠️ Podobne obiekty już istnieją:
+          </p>
+          <ul className="mb-1 space-y-0.5 text-sm text-yellow-800">
+            {duplicates.map((d) => (
+              <li key={d.id}>
+                • {d.name}
+                {d.city && ` (${d.city})`}
+                {d.status === 'pending' && ' — czeka na moderację'}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-yellow-700">
+            Jeśli zgłaszasz inny obiekt, kliknij „Wyślij mimo to”.
+          </p>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={saving}
         className="mt-6 w-full rounded-xl bg-black py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
       >
-        {saving ? 'Wysyłanie...' : 'Wyślij zgłoszenie'}
+        {saving
+          ? 'Wysyłanie...'
+          : duplicates !== null && duplicates.length > 0
+            ? 'Wyślij mimo to'
+            : 'Wyślij zgłoszenie'}
       </button>
     </form>
   )

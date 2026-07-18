@@ -14,6 +14,31 @@ Many systems were implemented incrementally and have already been debugged.
 
 ---
 
+# SECURITY BACKLOG (high priority)
+
+## event_registrations UPDATE policy lacks an explicit WITH CHECK
+
+Status: Open — found in the 2026-07-18 SP-036 production audit; deliberately
+NOT changed inside SP-036 (requires a dedicated policy analysis first).
+
+The live policy "manager or admin can update registration" (UPDATE on
+`event_registrations`) defines only USING, no WITH CHECK. PostgreSQL then
+reuses the USING expression to validate the NEW row, so the gap is
+narrower than it looks — but the implicit behavior has not been analyzed
+against column-level mutations (e.g. whether a permitted updater could
+reassign `event_id`/`user_id` to rows they also pass USING for), and there
+is no trigger guarding column immutability on this table.
+
+Required follow-up (separate migration, after analysis):
+
+* add an explicit WITH CHECK mirroring the intended rule,
+* decide which columns a manager may legally change (status only?) and
+  guard the rest,
+* verify the reservation UI flows (confirm/cancel) against the tightened
+  policy before applying.
+
+---
+
 # Sauna Master Satellite System
 
 Status: Working
