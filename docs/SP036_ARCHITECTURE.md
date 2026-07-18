@@ -1,9 +1,14 @@
 # SP-036 — Master-Contributed Facilities & Events: Architecture Proposal
 
-Status: **PROPOSED — awaiting review. No code has been written.**
-Date: 2026-07-18 (rev. 2 — facility submission opened to all authenticated
-users per Paweł's correction of 2026-07-18; see §1.4).
+Status: **APPROVED for the audit & migration-design phase** (Paweł,
+2026-07-18). Application implementation NOT started; migration prepared but
+NOT executed.
+Date: 2026-07-18 (rev. 3 — decisions resolved, migration drafted; rev. 2 —
+facility submission opened to all authenticated users; see §1.4/§1.5).
 Branch: `feature/sp-036-master-facilities`.
+Companion files: `supabase/2026-07-18_sp036_step0_audit.sql` (read-only
+production audit + rollback baseline), `supabase/2026-07-18_sp036_master_facilities.sql`
+(prepared migration, pending audit reconciliation + approval).
 
 Binding inputs: the SP-036 sprint brief (Paweł, 2026-07-18), Decision 015
 (master publication paths), Decision 016 (affiliations), W-09 in
@@ -108,7 +113,46 @@ This matches the brief ("confidence should be treated as uncertain").
 
 Explicit non-grants (from the correction): facility submission never
 creates a `sauna_managers` row, never grants editing rights after approval,
-and never grants event rights to non-masters.
+and never grants event rights to non-masters. The bundled-event path is
+**master-only**: a regular user's submission carries no event, ever.
+
+### 1.5 Resolved decisions (Paweł, 2026-07-18)
+
+1. **`pg_trgm` approved** — duplicate *warnings* only; similarity must never
+   auto-reject, auto-merge or modify a submission.
+2. **`og:image` import approved** — exactly one externally sourced preview
+   image; store source URL + platform; mark as imported; removable and
+   replaceable; never permanently hotlinked (downloaded, size-capped
+   ~5 MB, timeout-capped, SSRF-guarded, **decoded-and-validated** rather
+   than trusting extension/headers, **re-encoded** to a controlled format
+   — WebP/JPEG — before upload); graceful fallback to the manual form.
+3. **`sauna_submissions` deprecated gradually** — census in the step-0
+   audit; both forms rerouted to the `saunas.status='pending'` flow; legacy
+   workflow frozen read-only; existing pending records completed-in-place
+   vs migrated decided **from the audit output**; table/policies/actions/
+   admin tab removed only in a later cleanup migration.
+4. **Bundled events are deterministically marked** — new column
+   `sauna_events.bundled_with_submission` (immutable via trigger). Facility
+   approval activates *only* bundled pending events of that sauna, and at
+   approval time re-verifies the organizer is still an approved master and
+   the event has not expired (`approve_facility_submission()` RPC,
+   moderation-only). Ordinary pending events are never touched.
+5. **Anti-abuse cap** — max 5 open (pending) submissions per user; enforced
+   in the server action (friendly error) *and* by a database trigger
+   (boundary); moderation exempt.
+6. **`find_similar_saunas` hardening** — SECURITY DEFINER with pinned
+   `search_path=public`, execute granted to `authenticated` only, returns
+   only name/city/status/distance/match-reasons (no submitter identity,
+   contact data or address), 10-row cap, static SQL (no dynamic errors that
+   could leak data).
+7. **Community photo uploads stay** for active facilities, authenticated
+   only: anon storage upload removed; `sauna_photos.created_by` added
+   (default `auth.uid()`) for uploader auditability and future image
+   moderation — **the pre-SP-036 schema could not identify uploaders**
+   (live columns verified: `id, sauna_id, image_url, created_at` only), so
+   historical rows stay unattributable (NULL). Non-moderators are pinned to
+   `source='user'` and empty `source_url` by WITH CHECK; moderation/staff
+   keep delete rights.
 
 ---
 
@@ -186,7 +230,8 @@ alter table public.saunas
 alter table public.sauna_events
   add column if not exists created_by uuid references auth.users(id) on delete set null,
   add column if not exists organizer_master_id uuid
-    references public.sauna_masters(id) on delete set null;
+    references public.sauna_masters(id) on delete set null,
+  add column if not exists bundled_with_submission boolean not null default false;
 ```
 
 * `organizer_master_id IS NULL` → facility event (today's model, unchanged;
@@ -207,7 +252,9 @@ alter table public.sauna_events
 alter table public.sauna_photos
   add column if not exists source text not null default 'user'
     check (source in ('user', 'imported')),
-  add column if not exists source_url text;
+  add column if not exists source_url text,
+  add column if not exists created_by uuid  -- uploader audit (§1.5.7)
+    references auth.users(id) on delete set null;
 ```
 
 Imported preview images (max one representative image per import, per the
@@ -546,21 +593,24 @@ No data backfill, no destructive change anywhere.
 
 ## 8. Open Questions (need Paweł's answer before implementation)
 
-1. **`pg_trgm` extension** — approve enabling it for name-similarity dedup?
-   (Standard Supabase extension; fallback is a weaker ILIKE heuristic.)
-2. **Imported images stance** — accept copying one og:image preview per
-   import (provenance recorded, removable on request), or skip image import
-   entirely in this sprint?
-3. **Legacy `sauna_submissions` path** — the new flow writes pending rows
-   directly into `saunas`, making the separate `sauna_submissions` table
-   redundant. Proposal: `/submit` and the map form both switch to
-   `submitFacility`; the admin "Zgłoszenia" tab remains read-only until its
-   existing pending rows are drained, then retires. Confirm?
+All previous open questions are **resolved** — see §1.5 (pg_trgm, og:image,
+sauna_submissions transition) and rev 2 notes (submitter edit-while-pending,
+map form retained for all users).
 
-Resolved by the 2026-07-18 correction (previously Q2/Q3): the submitter
-**does** edit their own pending submission (all users, not only masters);
-the map form **stays** as an entry point for everyone, rewired to the
-moderated server-side workflow.
+Remaining items that only the step-0 production audit can settle:
+
+1. Whether `saunas.status` / `sauna_events.status` carry live CHECK
+   constraints that must be extended before `'pending'`/`'rejected'` rows
+   can exist (audit §3).
+2. The exact live policy names on `storage.objects` and the drifted
+   policies on `saunas`/`sauna_photos`/`sauna_events`/`pts_import_log`
+   (audit §1 — also the rollback baseline).
+3. The `sauna_submissions` census (audit §6) — decides completed-in-place
+   vs migrated for existing pending records.
+4. (Finding, decision deferred) anon can read `sauna_managers.user_id` of
+   approved managers via PostgREST — likely intentional enough for
+   "manager badge" features but worth an explicit decision outside SP-036
+   scope.
 
 ---
 
