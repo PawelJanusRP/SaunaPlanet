@@ -1327,8 +1327,14 @@ export default function SaunaMap() {
       </div>
 
       {showAccountPanel && (
-        <div className="fixed inset-0 z-[11000] flex justify-end bg-black/40">
-          <div className="flex h-full w-80 max-w-full flex-col bg-white shadow-2xl">
+        <div
+          className="fixed inset-0 z-[11000] flex justify-end bg-black/40"
+          onClick={() => setShowAccountPanel(false)}
+        >
+          <div
+            className="flex h-full w-80 max-w-full flex-col bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b px-4 py-3">
               <h2 className="text-base font-bold">SaunaPlanet</h2>
 
