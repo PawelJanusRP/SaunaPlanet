@@ -9,8 +9,10 @@
 --
 -- In-flight data at rollback time: pending rows remain invisible to the
 -- public, visible to their master, event staff and moderation; admin
--- resolves or deletes them manually. The partial unique index and the
--- created_by column stay (inert, data-preserving).
+-- resolves or deletes them manually. The partial unique index stays
+-- (inert, data-preserving). Note: rev 2 of the migration adds NO columns
+-- (created_by was removed from the sprint), so there is nothing
+-- column-related to roll back.
 -- ============================================================================
 
 begin;

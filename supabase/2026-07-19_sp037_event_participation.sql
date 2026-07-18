@@ -22,25 +22,33 @@
 -- owned pending row — request history is lost. No 'withdrawn' state in
 -- this sprint; if history becomes a requirement, a later sprint converts
 -- withdrawal to a status value.
+--
+-- REVIEW REV 2 (2026-07-19) — resolved findings:
+--   1. NO created_by column. RLS filters rows, not columns — approved rows
+--      are publicly selectable, so an auth-user UUID column would leak via
+--      PostgREST select=*. The column is not strictly required: requester
+--      identity is carried by master_id (linked to the account through
+--      sauna_masters.user_id, enforced by is_verified_master_owner at
+--      INSERT and is_master_owner at DELETE). Decision-log audit metadata,
+--      if ever needed, goes to a separate non-public table in a later
+--      sprint. Result: the table exposes NO auth.users UUID in any column
+--      (master_id/event_id are public-entity ids by design).
+--   2. event_id / master_id are immutable FOR EVERYONE — no moderation
+--      exception in the trigger. Identity repair = the existing explicit
+--      admin procedure outside the workflow: DELETE (admin policy) +
+--      re-INSERT (admin direct assignment).
+--   3. role contract: master requests carry role = NULL (pinned by the
+--      INSERT policy); role may change ONLY inside the trusted
+--      pending → approved transition (staff/admin choose it while
+--      approving); approved/rejected rows have immutable roles for every
+--      actor — historical role corrections use the same admin
+--      delete + re-insert repair path.
 -- ============================================================================
 
 begin;
 
 -- ---------------------------------------------------------------------------
--- 1. Audit column: who created the row (master request or admin assignment).
---    Existing 20 rows stay NULL — historical admin assignments, no
---    retroactive authorship claimed. Default is a convenience, not a
---    control: the request INSERT policy independently requires
---    created_by = auth.uid(), and the guard trigger freezes it afterward.
--- ---------------------------------------------------------------------------
-alter table public.sauna_event_masters
-  add column if not exists created_by uuid
-    references auth.users(id) on delete set null;
-alter table public.sauna_event_masters
-  alter column created_by set default auth.uid();
-
--- ---------------------------------------------------------------------------
--- 2. One open request/assignment per (event, master). Partial: a rejected
+-- 1. One open request/assignment per (event, master). Partial: a rejected
 --    request does not block a later re-request or an admin assignment.
 --    Probe confirmed zero conflicting pairs in production.
 -- ---------------------------------------------------------------------------
@@ -49,7 +57,7 @@ create unique index if not exists sauna_event_masters_active_unique
   where status in ('pending', 'approved');
 
 -- ---------------------------------------------------------------------------
--- 3. Helper: is the caller approved staff of the event's facility?
+-- 2. Helper: is the caller approved staff of the event's facility?
 --    (SECURITY DEFINER is necessary: sauna_managers rows of other users
 --    are not visible to the caller under RLS.)
 -- ---------------------------------------------------------------------------
@@ -69,7 +77,7 @@ revoke all on function public.is_event_staff(uuid) from public, anon;
 grant execute on function public.is_event_staff(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- 4. Deterministic policy replacement on sauna_event_masters.
+-- 3. Deterministic policy replacement on sauna_event_masters.
 --    Replaces (live baseline after SP-036 §12a): event_masters_select +
 --    "Allow public read sauna event masters" (both SELECT true),
 --    event_masters_insert (is_admin), event_masters_update (is_admin),
@@ -100,15 +108,16 @@ create policy event_masters_select on public.sauna_event_masters
 create policy event_masters_insert_admin on public.sauna_event_masters
   for insert with check (public.is_admin());
 
--- Master participation request: own approved profile, pending-only,
--- self-attributed, no pre-set approval timestamp, target event active and
--- not past (date-level check; timezone nuance accepted for a warn-level
--- gate — the resolving staff sees the event either way).
+-- Master participation request: own approved profile, pending-only, no
+-- role proposal (role = NULL — staff assigns it at approval), no pre-set
+-- approval timestamp, target event active and not past (date-level check;
+-- timezone nuance accepted for a warn-level gate — the resolving staff
+-- sees the event either way).
 create policy event_masters_insert_request on public.sauna_event_masters
   for insert with check (
     public.is_verified_master_owner(master_id)
     and status = 'pending'
-    and created_by = auth.uid()
+    and role is null
     and approved_at is null
     and exists (
       select 1 from public.sauna_events e
@@ -134,38 +143,44 @@ create policy event_masters_delete_own_pending on public.sauna_event_masters
   );
 
 -- ---------------------------------------------------------------------------
--- 5. Guard trigger — trusted resolution logic at the database boundary.
---    * event_id / master_id / created_by frozen after insertion (everyone
---      except platform moderation);
---    * approved_at is NEVER client-controlled: the trigger assigns it on
---      approval and clears it on rejection; any other change is refused;
---    * staff transitions are limited to pending → approved / rejected;
+-- 4. Guard trigger — a UNIFORM state machine at the database boundary,
+--    with NO moderation bypass (review rev 2):
+--    * event_id / master_id frozen after insertion for EVERYONE; identity
+--      repair = explicit admin procedure outside the workflow (DELETE +
+--      re-INSERT via the admin policies);
+--    * the only legal status transitions, for every actor, are
+--      pending → approved and pending → rejected, performed by event
+--      staff or platform moderation (admin);
+--    * approved_at is owned by this trigger: set to now() on approval,
+--      forced NULL on rejection, immutable otherwise — never
+--      client-controlled for anyone;
+--    * role may change ONLY inside the pending → approved transition
+--      (the approver assigns it); immutable in every other update, for
+--      every actor — approved/rejected history cannot be rewritten;
 --    * masters have no UPDATE policy at all — this trigger is defense in
---      depth on top of that, and also constrains staff.
+--      depth on top of the policy layer.
 -- ---------------------------------------------------------------------------
 create or replace function public.guard_event_master_columns()
 returns trigger as $$
 begin
-  if public.is_platform_moderator() then
-    -- moderation keeps full access, but approved_at still follows status
-    if new.status = 'rejected' then new.approved_at := null; end if;
-    if new.status = 'approved' and old.status is distinct from 'approved'
-       and new.approved_at is null then
-      new.approved_at := now();
-    end if;
-    return new;
-  end if;
-
+  -- identity: immutable for everyone, no exceptions
   if new.event_id is distinct from old.event_id
      or new.master_id is distinct from old.master_id
-     or new.created_by is distinct from old.created_by
   then
     raise exception 'Przypisania eventu nie można przenosić';
   end if;
 
+  -- role: only assignable while approving a pending request
+  if new.role is distinct from old.role
+     and not (old.status = 'pending' and new.status = 'approved')
+  then
+    raise exception 'Rolę nadaje się wyłącznie przy zatwierdzaniu zgłoszenia';
+  end if;
+
   if new.status is distinct from old.status then
     if old.status = 'pending' and new.status in ('approved', 'rejected') then
-      if not public.is_event_staff(old.event_id) then
+      if not (public.is_event_staff(old.event_id)
+              or public.is_platform_moderator()) then
         raise exception 'Zgłoszenie rozstrzyga obsada obiektu lub moderacja';
       end if;
       -- trusted timestamp logic
@@ -201,16 +216,28 @@ commit;
 --   -- expect exactly: select ×1, insert ×2, update ×2, delete ×2
 -- V2. Data untouched: select status, count(*) from sauna_event_masters
 --   group by status;  -- approved, 20
--- V3. Index: select indexname from pg_indexes
+-- V3. Index + columns: select indexname from pg_indexes
 --   where tablename = 'sauna_event_masters';
 --   -- includes sauna_event_masters_active_unique
+--   select column_name from information_schema.columns
+--   where table_name = 'sauna_event_masters' order by ordinal_position;
+--   -- expect: id, event_id, master_id, status, role, created_at,
+--   --         approved_at — and NOTHING ELSE (no created_by)
 -- V4. As anon (PostgREST): sauna_event_masters?status=neq.approved →
 --   0 rows (today it returns them — that is the leak being closed).
--- V5. As a verified master (app/API): INSERT pending on an active future
---   event → OK; INSERT with status='approved' → RLS violation; duplicate
---   request for the same event → unique violation; DELETE own pending →
---   OK; UPDATE own row → no row matched (no policy).
--- V6. As staff of the event's sauna: UPDATE pending → approved sets
---   approved_at automatically; → rejected clears it; approved → pending →
---   exception; changing approved_at alone → exception.
+-- V4b. ANON COLUMN-EXPOSURE TEST: GET sauna_event_masters?select=*&limit=1
+--   → the returned JSON keys must be exactly {id, event_id, master_id,
+--   status, role, created_at, approved_at}; none of them is an
+--   auth.users UUID (master_id/event_id are public catalogue entities).
+-- V5. As a verified master (app/API): INSERT pending (role omitted) on an
+--   active future event → OK; INSERT with status='approved' or a non-null
+--   role → RLS violation; duplicate request for the same event → unique
+--   violation; DELETE own pending → OK; UPDATE own row → no row matched
+--   (no policy).
+-- V6. As staff of the event's sauna: UPDATE pending → approved (with role)
+--   sets approved_at automatically; → rejected clears approved_at and
+--   refuses a role change; approved → pending → exception; changing
+--   approved_at or role alone (no transition) → exception — ALSO when
+--   executed as admin (uniform machine, no moderation bypass; identity
+--   repair = admin DELETE + re-INSERT).
 -- ============================================================================
