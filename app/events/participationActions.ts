@@ -16,8 +16,10 @@ export type ParticipationRole = 'lead' | 'assistant' | 'guest'
 const ROLES: ParticipationRole[] = ['lead', 'assistant', 'guest']
 
 function translateDbError(raw: string): string {
-  // our own trigger messages are user-oriented Polish — pass them through
-  if (/rozstrzyga|wymaga|nie można|Niedozwolona/.test(raw)) return raw
+  // our own trigger/RPC messages are user-oriented Polish — pass through
+  if (/rozstrzyga|wymaga|nie można|Niedozwolona|Tylko zatwierdzony|musi mieć|Obiekt nie istnieje|można tworzyć|Limit miejsc|dołączony/.test(raw)) {
+    return raw
+  }
   if (raw.includes('duplicate key')) {
     return 'Zgłoszenie dla tego wydarzenia już istnieje'
   }
@@ -93,6 +95,92 @@ export async function withdrawEventParticipation(
   }
 
   revalidatePath(`/events/${data[0].event_id}`)
+  revalidatePath('/studio/events')
+  revalidatePath('/workspace/events')
+  return {}
+}
+
+export type CreateMasterEventInput = {
+  saunaId: string
+  title: string
+  eventDate: string
+  eventTime: string | null
+  price: string | null
+  description: string | null
+  maxParticipants: number | null
+}
+
+/**
+ * SP-037B slice 2: master event creation goes EXCLUSIVELY through the
+ * trusted create_master_event RPC — managed/unmanaged routing is decided
+ * inside the database transaction and the RPC's returned statuses are the
+ * only source of truth the UI may present.
+ */
+export async function createMasterEvent(
+  input: CreateMasterEventInput
+): Promise<{
+  eventId?: string
+  eventStatus?: 'active' | 'pending'
+  participationStatus?: 'approved' | 'pending'
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('create_master_event', {
+    p_sauna_id: input.saunaId,
+    p_title: input.title,
+    p_event_date: input.eventDate,
+    p_event_time: input.eventTime,
+    p_price: input.price,
+    p_description: input.description,
+    p_max_participants: input.maxParticipants,
+  })
+
+  if (error) return { error: translateDbError(error.message) }
+
+  const result = data as {
+    event_id: string
+    event_status: 'active' | 'pending'
+    participation_status: 'approved' | 'pending'
+  }
+
+  revalidatePath('/events')
+  revalidatePath(`/events/${result.event_id}`)
+  revalidatePath(`/sauna/${input.saunaId}`)
+  revalidatePath('/studio/events')
+  revalidatePath('/workspace/events')
+  return {
+    eventId: result.event_id,
+    eventStatus: result.event_status,
+    participationStatus: result.participation_status,
+  }
+}
+
+/**
+ * Withdrawing a pending master-event PROPOSAL deletes the whole event
+ * (the organizer pair follows via FK cascade) — distinct from withdrawing
+ * an ordinary participation request. RLS (events_delete_master) plus the
+ * pending-status predicate are the boundary.
+ */
+export async function withdrawMasterEventProposal(
+  eventId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const own = await getOwnApprovedMasterId(supabase)
+  if (own.error || !own.masterId) return { error: own.error }
+
+  const { data, error } = await supabase
+    .from('sauna_events')
+    .delete()
+    .eq('id', eventId)
+    .eq('organizer_master_id', own.masterId)
+    .eq('status', 'pending')
+    .select('id')
+
+  if (error) return { error: translateDbError(error.message) }
+  if (!data || data.length === 0) {
+    return { error: 'Propozycja nie istnieje albo została już rozstrzygnięta' }
+  }
+
   revalidatePath('/studio/events')
   revalidatePath('/workspace/events')
   return {}

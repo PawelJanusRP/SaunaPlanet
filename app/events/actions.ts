@@ -119,7 +119,30 @@ export async function createEvent(
 export async function updateEvent(id: string, data: EventFormData) {
   const supabase = await createClient()
   const saunaId = await getEventSaunaId(supabase, id)
-  await assertCanManageSaunaEvents(supabase, saunaId)
+  try {
+    await assertCanManageSaunaEvents(supabase, saunaId)
+  } catch (staffError) {
+    // SP-037B organizer arm: the organizing master edits the CONTENT of
+    // their own event. RLS (events_update_master) plus sauna_events_guard
+    // remain the boundary — sauna_id / organizer / status are immutable
+    // there regardless of what this action would send.
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw staffError
+    const { data: ev } = await supabase
+      .from('sauna_events')
+      .select('organizer_master_id')
+      .eq('id', id)
+      .single()
+    if (!ev?.organizer_master_id) throw staffError
+    const { data: own } = await supabase
+      .from('sauna_masters')
+      .select('id')
+      .eq('id', ev.organizer_master_id)
+      .eq('user_id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    if (!own) throw staffError
+  }
 
   // .select() so an RLS mismatch (0 rows) surfaces as an error instead of a
   // silent no-op — matters until the SP-034 policies are applied to the DB.

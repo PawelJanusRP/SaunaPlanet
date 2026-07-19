@@ -29,7 +29,7 @@ export default async function EventPage({
 
   const { data: eventData } = await supabase
     .from('sauna_events')
-    .select('id, title, event_date, event_time, price, description, status, sauna_id, max_participants, saunas(id, name, city)')
+    .select('id, title, event_date, event_time, price, description, status, sauna_id, max_participants, organizer_master_id, saunas(id, name, city)')
     .eq('id', id)
     .single()
 
@@ -82,6 +82,25 @@ export default async function EventPage({
       ownAssignment = (assignmentRaw as any) ?? null
     }
   }
+
+  // SP-037B: the organizer badge derives STRICTLY from organizer_master_id
+  // (never from participation role or affiliation)
+  let organizerName: string | null = null
+  if (ev.organizer_master_id) {
+    const inLineup = eventMasters.find((m) => m.master_id === ev.organizer_master_id)
+    if (inLineup?.sauna_masters?.name) {
+      organizerName = inLineup.sauna_masters.name
+    } else {
+      const { data: organizerRaw } = await supabase
+        .from('sauna_masters')
+        .select('name')
+        .eq('id', ev.organizer_master_id)
+        .maybeSingle()
+      organizerName = organizerRaw?.name ?? null
+    }
+  }
+  const isOrganizerViewer =
+    ownMaster !== null && ev.organizer_master_id === ownMaster.id
 
   const { data: photosRaw } = await supabase
     .from('event_photos')
@@ -198,7 +217,7 @@ export default async function EventPage({
         <section className="rounded-3xl border bg-white p-6 shadow-sm">
           <div className="mb-1 flex flex-wrap items-start justify-between gap-3">
             <h1 className="text-2xl font-bold text-orange-700">🔥 {ev.title}</h1>
-            {isAdmin && (
+            {(isAdmin || isOrganizerViewer) && (
               <EditEventForm
                 eventId={id}
                 title={ev.title}
@@ -331,6 +350,20 @@ export default async function EventPage({
         <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-bold">🧖 Saunamistrzowie</h2>
 
+          {ev.organizer_master_id && (
+            <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2.5 text-sm text-orange-800">
+              📣 <span className="font-semibold">Event saunamistrza</span>
+              {' — organizuje '}
+              {organizerName ? (
+                <Link href={`/masters/${ev.organizer_master_id}`} className="font-semibold underline">
+                  {organizerName}
+                </Link>
+              ) : (
+                'saunamistrz'
+              )}
+            </div>
+          )}
+
           {eventMasters.length === 0 ? (
             <p className="text-sm text-gray-500">Brak przypisanych saunamistrzów.</p>
           ) : (
@@ -346,7 +379,14 @@ export default async function EventPage({
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-200 text-xl">🧖</div>
                       )}
                       <div>
-                        <p className="font-semibold leading-tight">{master?.name}</p>
+                        <p className="font-semibold leading-tight">
+                          {master?.name}
+                          {item.master_id === ev.organizer_master_id && (
+                            <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700">
+                              📣 ORGANIZATOR
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-gray-500">{item.role}</p>
                       </div>
                     </Link>

@@ -6,6 +6,8 @@ import WorkspaceSection from '@/components/workspace/WorkspaceSection'
 import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState'
 import StudioAccessNotice from '@/components/studio/StudioAccessNotice'
 import EventParticipationControls from '@/components/EventParticipationControls'
+import CreateMasterEventForm from '@/components/studio/CreateMasterEventForm'
+import WithdrawProposalButton from '@/components/studio/WithdrawProposalButton'
 import {
   MASTER_NAV,
   MASTER_STUDIO_LABEL,
@@ -34,14 +36,30 @@ export default async function StudioEventsPage() {
     return <StudioAccessNotice kind={profile.status === 'pending' ? 'pending' : 'rejected'} masterId={profile.id} />
   }
 
-  const { data: rowsRaw } = await supabase
-    .from('sauna_event_masters')
-    .select('id, status, role, created_at, sauna_events(id, title, event_date, event_time, saunas(id, name, city))')
-    .eq('master_id', profile.id)
-    .order('created_at', { ascending: false })
+  const [{ data: rowsRaw }, { data: saunasRaw }] = await Promise.all([
+    supabase
+      .from('sauna_event_masters')
+      .select('id, status, role, created_at, sauna_events(id, title, status, organizer_master_id, event_date, event_time, saunas(id, name, city))')
+      .eq('master_id', profile.id)
+      .order('created_at', { ascending: false }),
+    // facility picker for master-created events — active facilities only;
+    // the create_master_event RPC re-validates and decides the routing
+    supabase
+      .from('saunas')
+      .select('id, name, city')
+      .eq('status', 'active')
+      .order('name', { ascending: true })
+      .limit(1000),
+  ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows = (rowsRaw ?? []) as any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const saunaOptions = (saunasRaw ?? []) as any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isOwnProposal = (r: any) =>
+    r.sauna_events?.organizer_master_id === profile!.id &&
+    r.sauna_events?.status === 'pending'
   const today = new Date().toISOString().split('T')[0]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const eventDate = (r: any) => r.sauna_events?.event_date?.substring(0, 10) ?? ''
@@ -79,6 +97,10 @@ export default async function StudioEventsPage() {
       nav={MASTER_NAV}
     >
       <div className="space-y-4 sm:space-y-6">
+        <div className="flex justify-end">
+          <CreateMasterEventForm saunas={saunaOptions} />
+        </div>
+
         <WorkspaceSection title={`⏳ Oczekujące zgłoszenia (${pending.length})`}>
           {pending.length === 0 ? (
             <WorkspaceEmptyState
@@ -91,10 +113,22 @@ export default async function StudioEventsPage() {
               {pending.map((r) => (
                 <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
                   <EventLine r={r} />
-                  <EventParticipationControls
-                    eventId={r.sauna_events?.id}
-                    assignment={{ id: r.id, status: r.status, role: r.role }}
-                  />
+                  {isOwnProposal(r) ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                        📣 Twoja propozycja wydarzenia — czeka na managera obiektu
+                      </span>
+                      <WithdrawProposalButton
+                        eventId={r.sauna_events?.id}
+                        eventTitle={r.sauna_events?.title ?? ''}
+                      />
+                    </div>
+                  ) : (
+                    <EventParticipationControls
+                      eventId={r.sauna_events?.id}
+                      assignment={{ id: r.id, status: r.status, role: r.role }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -109,9 +143,15 @@ export default async function StudioEventsPage() {
               {upcoming.map((r) => (
                 <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
                   <EventLine r={r} />
-                  <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                    {PARTICIPATION_STATUS_LABELS.approved}
-                  </span>
+                  {r.sauna_events?.organizer_master_id === profile.id ? (
+                    <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
+                      📣 Organizator
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                      {PARTICIPATION_STATUS_LABELS.approved}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
