@@ -1,6 +1,9 @@
 # SP-037 rev B — Master Event Creation & Participation: Unified Architecture
 
-Status: **PROPOSED — awaiting review. No code, no SQL written.**
+Status: **APPROVED** (Paweł, 2026-07-19) with the authoritative
+clarifications recorded in §11; Slice 1 database artifacts prepared
+(`supabase/2026-07-19_sp037b_master_events.sql` + functional rollback),
+NOT executed.
 Date: 2026-07-19. Supersedes the paused SP-037B invitation-only sketch.
 Inputs: Paweł's authoritative product rules A–D (2026-07-19), the deployed
 SP-036 migration (event paths at the DB boundary), the deployed SP-037
@@ -261,3 +264,36 @@ triggers, execution grants only where policies do not reference them.
 
 Each slice ships behind lint+build with a focused commit; slices 2–5 are
 independently deployable after slice 1.
+
+---
+
+## 11. Approved clarifications (Paweł, 2026-07-19 — authoritative)
+
+**Facility gains a manager after a master-created event:** the active
+event stays active; future submissions follow the managed workflow; the
+manager gains operational/moderation authority over the facility's events
+(including deactivating or removing inappropriate ones) — but must NOT
+change `organizer_master_id`, take over authorship, silently replace the
+organizing master, or bypass master-consent rules for the lineup (all
+enforced today: `sauna_events_guard` freezes organizer/provenance for
+non-moderation; lineup changes go through the participation machine). The
+organizer keeps parallel content-edit rights within immutable identity and
+facility fields.
+
+**Edge cases 1–10** (enforced in the Slice 1 migration; see its header for
+the mapping): routing decided in-transaction; pending managers don't
+manage; orphaned proposals stay pending (master deletes own event or admin
+resolves); pending-only, `FOR UPDATE` concurrency-safe resolution;
+immutable `event_id`/`sauna_id`/`organizer_master_id`/`master_id`/
+`initiated_by`; `initiated_by` decides the resolving side ('master' →
+staff/admin, 'facility' → invited master/admin, NULL → operator rows);
+requests carry no role while pending; invitations carry a frozen offered
+role; facility approval/rejection touches only deterministically bundled
+content; RPCs return explicit resulting statuses.
+
+**Review flag carried into Slice 1:** the participation guard's resolver
+check widens from `is_admin()` to `is_platform_moderator()` so the
+moderator-operated facility RPCs can resolve bundled organizer pairs
+atomically. API-layer authorization is unchanged — the UPDATE policies
+still exclude non-admin moderators; the widening is reachable only inside
+the self-checking SECURITY DEFINER RPCs.
