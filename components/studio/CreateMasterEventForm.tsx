@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createMasterEvent } from '@/app/events/participationActions'
+import FacilityCombobox, { type FacilityOption } from '@/components/FacilityCombobox'
 
-type SaunaOption = { id: string; name: string; city: string | null }
+type SaunaOption = FacilityOption
 
 /**
  * SP-037B slice 2: master-created events. The client never decides the
@@ -113,18 +114,11 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
         </div>
 
         <div className="space-y-3">
-          <select
-            className="w-full rounded-xl border p-3 text-sm"
-            value={saunaId}
-            onChange={(e) => setSaunaId(e.target.value)}
-          >
-            <option value="">— wybierz obiekt —</option>
-            {saunas.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}{s.city ? ` (${s.city})` : ''}
-              </option>
-            ))}
-          </select>
+          <FacilityCombobox
+            saunas={saunas}
+            value={saunaId || null}
+            onChange={(id) => setSaunaId(id ?? '')}
+          />
 
           <input
             className="w-full rounded-xl border p-3 text-sm"
