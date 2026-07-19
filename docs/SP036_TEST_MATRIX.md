@@ -43,6 +43,15 @@ regular user via the map form or /submit).
 | M5 | Unauthorized access | Open /admin as regular user / anon | Redirect away (existing admin gate); calling approveFacility/rejectFacility directly → "Brak uprawnień"; RPC as anon → permission denied (S13 ✅) |
 | M6 | Duplicate warning visibility | Submit a near-duplicate of an existing sauna, open admin | Pending entry shows "⚠️ Możliwe duplikaty" with names + match reasons; active duplicates link to their pages; decision stays manual (no auto-action exists) |
 
+## SP-037B slice 2 — regression steps (added after the 2026-07-19 E2E defects)
+
+| # | Case | Steps | Expected |
+|---|---|---|---|
+| R1 | Dashboard shows the event immediately after creation | Studio → Wystąpienia → create an event → modal closes | The list re-renders at once (router.refresh); the event appears in "Nadchodzące wystąpienia" (unmanaged: 📣 Organizator chip) or "Oczekujące" (managed: proposal chip) without a manual reload |
+| R2 | Organizer events never depend on the participation pair | (admin) delete the organizer's `sauna_event_masters` row for a test event; reload /studio/events | The event STILL shows, exactly once, as an organizer entry (synthesized from `organizer_master_id`) |
+| R3 | Satellite avatar rule (documented) | Create a master event at an unmanaged facility with a master WITHOUT an avatar → check the map → then upload an avatar in Studio → Profil → recheck | No satellite before (documented rule: KNOWN_ISSUES "Sauna Master Satellite System" — `avatar_url` required; the map RPC DOES return the master); satellite appears after the avatar upload, same time-window rules as other masters |
+| R4 | Lineup does not require an avatar | Event page of the same event | The organizer is visible in the lineup and in the organizer banner even without an avatar (placeholder circle) |
+
 ## Manual pass to run after deploy (10 minutes)
 
 1. As anon: open map → "Dodaj saunę" → login prompt visible.

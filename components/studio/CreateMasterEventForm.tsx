@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createMasterEvent } from '@/app/events/participationActions'
 
@@ -13,6 +14,7 @@ type SaunaOption = { id: string; name: string; city: string | null }
  * statuses the database returned.
  */
 export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[] }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saunaId, setSaunaId] = useState('')
@@ -67,6 +69,9 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
     }
 
     setOpen(false)
+    // Defect-1 fix: force the dashboard lists to re-render immediately —
+    // revalidatePath alone left the open route visually stale.
+    router.refresh()
     setSaunaId('')
     setTitle('')
     setEventDate('')

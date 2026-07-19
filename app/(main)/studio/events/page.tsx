@@ -36,11 +36,19 @@ export default async function StudioEventsPage() {
     return <StudioAccessNotice kind={profile.status === 'pending' ? 'pending' : 'rejected'} masterId={profile.id} />
   }
 
-  const [{ data: rowsRaw }, { data: saunasRaw }] = await Promise.all([
+  const [{ data: rowsRaw }, { data: organizedRaw }, { data: saunasRaw }] = await Promise.all([
     supabase
       .from('sauna_event_masters')
       .select('id, status, role, created_at, sauna_events(id, title, status, organizer_master_id, event_date, event_time, saunas(id, name, city))')
       .eq('master_id', profile.id)
+      .order('created_at', { ascending: false }),
+    // Defect-1 hardening: organized events are ALSO loaded directly by
+    // organizer_master_id — the dashboard must never depend on the
+    // participation pair existing (e.g. raw-API events, deleted pairs).
+    supabase
+      .from('sauna_events')
+      .select('id, title, status, organizer_master_id, event_date, event_time, saunas(id, name, city)')
+      .eq('organizer_master_id', profile.id)
       .order('created_at', { ascending: false }),
     // facility picker for master-created events — active facilities only;
     // the create_master_event RPC re-validates and decides the routing
@@ -53,7 +61,27 @@ export default async function StudioEventsPage() {
   ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows = (rowsRaw ?? []) as any[]
+  const participationRows = (rowsRaw ?? []) as any[]
+  // Union: organized events without a participation pair get a synthesized
+  // display row (organizer events show exactly once — pair rows win, since
+  // they carry the role).
+  const coveredEventIds = new Set(
+    participationRows.map((r) => r.sauna_events?.id).filter(Boolean)
+  )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const synthesized = ((organizedRaw ?? []) as any[])
+    .filter((e) => !coveredEventIds.has(e.id))
+    .map((e) => ({
+      id: `organized-${e.id}`,
+      status:
+        e.status === 'active' ? 'approved'
+        : e.status === 'pending' ? 'pending'
+        : 'rejected',
+      role: null,
+      created_at: null,
+      sauna_events: e,
+    }))
+  const rows = [...participationRows, ...synthesized]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saunaOptions = (saunasRaw ?? []) as any[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
