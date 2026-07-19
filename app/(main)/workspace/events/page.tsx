@@ -9,6 +9,7 @@ import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState'
 import WorkspaceContextSwitcher from '@/components/workspace/WorkspaceContextSwitcher'
 import OwnerCreateEventButton from '@/components/workspace/OwnerCreateEventButton'
 import ParticipationModerationActions from '@/components/workspace/ParticipationModerationActions'
+import EventProposalActions from '@/components/workspace/EventProposalActions'
 import { workspaceContextLabel } from '@/lib/workspace/context'
 import {
   OWNER_ALL_FACILITIES_LABEL,
@@ -55,6 +56,25 @@ export default async function OwnerEventsPage({
     .filter((ev) => ev.event_date >= today)
     .sort((a, b) => (a.event_date < b.event_date ? -1 : 1))
   const past = events.filter((ev) => ev.event_date < today).slice(0, PAST_PREVIEW_LIMIT)
+
+  // SP-037B slice 3: pending master-created event PROPOSALS for the
+  // facilities in scope. Authorization is server-side (the queue is
+  // context-scoped here; the resolve_master_event RPC independently
+  // re-verifies staff/admin) — buttons are never the boundary.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let eventProposals: any[] = []
+  if (activeSaunaIds.length > 0) {
+    const { data: proposalsRaw } = await supabase
+      .from('sauna_events')
+      .select('id, title, description, event_date, event_time, price, max_participants, sauna_id, organizer_master_id, saunas(name, city), organizer:sauna_masters!sauna_events_organizer_master_id_fkey(id, name, avatar_url, level, status)')
+      .eq('status', 'pending')
+      .eq('bundled_with_submission', false)
+      .not('organizer_master_id', 'is', null)
+      .in('sauna_id', activeSaunaIds)
+      .order('created_at', { ascending: true })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    eventProposals = (proposalsRaw ?? []) as any[]
+  }
 
   // SP-037: pending master participation requests for the facilities in
   // scope. RLS (is_event_staff arm) already limits visibility; the inner
@@ -135,6 +155,62 @@ export default async function OwnerEventsPage({
               wydarzenie zawsze należy do jednego obiektu.
             </div>
           )
+        )}
+
+        {eventProposals.length > 0 && (
+          <WorkspaceSection title={`📣 Propozycje wydarzeń (${eventProposals.length})`}>
+            <div className="space-y-3">
+              {eventProposals.map((p) => (
+                <div key={p.id} className="rounded-2xl border border-orange-200 bg-orange-50/40 p-4">
+                  <div className="flex items-start gap-3">
+                    {p.organizer?.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.organizer.avatar_url}
+                        alt={p.organizer.name}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-lg">🧖</div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-orange-700">{p.title}</p>
+                      <p className="mt-0.5 text-sm text-gray-600">
+                        {p.event_date?.substring(0, 10)}
+                        {p.event_time ? ` · ${String(p.event_time).substring(0, 5)}` : ''}
+                        {p.price && <> · {p.price}</>}
+                        {p.max_participants != null && <> · limit: {p.max_participants}</>}
+                      </p>
+                      {context.scope === 'all' && p.saunas?.name && (
+                        <p className="mt-0.5 text-sm text-gray-400">
+                          {p.saunas.name}{p.saunas.city ? ` · ${p.saunas.city}` : ''}
+                        </p>
+                      )}
+                      {p.description && (
+                        <p className="mt-1.5 text-sm text-gray-600">{p.description}</p>
+                      )}
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Organizuje:{' '}
+                        <Link href={`/masters/${p.organizer?.id}`} className="font-medium hover:underline">
+                          {p.organizer?.name ?? 'Saunamistrz'}
+                        </Link>
+                        {p.organizer?.level && (
+                          <span className="ml-1 text-gray-400">· {p.organizer.level}</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 border-t pt-3">
+                    <p className="mb-2 text-xs text-gray-500">
+                      Zatwierdzenie publikuje wydarzenie i dodaje organizatora do lineupu
+                      z wybraną rolą — jedna, niepodzielna operacja.
+                    </p>
+                    <EventProposalActions eventId={p.id} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </WorkspaceSection>
         )}
 
         {participationRequests.length > 0 && (

@@ -17,7 +17,7 @@ const ROLES: ParticipationRole[] = ['lead', 'assistant', 'guest']
 
 function translateDbError(raw: string): string {
   // our own trigger/RPC messages are user-oriented Polish — pass through
-  if (/rozstrzyga|wymaga|nie można|Niedozwolona|Tylko zatwierdzony|musi mieć|Obiekt nie istnieje|można tworzyć|Limit miejsc|dołączony/.test(raw)) {
+  if (/rozstrzyg|wymaga|nie można|Niedozwolona|Tylko zatwierdzony|musi mieć|Obiekt nie istnieje|można tworzyć|Limit miejsc|dołączony|Decyzja musi|propozycja/i.test(raw)) {
     return raw
   }
   if (raw.includes('duplicate key')) {
@@ -181,6 +181,40 @@ export async function withdrawMasterEventProposal(
     return { error: 'Propozycja nie istnieje albo została już rozstrzygnięta' }
   }
 
+  revalidatePath('/studio/events')
+  revalidatePath('/workspace/events')
+  return {}
+}
+
+/**
+ * SP-037B slice 3: manager resolution of a master-created event proposal.
+ * Uses ONLY the trusted resolve_master_event RPC — event activation and
+ * organizer-participation approval (with the manager-selected role and a
+ * trusted approved_at) happen atomically in the database; rejection
+ * rejects both. Authorization (staff of the event's facility OR admin)
+ * and concurrency safety (FOR UPDATE + pending-only) live in the RPC.
+ */
+export async function resolveMasterEventProposal(
+  eventId: string,
+  decision: 'approved' | 'rejected',
+  role?: ParticipationRole
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+
+  if (decision === 'approved' && (!role || !ROLES.includes(role))) {
+    return { error: 'Zatwierdzenie wymaga wyboru roli organizatora (lead, assistant lub guest)' }
+  }
+
+  const { error } = await supabase.rpc('resolve_master_event', {
+    p_event_id: eventId,
+    p_decision: decision,
+    p_organizer_role: decision === 'approved' ? role : null,
+  })
+
+  if (error) return { error: translateDbError(error.message) }
+
+  revalidatePath('/events')
+  revalidatePath(`/events/${eventId}`)
   revalidatePath('/studio/events')
   revalidatePath('/workspace/events')
   return {}
