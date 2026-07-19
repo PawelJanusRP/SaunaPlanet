@@ -46,6 +46,9 @@ export default async function OwnerEventsPage({
       .from('sauna_events')
       .select('id, title, event_date, event_time, price, description, max_participants, sauna_id, saunas(name, city)')
       .in('sauna_id', activeSaunaIds)
+      // active only (SP-037B): pending proposals live in their own queue
+      // above, and rejected proposals must not linger in "upcoming"
+      .eq('status', 'active')
       .order('event_date', { ascending: false })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
