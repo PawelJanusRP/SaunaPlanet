@@ -114,7 +114,7 @@ export default async function AdminPage({
     pendingSaunaIds.length > 0
       ? supabase
           .from('sauna_events')
-          .select('id, title, event_date, sauna_id')
+          .select('id, title, event_date, event_time, sauna_id, organizer:sauna_masters!sauna_events_organizer_master_id_fkey(id, name)')
           .in('sauna_id', pendingSaunaIds)
           .eq('bundled_with_submission', true)
       : Promise.resolve({ data: [] }),
@@ -306,11 +306,16 @@ export default async function AdminPage({
 
                       {bundledEvents.length > 0 && (
                         <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700">
-                          🔥 Zgłoszenie zawiera {bundledEvents.length === 1 ? 'event saunamistrza' : `eventy saunamistrza: ${bundledEvents.length}`}
+                          🔥 Zgłoszenie zawiera {bundledEvents.length === 1 ? 'dołączony event saunamistrza' : `dołączone eventy saunamistrza: ${bundledEvents.length}`}
                           {' '}—{' '}
                           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                          {bundledEvents.map((e: any) => `${e.title} (${String(e.event_date).substring(0, 10)})`).join(', ')}
-                          . Zatwierdzenie obiektu aktywuje kwalifikujące się eventy.
+                          {bundledEvents.map((e: any) =>
+                            `${e.title} (${String(e.event_date).substring(0, 10)}${e.event_time ? ` ${String(e.event_time).substring(0, 5)}` : ''})` +
+                            (e.organizer?.name ? ` · organizuje ${e.organizer.name}` : '')
+                          ).join(', ')}
+                          . Zatwierdzenie publikuje obiekt i kwalifikujący się event razem
+                          (organizator dołącza do lineupu z rolą lead); odrzucenie odrzuca
+                          cały pakiet — jedna niepodzielna operacja.
                         </div>
                       )}
 

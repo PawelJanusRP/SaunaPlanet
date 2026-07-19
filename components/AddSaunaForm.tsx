@@ -8,9 +8,14 @@ import imageCompression from 'browser-image-compression'
 import { useAuth } from '@/components/AuthProvider'
 import {
   submitFacility,
+  submitFacilityWithEvent,
   findSimilarFacilities,
   type SimilarFacility,
 } from '@/app/saunas/actions'
+import BundledEventFields, {
+  EMPTY_BUNDLED_EVENT,
+  type BundledEventDraft,
+} from '@/components/BundledEventFields'
 
 const categories = [
   { value: 'public_sauna', label: '🧖 Sauna publiczna' },
@@ -34,7 +39,11 @@ export default function AddItemForm({
   /** Pan the map to a duplicate candidate so the user can compare places. */
   onCenterOnDuplicate?: (lat: number, lng: number) => void
 }) {
-  const { user, loading: authLoading } = useAuth()
+  const { user, access, loading: authLoading } = useAuth()
+  // approved-master flag: visibility only — the server action re-verifies
+  const isMaster = access?.hasLinkedMasterProfile === true
+  const [withEvent, setWithEvent] = useState(false)
+  const [eventDraft, setEventDraft] = useState<BundledEventDraft>(EMPTY_BUNDLED_EVENT)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('public_sauna')
@@ -139,30 +148,64 @@ export default function AddItemForm({
         setDuplicates([])
       }
 
-      // Step 2: moderated server-side submission (SP-036).
-      const result = await submitFacility({
+      // Step 2: moderated server-side submission (SP-036) — with the
+      // optional master-only bundled event (SP-037B rule A).
+      const facilityInput = {
         name,
         description: description || null,
         category,
         city: city || null,
         latitude,
         longitude,
-      })
-      if (result.error || !result.id) {
-        toast.error(result.error ?? 'Nie udało się zgłosić sauny')
+      }
+      const bundling = isMaster && withEvent
+      let facilityId: string | undefined
+      let facilityStatus: 'pending' | 'active' | undefined
+      let errorMsg: string | undefined
+      let eventError: string | undefined
+      if (bundling) {
+        const r = await submitFacilityWithEvent(facilityInput, {
+          title: eventDraft.title,
+          eventDate: eventDraft.eventDate,
+          eventTime: eventDraft.eventTime || null,
+          price: eventDraft.price.trim() || null,
+          description: eventDraft.description.trim() || null,
+          maxParticipants: eventDraft.maxParticipants
+            ? Number(eventDraft.maxParticipants)
+            : null,
+        })
+        facilityId = r.facilityId
+        facilityStatus = r.facilityStatus
+        errorMsg = r.error
+        eventError = r.eventError
+      } else {
+        const r = await submitFacility(facilityInput)
+        facilityId = r.id
+        facilityStatus = r.status
+        errorMsg = r.error
+      }
+      if (errorMsg || !facilityId) {
+        toast.error(errorMsg ?? 'Nie udało się zgłosić sauny')
         setLoading(false)
         return
       }
+      if (eventError) {
+        toast.error(eventError)
+      }
 
       try {
-        await uploadPhoto(result.id)
+        await uploadPhoto(facilityId)
       } catch (photoError) {
         console.error(photoError)
         toast.error('Saunę zgłoszono, ale nie udało się dodać zdjęcia')
       }
 
-      if (result.status === 'active') {
+      if (facilityStatus === 'active') {
         toast.success('Dodano saunę')
+      } else if (bundling && !eventError) {
+        toast.success(
+          'Zgłoszenie przyjęte! Obiekt i wydarzenie trafiły do moderacji — po zatwierdzeniu opublikują się razem, a Ty będziesz organizatorem.'
+        )
       } else {
         toast.success(
           'Zgłoszenie przyjęte! Sauna pojawi się na mapie po zatwierdzeniu przez moderację.'
@@ -175,6 +218,8 @@ export default function AddItemForm({
       setPhoto(null)
       setDuplicates(null)
       setDupCoords({})
+      setWithEvent(false)
+      setEventDraft(EMPTY_BUNDLED_EVENT)
       if (fileInputRef.current) fileInputRef.current.value = ''
 
       onAdded()
@@ -329,6 +374,22 @@ className="
 )}
 
 </div>
+
+      {isMaster && (
+        <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={withEvent}
+            onChange={(e) => setWithEvent(e.target.checked)}
+          />
+          🔥 Dodaj wydarzenie do tego zgłoszenia (saunamistrz)
+        </label>
+      )}
+      {isMaster && withEvent && (
+        <div className="mb-3">
+          <BundledEventFields value={eventDraft} onChange={setEventDraft} />
+        </div>
+      )}
 
       {duplicates !== null && duplicates.length > 0 && (
         <div className="mb-3 rounded-xl border border-yellow-300 bg-yellow-50 p-3">

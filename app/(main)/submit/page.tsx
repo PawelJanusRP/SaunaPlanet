@@ -17,12 +17,22 @@ export default async function SubmitPage() {
 
   // Own submissions (SP-036): RLS shows the caller their own rows in every
   // status; active rows of others are public anyway, so filter to created_by.
-  const { data: ownSubmissions } = await supabase
-    .from('saunas')
-    .select('id, name, city, status, created_at')
-    .eq('created_by', user.id)
-    .order('created_at', { ascending: false })
-    .limit(20)
+  // Approved-master check (SP-037B rule A): unlocks the bundled-event
+  // section — the server action independently re-verifies.
+  const [{ data: ownSubmissions }, { data: ownMaster }] = await Promise.all([
+    supabase
+      .from('saunas')
+      .select('id, name, city, status, created_at')
+      .eq('created_by', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('sauna_masters')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle(),
+  ])
 
   return (
     <main className="mx-auto max-w-2xl p-4">
@@ -30,7 +40,7 @@ export default async function SubmitPage() {
       <p className="mb-6 text-sm text-gray-500">
         Wypełnij formularz. Zgłoszenie trafi do moderacji i po zatwierdzeniu pojawi się na mapie.
       </p>
-      <SubmitSaunaForm />
+      <SubmitSaunaForm isMaster={ownMaster !== null} />
 
       {ownSubmissions && ownSubmissions.length > 0 && (
         <section className="mt-8">

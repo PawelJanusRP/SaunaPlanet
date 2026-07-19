@@ -41,12 +41,15 @@ const OPEN_SUBMISSION_LIMIT = 5
  * category message and the raw cause goes to the server log only.
  */
 function translateDbError(raw: string): string {
-  if (raw.includes('oczekujących na moderację')) return raw // cap trigger
+  // own trigger/RPC messages are user-oriented Polish — pass them through
+  if (/oczekując|moderacj|nie istnieje|Tylko zatwierdzony|musi mieć|wymaga|dołączony|można tworzyć|Limit miejsc/.test(raw)) {
+    return raw
+  }
   if (raw.includes('row-level security') || raw.includes('permission denied')) {
     return 'Brak uprawnień do wykonania tej operacji'
   }
-  console.error('submitFacility db error:', raw)
-  return 'Nie udało się zgłosić sauny — spróbuj ponownie'
+  console.error('facility action db error:', raw)
+  return 'Operacja nie powiodła się — spróbuj ponownie'
 }
 
 function validateCoordinates(
@@ -148,6 +151,107 @@ export async function submitFacility(
   }
 }
 
+export type BundledEventInput = {
+  title: string
+  eventDate: string
+  eventTime: string | null
+  price: string | null
+  description: string | null
+  maxParticipants: number | null
+}
+
+/**
+ * SP-037B slice 4 (rule A): a verified master submits a facility together
+ * with one bundled event and their own organizer participation. The
+ * facility goes through the standard moderated submitFacility path; the
+ * event + organizer pair are created by the trusted create_master_event
+ * RPC (p_bundled routing, statuses decided in the database transaction) —
+ * no client-side inserts, no client-supplied statuses/roles/flags.
+ *
+ * The two steps are not one database transaction (the deployed RPC
+ * contract composes them); event inputs are pre-validated first so a
+ * facility-without-event outcome is limited to pathological failures and
+ * is reported explicitly via eventError.
+ */
+export async function submitFacilityWithEvent(
+  facility: FacilitySubmissionInput,
+  event: BundledEventInput
+): Promise<{
+  facilityId?: string
+  facilityStatus?: 'pending' | 'active'
+  eventStatus?: 'pending' | 'active'
+  error?: string
+  eventError?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Musisz być zalogowany' }
+
+  // Bundling is master-only (ordinary users keep facility-only submission)
+  const { data: ownMaster } = await supabase
+    .from('sauna_masters')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('status', 'approved')
+    .maybeSingle()
+  if (!ownMaster) {
+    return { error: 'Wydarzenie do zgłoszenia mogą dołączyć tylko zatwierdzeni saunamistrzowie' }
+  }
+
+  // Pre-validate the event before creating the facility, so the bundle
+  // cannot fail on trivially-checkable input after the facility exists.
+  if (!event.title.trim()) return { error: 'Podaj nazwę wydarzenia' }
+  if (!event.eventDate) return { error: 'Podaj datę wydarzenia' }
+  const todayIso = new Date().toISOString().split('T')[0]
+  if (event.eventDate < todayIso) {
+    return { error: 'Wydarzenie musi mieć dzisiejszą lub przyszłą datę' }
+  }
+  if (event.maxParticipants !== null && event.maxParticipants < 1) {
+    return { error: 'Limit miejsc musi być większy od zera' }
+  }
+
+  const facilityResult = await submitFacility(facility)
+  if (facilityResult.error || !facilityResult.id) {
+    return { error: facilityResult.error ?? 'Nie udało się zgłosić sauny' }
+  }
+
+  const { data: rpcResult, error: rpcError } = await supabase.rpc(
+    'create_master_event',
+    {
+      p_sauna_id: facilityResult.id,
+      p_title: event.title,
+      p_event_date: event.eventDate,
+      p_event_time: event.eventTime,
+      p_price: event.price,
+      p_description: event.description,
+      p_max_participants: event.maxParticipants,
+      // moderation submitting via this flow gets an active facility, so the
+      // bundle flag must follow the ACTUAL facility status from the server
+      p_bundled: facilityResult.status === 'pending',
+    }
+  )
+
+  if (rpcError) {
+    console.error('bundled event creation failed:', rpcError.message)
+    return {
+      facilityId: facilityResult.id,
+      facilityStatus: facilityResult.status,
+      eventError:
+        'Obiekt został zgłoszony, ale wydarzenia nie udało się dołączyć: ' +
+        translateDbError(rpcError.message),
+    }
+  }
+
+  const result = rpcResult as { event_id: string; event_status: 'pending' | 'active' }
+  revalidatePath('/admin')
+  revalidatePath('/studio/events')
+  return {
+    facilityId: facilityResult.id,
+    facilityStatus: facilityResult.status,
+    eventStatus: result.event_status,
+  }
+}
+
 async function assertModerationResult(): Promise<string | null> {
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') return 'Brak uprawnień'
@@ -161,7 +265,12 @@ async function assertModerationResult(): Promise<string | null> {
  */
 export async function approveFacility(
   saunaId: string
-): Promise<{ activatedEvents?: number; skippedEvents?: number; error?: string }> {
+): Promise<{
+  activatedEvents?: number
+  skippedEvents?: number
+  approvedParticipations?: number
+  error?: string
+}> {
   const denied = await assertModerationResult()
   if (denied) return { error: denied }
 
@@ -169,39 +278,43 @@ export async function approveFacility(
   const { data, error } = await supabase.rpc('approve_facility_submission', {
     target_sauna_id: saunaId,
   })
-  if (error) return { error: error.message }
+  if (error) return { error: translateDbError(error.message) }
 
   revalidatePath('/admin')
+  revalidatePath('/events')
   revalidatePath(`/sauna/${saunaId}`)
   const result = data as {
     activated_event_ids?: string[]
     skipped_event_ids?: string[]
+    approved_participations?: number
   } | null
   return {
     activatedEvents: result?.activated_event_ids?.length ?? 0,
     skippedEvents: result?.skipped_event_ids?.length ?? 0,
+    approvedParticipations: result?.approved_participations ?? 0,
   }
 }
 
+/**
+ * SP-037B slice 4: rejection goes through the trusted
+ * reject_facility_submission RPC — the pending facility, its
+ * deterministically bundled pending event(s) and their organizer
+ * participations reject atomically; unrelated events are untouched and no
+ * orphaned pending bundle records remain.
+ */
 export async function rejectFacility(
   saunaId: string
-): Promise<{ error?: string }> {
+): Promise<{ rejectedEvents?: number; error?: string }> {
   const denied = await assertModerationResult()
   if (denied) return { error: denied }
 
   const supabase = await createClient()
-  // .select() so an RLS/status mismatch surfaces instead of a silent no-op.
-  const { data, error } = await supabase
-    .from('saunas')
-    .update({ status: 'rejected' })
-    .eq('id', saunaId)
-    .eq('status', 'pending')
-    .select('id')
+  const { data, error } = await supabase.rpc('reject_facility_submission', {
+    target_sauna_id: saunaId,
+  })
+  if (error) return { error: translateDbError(error.message) }
 
-  if (error) return { error: error.message }
-  if (!data || data.length === 0) {
-    return { error: 'Obiekt nie istnieje albo nie oczekuje na moderację' }
-  }
   revalidatePath('/admin')
-  return {}
+  const result = data as { rejected_event_ids?: string[] } | null
+  return { rejectedEvents: result?.rejected_event_ids?.length ?? 0 }
 }

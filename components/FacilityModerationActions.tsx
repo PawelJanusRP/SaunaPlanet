@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { approveFacility, rejectFacility } from '@/app/saunas/actions'
 
@@ -11,25 +12,33 @@ import { approveFacility, rejectFacility } from '@/app/saunas/actions'
  * events — never a bare status update.
  */
 export default function FacilityModerationActions({ saunaId }: { saunaId: string }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   function handleApprove() {
     startTransition(async () => {
       const result = await approveFacility(saunaId)
       if (result.error) {
+        // stale/already-resolved submissions surface here as a clean
+        // message — repaint so the queue reflects reality
         toast.error(result.error)
+        router.refresh()
         return
       }
       if ((result.activatedEvents ?? 0) > 0) {
         toast.success(
-          `Obiekt zatwierdzony · aktywowano eventy: ${result.activatedEvents}` +
+          `Obiekt zatwierdzony · opublikowano eventy: ${result.activatedEvents}` +
+            ((result.approvedParticipations ?? 0) > 0
+              ? ` · organizator dołączył do lineupu (lead)`
+              : '') +
             ((result.skippedEvents ?? 0) > 0
-              ? ` (pominięto: ${result.skippedEvents})`
+              ? ` · pominięto niekwalifikujące się: ${result.skippedEvents}`
               : '')
         )
       } else {
         toast.success('Obiekt zatwierdzony')
       }
+      router.refresh()
     })
   }
 
@@ -38,9 +47,15 @@ export default function FacilityModerationActions({ saunaId }: { saunaId: string
       const result = await rejectFacility(saunaId)
       if (result.error) {
         toast.error(result.error)
+        router.refresh()
         return
       }
-      toast.error('Zgłoszenie odrzucone')
+      toast.error(
+        (result.rejectedEvents ?? 0) > 0
+          ? `Zgłoszenie odrzucone wraz z dołączonym eventem (${result.rejectedEvents})`
+          : 'Zgłoszenie odrzucone'
+      )
+      router.refresh()
     })
   }
 

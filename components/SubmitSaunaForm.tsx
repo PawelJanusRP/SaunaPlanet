@@ -5,9 +5,14 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   submitFacility,
+  submitFacilityWithEvent,
   findSimilarFacilities,
   type SimilarFacility,
 } from '@/app/saunas/actions'
+import BundledEventFields, {
+  EMPTY_BUNDLED_EVENT,
+  type BundledEventDraft,
+} from '@/components/BundledEventFields'
 
 const CATEGORIES = [
   { value: 'public_sauna',   label: 'Sauna publiczna' },
@@ -18,10 +23,12 @@ const CATEGORIES = [
   { value: 'other',          label: 'Inne' },
 ]
 
-export default function SubmitSaunaForm() {
+export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boolean }) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [done, setDone] = useState(false)
+  const [done, setDone] = useState<false | 'facility' | 'bundle'>(false)
+  const [withEvent, setWithEvent] = useState(false)
+  const [eventDraft, setEventDraft] = useState<BundledEventDraft>(EMPTY_BUNDLED_EVENT)
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -67,8 +74,9 @@ export default function SubmitSaunaForm() {
     }
 
     // SP-036: single moderated server-side workflow — no client-side
-    // inserts, no writes to the legacy sauna_submissions table.
-    const result = await submitFacility({
+    // inserts, no writes to the legacy sauna_submissions table. Verified
+    // masters may bundle one event (SP-037B rule A).
+    const facilityInput = {
       name,
       description: description || null,
       city: city || null,
@@ -76,7 +84,20 @@ export default function SubmitSaunaForm() {
       website: website || null,
       latitude: latNum,
       longitude: lngNum,
-    })
+    }
+    const bundling = isMaster && withEvent
+    const result = bundling
+      ? await submitFacilityWithEvent(facilityInput, {
+          title: eventDraft.title,
+          eventDate: eventDraft.eventDate,
+          eventTime: eventDraft.eventTime || null,
+          price: eventDraft.price.trim() || null,
+          description: eventDraft.description.trim() || null,
+          maxParticipants: eventDraft.maxParticipants
+            ? Number(eventDraft.maxParticipants)
+            : null,
+        })
+      : await submitFacility(facilityInput)
 
     setSaving(false)
 
@@ -84,8 +105,13 @@ export default function SubmitSaunaForm() {
       toast.error(result.error)
       return
     }
+    if ('eventError' in result && result.eventError) {
+      toast.error(result.eventError)
+      setDone('facility')
+      return
+    }
 
-    setDone(true)
+    setDone(bundling ? 'bundle' : 'facility')
   }
 
   if (done) {
@@ -94,8 +120,10 @@ export default function SubmitSaunaForm() {
         <div className="mb-4 text-5xl">🎉</div>
         <h2 className="mb-2 text-xl font-bold">Zgłoszenie przyjęte!</h2>
         <p className="mb-6 text-sm text-gray-500">
-          Dziękujemy. Zgłoszenie trafi do moderacji i po zatwierdzeniu sauna pojawi się na mapie.
-          Status znajdziesz poniżej na tej stronie.
+          {done === 'bundle'
+            ? 'Dziękujemy. Obiekt i dołączone wydarzenie trafiły do moderacji — po zatwierdzeniu opublikują się razem, a Ty będziesz organizatorem wydarzenia.'
+            : 'Dziękujemy. Zgłoszenie trafi do moderacji i po zatwierdzeniu sauna pojawi się na mapie.'}
+          {' '}Status znajdziesz poniżej na tej stronie.
         </p>
         <button
           onClick={() => router.refresh()}
@@ -212,6 +240,24 @@ export default function SubmitSaunaForm() {
           </p>
         </div>
       </div>
+
+      {isMaster && (
+        <div className="mt-4">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={withEvent}
+              onChange={(e) => setWithEvent(e.target.checked)}
+            />
+            🔥 Dodaj wydarzenie do tego zgłoszenia (saunamistrz)
+          </label>
+          {withEvent && (
+            <div className="mt-2">
+              <BundledEventFields value={eventDraft} onChange={setEventDraft} />
+            </div>
+          )}
+        </div>
+      )}
 
       {duplicates !== null && duplicates.length > 0 && (
         <div className="mt-4 rounded-xl border border-yellow-300 bg-yellow-50 p-3">
