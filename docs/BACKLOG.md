@@ -16,6 +16,17 @@ system ocen (gwiazdki dla saun, saunamistrzów, eventów)
 - kliknięcie na mapę otwiera formularz zgłoszenia z automatycznie ustawioną lokalizacją
 - możliwość dodania zdjęć w formularzu zgłoszenia
 
+# map — small improvements
+
+- **Map satellite fallback for approved event masters without an avatar**
+  (recorded 2026-07-19, SP-037B E2E): today satellites render only masters
+  with `avatar_url` set (documented rule — KNOWN_ISSUES "Sauna Master
+  Satellite System"; `SaunaMap.tsx` filters on it, while the map RPC and
+  the public lineup already include avatar-less masters). Intended future
+  behavior: render a neutral fallback satellite (placeholder circle)
+  instead of hiding the master entirely. Not implemented — SaunaMap is a
+  protected area; do it as a deliberate small change with visual review.
+
 # kalendarz eventów użytkownika
 - użytkownik może dodać event do swojego kalendarza
 - widok "moje eventy" z listą nadchodzących eventów
