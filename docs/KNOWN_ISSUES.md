@@ -16,6 +16,23 @@ Many systems were implemented incrementally and have already been debugged.
 
 # SECURITY BACKLOG (high priority)
 
+## sauna_events.created_by may expose an auth-user UUID via SELECT *
+
+Status: Open — recorded 2026-07-20 during the SP-037B bundled-RPC review;
+deliberately NOT fixed in that slice.
+
+Active `sauna_events` rows are publicly selectable and carry `created_by`
+(a raw `auth.users` UUID, populated since SP-036 for audit and used by the
+SP-037B creator-visibility SELECT arm). RLS is row-level, not
+column-level, so PostgREST `select=*` returns the creator UUID of every
+active event to anonymous callers. Same exposure class as the
+`master_affiliations` entry below; candidate fixes are also the same
+(public view without audit columns, or a separate decision-log), with the
+extra constraint that the SP-037B SELECT policy relies on `created_by`
+for organizer visibility — a fix must preserve that arm.
+
+---
+
 ## master_affiliations exposes auth-user UUIDs on public rows
 
 Status: Open — recorded during the 2026-07-19 SP-037 review; deliberately

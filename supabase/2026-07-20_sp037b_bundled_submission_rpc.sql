@@ -33,6 +33,23 @@
 --     later edits still flows only from the saunas UPDATE policy
 --     (creator while pending) and staff/moderation rules.
 --
+-- FINAL CONFIRMATION (review 2026-07-20):
+--   1. Identity derives ONLY from auth.uid() → the caller's approved
+--      sauna_masters row (v_master). The signature carries NO user ID,
+--      creator ID, organizer ID or participation-master ID — every
+--      identity column is assigned internally (created_by := auth.uid(),
+--      organizer_master_id := v_master, master_id := v_master).
+--   2. Every workflow value is a literal fixed inside the function:
+--      facility 'pending', event 'pending', participation 'pending',
+--      bundled_with_submission = true, initiated_by = 'master'; role and
+--      approved_at are omitted from the participation column list (NULL)
+--      and the INSERT normalization trigger independently forces both to
+--      NULL for a pending master-initiated row.
+--   4. Final sauna_events SELECT contract (§2): anon/public → active
+--      only; creator (created_by = auth.uid()) → own rows in every
+--      status; event staff (is_event_staff(id)) → all events of their
+--      managed facilities; platform moderation → all rows.
+--
 -- §2 — sauna_events SELECT tightening (required by the invisibility rule):
 --   replaces events_select USING(true) with
 --     active  → public,
@@ -216,13 +233,43 @@ commit;
 --   participation initiated_by='master', role NULL, approved_at NULL.
 --   Then verify NO new sauna_managers or master_affiliations rows exist
 --   for that master/sauna (counts unchanged).
--- B6 (session: verified master) — forced failure atomicity:
---   a) event date in the past → ERROR; count of own pending saunas
---      UNCHANGED (no facility-only orphan);
---   b) empty event title → same;
---   (any raise inside the body — including the participation insert —
---   rolls back the whole transaction; B6a empirically demonstrates the
---   rollback path through the same mechanism.)
+-- B6 — REAL post-insert rollback proof (SQL Editor, one transaction that
+--   is fully rolled back at the end; substitute <MASTER_USER_ID> with the
+--   auth.users id of an approved master, e.g. the test master account):
+--
+--   begin;
+--   -- impersonate the master so auth.uid() resolves inside the RPC
+--   select set_config('request.jwt.claims',
+--     '{"sub":"<MASTER_USER_ID>","role":"authenticated"}', true);
+--
+--   -- B6a: sabotage the PARTICIPATION insert (fires AFTER facility and
+--   -- event were successfully inserted)
+--   create function public._b6_boom() returns trigger
+--     language plpgsql as $b6$
+--     begin raise exception 'B6 forced participation failure'; end $b6$;
+--   create trigger _b6_boom before insert on public.sauna_event_masters
+--     for each row execute function public._b6_boom();
+--
+--   savepoint b6;
+--   select public.submit_facility_with_master_event(
+--     'B6 Test Sauna', 'B6 Test Event', now() + interval '3 days');
+--   -- EXPECT: ERROR 'B6 forced participation failure'
+--   rollback to savepoint b6;
+--
+--   select count(*) from public.saunas       where name  = 'B6 Test Sauna';
+--   select count(*) from public.sauna_events where title = 'B6 Test Event';
+--   -- EXPECT: 0 and 0 — facility AND event created before the failure
+--   -- were rolled back with it (no partial bundle remains)
+--
+--   -- B6b (variant): drop the trigger above, recreate it on
+--   -- public.sauna_events instead → EXPECT the same error pattern and
+--   -- saunas count 0 (facility-only orphan impossible)
+--
+--   rollback;  -- removes the sabotage trigger/function and every trace
+--
+--   (A validation error before the first insert is deliberately NOT used
+--   as evidence here — the sabotage trigger guarantees the failure occurs
+--   after inserts have started.)
 -- B7 (session: verified master): with 5 own pending submissions → call →
 --   cap trigger error ('Masz już 5 zgłoszeń...'); NOTHING created; two
 --   parallel calls at 4 pending → at most one succeeds (advisory lock).
