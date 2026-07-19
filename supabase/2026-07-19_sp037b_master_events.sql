@@ -37,17 +37,29 @@
 --                              reject_facility_submission (§8) rejects
 --                              bundled content deterministically.
 --
--- (*) MODERATOR SEMANTICS — REVIEW FLAG: the guard's resolver checks widen
---     from is_admin() (rev 4) to is_platform_moderator(). This does NOT
---     broaden API authorization: the UPDATE policies (is_admin OR
---     is_event_staff OR invited-master arm) remain the row-access gate and
---     still deny non-admin moderators, exactly as rev 4 required. The
---     widening is needed so the facility-approval RPCs — which SP-036
---     grants to moderators by product rule — can atomically resolve the
---     bundled organizer pairs inside SECURITY DEFINER context (where RLS
---     is bypassed and the guard is the only check). Net effect: non-admin
---     moderators resolve participation ONLY through the self-checking
---     facility RPCs, never through generic UPDATE.
+-- (*) MODERATOR EXCEPTION CONTRACT (final, per review 2026-07-19): the
+--     ordinary resolver contract stays NARROW — 'master' → event staff or
+--     admin; 'facility' → invited master or admin; NULL → admin operator
+--     rows. A platform moderator may resolve a participation ONLY under
+--     the bundled facility-submission exception, which requires ALL of:
+--       * caller is_platform_moderator();
+--       * the row's event has bundled_with_submission = true;
+--       * that event is STILL 'pending';
+--       * the event's facility is STILL the exact 'pending' submission
+--         being moderated;
+--       * organizer pair: sauna_events.organizer_master_id =
+--         sauna_event_masters.master_id;
+--       * the participation itself is still 'pending' (the only guarded
+--         transitions are pending → approved / rejected anyway).
+--     The checks are purely relational — no transaction-local marker is
+--     used, because the relational contract is complete on its own and
+--     the policy layer already denies non-admin moderators every generic
+--     UPDATE path. Unrelated events sharing the same sauna_id can never
+--     match (the exception is row-scoped through the row's own event_id
+--     and the bundled/pending predicates). To keep these relational facts
+--     true at guard time, the facility RPCs resolve participations FIRST,
+--     then events, then the facility row — all inside one transaction
+--     with the facility row locked FOR UPDATE.
 --
 -- EDGE-CASE COVERAGE (Paweł 2026-07-19): (1) routing decided inside the
 -- RPC transaction, never client-supplied; (2) is_sauna_managed counts
@@ -127,19 +139,35 @@ begin
 
   if new.status is distinct from old.status then
     if old.status = 'pending' and new.status in ('approved', 'rejected') then
-      -- resolver depends on the handshake direction (edge case 6);
-      -- is_platform_moderator (not is_admin) — see the header REVIEW FLAG:
-      -- policies still gate API access, this only serves the trusted RPCs
+      -- resolver depends on the handshake direction (edge case 6); the
+      -- ordinary contract stays as narrow as rev 4 (staff/admin resp.
+      -- invited-master/admin) — see the header MODERATOR EXCEPTION
+      -- CONTRACT for the single, fully relational bundled exception
       if old.initiated_by = 'facility' then
-        if not (public.is_master_owner(old.master_id)
-                or public.is_platform_moderator()) then
+        if not (public.is_master_owner(old.master_id) or public.is_admin()) then
           raise exception
-            'Zaproszenie rozstrzyga zaproszony saunamistrz lub moderacja';
+            'Zaproszenie rozstrzyga zaproszony saunamistrz lub administrator';
         end if;
       else
-        if not (public.is_event_staff(old.event_id)
-                or public.is_platform_moderator()) then
-          raise exception 'Zgłoszenie rozstrzyga obsada obiektu lub moderacja';
+        if not (
+          public.is_event_staff(old.event_id)
+          or public.is_admin()
+          -- bundled facility-submission moderation exception: every
+          -- relational fact below must hold simultaneously; the facility
+          -- RPCs keep them true by resolving participations before events
+          -- and the facility row
+          or (public.is_platform_moderator()
+              and exists (
+                select 1
+                from public.sauna_events e
+                join public.saunas s on s.id = e.sauna_id
+                where e.id = old.event_id
+                  and e.bundled_with_submission = true
+                  and e.status = 'pending'
+                  and e.organizer_master_id = old.master_id
+                  and s.status = 'pending'))
+        ) then
+          raise exception 'Zgłoszenie rozstrzyga obsada obiektu lub administrator';
         end if;
       end if;
       if new.status = 'approved' then
@@ -239,6 +267,12 @@ create policy event_masters_delete_invitation on public.sauna_event_masters
 --    Routing decided inside this transaction (edge cases 1–2); returns
 --    explicit statuses (edge case 10).
 -- ---------------------------------------------------------------------------
+-- Organizer role contract (review 2026-07-19): when the pair becomes
+-- active/approved immediately (unmanaged facility) the trusted role is a
+-- FIXED 'lead' — not caller-chosen. For managed proposals the pending
+-- participation stays role-less; event staff picks the role during
+-- approval (resolve_master_event). Bundled activation likewise assigns
+-- the trusted 'lead' (§7).
 create or replace function public.create_master_event(
   p_sauna_id uuid,
   p_title text,
@@ -247,7 +281,6 @@ create or replace function public.create_master_event(
   p_price text default null,
   p_description text default null,
   p_max_participants integer default null,
-  p_role text default 'lead',
   p_bundled boolean default false
 ) returns jsonb as $$
 declare
@@ -268,9 +301,6 @@ begin
   if p_event_date is null
      or p_event_date < pg_catalog.date_trunc('day', pg_catalog.now()) then
     raise exception 'Wydarzenie musi mieć dzisiejszą lub przyszłą datę';
-  end if;
-  if p_role is null or p_role not in ('lead', 'assistant', 'guest') then
-    raise exception 'Rola organizatora: lead, assistant lub guest';
   end if;
   if p_max_participants is not null and p_max_participants < 1 then
     raise exception 'Limit miejsc musi być większy od zera';
@@ -314,7 +344,7 @@ begin
     (event_id, master_id, status, role, initiated_by)
   values
     (v_event_id, v_master, v_part_status,
-     case when v_part_status = 'approved' then p_role else null end,
+     case when v_part_status = 'approved' then 'lead' else null end,
      'master');
 
   return pg_catalog.jsonb_build_object(
@@ -324,10 +354,10 @@ begin
 end $$ language plpgsql security definer set search_path = '';
 
 revoke all on function public.create_master_event(
-  uuid, text, timestamptz, time, text, text, integer, text, boolean)
+  uuid, text, timestamptz, time, text, text, integer, boolean)
   from public, anon;
 grant execute on function public.create_master_event(
-  uuid, text, timestamptz, time, text, text, integer, text, boolean)
+  uuid, text, timestamptz, time, text, text, integer, boolean)
   to authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -413,9 +443,17 @@ grant execute on function public.resolve_master_event(uuid, text, text)
 --    organizers' pending participation pairs (rule A). Deterministic
 --    bundled scope only (edge case 9); explicit statuses (edge case 10).
 -- ---------------------------------------------------------------------------
+-- Operation order matters (moderator exception contract): the facility
+-- row is validated and LOCKED first, then organizer participations are
+-- approved WHILE the event and facility are still 'pending' (so the
+-- guard's relational exception holds), then events activate, then the
+-- facility itself. One transaction; concurrent approvals serialize on
+-- the row lock.
 create or replace function public.approve_facility_submission(target_sauna_id uuid)
 returns jsonb as $$
 declare
+  v_status text;
+  v_eligible uuid[];
   v_activated uuid[];
   v_skipped uuid[];
   v_participations integer := 0;
@@ -424,36 +462,47 @@ begin
     raise exception 'Zgłoszenia obiektów zatwierdza tylko moderacja';
   end if;
 
-  update public.saunas
-    set status = 'active'
-    where id = target_sauna_id and status = 'pending';
-  if not found then
+  select status into v_status
+    from public.saunas where id = target_sauna_id for update;
+  if v_status is null or v_status <> 'pending' then
     raise exception 'Obiekt nie istnieje albo nie oczekuje na moderację';
   end if;
 
-  with activated as (
-    update public.sauna_events e
-      set status = 'active'
-      where e.sauna_id = target_sauna_id
-        and e.bundled_with_submission = true
-        and e.status = 'pending'
-        and e.event_date >= pg_catalog.date_trunc('day', pg_catalog.now())
-        and exists (select 1 from public.sauna_masters m
-                    where m.id = e.organizer_master_id
-                      and m.status = 'approved')
-      returning e.id
-  )
-  select coalesce(array_agg(id), '{}') into v_activated from activated;
+  -- eligible bundled events, computed once and reused for both updates
+  select coalesce(array_agg(e.id), '{}') into v_eligible
+  from public.sauna_events e
+  where e.sauna_id = target_sauna_id
+    and e.bundled_with_submission = true
+    and e.status = 'pending'
+    and e.event_date >= pg_catalog.date_trunc('day', pg_catalog.now())
+    and exists (select 1 from public.sauna_masters m
+                where m.id = e.organizer_master_id
+                  and m.status = 'approved');
 
+  -- 1) organizer pairs first — trusted role 'lead' (role contract)
   update public.sauna_event_masters p
      set status = 'approved',
-         role = coalesce(p.role, 'lead')
+         role = 'lead'
     from public.sauna_events e
-   where p.event_id = any(v_activated)
+   where p.event_id = any(v_eligible)
      and e.id = p.event_id
      and p.master_id = e.organizer_master_id
      and p.status = 'pending';
   get diagnostics v_participations = row_count;
+
+  -- 2) events
+  with activated as (
+    update public.sauna_events e
+      set status = 'active'
+      where e.id = any(v_eligible)
+      returning e.id
+  )
+  select coalesce(array_agg(id), '{}') into v_activated from activated;
+
+  -- 3) facility last
+  update public.saunas
+    set status = 'active'
+    where id = target_sauna_id;
 
   select coalesce(array_agg(e.id), '{}') into v_skipped
   from public.sauna_events e
@@ -475,47 +524,56 @@ end $$ language plpgsql security definer set search_path = '';
 --    deterministically, ONLY its bundled pending events + their organizer
 --    pairs (closes the orphaned-bundled gap; edge cases 9–10).
 -- ---------------------------------------------------------------------------
+-- Same operation order as approval: lock facility → reject organizer
+-- pairs while everything is still 'pending' (guard exception holds) →
+-- reject bundled events → reject the facility. Deterministic bundled
+-- scope only (edge case 9).
 create or replace function public.reject_facility_submission(target_sauna_id uuid)
 returns jsonb as $$
 declare
-  v_rejected uuid[];
+  v_status text;
+  v_bundled uuid[];
   v_participations integer := 0;
 begin
   if not public.is_platform_moderator() then
     raise exception 'Zgłoszenia obiektów odrzuca tylko moderacja';
   end if;
 
-  update public.saunas
-    set status = 'rejected'
-    where id = target_sauna_id and status = 'pending';
-  if not found then
+  select status into v_status
+    from public.saunas where id = target_sauna_id for update;
+  if v_status is null or v_status <> 'pending' then
     raise exception 'Obiekt nie istnieje albo nie oczekuje na moderację';
   end if;
 
-  with rejected as (
-    update public.sauna_events e
-      set status = 'rejected'
-      where e.sauna_id = target_sauna_id
-        and e.bundled_with_submission = true
-        and e.status = 'pending'
-      returning e.id, e.organizer_master_id
-  )
-  , parts as (
-    update public.sauna_event_masters p
-       set status = 'rejected'
-      from rejected r
-     where p.event_id = r.id
-       and p.master_id = r.organizer_master_id
-       and p.status = 'pending'
-    returning p.id
-  )
-  select coalesce((select array_agg(id) from rejected), '{}'),
-         coalesce((select count(*) from parts), 0)
-    into v_rejected, v_participations;
+  select coalesce(array_agg(e.id), '{}') into v_bundled
+  from public.sauna_events e
+  where e.sauna_id = target_sauna_id
+    and e.bundled_with_submission = true
+    and e.status = 'pending';
+
+  -- 1) organizer pairs first
+  update public.sauna_event_masters p
+     set status = 'rejected'
+    from public.sauna_events e
+   where p.event_id = any(v_bundled)
+     and e.id = p.event_id
+     and p.master_id = e.organizer_master_id
+     and p.status = 'pending';
+  get diagnostics v_participations = row_count;
+
+  -- 2) bundled events
+  update public.sauna_events
+     set status = 'rejected'
+   where id = any(v_bundled);
+
+  -- 3) facility last
+  update public.saunas
+    set status = 'rejected'
+    where id = target_sauna_id;
 
   return pg_catalog.jsonb_build_object(
     'facility_status', 'rejected',
-    'rejected_event_ids', pg_catalog.to_jsonb(v_rejected),
+    'rejected_event_ids', pg_catalog.to_jsonb(v_bundled),
     'rejected_participations', v_participations);
 end $$ language plpgsql security definer set search_path = '';
 
@@ -565,4 +623,31 @@ commit;
 --   resolution sides, invitation role frozen, concurrent double-resolve
 --   (second gets 'już rozstrzygnięta'), moderator-without-admin denied at
 --   the policy layer for generic UPDATE.
+--
+-- M-SERIES — MODERATOR EXCEPTION CONTRACT (requires a NON-ADMIN moderator
+-- session [role='moderator'] plus a test master + pending facility with a
+-- bundled event; run via the app or API with that JWT):
+-- M1. Moderator calls approve_facility_submission on the pending facility
+--     → succeeds; response lists the activated event and
+--     approved_participations = 1.
+-- M2. The SAME moderator attempts a generic resolution of an ordinary
+--     'master' participation request (PATCH sauna_event_masters) →
+--     0 rows / refused at the POLICY layer (no UPDATE policy matches).
+-- M3. The same moderator attempts to resolve a 'facility' invitation →
+--     0 rows / refused (policy layer again).
+-- M4. An unrelated event with the SAME sauna_id (non-bundled, or created
+--     after approval) is untouched by M1 — verify its status did not
+--     change.
+-- M5. After M1 the bundled organizer row is status='approved' with
+--     role='lead' and a trusted approved_at (verify by SELECT).
+-- M6. reject_facility_submission on a second pending facility with a
+--     bundled event → facility rejected, ONLY the bundled event and its
+--     organizer pair rejected; response lists exactly them.
+-- M7. Admin operator workflows unchanged: direct INSERT approved with a
+--     role still works (normalization assigns approved_at); admin DELETE
+--     still works.
+-- M8. Rev-4 matrix regression: staff resolves an ordinary 'master' request
+--     for their own event (role required); a master still cannot
+--     self-approve; an invited master (not staff, not admin) can resolve
+--     ONLY their own 'facility' invitation.
 -- ============================================================================

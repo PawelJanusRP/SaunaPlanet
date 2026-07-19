@@ -18,7 +18,7 @@ begin;
 
 -- 1. Drop rev-B RPCs; restore the SP-036 approve_facility_submission body
 drop function if exists public.create_master_event(
-  uuid, text, timestamptz, time, text, text, integer, text, boolean);
+  uuid, text, timestamptz, time, text, text, integer, boolean);
 drop function if exists public.resolve_master_event(uuid, text, text);
 drop function if exists public.reject_facility_submission(uuid);
 
