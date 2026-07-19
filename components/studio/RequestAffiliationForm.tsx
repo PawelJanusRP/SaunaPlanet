@@ -3,8 +3,9 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { requestAffiliation } from '@/app/(main)/studio/actions'
+import FacilityCombobox, { type FacilityOption } from '@/components/FacilityCombobox'
 
-type SaunaOption = { id: string; name: string; city: string | null }
+type SaunaOption = FacilityOption
 
 /** Master-side start of the affiliation handshake (W-16). */
 export default function RequestAffiliationForm({ saunas }: { saunas: SaunaOption[] }) {
@@ -30,19 +31,14 @@ export default function RequestAffiliationForm({ saunas }: { saunas: SaunaOption
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
-      <select
-        value={saunaId}
-        onChange={(e) => setSaunaId(e.target.value)}
-        className="flex-1 rounded-xl border bg-white p-2.5 text-sm"
-        aria-label="Obiekt do afiliacji"
-      >
-        <option value="">— Wybierz obiekt —</option>
-        {saunas.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}{s.city ? ` · ${s.city}` : ''}
-          </option>
-        ))}
-      </select>
+      <div className="flex-1">
+        <FacilityCombobox
+          saunas={saunas}
+          value={saunaId || null}
+          onChange={(id) => setSaunaId(id ?? '')}
+          ariaLabel="Obiekt do afiliacji"
+        />
+      </div>
       <button
         type="submit"
         disabled={isPending}

@@ -30,17 +30,28 @@ function rank(option: FacilityOption, q: string): number {
 }
 
 /**
- * Searchable facility combobox — filters the dataset the page already
- * loaded (no extra API); the selected value stays the facility ID.
+ * Searchable combobox — filters a dataset the page already loaded (no
+ * extra API); the selected value stays the option ID. Built for facility
+ * pickers (name — city, city grouping) but reusable for any {id, name,
+ * city?} option list (e.g. master pickers pass city: null and disable
+ * grouping).
  */
 export default function FacilityCombobox({
   saunas,
   value,
   onChange,
+  placeholder = 'Wpisz nazwę sauny lub miasto',
+  emptyLabel = 'Nie znaleziono obiektu',
+  groupWhenEmpty = true,
+  ariaLabel,
 }: {
   saunas: FacilityOption[]
   value: string | null
   onChange: (id: string | null) => void
+  placeholder?: string
+  emptyLabel?: string
+  groupWhenEmpty?: boolean
+  ariaLabel?: string
 }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -67,7 +78,7 @@ export default function FacilityCombobox({
   }, [saunas, query])
 
   const visible = results.slice(0, VISIBLE_LIMIT)
-  const grouped = fold(query.trim()) === ''
+  const grouped = groupWhenEmpty && fold(query.trim()) === ''
 
   function select(option: FacilityOption) {
     onChange(option.id)
@@ -127,8 +138,9 @@ export default function FacilityCombobox({
         role="combobox"
         aria-expanded={open}
         aria-autocomplete="list"
+        aria-label={ariaLabel}
         className="w-full rounded-xl border p-3 text-sm"
-        placeholder="Wpisz nazwę sauny lub miasto"
+        placeholder={placeholder}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value)
@@ -146,7 +158,7 @@ export default function FacilityCombobox({
           className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border bg-white shadow-lg"
         >
           {visible.length === 0 ? (
-            <li className="px-3 py-2.5 text-sm text-gray-500">Nie znaleziono obiektu</li>
+            <li className="px-3 py-2.5 text-sm text-gray-500">{emptyLabel}</li>
           ) : (
             visible.map((s, i) => {
               const cityHeader =

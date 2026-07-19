@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { inviteMaster } from '@/app/(main)/studio/actions'
+import FacilityCombobox from '@/components/FacilityCombobox'
 
 type MasterOption = { id: string; name: string }
 
@@ -42,17 +43,17 @@ export default function InviteMasterForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
-      <select
-        value={masterId}
-        onChange={(e) => setMasterId(e.target.value)}
-        className="flex-1 rounded-xl border bg-white p-2.5 text-sm"
-        aria-label="Saunamistrz do zaproszenia"
-      >
-        <option value="">— Wybierz saunamistrza —</option>
-        {masters.map((m) => (
-          <option key={m.id} value={m.id}>{m.name}</option>
-        ))}
-      </select>
+      <div className="flex-1">
+        <FacilityCombobox
+          saunas={masters.map((m) => ({ id: m.id, name: m.name, city: null }))}
+          value={masterId || null}
+          onChange={(id) => setMasterId(id ?? '')}
+          placeholder="Wpisz imię saunamistrza"
+          emptyLabel="Nie znaleziono saunamistrza"
+          groupWhenEmpty={false}
+          ariaLabel="Saunamistrz do zaproszenia"
+        />
+      </div>
       <button
         type="submit"
         disabled={isPending}
