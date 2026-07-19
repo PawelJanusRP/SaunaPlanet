@@ -42,7 +42,7 @@ const OPEN_SUBMISSION_LIMIT = 5
  */
 function translateDbError(raw: string): string {
   // own trigger/RPC messages are user-oriented Polish — pass them through
-  if (/oczekując|moderacj|nie istnieje|Tylko zatwierdzony|musi mieć|wymaga|dołączony|można tworzyć|Limit miejsc/.test(raw)) {
+  if (/oczekując|moderacj|nie istnieje|Tylko zatwierdzony|musi mieć|wymaga|dołączony|można tworzyć|Limit miejsc|Podaj |Współrzędne/.test(raw)) {
     return raw
   }
   if (raw.includes('row-level security') || raw.includes('permission denied')) {
@@ -162,93 +162,52 @@ export type BundledEventInput = {
 
 /**
  * SP-037B slice 4 (rule A): a verified master submits a facility together
- * with one bundled event and their own organizer participation. The
- * facility goes through the standard moderated submitFacility path; the
- * event + organizer pair are created by the trusted create_master_event
- * RPC (p_bundled routing, statuses decided in the database transaction) —
- * no client-side inserts, no client-supplied statuses/roles/flags.
- *
- * The two steps are not one database transaction (the deployed RPC
- * contract composes them); event inputs are pre-validated first so a
- * facility-without-event outcome is limited to pathological failures and
- * is reported explicitly via eventError.
+ * with one bundled event and their own organizer participation — through
+ * the trusted submit_facility_with_master_event RPC, which creates the
+ * WHOLE bundle in one database transaction or nothing at all. There is no
+ * partial outcome: one clear success or one clear failure. The RPC
+ * self-authorizes (approved master only), validates every field, reuses
+ * the five-pending cap with its advisory lock, fixes all statuses/flags
+ * internally and never trusts client-supplied identity or routing.
  */
 export async function submitFacilityWithEvent(
   facility: FacilitySubmissionInput,
   event: BundledEventInput
 ): Promise<{
   facilityId?: string
-  facilityStatus?: 'pending' | 'active'
-  eventStatus?: 'pending' | 'active'
+  facilityStatus?: 'pending'
+  eventStatus?: 'pending'
   error?: string
-  eventError?: string
 }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Musisz być zalogowany' }
-
-  // Bundling is master-only (ordinary users keep facility-only submission)
-  const { data: ownMaster } = await supabase
-    .from('sauna_masters')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('status', 'approved')
-    .maybeSingle()
-  if (!ownMaster) {
-    return { error: 'Wydarzenie do zgłoszenia mogą dołączyć tylko zatwierdzeni saunamistrzowie' }
-  }
-
-  // Pre-validate the event before creating the facility, so the bundle
-  // cannot fail on trivially-checkable input after the facility exists.
-  if (!event.title.trim()) return { error: 'Podaj nazwę wydarzenia' }
-  if (!event.eventDate) return { error: 'Podaj datę wydarzenia' }
-  const todayIso = new Date().toISOString().split('T')[0]
-  if (event.eventDate < todayIso) {
-    return { error: 'Wydarzenie musi mieć dzisiejszą lub przyszłą datę' }
-  }
-  if (event.maxParticipants !== null && event.maxParticipants < 1) {
-    return { error: 'Limit miejsc musi być większy od zera' }
-  }
-
-  const facilityResult = await submitFacility(facility)
-  if (facilityResult.error || !facilityResult.id) {
-    return { error: facilityResult.error ?? 'Nie udało się zgłosić sauny' }
-  }
-
-  const { data: rpcResult, error: rpcError } = await supabase.rpc(
-    'create_master_event',
+  const { data, error } = await supabase.rpc(
+    'submit_facility_with_master_event',
     {
-      p_sauna_id: facilityResult.id,
-      p_title: event.title,
+      p_name: facility.name,
+      p_event_title: event.title,
       p_event_date: event.eventDate,
+      p_description: facility.description,
+      p_category: facility.category,
+      p_city: facility.city,
+      p_website: facility.website ?? null,
+      p_latitude: facility.latitude,
+      p_longitude: facility.longitude,
       p_event_time: event.eventTime,
-      p_price: event.price,
-      p_description: event.description,
-      p_max_participants: event.maxParticipants,
-      // moderation submitting via this flow gets an active facility, so the
-      // bundle flag must follow the ACTUAL facility status from the server
-      p_bundled: facilityResult.status === 'pending',
+      p_event_price: event.price,
+      p_event_description: event.description,
+      p_event_max_participants: event.maxParticipants,
     }
   )
 
-  if (rpcError) {
-    console.error('bundled event creation failed:', rpcError.message)
-    return {
-      facilityId: facilityResult.id,
-      facilityStatus: facilityResult.status,
-      eventError:
-        'Obiekt został zgłoszony, ale wydarzenia nie udało się dołączyć: ' +
-        translateDbError(rpcError.message),
-    }
-  }
+  if (error) return { error: translateDbError(error.message) }
 
-  const result = rpcResult as { event_id: string; event_status: 'pending' | 'active' }
+  const result = data as { facility_id: string; event_id: string }
   revalidatePath('/admin')
   revalidatePath('/studio/events')
   return {
-    facilityId: facilityResult.id,
-    facilityStatus: facilityResult.status,
-    eventStatus: result.event_status,
+    facilityId: result.facility_id,
+    facilityStatus: 'pending',
+    eventStatus: 'pending',
   }
 }
 

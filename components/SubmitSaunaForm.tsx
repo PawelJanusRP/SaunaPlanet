@@ -105,12 +105,9 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
       toast.error(result.error)
       return
     }
-    if ('eventError' in result && result.eventError) {
-      toast.error(result.eventError)
-      setDone('facility')
-      return
-    }
 
+    // atomic bundle (SP-037B): either the whole submission succeeded or an
+    // error was returned above — no partial outcomes exist
     setDone(bundling ? 'bundle' : 'facility')
   }
 

@@ -162,8 +162,8 @@ export default function AddItemForm({
       let facilityId: string | undefined
       let facilityStatus: 'pending' | 'active' | undefined
       let errorMsg: string | undefined
-      let eventError: string | undefined
       if (bundling) {
+        // atomic bundle: whole submission succeeds or nothing is created
         const r = await submitFacilityWithEvent(facilityInput, {
           title: eventDraft.title,
           eventDate: eventDraft.eventDate,
@@ -177,7 +177,6 @@ export default function AddItemForm({
         facilityId = r.facilityId
         facilityStatus = r.facilityStatus
         errorMsg = r.error
-        eventError = r.eventError
       } else {
         const r = await submitFacility(facilityInput)
         facilityId = r.id
@@ -189,9 +188,6 @@ export default function AddItemForm({
         setLoading(false)
         return
       }
-      if (eventError) {
-        toast.error(eventError)
-      }
 
       try {
         await uploadPhoto(facilityId)
@@ -202,7 +198,7 @@ export default function AddItemForm({
 
       if (facilityStatus === 'active') {
         toast.success('Dodano saunę')
-      } else if (bundling && !eventError) {
+      } else if (bundling) {
         toast.success(
           'Zgłoszenie przyjęte! Obiekt i wydarzenie trafiły do moderacji — po zatwierdzeniu opublikują się razem, a Ty będziesz organizatorem.'
         )
