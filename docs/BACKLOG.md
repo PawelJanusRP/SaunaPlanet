@@ -16,6 +16,16 @@ system ocen (gwiazdki dla saun, saunamistrzów, eventów)
 - kliknięcie na mapę otwiera formularz zgłoszenia z automatycznie ustawioną lokalizacją
 - możliwość dodania zdjęć w formularzu zgłoszenia
 
+# workspace — small improvements
+
+- **ParticipationModerationActions should refresh the current route after
+  resolution**, matching the SP-037B proposal-queue freshness pattern
+  (`EventProposalActions` calls `router.refresh()` on success and on
+  stale-error; the older SP-037 request queue still relies on
+  `revalidatePath` alone, which does not repaint the open route — same
+  staleness class as the R1 defect). One-line follow-up, recorded
+  2026-07-19.
+
 # map — small improvements
 
 - **Map satellite fallback for approved event masters without an avatar**
