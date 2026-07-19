@@ -97,10 +97,53 @@ function revalidateEventSurfaces(eventId: string, saunaId: string) {
 export async function createEvent(
   saunaId: string,
   data: EventFormData
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; status?: 'active' | 'pending' }> {
   try {
     const supabase = await createClient()
-    await assertCanManageSaunaEvents(supabase, saunaId)
+
+    try {
+      await assertCanManageSaunaEvents(supabase, saunaId)
+    } catch (staffError) {
+      // SP-037B: a verified master reaching this legacy entry point (map
+      // AddEventModal) is routed to the trusted create_master_event RPC —
+      // managed/unmanaged routing stays inside the database transaction
+      // and the staff-only refusal no longer dead-ends masters. Staff and
+      // admin authorization above is unchanged; non-masters still get the
+      // original refusal.
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw staffError
+      const { data: ownMaster } = await supabase
+        .from('sauna_masters')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'approved')
+        .maybeSingle()
+      if (!ownMaster) throw staffError
+
+      const row = eventRowFromForm(data)
+      const { data: rpcResult, error: rpcError } = await supabase.rpc(
+        'create_master_event',
+        {
+          p_sauna_id: saunaId,
+          p_title: row.title,
+          p_event_date: row.event_date,
+          p_event_time: row.event_time,
+          p_price: row.price,
+          p_description: row.description,
+          p_max_participants:
+            'max_participants' in row ? row.max_participants : null,
+        }
+      )
+      if (rpcError) throw new Error(rpcError.message)
+
+      const result = rpcResult as {
+        event_id: string
+        event_status: 'active' | 'pending'
+      }
+      revalidateEventSurfaces(result.event_id, saunaId)
+      revalidatePath('/studio/events')
+      return { status: result.event_status }
+    }
 
     const { data: created, error } = await supabase
       .from('sauna_events')
@@ -110,7 +153,7 @@ export async function createEvent(
 
     if (error) throw new Error(error.message)
     revalidateEventSurfaces(created.id, saunaId)
-    return {}
+    return { status: 'active' }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Nie udało się dodać eventu' }
   }

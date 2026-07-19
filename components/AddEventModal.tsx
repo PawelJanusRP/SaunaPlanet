@@ -40,6 +40,7 @@ export default function AddEventModal({
 
     setLoading(true)
 
+    let createdStatus: 'active' | 'pending' | undefined
     try {
       const result = await createEvent(saunaId, {
         title,
@@ -54,6 +55,7 @@ export default function AddEventModal({
         toast.error(result.error)
         return
       }
+      createdStatus = result?.status
     } catch (e) {
       // Only unexpected transport failures land here — expected errors come
       // back as result.error (prod strips thrown server-action messages).
@@ -64,7 +66,15 @@ export default function AddEventModal({
     }
 
     setLoading(false)
-    toast.success('Dodano event')
+    // Routing feedback from the action result (SP-037B): masters at
+    // managed facilities create a pending proposal, not a live event.
+    if (createdStatus === 'pending') {
+      toast.success(
+        'Propozycja wysłana — obiekt ma managera, więc wydarzenie i Twój udział czekają na jego akceptację.'
+      )
+    } else {
+      toast.success('Dodano event')
+    }
     await onAdded()
     onClose()
   }
