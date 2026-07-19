@@ -57,10 +57,17 @@ export async function requestEventParticipation(
   if (own.error || !own.masterId) return { error: own.error }
 
   // RLS independently enforces: pending-only, role NULL, event active and
-  // not past, one open request per pair (partial unique index).
+  // not past, one open request per pair (partial unique index). Since the
+  // SP-037B migration the request policy also requires the handshake
+  // direction to be explicit: initiated_by = 'master'.
   const { error } = await supabase
     .from('sauna_event_masters')
-    .insert({ event_id: eventId, master_id: own.masterId, status: 'pending' })
+    .insert({
+      event_id: eventId,
+      master_id: own.masterId,
+      status: 'pending',
+      initiated_by: 'master',
+    })
 
   if (error) return { error: translateDbError(error.message) }
 
