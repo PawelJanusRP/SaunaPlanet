@@ -13,6 +13,13 @@ import BundledEventFields, {
   EMPTY_BUNDLED_EVENT,
   type BundledEventDraft,
 } from '@/components/BundledEventFields'
+import ImportFromUrlSection from '@/components/ImportFromUrlSection'
+import {
+  applyDraftToForm,
+  clearImportedValues,
+  type ImportableFormValues,
+} from '@/lib/import/previewState'
+import type { FacilityDraft } from '@/lib/import/types'
 
 const CATEGORIES = [
   { value: 'public_sauna',   label: 'Sauna publiczna' },
@@ -38,6 +45,37 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
   const [lat, setLat] = useState('')
   const [lng, setLng] = useState('')
   const [duplicates, setDuplicates] = useState<SimilarFacility[] | null>(null)
+  // Pre-import form snapshot: "Wyczyść zaimportowane dane" restores the
+  // manual values instead of wiping the form (SP-038 slice 2).
+  const [preImportSnapshot, setPreImportSnapshot] =
+    useState<ImportableFormValues | null>(null)
+
+  function setFormValues(values: ImportableFormValues) {
+    setName(values.name)
+    setDescription(values.description)
+    setCity(values.city)
+    setWebsite(values.website)
+    setLat(values.lat)
+    setLng(values.lng)
+  }
+
+  function handleImportApply(draft: FacilityDraft) {
+    const current: ImportableFormValues = { name, description, city, website, lat, lng }
+    const { values, snapshot } = applyDraftToForm(draft, current)
+    // First apply wins as the restore point; a re-apply must not capture
+    // already-imported values as the "manual" snapshot.
+    setPreImportSnapshot((prev) => prev ?? snapshot)
+    setFormValues(values)
+    setDuplicates(null)
+  }
+
+  function handleImportClear() {
+    if (preImportSnapshot) {
+      setFormValues(clearImportedValues(preImportSnapshot))
+      setPreImportSnapshot(null)
+    }
+    setDuplicates(null)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -139,7 +177,9 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl border bg-white p-6 shadow-sm">
+    <div>
+      <ImportFromUrlSection onApply={handleImportApply} onClearImport={handleImportClear} />
+      <form onSubmit={handleSubmit} className="rounded-3xl border bg-white p-6 shadow-sm">
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -287,6 +327,7 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
             ? 'Wyślij mimo to'
             : 'Wyślij zgłoszenie'}
       </button>
-    </form>
+      </form>
+    </div>
   )
 }

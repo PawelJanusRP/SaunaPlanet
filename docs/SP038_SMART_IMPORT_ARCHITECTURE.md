@@ -1,7 +1,8 @@
 # SP-038 — Smart Facility Import: Architecture
 
-Status: **Slice 1 implemented** (import engine library only — no UI, no
-server actions, no database writes). Date: 2026-07-20.
+Status: **Slice 2 implemented** (extraction server action + editable
+import preview on `/submit`; Slice 1 delivered the engine library).
+Date: 2026-07-20.
 Branch: `feature/sp-038-smart-import` (from `main` @ `351d7a2`).
 
 Binding inputs: SP-038 audit report (2026-07-20, approved), approved
@@ -231,11 +232,12 @@ needed), axios (undici covers it), any headless browser.
 1. **Slice 1 (this document)** — architecture, classification,
    normalization, SSRF-safe fetcher, website provider, parser, tests.
    No UI, no actions, no DB writes.
-2. **Slice 2** — `extractFacilityDraft` server action (auth required,
-   10/h/user rate limit from `import_log`, one log row per operation),
-   import preview UI on the submission form, duplicate candidates via
-   existing `findSimilarFacilities`, optional best-effort geocoding
-   (`inferred`).
+2. **Slice 2 (implemented — §12a)** — `extractFacilityDraft` server
+   action (auth required, 10/h/user rolling rate limit from
+   `import_log`, one log row per accepted operation), editable import
+   preview on `/submit` with per-field provenance, duplicate candidates
+   via `find_similar_saunas`. Geocoding excluded by decision (Slice 3+
+   at the earliest, always `inferred`).
 3. **Slice 3** — persistence migration (extend `source_kind` CHECK, add
    `import_log.sauna_id` + link RPC, `opening_hours` on `saunas`),
    `submitFacility` extension (phone/email/address/opening hours +
@@ -244,6 +246,85 @@ needed), axios (undici covers it), any headless browser.
 4. **Slice 4** — Facebook best-effort OG provider + paste-text
    fallback; explicit unsupported states for Google Maps and Instagram.
 5. **Slice 5** — E2E, documentation, closure.
+
+## 12a. Slice 2 implementation — action boundary and preview
+
+### Action boundary
+
+`extractFacilityDraft(url)` (`app/saunas/importActions.ts`) is the only
+user-reachable entry to the engine. Orchestration lives in the
+dependency-injected core `lib/import/actionCore.ts` (fully unit-tested
+without Next/Supabase). Contract:
+
+- authenticated users only (server-side check; UI gating is never the
+  authorization boundary);
+- URL is normalized and classified **server-side** — the client cannot
+  select a provider;
+- only the website provider fetches; Facebook / Instagram / Google Maps
+  return a source-specific unsupported state with the normalized URL
+  preserved, and the manual form stays fully usable;
+- raw HTML never leaves the server and is never persisted (decision 6);
+  internal SSRF error details (`blocked-address` etc.) are collapsed to
+  the generic user-safe `fetch-blocked` code — resolution details stay
+  in server logs and `import_log.extracted.errorCode` (moderation-read);
+- the action never creates/updates saunas, never uploads images and
+  never uses a service-role client.
+
+### Rate-limit semantics (decision 5)
+
+10 accepted operations per authenticated user per **rolling hour**,
+counted server-side from the caller's own `import_log` rows
+(`created_at >= now() - 1h`; readable under the own-row SELECT policy).
+Counted: every accepted operation regardless of result — `ok`,
+`partial`, `failed` and `blocked` all write exactly one append-only
+`import_log` row. Not counted / not logged: unauthenticated calls,
+purely local validation failures (no syntactically valid normalized
+https URL was accepted) and rate-limited attempts themselves. If the
+count query fails, the action **fails closed** (treats the limit as
+exhausted). Known accepted race: check-then-insert is not atomic, so a
+parallel burst can slightly exceed 10 — the cap is anti-abuse advisory,
+not a billing boundary; Slice 3 may tighten it in the database if ever
+needed.
+
+### Import-log record shape
+
+One row per accepted operation: `url` = canonical normalized URL,
+`source_kind` = current DB vocabulary (see §6 mapping; the
+application-level kind is preserved in `extracted.appSourceKind`),
+`result` ∈ ok/partial/failed/blocked, `extracted` = normalized draft
+with per-field provenance + warnings + finalUrl (success) or
+`{errorCode, httpStatus?}` (failure) — never raw HTML, headers or
+network internals. `requested_by` comes from the session; timestamps
+come from the database default.
+
+### Transient preview model
+
+Extraction results are transient client state — nothing persists except
+the `import_log` audit row. The preview state machine
+(`lib/import/previewState.ts`, pure and unit-tested) guarantees: a
+second extraction replaces the first cleanly; an older slow response
+can never overwrite a newer one (monotonic request tokens); cancel
+drops the in-flight response; a preview shown for a different URL than
+the current input is labelled as such. Applying the draft to the form
+is an explicit user action; "clear" restores the pre-import snapshot of
+manual values. Extracted fields with no form input yet (address, phone,
+email, country, opening hours, image, social links, source title) are
+displayed in an information area and retained in the action result and
+`import_log` — never silently discarded (form persistence follows in
+Slice 3). The remote `og:image` is rendered as a source preview only —
+not copied to Storage, not inserted into `sauna_photos`, not used as
+the submitted image (decision 2).
+
+### Deduplication flow
+
+After a successful extraction the action calls `find_similar_saunas`
+with the best extracted values (name, coordinates, website, phone) plus
+the normalized source URL (matched against `saunas.source_url`).
+Results are warn-only: the preview shows "Ten obiekt może już istnieć w
+SaunaPlanet." with name, city, pending marker, distance, translated
+match reasons and a link for active facilities. Lookup failures degrade
+to an empty list. No merging, no update workflow, no overwrite — the
+controlled improvement path is SP-042 (§13).
 
 ## 13. Extension point: facility data improvement proposals (SP-042)
 
