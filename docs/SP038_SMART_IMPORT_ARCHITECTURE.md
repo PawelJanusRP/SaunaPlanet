@@ -245,7 +245,31 @@ needed), axios (undici covers it), any headless browser.
    fallback; explicit unsupported states for Google Maps and Instagram.
 5. **Slice 5** — E2E, documentation, closure.
 
-## 13. Known limitations (Slice 1)
+## 13. Extension point: facility data improvement proposals (SP-042)
+
+Out of scope for SP-038, discovered during it (backlog:
+`docs/BACKLOG.md` §SP-042). When an import matches an existing facility
+but carries newer or more complete data, the long-term answer is a
+**controlled improvement proposal** (field-level diffs, provenance,
+partial acceptance, managed/unmanaged resolution with platform
+moderator override, full audit history) — not a duplicate and not an
+overwrite of the active record.
+
+What SP-038 guarantees so that SP-042 can attach later without rework:
+
+* duplicate detection stays **warn-only** and its behavior is
+  unchanged — an import matching an existing facility still proceeds
+  only as an ordinary pending submission if the user insists;
+* every extracted value already carries the `ExtractedField`
+  provenance (origin / confidence / source hint) and every operation
+  has one `import_log` row — exactly the per-field evidence a future
+  proposal needs;
+* the importer never writes to active facility records (prefill-only),
+  so introducing a proposal path is additive.
+
+No proposal tables, actions or UI are built in SP-038.
+
+## 14. Known limitations (Slice 1)
 
 - `<meta charset>` inside HTML is not honored — only the
   `Content-Type` header charset (utf-8 fallback). Old latin-2 pages
