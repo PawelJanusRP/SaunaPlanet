@@ -8,6 +8,7 @@ import StudioAccessNotice from '@/components/studio/StudioAccessNotice'
 import EventParticipationControls from '@/components/EventParticipationControls'
 import CreateMasterEventForm from '@/components/studio/CreateMasterEventForm'
 import WithdrawProposalButton from '@/components/studio/WithdrawProposalButton'
+import InvitationResponseButtons from '@/components/studio/InvitationResponseButtons'
 import {
   MASTER_NAV,
   MASTER_STUDIO_LABEL,
@@ -39,7 +40,7 @@ export default async function StudioEventsPage() {
   const [{ data: rowsRaw }, { data: organizedRaw }, { data: saunasRaw }] = await Promise.all([
     supabase
       .from('sauna_event_masters')
-      .select('id, status, role, created_at, sauna_events(id, title, status, organizer_master_id, event_date, event_time, saunas(id, name, city))')
+      .select('id, status, role, initiated_by, created_at, sauna_events(id, title, status, organizer_master_id, event_date, event_time, saunas(id, name, city))')
       .eq('master_id', profile.id)
       .order('created_at', { ascending: false }),
     // Defect-1 hardening: organized events are ALSO loaded directly by
@@ -92,7 +93,10 @@ export default async function StudioEventsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const eventDate = (r: any) => r.sauna_events?.event_date?.substring(0, 10) ?? ''
 
-  const pending = rows.filter((r) => r.status === 'pending')
+  // Rule D: facility-originated invitations get their own section — they
+  // are responded to (accept/reject), never withdrawn by the master.
+  const invitations = rows.filter((r) => r.status === 'pending' && r.initiated_by === 'facility')
+  const pending = rows.filter((r) => r.status === 'pending' && r.initiated_by !== 'facility')
   const upcoming = rows.filter((r) => r.status === 'approved' && eventDate(r) >= today)
   const history = rows
     .filter((r) => r.status === 'rejected' || (r.status === 'approved' && eventDate(r) < today))
@@ -128,6 +132,28 @@ export default async function StudioEventsPage() {
         <div className="flex justify-end">
           <CreateMasterEventForm saunas={saunaOptions} />
         </div>
+
+        {invitations.length > 0 && (
+          <WorkspaceSection title={`📨 Zaproszenia od obiektów (${invitations.length})`}>
+            <div className="space-y-3">
+              {invitations.map((r) => (
+                <div key={r.id} className="rounded-2xl border border-orange-200 bg-orange-50/40 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <EventLine r={r} />
+                      <p className="mt-1 text-xs text-orange-700">
+                        Obiekt zaprasza Cię do wystąpienia — oferowana rola:{' '}
+                        <span className="font-semibold">{r.role}</span>
+                        {' '}(przyjęcie zachowuje dokładnie tę rolę)
+                      </p>
+                    </div>
+                    <InvitationResponseButtons invitationId={r.id} offeredRole={r.role} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </WorkspaceSection>
+        )}
 
         <WorkspaceSection title={`⏳ Oczekujące zgłoszenia (${pending.length})`}>
           {pending.length === 0 ? (

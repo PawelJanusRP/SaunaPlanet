@@ -107,6 +107,133 @@ export async function withdrawEventParticipation(
   return {}
 }
 
+/**
+ * SP-037B slice 5 (rule D): facility-initiated invitation. The database
+ * contract enforces everything essential (staff-of-event INSERT policy,
+ * pending+'facility' only, offered role from the vocabulary, target
+ * master approved, event active and future, unique open pair); this
+ * action re-verifies staff/admin and translates failures.
+ */
+export async function inviteMasterToEvent(
+  eventId: string,
+  masterId: string,
+  role: ParticipationRole
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+
+  if (!ROLES.includes(role)) {
+    return { error: 'Rola zaproszenia musi być jedną z: lead, assistant, guest' }
+  }
+
+  const { data: ev } = await supabase
+    .from('sauna_events')
+    .select('sauna_id')
+    .eq('id', eventId)
+    .maybeSingle()
+  if (!ev?.sauna_id) return { error: 'Nie znaleziono wydarzenia' }
+  try {
+    await assertCanManageSaunaEvents(supabase, ev.sauna_id)
+  } catch {
+    return { error: 'Brak uprawnień do zapraszania na wydarzenia tego obiektu' }
+  }
+
+  const { error } = await supabase
+    .from('sauna_event_masters')
+    .insert({
+      event_id: eventId,
+      master_id: masterId,
+      status: 'pending',
+      initiated_by: 'facility',
+      role,
+    })
+  if (error) {
+    if (error.message.includes('duplicate key')) {
+      return { error: 'Ten saunamistrz ma już zaproszenie lub udział w tym wydarzeniu' }
+    }
+    return { error: translateDbError(error.message) }
+  }
+
+  revalidatePath('/workspace/events')
+  revalidatePath('/studio/events')
+  return {}
+}
+
+/**
+ * The invited master accepts or declines their own pending
+ * facility-originated invitation. Acceptance keeps the EXACT offered role
+ * (the guard freezes it) and the trigger assigns the trusted approved_at;
+ * rejection clears role and approved_at per the database invariant.
+ */
+export async function respondToEventInvitation(
+  invitationId: string,
+  decision: 'approved' | 'rejected'
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const own = await getOwnApprovedMasterId(supabase)
+  if (own.error || !own.masterId) return { error: own.error }
+
+  const { data, error } = await supabase
+    .from('sauna_event_masters')
+    .update({ status: decision })
+    .eq('id', invitationId)
+    .eq('master_id', own.masterId)
+    .eq('status', 'pending')
+    .eq('initiated_by', 'facility')
+    .select('event_id')
+
+  if (error) return { error: translateDbError(error.message) }
+  if (!data || data.length === 0) {
+    return { error: 'Zaproszenie nie istnieje albo zostało już rozstrzygnięte' }
+  }
+
+  revalidatePath(`/events/${data[0].event_id}`)
+  revalidatePath('/studio/events')
+  revalidatePath('/workspace/events')
+  return {}
+}
+
+/**
+ * Facility staff (or admin) withdraws a pending invitation. MVP
+ * limitation, mirroring request withdrawal: DELETE removes the pending
+ * invitation history.
+ */
+export async function withdrawEventInvitation(
+  invitationId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+
+  const { data: inv } = await supabase
+    .from('sauna_event_masters')
+    .select('id, sauna_events(sauna_id)')
+    .eq('id', invitationId)
+    .maybeSingle()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const saunaId = (inv as any)?.sauna_events?.sauna_id
+  if (!inv || !saunaId) return { error: 'Nie znaleziono zaproszenia' }
+  try {
+    await assertCanManageSaunaEvents(supabase, saunaId)
+  } catch {
+    return { error: 'Brak uprawnień do wycofania tego zaproszenia' }
+  }
+
+  const { data, error } = await supabase
+    .from('sauna_event_masters')
+    .delete()
+    .eq('id', invitationId)
+    .eq('status', 'pending')
+    .eq('initiated_by', 'facility')
+    .select('id')
+
+  if (error) return { error: translateDbError(error.message) }
+  if (!data || data.length === 0) {
+    return { error: 'Zaproszenie nie istnieje albo zostało już rozstrzygnięte' }
+  }
+
+  revalidatePath('/workspace/events')
+  revalidatePath('/studio/events')
+  return {}
+}
+
 export type CreateMasterEventInput = {
   saunaId: string
   title: string

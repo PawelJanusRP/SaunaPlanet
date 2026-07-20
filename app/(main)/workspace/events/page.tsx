@@ -10,6 +10,8 @@ import WorkspaceContextSwitcher from '@/components/workspace/WorkspaceContextSwi
 import OwnerCreateEventButton from '@/components/workspace/OwnerCreateEventButton'
 import ParticipationModerationActions from '@/components/workspace/ParticipationModerationActions'
 import EventProposalActions from '@/components/workspace/EventProposalActions'
+import InviteMasterToEventForm from '@/components/workspace/InviteMasterToEventForm'
+import WithdrawInvitationButton from '@/components/workspace/WithdrawInvitationButton'
 import { workspaceContextLabel } from '@/lib/workspace/context'
 import {
   OWNER_ALL_FACILITIES_LABEL,
@@ -80,19 +82,50 @@ export default async function OwnerEventsPage({
   }
 
   // SP-037: pending master participation requests for the facilities in
-  // scope. RLS (is_event_staff arm) already limits visibility; the inner
-  // join filter keeps the list within the active context.
+  // scope. Slice 5 tightening: requests only ('master'-initiated), on
+  // ACTIVE events, and never the organizer pair of a pending proposal
+  // (those resolve atomically in the proposals queue above — resolving
+  // them standalone would create the split state rule C forbids).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let participationRequests: any[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let sentInvitations: any[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let invitableMasters: any[] = []
   if (activeSaunaIds.length > 0) {
-    const { data: requestsRaw } = await supabase
-      .from('sauna_event_masters')
-      .select('id, created_at, sauna_events!inner(id, title, event_date, sauna_id, saunas(name)), sauna_masters(id, name, avatar_url, level)')
-      .eq('status', 'pending')
-      .in('sauna_events.sauna_id', activeSaunaIds)
-      .order('created_at', { ascending: true })
+    const [{ data: requestsRaw }, { data: invitationsRaw }, { data: mastersRaw }] = await Promise.all([
+      supabase
+        .from('sauna_event_masters')
+        .select('id, master_id, created_at, sauna_events!inner(id, title, status, event_date, sauna_id, organizer_master_id, saunas(name)), sauna_masters(id, name, avatar_url, level)')
+        .eq('status', 'pending')
+        .eq('initiated_by', 'master')
+        .eq('sauna_events.status', 'active')
+        .in('sauna_events.sauna_id', activeSaunaIds)
+        .order('created_at', { ascending: true }),
+      // facility-originated pending invitations (rule D)
+      supabase
+        .from('sauna_event_masters')
+        .select('id, role, created_at, sauna_events!inner(id, title, event_date, sauna_id, saunas(name)), sauna_masters(id, name, avatar_url, level)')
+        .eq('status', 'pending')
+        .eq('initiated_by', 'facility')
+        .in('sauna_events.sauna_id', activeSaunaIds)
+        .order('created_at', { ascending: true }),
+      // approved masters for the invitation picker
+      supabase
+        .from('sauna_masters')
+        .select('id, name, level, avatar_url')
+        .eq('status', 'approved')
+        .order('name', { ascending: true })
+        .limit(1000),
+    ])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    participationRequests = (requestsRaw ?? []) as any[]
+    participationRequests = ((requestsRaw ?? []) as any[]).filter(
+      (r) => r.sauna_events?.organizer_master_id !== r.master_id
+    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sentInvitations = (invitationsRaw ?? []) as any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    invitableMasters = (mastersRaw ?? []) as any[]
   }
 
   // Creating an event requires a concrete facility (SP-034): the selected
@@ -149,7 +182,23 @@ export default async function OwnerEventsPage({
       <div className="space-y-4 sm:space-y-6">
         {options.length > 0 && (
           createTarget ? (
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+              {upcoming.length > 0 && (
+                <InviteMasterToEventForm
+                  events={upcoming.map((ev) => ({
+                    id: ev.id,
+                    title: ev.title,
+                    eventDate: String(ev.event_date).substring(0, 10),
+                    saunaName: context.scope === 'all' ? ev.saunas?.name ?? null : null,
+                  }))}
+                  masters={invitableMasters.map((m) => ({
+                    id: m.id,
+                    name: m.name,
+                    level: m.level,
+                    avatarUrl: m.avatar_url,
+                  }))}
+                />
+              )}
               <OwnerCreateEventButton saunaId={createTarget.id} saunaName={createTarget.label} />
             </div>
           ) : (
@@ -216,6 +265,51 @@ export default async function OwnerEventsPage({
           </WorkspaceSection>
         )}
 
+        {sentInvitations.length > 0 && (
+          <WorkspaceSection title={`📨 Wysłane zaproszenia (${sentInvitations.length})`}>
+            <div className="space-y-3">
+              {sentInvitations.map((inv) => (
+                <div key={inv.id} className="rounded-2xl border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      {inv.sauna_masters?.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={inv.sauna_masters.avatar_url} alt={inv.sauna_masters.name} className="h-9 w-9 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">🧖</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-800">
+                          <Link href={`/masters/${inv.sauna_masters?.id}`} className="hover:underline">
+                            {inv.sauna_masters?.name ?? 'Saunamistrz'}
+                          </Link>
+                          <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700">
+                            Zaproszenie obiektu
+                          </span>
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          <Link href={`/events/${inv.sauna_events?.id}`} className="hover:underline">
+                            {inv.sauna_events?.title}
+                          </Link>
+                          {' · '}{inv.sauna_events?.event_date?.substring(0, 10)}
+                          {context.scope === 'all' && inv.sauna_events?.saunas?.name && <> · {inv.sauna_events.saunas.name}</>}
+                          {' · oferowana rola: '}<span className="font-medium">{inv.role}</span>
+                          {' · wysłane '}{new Date(inv.created_at).toLocaleDateString('pl-PL')}
+                          {' · ⏳ czeka na saunamistrza'}
+                        </p>
+                      </div>
+                    </div>
+                    <WithdrawInvitationButton
+                      invitationId={inv.id}
+                      masterName={inv.sauna_masters?.name ?? 'saunamistrz'}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </WorkspaceSection>
+        )}
+
         {participationRequests.length > 0 && (
           <WorkspaceSection title={`🧖 Zgłoszenia saunamistrzów (${participationRequests.length})`}>
             <div className="space-y-3">
@@ -237,6 +331,9 @@ export default async function OwnerEventsPage({
                         <Link href={`/masters/${r.sauna_masters?.id}`} className="hover:underline">
                           {r.sauna_masters?.name ?? 'Saunamistrz'}
                         </Link>
+                        <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-bold text-yellow-700">
+                          Zgłoszenie saunamistrza
+                        </span>
                         {r.sauna_masters?.level && (
                           <span className="ml-2 text-xs font-normal text-gray-400">{r.sauna_masters.level}</span>
                         )}
