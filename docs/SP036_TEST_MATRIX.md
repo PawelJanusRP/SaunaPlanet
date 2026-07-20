@@ -47,7 +47,7 @@ regular user via the map form or /submit).
 
 | # | Case | Steps | Expected |
 |---|---|---|---|
-| R1 | Dashboard shows the event immediately after creation | Studio → Wystąpienia → create an event → modal closes | The list re-renders at once (router.refresh); the event appears in "Nadchodzące wystąpienia" (unmanaged: 📣 Organizator chip) or "Oczekujące" (managed: proposal chip) without a manual reload |
+| R1 | Dashboard shows the event immediately after creation | Studio → Moje wydarzenia → create an event → modal closes | The list re-renders at once (router.refresh); the event appears in "Nadchodzące wydarzenia" (unmanaged: 📣 Organizator chip) or "Oczekujące" (managed: proposal chip) without a manual reload |
 | R2 | Organizer events never depend on the participation pair | (admin) delete the organizer's `sauna_event_masters` row for a test event; reload /studio/events | The event STILL shows, exactly once, as an organizer entry (synthesized from `organizer_master_id`) |
 | R3 | Satellite avatar rule (documented) | Create a master event at an unmanaged facility with a master WITHOUT an avatar → check the map → then upload an avatar in Studio → Profil → recheck | No satellite before (documented rule: KNOWN_ISSUES "Sauna Master Satellite System" — `avatar_url` required; the map RPC DOES return the master); satellite appears after the avatar upload, same time-window rules as other masters |
 | R4 | Lineup does not require an avatar | Event page of the same event | The organizer is visible in the lineup and in the organizer banner even without an avatar (placeholder circle) |
@@ -65,3 +65,24 @@ regular user via the map form or /submit).
 4. As user B: cannot see user A's pending row (direct API).
 5. As admin: Sauny tab shows the pending row; edit/approve path works.
 6. Cleanup: admin deletes the test submission.
+
+## SP-037B slice 5 — production E2E closure (2026-07-20)
+
+The full invitation matrix was executed against production and is GREEN:
+
+* **DB-level matrix 20/20** (single rolled-back transaction with RLS
+  enforced via role impersonation): invitation lifecycle
+  (create/accept/reject/withdraw), duplicate-pair rejection, foreign-master
+  and foreign-facility denials, unapproved-master denial, frozen offered
+  role, stale/double response, master-request regression with staff
+  resolution, admin direct assignment with forced `approved_at`; zero
+  traces after rollback, invariant sweep 0.
+* **UI-level matrix** (headless browser on production, throwaway seeded
+  accounts, total cleanup): manager invite flow, "Wysłane zaproszenia"
+  with direction chips, Studio "Zaproszenia od obiektów", accept → upcoming
+  with the offered role, reject → history, withdraw → disappears on both
+  sides, public lineup + `get_saunas_nearby` satellite data for the
+  accepted master.
+
+Sprint SP-037/SP-037B closed; the terminology pass renamed the Studio nav
+label "Wystąpienia" → "Moje wydarzenia" (route `/studio/events` unchanged).

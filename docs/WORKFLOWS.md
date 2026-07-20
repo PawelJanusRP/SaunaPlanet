@@ -29,10 +29,10 @@ Workflow index:
 | W-05 | Owner manages facilities | Partial |
 | W-06 | Owner creates an event | Implemented (SP-034) |
 | W-07 | Sauna Master onboarding | Implemented (verification badge future) |
-| W-08 | Sauna Master creates a session | Future (planned: SP-036) |
-| W-09 | Sauna Master creates an event | Future (Decision 015) |
-| W-10 | Owner invites a Sauna Master | Partial (admin-side only) |
-| W-11 | Sauna Master applies to an event | Future |
+| W-08 | Sauna Master creates a session | Future (planned: SP-039) |
+| W-09 | Sauna Master creates an event | Implemented (SP-037B: managed/unmanaged routing, bundled submission) |
+| W-10 | Owner invites a Sauna Master | Implemented (SP-037B: consent-based invitations; notifications future) |
+| W-11 | Sauna Master applies to an event | Implemented (SP-037: participation requests) |
 | W-12 | Public Sauna Master discovery | Implemented |
 | W-13 | Contacting a Sauna Master | Future |
 | W-14 | Reservation moderation | Implemented (notifications future) |
@@ -413,8 +413,29 @@ themes; sauna_masters, saunas, reservations.
 
 # W-09 · Sauna Master creates an event
 
-**Status:** Future. Binding product rules: **Decision 015**;
-model: EVENT_SESSION_MODEL §2.1 + §2.3.
+**Status:** Implemented (SP-037B). Binding product rules: **Decision 015**;
+model: EVENT_SESSION_MODEL §2.1 + §2.3; implementation architecture:
+SP037_MASTER_EVENTS_ARCHITECTURE.md.
+
+**As implemented (SP-037B):** creation goes exclusively through the trusted
+`create_master_event` RPC (Master Studio "Utwórz wydarzenie" and the map's
+event form, which delegates verified masters to the same RPC). Routing is
+decided inside the database transaction:
+
+* **unmanaged facility** → event `active` immediately + organizer
+  participation `approved` with the fixed role `lead`;
+* **managed facility** → event `pending` + organizer participation
+  `pending` created together; the manager resolves both **atomically** via
+  `resolve_master_event` (approve assigns the organizer role and a trusted
+  `approved_at`; reject rejects both — no split states);
+* **bundled facility + event submission** → a master may submit a new
+  facility together with its first event in one atomic RPC
+  (`submit_facility_with_master_event`); platform moderation approves or
+  rejects the whole package atomically.
+
+Organizer identity (`organizer_master_id`), event/master pair identity and
+`initiated_by` are immutable at the database boundary. No manager rights or
+affiliation are ever inferred from organizing an event.
 
 **Purpose:** let active masters organize larger productions (a
 master-branded sauna night, a touring show) even at facilities not yet
@@ -483,8 +504,16 @@ the path), (future) sessions.
 
 # W-10 · Owner invites a Sauna Master
 
-**Status:** Partial — assignments exist (`sauna_event_masters`,
-admin-side); the master's accept/decline half of the handshake is missing.
+**Status:** Implemented (SP-037B slice 5). Facility staff invite an
+approved master to an active future event with an offered role
+(`lead`/`assistant`/`guest`); the invitation is `pending` +
+`initiated_by = 'facility'` and **only the invited master (or admin)
+resolves it**. Acceptance keeps the exact offered role (frozen by a guard
+trigger) and receives a trusted `approved_at`; rejection keeps the master
+off all public surfaces. Staff may withdraw a pending invitation (MVP
+limitation: withdrawal is a DELETE — pending invitation history is
+removed). Admin direct assignment remains an operator-only exception.
+In-app only — invitation notifications remain future.
 
 **Purpose:** staff an event's lineup with consenting professionals —
 facilities *invite*, masters *accept*, never the reverse framing.
@@ -527,7 +556,13 @@ sauna_masters, sauna_events, (future) affiliations, session conductors.
 
 # W-11 · Sauna Master applies to an event
 
-**Status:** Future (the mirror image of W-10).
+**Status:** Implemented (SP-037; the mirror image of W-10). An approved
+master requests participation in an active future event (`pending`,
+`initiated_by = 'master'`, no role); facility staff approve (selecting the
+role) or reject in the Owner Workspace queue. The master may withdraw a
+pending request (MVP limitation: DELETE — request history is removed).
+The organizer pair of a pending master-event proposal is excluded from
+this queue — it resolves only atomically with the proposal (W-09).
 
 **Purpose:** let masters proactively join productions — a touring master
 finds a festival and offers a show; supply finds demand in both directions.

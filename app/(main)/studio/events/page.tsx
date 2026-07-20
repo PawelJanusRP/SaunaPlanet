@@ -20,8 +20,9 @@ import { loadMasterStudioScope } from '@/lib/workspace/masterServer'
 const HISTORY_PREVIEW_LIMIT = 15
 
 /**
- * SP-037 "Wystąpienia" — the master's own event participation: pending
- * requests (withdrawable), upcoming confirmed appearances, and history.
+ * SP-037 "Moje wydarzenia" — the master's own events: organized proposals,
+ * facility invitations, pending requests (withdrawable), upcoming confirmed
+ * appearances, and history.
  * RLS shows the owner every own row regardless of status.
  */
 export default async function StudioEventsPage() {
@@ -124,8 +125,8 @@ export default async function StudioEventsPage() {
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Twoje wystąpienia na wydarzeniach"
-      breadcrumbs={masterBreadcrumbs('Wystąpienia')}
+      subtitle="Wydarzenia, które organizujesz i na których występujesz"
+      breadcrumbs={masterBreadcrumbs('Moje wydarzenia')}
       nav={MASTER_NAV}
     >
       <div className="space-y-4 sm:space-y-6">
@@ -189,9 +190,9 @@ export default async function StudioEventsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title={`🔥 Nadchodzące wystąpienia (${upcoming.length})`}>
+        <WorkspaceSection title={`🔥 Nadchodzące wydarzenia (${upcoming.length})`}>
           {upcoming.length === 0 ? (
-            <WorkspaceEmptyState icon="🔥" title="Brak potwierdzonych wystąpień" />
+            <WorkspaceEmptyState icon="🔥" title="Brak nadchodzących wydarzeń" />
           ) : (
             <div className="space-y-3">
               {upcoming.map((r) => (
@@ -214,7 +215,7 @@ export default async function StudioEventsPage() {
 
         <WorkspaceSection title="🗓️ Historia">
           {history.length === 0 ? (
-            <WorkspaceEmptyState icon="🗓️" title="Brak historii wystąpień" />
+            <WorkspaceEmptyState icon="🗓️" title="Brak historii wydarzeń" />
           ) : (
             <div className="space-y-3">
               {history.map((r) => (

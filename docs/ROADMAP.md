@@ -119,7 +119,7 @@ Delivered (Workspace track, 2026-07):
 * Owner Workspace at /workspace with active facility context (SP-033)
 * owner event management from the Owner Workspace (SP-034)
 
-Remaining:
+Completed in this phase:
 
 * **Master Studio Foundation (SP-035)** — Master Workspace on the shared
   shell; Sauna Master profile; profile integrity fixes (own-profile-only
@@ -127,11 +127,19 @@ Remaining:
   SP-016, Decision 016) replacing the home-sauna concept as the primary
   model
 * **Master-Contributed Facilities & Events (SP-036)** — community facility
-  submissions with moderation, duplicate detection, master event paths
-  (docs/SP036_ARCHITECTURE.md); functionally complete 2026-07-19
+  submissions with moderation, duplicate detection, RLS hardening
+  (docs/SP036_ARCHITECTURE.md); completed 2026-07-19
 * **Master Event Participation (SP-037)** — verified masters request event
   participation, facility staff moderate, approved masters appear in
-  lineups and on the map (W-11; in progress)
+  lineups and on the map (W-11); completed 2026-07-19
+* **Master Events & Invitations (SP-037B)** — master-created events with
+  managed/unmanaged routing and atomic proposal resolution (W-09), atomic
+  bundled facility+event submission, facility→master invitations with
+  master consent (W-10); completed 2026-07-20
+  (docs/SP037_MASTER_EVENTS_ARCHITECTURE.md)
+
+Remaining:
+
 * **Sauna Sessions (SP-039)** — Sessions as a first-class entity independent
   from Events (Facility ↔ Event ↔ Session ↔ Sauna Master; an Event may
   contain many Sessions; a Session happens at exactly one facility and may

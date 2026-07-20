@@ -126,6 +126,20 @@ That RPC should be updated separately in Supabase Dashboard.
 
 ---
 
+# Participation Withdrawal Removes History (MVP)
+
+Status: Accepted MVP limitation (SP-037 / SP-037B, recorded 2026-07-20)
+
+Withdrawing a pending participation request (master side) or a pending
+facility invitation (staff side) is implemented as a DELETE on
+`sauna_event_masters` — there is no `withdrawn` status, so pending-request
+history disappears. Resolved rows (approved/rejected) are immutable and
+ARE preserved. If withdrawal history becomes a product requirement, add a
+dedicated status or an audit log in a separate migration; do not weaken
+the current transition automaton.
+
+---
+
 # Authentication
 
 Status: Not Implemented

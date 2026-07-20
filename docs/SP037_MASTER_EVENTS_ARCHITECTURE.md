@@ -1,10 +1,18 @@
 # SP-037 rev B — Master Event Creation & Participation: Unified Architecture
 
-Status: **APPROVED** (Paweł, 2026-07-19) with the authoritative
-clarifications recorded in §11; Slice 1 database artifacts prepared
-(`supabase/2026-07-19_sp037b_master_events.sql` + functional rollback),
-NOT executed.
-Date: 2026-07-19. Supersedes the paused SP-037B invitation-only sketch.
+Status: **IMPLEMENTED** (sprint closed 2026-07-20). All six slices are
+deployed to production and E2E-verified: slice 1 database contract
+(`supabase/2026-07-19_sp037b_master_events.sql`, applied + verified),
+slice 2 master event creation (Studio + map routing through
+`create_master_event`), slice 3 manager proposal queue
+(`resolve_master_event`), slice 4 atomic bundled submission
+(`submit_facility_with_master_event` + atomic facility moderation),
+slice 5 facility→master invitations (rule D; production E2E: DB matrix
+20/20, UI matrix green), slice 6 regression + documentation closure.
+Originally APPROVED by Paweł 2026-07-19 with the authoritative
+clarifications recorded in §11.
+Date: 2026-07-19 (approved) / 2026-07-20 (implemented). Supersedes the
+paused SP-037B invitation-only sketch.
 Inputs: Paweł's authoritative product rules A–D (2026-07-19), the deployed
 SP-036 migration (event paths at the DB boundary), the deployed SP-037
 migration + application layer (participation), W-09/W-10/W-11 in

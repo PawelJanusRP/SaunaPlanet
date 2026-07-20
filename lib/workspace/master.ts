@@ -14,7 +14,7 @@ export const MASTER_STUDIO_HOME = '/studio'
 export const MASTER_NAV: WorkspaceNavItem[] = [
   { key: 'dashboard', label: 'Pulpit', href: '/studio' },
   { key: 'profile', label: 'Profil', href: '/studio/profile' },
-  { key: 'events', label: 'Wystąpienia', href: '/studio/events' },
+  { key: 'events', label: 'Moje wydarzenia', href: '/studio/events' },
   { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
   { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
 ]

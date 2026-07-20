@@ -21,7 +21,11 @@ Chronological record of sprint execution. For scope details of each sprint see
 | SP-033 | Completed   | `feature/sp-033-owner-workspace`  | `8047212` | Owner Workspace Foundation — /workspace on the shared shell: active facility context (all/one), dashboard, reservations and events modules; manager functionality migrated out of the Personal Workspace |
 | SP-034 | Completed   | `feature/sp-034-owner-events`     | `8bda515` | Owner Event Management — create/edit/delete events from the Owner Workspace within the active facility context; manager-scoped server actions + additive sauna_events RLS (SQL applied 2026-07) |
 | SP-035 | Completed   | `feature/sp-035-master-studio`    | `47b400c` | Master Studio Foundation (+SP-035D quality pass) — /studio on the shared shell, profile integrity (unique account↔profile link, own-row RLS, privileged-column guard), first-class master_affiliations with two-direction lifecycle, Owner Workspace Team module; home_sauna_id frozen as legacy (SQL applied 2026-07) |
-| SP-036 | Planned     | —                                 | —         | Sauna Sessions — Sessions as a first-class entity independent from Events (Facility ↔ Event ↔ Session ↔ Master; see docs/EVENT_SESSION_MODEL.md) |
+| SP-036 | Completed   | `feature/sp-036-master-facilities` / `feature/sp-036-facility-moderation` | `c5c5404`+ | Master-Contributed Facilities & Events — community facility submissions (pending + moderation), duplicate detection (pg_trgm + distance gating), RLS hardening of live anon-write holes, admin facility-moderation tab. URL import descoped to SP-038; bundled-submission UI delivered inside SP-037B |
+| SP-037 | Completed   | `feature/sp-036-facility-moderation` | `1802c48` | Master Event Participation (W-11) — sauna_event_masters as a workflow table (policies + guard triggers, trusted approved_at), request from event pages, /studio/events, staff moderation queue in /workspace/events (SQL applied + verified 2026-07-19) |
+| SP-037B | Completed  | `feature/sp-036-facility-moderation` | `ec0d76b` | Master Events & Invitations (W-09/W-10) — initiated_by handshake direction; trusted RPCs: create_master_event (unmanaged → active + organizer lead, managed → atomic pending pair), resolve_master_event (atomic proposal resolution), submit_facility_with_master_event (atomic bundled facility + first event), reject_facility_submission; organizer UI + proposal queue; facility→master invitations with master consent, frozen offered role, staff withdrawal (SQL applied + verified; production E2E green 2026-07-20) |
+| SP-038 | Planned     | —                                 | —         | Smart Facility Import (Universal Import Engine) — see docs/BACKLOG.md |
+| SP-039 | Planned     | —                                 | —         | Sauna Sessions — Sessions as a first-class entity independent from Events (Facility ↔ Event ↔ Session ↔ Master; see docs/EVENT_SESSION_MODEL.md); renumbered from the original SP-036 reservation |
 
 Sprints prior to SP-019 (SP-012 through SP-018: roles and permissions, RLS
 hardening, submission moderation, master registration, certificates, event
@@ -48,6 +52,12 @@ The project intentionally continues with **SP-031** because the Workspace
 initiative (`docs/PLATFORM_WORKSPACES.md`) became a separate architectural
 milestone after earlier roadmap iterations, and it was assigned a fresh
 identifier rather than consuming one of the reserved numbers.
+
+**SP-036** was rescoped from the original "Sauna Sessions" reservation to
+**Master-Contributed Facilities & Events**; Sessions moved to **SP-039**.
+**SP-037B** is a mid-sprint extension of SP-037 (the invitation and
+master-event rules A–D pivot) — it shares the SP-037 architecture document
+and branch and keeps its own identifier in commits.
 
 ## Sources of Truth
 

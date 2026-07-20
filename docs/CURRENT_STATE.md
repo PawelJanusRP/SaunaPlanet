@@ -1,6 +1,6 @@
 # SaunaPlanet — Current Project State
 
-Last updated: 2026-07-12 (branch `feature/sp-035-master-studio`).
+Last updated: 2026-07-20 (branch `feature/sp-036-facility-moderation`).
 
 This is the canonical **handover document** for ongoing development. Its purpose
 is orientation: a new AI or human session should understand the current project
@@ -107,6 +107,29 @@ Merged into `main` (details: `docs/SPRINT_HISTORY.md`, `docs/FEATURES.md`):
   (`master_moderation_notes`); event-pulse on map clusters. `home_sauna_id`
   is frozen as legacy display data. Merged 2026-07-17 (`47b400c`). Full
   scope: `docs/FEATURES.md` §SP-035, `docs/CODE_QUALITY_REVIEW.md`.
+* **SP-036 — Master-Contributed Facilities & Events**: community facility
+  submissions (all authenticated users, pending + admin/moderator
+  moderation), duplicate detection (pg_trgm + distance gating), RLS
+  hardening of live anon-write holes, facility moderation tab in the admin
+  panel. Slice 1 merged 2026-07-18 (`c5c5404`); moderation and dedup fixes
+  completed on `feature/sp-036-facility-moderation`. Bundled-submission UI
+  was descoped into SP-037B; URL import moved to SP-038.
+* **SP-037 — Master Event Participation (W-11)**: `sauna_event_masters`
+  became a workflow table (policies + guard triggers; `approved_at` owned
+  by the database), masters request participation from event pages,
+  `/studio/events` in Master Studio, staff moderation queue in
+  `/workspace/events`. Completed and deployed 2026-07-19.
+* **SP-037B — Master Events & Invitations**: `initiated_by` handshake
+  direction; trusted RPCs `create_master_event` (unmanaged → active +
+  organizer `lead`; managed → atomic pending pair), `resolve_master_event`
+  (manager approves/rejects proposal + organizer atomically),
+  `submit_facility_with_master_event` (atomic bundled facility + first
+  event), extended `approve/reject_facility_submission`; organizer UI
+  (Studio creation, proposal queue, organizer badge from
+  `organizer_master_id` only); facility→master invitations with master
+  consent (W-10) — offered role frozen, invited master resolves,
+  staff withdrawal. Completed and deployed 2026-07-20 (E2E green:
+  DB matrix 20/20, UI matrix on production).
 
 The SP-034/SP-035 SQL scripts (`supabase/2026-07-11_sp034_owner_events_rls.sql`,
 `2026-07-11_sp035_master_studio.sql`, `2026-07-12_sp035_master_insert_level_guard.sql`,
@@ -118,8 +141,12 @@ Supabase project and runtime-verified before the merge (2026-07-17).
 
 ## In Review
 
-Nothing — `main` is the current state; the next sprint (SP-036 Sauna
-Sessions) has not started.
+Branch `feature/sp-036-facility-moderation` is ~35 commits ahead of `main`
+(SP-036 moderation slices + SP-037 + SP-037B). It is **deployed to
+production** (manual `vercel --prod`; production is ahead of `main`) but
+**not merged** — merge to `main` is the next repository step. All SP-037/
+SP-037B SQL scripts under `supabase/` were applied manually to the live
+database and verified.
 
 ---
 
@@ -140,7 +167,7 @@ permissions: `docs/USER_MODEL.md`):
 
 Planned, not yet implemented:
 
-* **Session** — first-class ritual entity independent from Events (SP-036;
+* **Session** — first-class ritual entity independent from Events (SP-039;
   authoritative model: `docs/EVENT_SESSION_MODEL.md`)
 * **Payments / transactions** — no tables yet (SP-024)
 * **Private sauna ownership** — marketplace entities (SP-025)
@@ -181,13 +208,11 @@ Every future sprint must respect these (full reasoning: `docs/DECISIONS.md`):
 Next stages (do not duplicate — see `docs/ROADMAP.md` Phase 4 and
 `docs/BACKLOG.md`):
 
-* **SP-036** — Master-Contributed Facilities & Events: community facility
-  submissions with admin moderation, duplicate detection, master event
-  publication paths (`docs/SP036_ARCHITECTURE.md`). Functionally complete
-  2026-07-19 (the bundled-submission UI and URL import were descoped —
-  import moved to SP-038 Smart Facility Import).
-* **SP-037** — Master Event Participation Workflow (W-11): masters request,
-  facility staff moderate, approved masters join lineups/map. In progress.
+* **SP-036** — Master-Contributed Facilities & Events: completed
+  (`docs/SP036_ARCHITECTURE.md`; URL import moved to SP-038).
+* **SP-037 / SP-037B** — Master Event Participation, Master Events &
+  Invitations (W-09/W-10/W-11): **completed** 2026-07-20
+  (`docs/SP037_MASTER_EVENTS_ARCHITECTURE.md`).
 * **SP-038 / SP-040 / SP-041** — allocated in `docs/BACKLOG.md` (Smart
   Facility Import; Architecture Review; Capacity Dashboard).
 * **SP-039** — Sauna Sessions as a first-class entity

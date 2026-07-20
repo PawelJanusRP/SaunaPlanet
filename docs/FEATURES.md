@@ -700,7 +700,7 @@ Related files:
 
 # SP-035 Master Studio Foundation
 
-Status: IN REVIEW (branch `feature/sp-035-master-studio`)
+Status: COMPLETED (merged to main 2026-07-17, `47b400c`)
 
 Implemented:
 
@@ -712,7 +712,7 @@ Implemented:
 * home_sauna_id: transitional only — read as legacy display data, frozen against non-moderation writes, never used for authorization; automatic migration to affiliations deliberately deferred (would grant future session-publication consent without facility consent)
 * SQL to apply manually: supabase/2026-07-11_sp035_master_studio.sql
 
-Deferred to SP-036+: sauna sessions, master event proposals, event-specific invitations, affiliation types/verification/trust levels, notifications.
+Deferred: sauna sessions (SP-039), affiliation types/verification/trust levels, notifications. Master event proposals and event-specific invitations were delivered in SP-037/SP-037B.
 
 Related files:
 
@@ -723,6 +723,62 @@ Related files:
 * components/workspace/InviteMasterForm.tsx
 * lib/workspace/master.ts, lib/workspace/masterServer.ts
 * supabase/2026-07-11_sp035_master_studio.sql
+
+---
+
+# SP-036 Master-Contributed Facilities & Events
+
+Status: COMPLETED (slice 1 merged to main 2026-07-18, `c5c5404`; moderation slices on `feature/sp-036-facility-moderation`)
+
+Implemented:
+
+* facility submission for ALL authenticated users: pending-only, self-only, submitter edits own pending (guard trigger freezes status/created_by/pts_*); the map form and /submit both go through the submitFacility server action (no more client-side inserts of active facilities)
+* admin/moderator facility moderation: dedicated "Sauny" admin tab (pending-first, submitter context, coordinates, duplicate warnings with links), approve/reject actions
+* duplicate detection: find_similar_saunas (SECURITY DEFINER, pg_trgm in the extensions schema, stop-word stripping, distance gating ≤25 km, two-path name matching) — warn-only, never blocks; duplicate map centering on the nearest active match
+* cap of 5 pending submissions per user (action + trigger with advisory lock; moderation exempt)
+* RLS hardening of live holes found in the step-0 audit: anon UPDATE saunas, anon INSERT saunas/sauna_events/sauna_photos/sauna_event_masters/pts_import_log, anon storage uploads, public sauna_managers.user_id — all closed
+* sauna_submissions frozen read-only (legacy); photo provenance (source/created_by)
+
+Descoped: URL import → SP-038 Smart Facility Import; bundled facility+event submission UI → delivered inside SP-037B.
+
+Architecture: docs/SP036_ARCHITECTURE.md; test matrix: docs/SP036_TEST_MATRIX.md; SQL: supabase/2026-07-18_sp036_master_facilities.sql (+ dedup tuning), applied manually and verified.
+
+---
+
+# SP-037 Master Event Participation (W-11)
+
+Status: COMPLETED (deployed 2026-07-19)
+
+Implemented:
+
+* sauna_event_masters as a workflow table: deterministic SELECT (approved OR own-master OR event staff OR moderation), INSERT policies for admin and master requests, UPDATE staff/admin, DELETE admin/own-pending; guard triggers make pending→approved/rejected the ONLY transitions, freeze event/master identity, and own approved_at (approve → now(), reject → NULL); role vocabulary lead/assistant/guest enforced in the database
+* masters request participation from event pages (EventParticipationControls, 4 states); withdrawal of a pending request (MVP: DELETE — request history removed)
+* /studio/events in Master Studio ("Moje wydarzenia"): pending requests, upcoming confirmed events, history
+* staff moderation queue in /workspace/events: approve (role selection) / reject
+* production data healed: historical approved rows backfilled with approved_at
+
+SQL: supabase/2026-07-19_sp037_event_participation.sql (applied + verified, incl. the anon-EXECUTE lesson on policy helper functions).
+
+---
+
+# SP-037B Master Events & Invitations (W-09 / W-10)
+
+Status: COMPLETED (deployed 2026-07-20, `ec0d76b`; production E2E green)
+
+Implemented:
+
+* initiated_by handshake direction on sauna_event_masters ('master' | 'facility'; NULL = legacy/admin), immutable once set
+* master-created events exclusively through the trusted create_master_event RPC: unmanaged facility → event active + organizer approved as fixed 'lead'; managed facility → atomic pending event + pending organizer pair; Studio "Utwórz wydarzenie" (facility combobox with diacritic folding) and the map event form (verified masters delegated to the RPC)
+* manager proposal moderation: "Propozycje wydarzeń" queue in /workspace/events resolving via resolve_master_event (FOR UPDATE, pending-only) — approve activates event + organizer with the selected role and trusted approved_at, reject rejects both; no split states
+* atomic bundled submission: submit_facility_with_master_event (facility + first event + organizer pair in ONE transaction; cap + advisory lock reused; rollback proven post-insert); approve/reject_facility_submission resolve the whole package atomically
+* facility→master invitations (W-10): staff invite an approved master to an active future event with an offered role; pending + initiated_by='facility'; ONLY the invited master (or admin) resolves; acceptance keeps the frozen offered role + trusted approved_at; rejection keeps the master non-public; staff withdraw pending invitations (MVP: DELETE); "Wysłane zaproszenia" in /workspace/events with direction chips, "Zaproszenia od obiektów" in /studio/events
+* organizer semantics: organizer badge and "Event saunamistrza" banner derive ONLY from sauna_events.organizer_master_id; organizer edits own active future events (content-only); organizing never grants manager rights or affiliation
+* public surfaces unchanged: only active events and approved assignments are public; map satellites follow the existing avatar + 7-day-window rules
+* sauna_events SELECT hardened (active OR own created_by OR event staff OR moderation) — anon can no longer read pending/rejected events
+
+Architecture: docs/SP037_MASTER_EVENTS_ARCHITECTURE.md; SQL: supabase/2026-07-19_sp037b_master_events.sql + 2026-07-19_sp037b_bundled_rpc.sql (applied + verified; B-suite and production E2E matrices green).
+
+Known MVP limitations: pending withdrawal is a DELETE (no history); in-app only (no notifications/email/messaging); no invitation expiry; map satellite requires an avatar (fallback in backlog).
 
 ---
 
@@ -827,17 +883,20 @@ Completed:
 * Personal Workspace — dashboard + profile modules on the shared shell (SP-032)
 * Owner Workspace — facility context, dashboard, reservations, events (SP-033)
 * Owner event management — create/edit/delete from the Owner Workspace (SP-034)
-* Master Studio Foundation — Studio workspace, profile integrity, first-class affiliations (SP-035, in review; absorbs SP-016)
+* Master Studio Foundation — Studio workspace, profile integrity, first-class affiliations (SP-035; absorbs SP-016)
+* Master-contributed facilities — community submissions, moderation, dedup, RLS hardening (SP-036)
+* Master event participation — requests, staff moderation, lineup/map visibility (SP-037)
+* Master events & invitations — organizer routing, atomic proposals/bundles, facility invitations with master consent (SP-037B)
 
 Planned:
 
-* Sauna Sessions — first-class Session entity independent from Events (SP-036)
+* Sauna Sessions — first-class Session entity independent from Events (SP-039)
+* Smart Facility Import — URL/OG import pipeline (SP-038)
 * Bookings (SP-022)
 * Payments (SP-024)
 * Private Saunas (SP-025)
 * Verification
 * Recurring events
-* Sauna master ↔ event assignments, two-sided handshake (SP-026)
 * Sauna and master rankings (SP-023)
 * Rating parameters admin panel (SP-027)
 * Native Mobile App — Expo, 3 phases: Architecture → Android → iOS (SP-030)
