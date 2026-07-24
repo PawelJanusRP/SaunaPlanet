@@ -49,13 +49,22 @@ export async function extractFacilityDraft(rawUrl: string): Promise<ExtractDraft
       },
 
       insertImportLog: async (record: ImportLogRecord) => {
-        const { error } = await supabase.from('import_log').insert({
-          ...record,
-          requested_by: user?.id,
-        })
+        const { data, error } = await supabase
+          .from('import_log')
+          .insert({
+            ...record,
+            requested_by: user?.id,
+          })
+          .select('id')
+          .single()
         // Audit-trail failure must not hide an already-computed result from
-        // the user; it is logged server-side for investigation.
-        if (error) console.error('import_log insert failed:', error.message)
+        // the user; it is logged server-side for investigation. The result
+        // is then simply unlinkable (importId null).
+        if (error) {
+          console.error('import_log insert failed:', error.message)
+          return null
+        }
+        return data.id as string
       },
 
       extract: (normalizedUrl: string) => extractFacilityFromUrl(normalizedUrl),
@@ -84,5 +93,39 @@ export async function extractFacilityDraft(rawUrl: string): Promise<ExtractDraft
       code: 'fetch-failed',
       message: 'Nie udało się pobrać danych — spróbuj ponownie',
     }
+  }
+}
+
+/**
+ * SP-038 Slice 3 — best-effort link between an import operation and the
+ * pending submission it produced, via the link_import_to_submission RPC
+ * (the ONLY write path to import_log.sauna_id; SECURITY DEFINER with
+ * strict predicates: caller owns both the log row and the pending sauna,
+ * the log is unlinked and ok/partial). The RPC returns false for every
+ * no-op — this action NEVER throws into the submission flow: a failed
+ * link must not disturb an already-successful submission.
+ */
+export async function linkImportToSubmission(
+  importId: string,
+  saunaId: string
+): Promise<{ linked: boolean }> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('link_import_to_submission', {
+      p_import_id: importId,
+      p_sauna_id: saunaId,
+    })
+    if (error) {
+      console.error('link_import_to_submission failed:', error.message)
+      return { linked: false }
+    }
+    if (data !== true) {
+      // diagnostic only — the RPC deliberately does not disclose the cause
+      console.warn('link_import_to_submission no-op', { importId, saunaId })
+    }
+    return { linked: data === true }
+  } catch (e) {
+    console.error('linkImportToSubmission failed:', e)
+    return { linked: false }
   }
 }

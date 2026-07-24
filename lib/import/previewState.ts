@@ -7,7 +7,7 @@
 // components/ImportFromUrlSection.tsx is a thin renderer.
 
 import type { ExtractDraftResult, ExtractDraftSuccess } from './actionCore'
-import type { FacilityDraft } from './types'
+import type { FacilityDraft, OpeningHoursDraft } from './types'
 
 export type ImportPreviewState = {
   phase: 'idle' | 'loading' | 'success' | 'error'
@@ -75,7 +75,10 @@ export function isPreviewForDifferentUrl(state: ImportPreviewState, currentInput
   )
 }
 
-/** The subset of the /submit form the importer may prefill (Slice 2). */
+/** The subset of the /submit form the importer may prefill (Slice 2;
+ * phone/email/address/openingHours added in Slice 3). openingHours is the
+ * structured draft — the form holds it as-is and serializes on submit via
+ * openingHoursToJson. */
 export type ImportableFormValues = {
   name: string
   description: string
@@ -83,6 +86,10 @@ export type ImportableFormValues = {
   website: string
   lat: string
   lng: string
+  phone: string
+  email: string
+  address: string
+  openingHours: OpeningHoursDraft | null
 }
 
 /**
@@ -105,7 +112,35 @@ export function applyDraftToForm(
     values.lat = String(draft.geo.value.latitude)
     values.lng = String(draft.geo.value.longitude)
   }
+  if (draft.phone) values.phone = draft.phone.value
+  if (draft.email) values.email = draft.email.value
+  if (draft.address) values.address = draft.address.value
+  if (draft.openingHours) values.openingHours = draft.openingHours.value
   return { values, snapshot }
+}
+
+/**
+ * Serializes the structured opening-hours draft into the saunas.opening_hours
+ * JSONB contract: a top-level OBJECT (DB CHECK) shaped
+ * {"specifications": [...], "raw": [...], "note": null} — mirrors
+ * OpeningHoursDraft and stays extensible (future keys are additive).
+ */
+export function openingHoursToJson(
+  hours: OpeningHoursDraft
+): Record<string, unknown> {
+  return {
+    specifications: hours.specifications,
+    raw: hours.raw,
+    note: null,
+  }
+}
+
+/** Compact human-readable summary of an opening-hours draft (form chip). */
+export function openingHoursSummary(hours: OpeningHoursDraft): string {
+  const specs = hours.specifications.map(
+    (s) => `${s.days.join(', ')}: ${s.opens ?? '?'}–${s.closes ?? '?'}`
+  )
+  return [...specs, ...hours.raw].join(' · ')
 }
 
 /** Restores the form to its pre-import snapshot. */
@@ -115,15 +150,12 @@ export function clearImportedValues(snapshot: ImportableFormValues): ImportableF
 
 /**
  * Draft fields that have no form input yet (kept visible in the preview's
- * information area and carried by the action result for Slice 3 —
- * extracted values are never silently discarded).
+ * information area and preserved in import_log.extracted — extracted
+ * values are never silently discarded). Slice 3 moved address, phone,
+ * email and openingHours into the form.
  */
 export const UNMAPPED_DRAFT_KEYS = [
-  'address',
   'country',
-  'phone',
-  'email',
-  'openingHours',
   'imageUrl',
   'socialLinks',
   'sourceTitle',

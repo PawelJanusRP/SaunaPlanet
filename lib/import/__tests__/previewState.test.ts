@@ -8,11 +8,13 @@ import {
   clearImportedValues,
   clearPreview,
   isPreviewForDifferentUrl,
+  openingHoursSummary,
+  openingHoursToJson,
   resolveExtraction,
   unmappedFields,
   type ImportableFormValues,
 } from '../previewState'
-import type { FacilityDraft } from '../types'
+import type { FacilityDraft, OpeningHoursDraft } from '../types'
 
 const DRAFT: FacilityDraft = {
   name: { value: 'Sauna Leśna', origin: 'jsonld', confidence: 'high', sourceHint: 'JSON-LD LocalBusiness.name' },
@@ -34,13 +36,30 @@ function success(url: string, overrides: Partial<ExtractDraftSuccess> = {}): Ext
     draft: DRAFT,
     warnings: [],
     duplicates: [],
+    importId: 'log-1',
     ...overrides,
   }
 }
 
 const FAILURE: ExtractDraftResult = { ok: false, code: 'fetch-failed', message: 'Nie udało się pobrać danych' }
 
-const EMPTY_FORM: ImportableFormValues = { name: '', description: '', city: '', website: '', lat: '', lng: '' }
+const EMPTY_FORM: ImportableFormValues = {
+  name: '',
+  description: '',
+  city: '',
+  website: '',
+  lat: '',
+  lng: '',
+  phone: '',
+  email: '',
+  address: '',
+  openingHours: null,
+}
+
+const HOURS: OpeningHoursDraft = {
+  specifications: [{ days: ['Mo', 'Tu'], opens: '09:00', closes: '21:00' }],
+  raw: ['So-Nd 10:00-18:00'],
+}
 
 describe('preview state machine', () => {
   it('resolves the matching token into a success preview', () => {
@@ -123,7 +142,24 @@ describe('form mapping', () => {
       website: 'https://saunalesna.pl',
       lat: '',
       lng: '',
+      phone: '',
+      email: '',
+      address: '',
+      openingHours: null,
     })
+  })
+
+  it('maps phone, email, address and opening hours into the form (Slice 3)', () => {
+    const draft: FacilityDraft = {
+      ...DRAFT,
+      address: { value: 'Termalna 1', origin: 'jsonld', confidence: 'high', sourceHint: 'JSON-LD PostalAddress' },
+      openingHours: { value: HOURS, origin: 'jsonld', confidence: 'high', sourceHint: 'JSON-LD openingHoursSpecification' },
+    }
+    const { values } = applyDraftToForm(draft, EMPTY_FORM)
+    expect(values.phone).toBe('+48 600 100 200')
+    expect(values.email).toBe('x@saunalesna.pl')
+    expect(values.address).toBe('Termalna 1')
+    expect(values.openingHours).toEqual(HOURS)
   })
 
   it('maps coordinates into the lat/lng string inputs', () => {
@@ -148,8 +184,28 @@ describe('form mapping', () => {
   })
 
   it('lists extracted values without a form field instead of discarding them', () => {
-    expect(unmappedFields(DRAFT)).toEqual(['phone', 'email'])
+    // phone/email/address/openingHours moved into the form in Slice 3
+    expect(unmappedFields(DRAFT)).toEqual([])
+    const withExtras: FacilityDraft = {
+      ...DRAFT,
+      country: { value: 'PL', origin: 'jsonld', confidence: 'high', sourceHint: 'JSON-LD addressCountry' },
+      sourceTitle: { value: 'Sauna Leśna — oficjalna strona', origin: 'metadata', confidence: 'medium', sourceHint: 'og:site_name' },
+    }
+    expect(unmappedFields(withExtras)).toEqual(['country', 'sourceTitle'])
     expect(unmappedFields({})).toEqual([])
+  })
+
+  it('serializes opening hours into the JSONB object contract', () => {
+    expect(openingHoursToJson(HOURS)).toEqual({
+      specifications: [{ days: ['Mo', 'Tu'], opens: '09:00', closes: '21:00' }],
+      raw: ['So-Nd 10:00-18:00'],
+      note: null,
+    })
+  })
+
+  it('summarizes opening hours for the form chip', () => {
+    expect(openingHoursSummary(HOURS)).toBe('Mo, Tu: 09:00–21:00 · So-Nd 10:00-18:00')
+    expect(openingHoursSummary({ specifications: [], raw: [] })).toBe('')
   })
 })
 

@@ -14,12 +14,15 @@ import BundledEventFields, {
   type BundledEventDraft,
 } from '@/components/BundledEventFields'
 import ImportFromUrlSection from '@/components/ImportFromUrlSection'
+import { linkImportToSubmission } from '@/app/saunas/importActions'
 import {
   applyDraftToForm,
   clearImportedValues,
+  openingHoursSummary,
+  openingHoursToJson,
   type ImportableFormValues,
 } from '@/lib/import/previewState'
-import type { FacilityDraft } from '@/lib/import/types'
+import type { FacilityDraft, OpeningHoursDraft } from '@/lib/import/types'
 
 const CATEGORIES = [
   { value: 'public_sauna',   label: 'Sauna publiczna' },
@@ -44,11 +47,24 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
   const [website, setWebsite] = useState('')
   const [lat, setLat] = useState('')
   const [lng, setLng] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [address, setAddress] = useState('')
+  // Structured opening hours arrive only via import (no manual editor in
+  // the MVP) — shown as a removable summary chip, serialized on submit.
+  const [openingHours, setOpeningHours] = useState<OpeningHoursDraft | null>(null)
   const [duplicates, setDuplicates] = useState<SimilarFacility[] | null>(null)
   // Pre-import form snapshot: "Wyczyść zaimportowane dane" restores the
   // manual values instead of wiping the form (SP-038 slice 2).
   const [preImportSnapshot, setPreImportSnapshot] =
     useState<ImportableFormValues | null>(null)
+  // import_log row id of the applied import — linked to the submission
+  // after a successful submit (SP-038 slice 3, best-effort).
+  const [appliedImportId, setAppliedImportId] = useState<string | null>(null)
+
+  function currentFormValues(): ImportableFormValues {
+    return { name, description, city, website, lat, lng, phone, email, address, openingHours }
+  }
 
   function setFormValues(values: ImportableFormValues) {
     setName(values.name)
@@ -57,15 +73,19 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
     setWebsite(values.website)
     setLat(values.lat)
     setLng(values.lng)
+    setPhone(values.phone)
+    setEmail(values.email)
+    setAddress(values.address)
+    setOpeningHours(values.openingHours)
   }
 
-  function handleImportApply(draft: FacilityDraft) {
-    const current: ImportableFormValues = { name, description, city, website, lat, lng }
-    const { values, snapshot } = applyDraftToForm(draft, current)
+  function handleImportApply(draft: FacilityDraft, importId: string | null) {
+    const { values, snapshot } = applyDraftToForm(draft, currentFormValues())
     // First apply wins as the restore point; a re-apply must not capture
     // already-imported values as the "manual" snapshot.
     setPreImportSnapshot((prev) => prev ?? snapshot)
     setFormValues(values)
+    setAppliedImportId(importId)
     setDuplicates(null)
   }
 
@@ -74,6 +94,7 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
       setFormValues(clearImportedValues(preImportSnapshot))
       setPreImportSnapshot(null)
     }
+    setAppliedImportId(null)
     setDuplicates(null)
   }
 
@@ -122,6 +143,10 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
       website: website || null,
       latitude: latNum,
       longitude: lngNum,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      openingHours: openingHours ? openingHoursToJson(openingHours) : null,
     }
     const bundling = isMaster && withEvent
     const result = bundling
@@ -142,6 +167,17 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
     if (result.error) {
       toast.error(result.error)
       return
+    }
+
+    // SP-038 slice 3: link the applied import operation to the created
+    // pending sauna (moderation provenance). Best-effort by contract —
+    // the RPC no-ops safely and a failed link never disturbs the
+    // already-successful submission.
+    const createdSaunaId = bundling
+      ? (result as { facilityId?: string }).facilityId
+      : (result as { id?: string }).id
+    if (appliedImportId && createdSaunaId) {
+      await linkImportToSubmission(appliedImportId, createdSaunaId)
     }
 
     // atomic bundle (SP-037B): either the whole submission succeeded or an
@@ -251,6 +287,71 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
             placeholder="https://..."
           />
         </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Adres
+          </label>
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            placeholder="np. Termalna 1, 61-028 Poznań"
+          />
+        </div>
+
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Telefon
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="np. +48 61 000 00 00"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              E-mail kontaktowy
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="np. kontakt@obiekt.pl"
+            />
+          </div>
+        </div>
+
+        {openingHours && (
+          <div className="rounded-xl border bg-gray-50 px-3 py-2">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-medium text-gray-500">
+                  🕐 Godziny otwarcia (z importu)
+                </p>
+                <p className="mt-0.5 text-sm text-gray-800">
+                  {openingHoursSummary(openingHours)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpeningHours(null)}
+                className="shrink-0 text-xs text-gray-500 underline hover:text-gray-700"
+              >
+                Usuń
+              </button>
+            </div>
+            <p className="mt-1 text-[10px] text-gray-400">
+              Zapiszemy je przy zgłoszeniu — moderacja może je poprawić.
+            </p>
+          </div>
+        )}
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">

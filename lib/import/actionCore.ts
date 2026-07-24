@@ -12,14 +12,22 @@ import type { FacilityDraft, ImportErrorCode, ProviderResult, SourceKind } from 
 export const IMPORT_RATE_LIMIT = 10 // accepted operations per rolling hour
 export const IMPORT_RATE_WINDOW_MS = 60 * 60 * 1000
 
-/** Current database vocabulary of import_log.source_kind (SP-036 CHECK). */
-export type DbSourceKind = 'facebook_page' | 'facebook_event' | 'instagram' | 'website' | 'other'
+/** Database vocabulary of import_log.source_kind (SP-036 CHECK, extended
+ * with 'google_maps' by the Slice 3 migration — that migration must be
+ * applied before this code is deployed, or google_maps log inserts fail
+ * the CHECK). */
+export type DbSourceKind =
+  | 'facebook_page'
+  | 'facebook_event'
+  | 'instagram'
+  | 'website'
+  | 'google_maps'
+  | 'other'
 
 /**
- * Maps the application-level source kind onto the current database CHECK
- * vocabulary. `google_maps` persists as 'other' until the Slice 3
- * migration extends the CHECK — the application-level kind is preserved
- * inside extracted.appSourceKind so provenance is not lost.
+ * Maps the application-level source kind onto the database CHECK
+ * vocabulary. The application-level kind is additionally preserved inside
+ * extracted.appSourceKind so fine-grained provenance is never lost.
  */
 export function toDbSourceKind(kind: SourceKind): DbSourceKind {
   switch (kind) {
@@ -34,6 +42,7 @@ export function toDbSourceKind(kind: SourceKind): DbSourceKind {
     case 'instagram_post':
       return 'instagram'
     case 'google_maps':
+      return 'google_maps'
     case 'unsupported':
       return 'other'
   }
@@ -60,8 +69,12 @@ export type ExtractDraftDeps = {
   getUserId(): Promise<string | null>
   /** Count of the caller's import_log rows within the rolling window. */
   countRecentImports(): Promise<number>
-  /** Append-only import_log insert (requested_by comes from the session). */
-  insertImportLog(record: ImportLogRecord): Promise<void>
+  /**
+   * Append-only import_log insert (requested_by comes from the session).
+   * Returns the new row id, or null when the audit insert failed — the
+   * result is then still delivered to the user, only unlinkable (Slice 3).
+   */
+  insertImportLog(record: ImportLogRecord): Promise<string | null>
   /** Provider engine (lib/import extractFacilityFromUrl in production). */
   extract(normalizedUrl: string): Promise<ProviderResult>
   /** Warn-only duplicate lookup; must degrade to [] on failure. */
@@ -93,6 +106,12 @@ export type ExtractDraftSuccess = {
   draft: FacilityDraft
   warnings: string[]
   duplicates: DuplicateCandidate[]
+  /**
+   * id of the import_log row for this operation — used by Slice 3 to link
+   * the operation to the submission it produced. null when the audit
+   * insert failed (the preview still works; linking is skipped).
+   */
+  importId: string | null
 }
 
 export type ExtractDraftFailure = {
@@ -213,7 +232,7 @@ export async function extractDraftCore(
     }
   }
 
-  await deps.insertImportLog({
+  const importId = await deps.insertImportLog({
     source_kind: dbKind,
     url: classified.url,
     result: extraction.result,
@@ -243,5 +262,6 @@ export async function extractDraftCore(
     draft: extraction.draft,
     warnings: extraction.warnings,
     duplicates,
+    importId,
   }
 }

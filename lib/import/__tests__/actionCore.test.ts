@@ -41,6 +41,7 @@ function makeDeps(overrides: DepsOverrides = {}) {
       overrides.insertImportLog ??
       (async (record) => {
         logs.push(record)
+        return `log-${logs.length}`
       }),
     extract: overrides.extract ?? (async () => overrides.extraction ?? OK_EXTRACTION),
     findDuplicates:
@@ -146,7 +147,7 @@ describe('extractDraftCore', () => {
     })
     expect(logs).toEqual([
       {
-        source_kind: 'other', // DB vocabulary until the Slice 3 migration
+        source_kind: 'google_maps', // DB vocabulary extended by the Slice 3 migration
         url: 'https://maps.app.goo.gl/AbCdEf',
         result: 'blocked',
         extracted: { appSourceKind: 'google_maps', reason: 'unsupported-source' },
@@ -154,15 +155,29 @@ describe('extractDraftCore', () => {
     ])
   })
 
-  it('maps app source kinds onto the current DB vocabulary', () => {
+  it('maps app source kinds onto the DB vocabulary', () => {
     expect(toDbSourceKind('website')).toBe('website')
     expect(toDbSourceKind('facebook_page')).toBe('facebook_page')
     expect(toDbSourceKind('facebook_post')).toBe('facebook_page')
     expect(toDbSourceKind('facebook_event')).toBe('facebook_event')
     expect(toDbSourceKind('instagram_profile')).toBe('instagram')
     expect(toDbSourceKind('instagram_post')).toBe('instagram')
-    expect(toDbSourceKind('google_maps')).toBe('other')
+    expect(toDbSourceKind('google_maps')).toBe('google_maps')
     expect(toDbSourceKind('unsupported')).toBe('other')
+  })
+
+  it('returns the import_log row id on success (Slice 3 linking)', async () => {
+    const { deps } = makeDeps()
+    const result = await extractDraftCore('https://saunalesna.pl/', deps)
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.importId).toBe('log-1')
+  })
+
+  it('degrades to importId null when the audit insert fails', async () => {
+    const { deps } = makeDeps({ insertImportLog: async () => null })
+    const result = await extractDraftCore('https://saunalesna.pl/', deps)
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.importId).toBeNull()
   })
 
   it('does not log purely local validation failures', async () => {

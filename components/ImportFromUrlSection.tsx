@@ -111,7 +111,9 @@ export default function ImportFromUrlSection({
   onApply,
   onClearImport,
 }: {
-  onApply: (draft: FacilityDraft) => void
+  /** importId = import_log row id for the applied operation (null when the
+   * audit insert failed) — the form links it to the submission (Slice 3). */
+  onApply: (draft: FacilityDraft, importId: string | null) => void
   onClearImport: () => void
 }) {
   const [inputUrl, setInputUrl] = useState('')
@@ -151,7 +153,7 @@ export default function ImportFromUrlSection({
 
   function handleApply() {
     if (preview.phase !== 'success' || !preview.result) return
-    onApply(preview.result.draft)
+    onApply(preview.result.draft, preview.result.importId)
     setApplied(true)
     toast.success('Dane przeniesione do formularza — sprawdź i uzupełnij przed wysłaniem')
   }
