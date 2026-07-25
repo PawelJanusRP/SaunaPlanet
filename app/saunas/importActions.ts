@@ -9,6 +9,11 @@ import {
   type ImportLogRecord,
 } from '@/lib/import/actionCore'
 import { extractFacilityFromUrl } from '@/lib/import'
+import { fetchFacilityImage } from '@/lib/import/imageFetch'
+import {
+  importSubmissionImageCore,
+  type ImageImportResult,
+} from '@/lib/import/imageImportCore'
 
 /**
  * SP-038 Slice 2 — trusted extraction action for the /submit import
@@ -127,5 +132,97 @@ export async function linkImportToSubmission(
   } catch (e) {
     console.error('linkImportToSubmission failed:', e)
     return { linked: false }
+  }
+}
+
+/**
+ * SP-038 Slice 3C — controlled, consent-gated facility-image import.
+ *
+ * The client supplies ONLY identifiers; the remote URL is read from the
+ * caller-owned import_log row and the log must already be linked to this
+ * pending sauna (link_import_to_submission is the trust anchor). Fetching
+ * uses the dedicated SSRF-safe image profile (https, pinned lookup,
+ * validated redirects, 5 MB, JPEG/PNG/WebP with signature verification);
+ * upload goes to imported/{sauna_id}/ WITHOUT overwrite; attachment goes
+ * through the attach_imported_photo RPC; the cover is set only when
+ * currently empty. Best-effort by contract — any failure returns a
+ * structured, user-safe status and never affects the submission itself.
+ */
+export async function importSubmissionImage(
+  importId: string,
+  saunaId: string
+): Promise<ImageImportResult> {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    return await importSubmissionImageCore(importId, saunaId, {
+      getUserId: async () => user?.id ?? null,
+
+      getImportRecord: async (id) => {
+        const { data, error } = await supabase
+          .from('import_log')
+          .select('sauna_id, extracted')
+          .eq('id', id)
+          .maybeSingle()
+        if (error || !data) return null
+        const draft = (data.extracted as { draft?: { imageUrl?: { value?: unknown } } } | null)?.draft
+        const imageUrl = draft?.imageUrl?.value
+        return {
+          saunaId: (data.sauna_id as string | null) ?? null,
+          imageUrl: typeof imageUrl === 'string' ? imageUrl : null,
+        }
+      },
+
+      fetchImage: (url) => fetchFacilityImage(url),
+
+      uploadImage: async (path, bytes, contentType) => {
+        const { error } = await supabase.storage
+          .from('sauna-images')
+          .upload(path, Buffer.from(bytes), { contentType, upsert: false })
+        if (error) {
+          console.error('imported image upload failed:', error.message)
+          return null
+        }
+        return supabase.storage.from('sauna-images').getPublicUrl(path).data.publicUrl
+      },
+
+      attachPhoto: async (targetSaunaId, publicUrl, sourceUrl) => {
+        const { data, error } = await supabase.rpc('attach_imported_photo', {
+          target_sauna_id: targetSaunaId,
+          p_image_url: publicUrl,
+          p_source_url: sourceUrl,
+        })
+        if (error) {
+          console.error('attach_imported_photo failed:', error.message)
+          return null
+        }
+        return (data as string | null) ?? null
+      },
+
+      setCoverIfEmpty: async (targetSaunaId, publicUrl) => {
+        const { data, error } = await supabase
+          .from('saunas')
+          .update({ cover_image_url: publicUrl })
+          .eq('id', targetSaunaId)
+          .is('cover_image_url', null)
+          .eq('status', 'pending')
+          .select('id')
+        if (error) {
+          console.error('cover update failed:', error.message)
+          return false
+        }
+        return (data?.length ?? 0) > 0
+      },
+    })
+  } catch (e) {
+    console.error('importSubmissionImage failed:', e)
+    return {
+      ok: false,
+      reason: 'fetch-failed',
+      message: 'Nie udało się pobrać zdjęcia ze strony źródłowej',
+    }
   }
 }

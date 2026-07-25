@@ -112,13 +112,18 @@ export default function ImportFromUrlSection({
   onClearImport,
 }: {
   /** importId = import_log row id for the applied operation (null when the
-   * audit insert failed) — the form links it to the submission (Slice 3). */
-  onApply: (draft: FacilityDraft, importId: string | null) => void
+   * audit insert failed) — the form links it to the submission (Slice 3).
+   * importImage = user consent to copy the source image after submission
+   * (Slice 3C); always false when the draft has no image. */
+  onApply: (draft: FacilityDraft, importId: string | null, importImage: boolean) => void
   onClearImport: () => void
 }) {
   const [inputUrl, setInputUrl] = useState('')
   const [preview, setPreview] = useState<ImportPreviewState>(INITIAL_PREVIEW_STATE)
   const [applied, setApplied] = useState(false)
+  // Consent checkbox for copying the source image (approved decision 3):
+  // selected by default, clearable before applying/submitting.
+  const [importImage, setImportImage] = useState(true)
   // The ref mirrors the state so async resolutions always see the LATEST
   // token — the tested stale-drop logic in resolveExtraction stays in charge.
   const stateRef = useRef<ImportPreviewState>(INITIAL_PREVIEW_STATE)
@@ -137,6 +142,7 @@ export default function ImportFromUrlSection({
     const { state: loading, token } = beginExtraction(stateRef.current, trimmed)
     update(loading)
     setApplied(false)
+    setImportImage(true)
     const outcome = await extractFacilityDraft(trimmed)
     update(resolveExtraction(stateRef.current, token, outcome))
   }
@@ -153,7 +159,8 @@ export default function ImportFromUrlSection({
 
   function handleApply() {
     if (preview.phase !== 'success' || !preview.result) return
-    onApply(preview.result.draft, preview.result.importId)
+    const hasImage = preview.result.draft.imageUrl !== undefined
+    onApply(preview.result.draft, preview.result.importId, hasImage && importImage)
     setApplied(true)
     toast.success('Dane przeniesione do formularza — sprawdź i uzupełnij przed wysłaniem')
   }
@@ -277,9 +284,10 @@ export default function ImportFromUrlSection({
                 </div>
                 {key === 'imageUrl' ? (
                   <div>
-                    {/* Remote source preview ONLY — never persisted, never
-                        uploaded, never used as the submitted image (SP-038
-                        decision 2). */}
+                    {/* This <img> is a REMOTE preview — nothing has been
+                        copied yet. Copying happens only after submission
+                        and only with the consent checkbox below (SP-038
+                        slice 3C, decision 3). */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={String(field.value)}
@@ -287,8 +295,25 @@ export default function ImportFromUrlSection({
                       className="mt-1 max-h-40 rounded-lg border object-cover"
                     />
                     <p className="mt-1 text-[10px] text-gray-400">
-                      Podgląd ze źródła — obraz nie zostanie zapisany automatycznie.
+                      To jest podgląd ze strony źródłowej — nic nie zostało
+                      jeszcze skopiowane do SaunaPlanet.
                     </p>
+                    <label className="mt-2 flex items-start gap-2 text-xs text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={importImage}
+                        onChange={(e) => setImportImage(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        Zaimportuj to zdjęcie do SaunaPlanet
+                        <span className="block text-[10px] text-gray-400">
+                          {importImage
+                            ? 'Zdjęcie zostanie skopiowane do zgłoszenia PO jego wysłaniu.'
+                            : 'Zdjęcie NIE zostanie skopiowane — pozostanie tylko podgląd.'}
+                        </span>
+                      </span>
+                    </label>
                   </div>
                 ) : (
                   <p className="break-words text-sm text-gray-800">{fieldValueText(key, field)}</p>

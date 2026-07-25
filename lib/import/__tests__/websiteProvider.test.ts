@@ -52,6 +52,30 @@ const OG_ONLY_HTML = `<!doctype html>
 
 const BARE_HTML = `<html><head><title>Jakaś strona</title></head><body><p>nic</p></body></html>`
 
+// Deterministic regression fixture for the Lake Hill Mazury structure
+// (Slice 3C approved decision): a primary Hotel node with facility-level
+// contact/address but NO description, plus a secondary TouristAttraction
+// node that carries the sauna-zone description. No og:description and no
+// meta description anywhere.
+const LAKEHILL_HTML = `<!doctype html>
+<html><head>
+<meta property="og:title" content="Strefa Saun i Łaźni" />
+<meta property="og:image" content="https://cdn.lakehill.example/attractions/1716904034.Projekt bez nazwy (2).jpg" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Hotel","name":"Lake Hill Mazury Resort & Spa",
+ "url":"https://www.lakehill.example/atrakcje/strefa-saun",
+ "address":{"@type":"PostalAddress","streetAddress":"Turystyczna 15","addressLocality":"Ostróda","postalCode":"14-100","addressCountry":"PL"},
+ "geo":{"@type":"GeoCoordinates","latitude":53.7091685,"longitude":19.9438107},
+ "telephone":"89 307 50 50","email":"reservation@lakehill.example"}
+</script>
+<script type="application/ld+json">
+{"@type":"TouristAttraction","name":"Strefa Saun i Łaźni","@context":"https://schema.org",
+ "url":"https://www.lakehill.example/atrakcje/strefa-saun",
+ "description":"Zregeneruj się, oczyść organizm, zrelaksuj zmysły. Skorzystaj z sauny fińskiej i łaźni parowej.",
+ "image":["https://cdn.lakehill.example/attractions/other.jpg"]}
+</script>
+</head><body></body></html>`
+
 function siteTransport(html: string, url = 'https://saunalesna.pl/') {
   const host = new URL(url).hostname
   return makeTransport({ dns: { [host]: PUBLIC_IP }, routes: { [url]: { body: html } } })
@@ -122,6 +146,49 @@ describe('extractFromWebsite', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.warnings).toEqual(['malformed-jsonld-block-skipped'])
+  })
+
+  it('fills missing fields from a lower-ranked JSON-LD node (Lake Hill regression)', async () => {
+    const result = await extractFromWebsite('https://saunalesna.pl/', {
+      transport: siteTransport(LAKEHILL_HTML),
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    // Primary Hotel node wins for every field it carries — never replaced
+    // by the more sauna-specific TouristAttraction name.
+    expect(result.draft.name).toMatchObject({
+      value: 'Lake Hill Mazury Resort & Spa',
+      origin: 'jsonld',
+      confidence: 'high',
+      sourceHint: 'JSON-LD Hotel.name',
+    })
+    expect(result.draft.phone?.value).toBe('89 307 50 50')
+    expect(result.draft.email?.value).toBe('reservation@lakehill.example')
+    expect(result.draft.city?.value).toBe('Ostróda')
+    expect(result.draft.geo?.value).toEqual({ latitude: 53.7091685, longitude: 19.9438107 })
+    // The missing description is filled from the SECONDARY node with
+    // node-accurate provenance and medium confidence.
+    expect(result.draft.description).toEqual({
+      value: 'Zregeneruj się, oczyść organizm, zrelaksuj zmysły. Skorzystaj z sauny fińskiej i łaźni parowej.',
+      origin: 'jsonld',
+      confidence: 'medium',
+      sourceHint: 'JSON-LD TouristAttraction.description',
+    })
+    // Primary has no image → fallback node image wins over og:image and
+    // the og:image URL with a raw space is serialized percent-encoded.
+    expect(result.draft.imageUrl?.sourceHint).toBe('JSON-LD TouristAttraction.image')
+  })
+
+  it('percent-encodes unsafe characters in og:image URLs (space case)', async () => {
+    const html = `<html><head><title>X</title>
+      <meta property="og:image" content="https://cdn.example.pl/img/Projekt bez nazwy (2).jpg" />
+      </head></html>`
+    const result = await extractFromWebsite('https://saunalesna.pl/', { transport: siteTransport(html) })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.draft.imageUrl?.value).toBe(
+      'https://cdn.example.pl/img/Projekt%20bez%20nazwy%20(2).jpg'
+    )
   })
 })
 

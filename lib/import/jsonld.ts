@@ -188,12 +188,20 @@ function filledFieldCount(business: JsonLdBusiness): number {
 
 export type JsonLdExtraction = {
   business: JsonLdBusiness | null
+  /**
+   * Remaining recognized nodes ranked best-first (tier, then filled
+   * fields). Used for deterministic per-field fallback (Slice 3C): fields
+   * missing on the primary node may be filled from these — the primary
+   * selection itself is never changed by them.
+   */
+  others: JsonLdBusiness[]
   warnings: string[]
 }
 
 /**
  * Parses the collected JSON-LD blocks and returns the most relevant
- * business node (best type tier, then most filled fields).
+ * business node (best type tier, then most filled fields) plus the
+ * remaining recognized nodes in rank order.
  */
 export function extractBusinessFromJsonLd(blocks: string[]): JsonLdExtraction {
   const warnings: string[] = []
@@ -206,17 +214,14 @@ export function extractBusinessFromJsonLd(blocks: string[]): JsonLdExtraction {
     }
   }
 
-  let best: JsonLdBusiness | null = null
+  const recognized: JsonLdBusiness[] = []
   for (const node of nodes) {
     const business = toBusiness(node)
-    if (!business) continue
-    if (
-      best === null ||
-      business.tier < best.tier ||
-      (business.tier === best.tier && filledFieldCount(business) > filledFieldCount(best))
-    ) {
-      best = business
-    }
+    if (business) recognized.push(business)
   }
-  return { business: best, warnings }
+  recognized.sort(
+    (a, b) => a.tier - b.tier || filledFieldCount(b) - filledFieldCount(a)
+  )
+  const [best = null, ...others] = recognized
+  return { business: best, others, warnings }
 }

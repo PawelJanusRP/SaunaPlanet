@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { sanitizeSocialLinks } from '@/lib/import/social'
 
 /**
  * SP-036 facility submission workflow (docs/SP036_ARCHITECTURE.md §5.1).
@@ -29,6 +30,10 @@ export type FacilitySubmissionInput = {
   email?: string | null
   address?: string | null
   openingHours?: Record<string, unknown> | null
+  // Slice 3C — keyed social profile URLs; server-side sanitization
+  // (sanitizeSocialLinks) enforces https + matching platform host and
+  // stores NULL instead of an empty object.
+  socialLinks?: Record<string, string> | null
 }
 
 export type SimilarFacility = {
@@ -144,6 +149,7 @@ export async function submitFacility(
         email: data.email?.trim() || null,
         address: data.address?.trim() || null,
         opening_hours: data.openingHours ?? null,
+        social_links: sanitizeSocialLinks(data.socialLinks),
         // Moderation keeps the pre-SP-036 direct-to-map behavior; everyone
         // else enters the moderated queue. RLS enforces the same rule.
         status: isModeration ? 'active' : 'pending',
@@ -224,8 +230,9 @@ export async function submitFacilityWithEvent(
     email: facility.email?.trim() || null,
     address: facility.address?.trim() || null,
     opening_hours: facility.openingHours ?? null,
+    social_links: sanitizeSocialLinks(facility.socialLinks),
   }
-  if (extras.phone || extras.email || extras.address || extras.opening_hours) {
+  if (extras.phone || extras.email || extras.address || extras.opening_hours || extras.social_links) {
     const { error: extrasError } = await supabase
       .from('saunas')
       .update(extras)

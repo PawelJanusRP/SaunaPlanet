@@ -54,6 +54,7 @@ const EMPTY_FORM: ImportableFormValues = {
   email: '',
   address: '',
   openingHours: null,
+  socialLinks: {},
 }
 
 const HOURS: OpeningHoursDraft = {
@@ -146,6 +147,29 @@ describe('form mapping', () => {
       email: '',
       address: '',
       openingHours: null,
+      socialLinks: {},
+    })
+  })
+
+  it('maps recognized social links per platform and keeps manual ones (Slice 3C)', () => {
+    const draft: FacilityDraft = {
+      socialLinks: {
+        value: [
+          'https://www.facebook.com/saunalesna?fbclid=xyz',
+          'https://www.youtube.com/@saunalesna',
+          'https://unsupported.example.com/profil',
+        ],
+        origin: 'html',
+        confidence: 'medium',
+        sourceHint: 'page links',
+      },
+    }
+    const current = { ...EMPTY_FORM, socialLinks: { instagram: 'https://www.instagram.com/manual/' } }
+    const { values } = applyDraftToForm(draft, current)
+    expect(values.socialLinks).toEqual({
+      facebook: 'https://www.facebook.com/saunalesna', // tracking stripped
+      youtube: 'https://www.youtube.com/@saunalesna',
+      instagram: 'https://www.instagram.com/manual/', // manual value preserved
     })
   })
 

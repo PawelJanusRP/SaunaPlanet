@@ -19,6 +19,13 @@ const STATUSES = [
   { value: 'inactive', label: 'Nieaktywna' },
 ]
 
+const SOCIAL_FIELDS = [
+  { key: 'facebook', label: 'Facebook' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'youtube', label: 'YouTube' },
+  { key: 'tiktok', label: 'TikTok' },
+] as const
+
 type Props = {
   sauna: {
     id: string
@@ -28,6 +35,7 @@ type Props = {
     website: string | null
     category: string
     status: string
+    social_links?: Record<string, string> | null
   }
 }
 
@@ -42,6 +50,12 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
     website: sauna.website ?? '',
     category: sauna.category,
     status: sauna.status,
+  })
+  const [social, setSocial] = useState<Record<string, string>>({
+    facebook: sauna.social_links?.facebook ?? '',
+    instagram: sauna.social_links?.instagram ?? '',
+    youtube: sauna.social_links?.youtube ?? '',
+    tiktok: sauna.social_links?.tiktok ?? '',
   })
 
   function set(field: string, value: string) {
@@ -58,6 +72,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
           website: form.website || null,
           category: form.category,
           status: form.status,
+          socialLinks: social,
         })
         toast.success('Sauna zaktualizowana')
         setOpen(false)
@@ -155,6 +170,25 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">
+          Profile społecznościowe (https, tylko pasująca platforma)
+        </label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {SOCIAL_FIELDS.map(({ key, label }) => (
+            <input
+              key={key}
+              type="url"
+              value={social[key]}
+              onChange={(e) => setSocial((prev) => ({ ...prev, [key]: e.target.value }))}
+              placeholder={label}
+              aria-label={`Adres profilu ${label}`}
+              className="w-full rounded-xl border px-3 py-2 text-sm"
+            />
+          ))}
         </div>
       </div>
 

@@ -23,7 +23,15 @@ export type HtmlDocumentMeta = {
   socialLinks: string[]
 }
 
-const SOCIAL_HOSTS = ['facebook.com', 'instagram.com', 'fb.com', 'instagr.am']
+const SOCIAL_HOSTS = [
+  'facebook.com',
+  'instagram.com',
+  'fb.com',
+  'instagr.am',
+  'youtube.com',
+  'youtu.be',
+  'tiktok.com',
+]
 
 function isSocialLink(href: string): boolean {
   try {

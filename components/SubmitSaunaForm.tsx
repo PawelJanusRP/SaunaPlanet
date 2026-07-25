@@ -14,7 +14,7 @@ import BundledEventFields, {
   type BundledEventDraft,
 } from '@/components/BundledEventFields'
 import ImportFromUrlSection from '@/components/ImportFromUrlSection'
-import { linkImportToSubmission } from '@/app/saunas/importActions'
+import { importSubmissionImage, linkImportToSubmission } from '@/app/saunas/importActions'
 import {
   applyDraftToForm,
   clearImportedValues,
@@ -22,7 +22,15 @@ import {
   openingHoursToJson,
   type ImportableFormValues,
 } from '@/lib/import/previewState'
+import { SOCIAL_PLATFORMS, type SocialLinks } from '@/lib/import/social'
 import type { FacilityDraft, OpeningHoursDraft } from '@/lib/import/types'
+
+const SOCIAL_LABELS: Record<(typeof SOCIAL_PLATFORMS)[number], string> = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+}
 
 const CATEGORIES = [
   { value: 'public_sauna',   label: 'Sauna publiczna' },
@@ -53,6 +61,10 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
   // Structured opening hours arrive only via import (no manual editor in
   // the MVP) — shown as a removable summary chip, serialized on submit.
   const [openingHours, setOpeningHours] = useState<OpeningHoursDraft | null>(null)
+  // Editable social-profile URLs ('' = empty input, never persisted).
+  const [social, setSocial] = useState<Record<string, string>>({
+    facebook: '', instagram: '', youtube: '', tiktok: '',
+  })
   const [duplicates, setDuplicates] = useState<SimilarFacility[] | null>(null)
   // Pre-import form snapshot: "Wyczyść zaimportowane dane" restores the
   // manual values instead of wiping the form (SP-038 slice 2).
@@ -61,9 +73,25 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
   // import_log row id of the applied import — linked to the submission
   // after a successful submit (SP-038 slice 3, best-effort).
   const [appliedImportId, setAppliedImportId] = useState<string | null>(null)
+  // User consent from the preview checkbox (slice 3C) — when false, no
+  // image request of any kind happens after submission.
+  const [importImageWanted, setImportImageWanted] = useState(false)
+  // Honest post-submission status of the best-effort image import.
+  const [imageNote, setImageNote] = useState<string | null>(null)
+
+  function socialAsLinks(): SocialLinks {
+    const result: SocialLinks = {}
+    for (const p of SOCIAL_PLATFORMS) {
+      if (social[p].trim()) result[p] = social[p].trim()
+    }
+    return result
+  }
 
   function currentFormValues(): ImportableFormValues {
-    return { name, description, city, website, lat, lng, phone, email, address, openingHours }
+    return {
+      name, description, city, website, lat, lng, phone, email, address,
+      openingHours, socialLinks: socialAsLinks(),
+    }
   }
 
   function setFormValues(values: ImportableFormValues) {
@@ -77,15 +105,22 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
     setEmail(values.email)
     setAddress(values.address)
     setOpeningHours(values.openingHours)
+    setSocial({
+      facebook: values.socialLinks.facebook ?? '',
+      instagram: values.socialLinks.instagram ?? '',
+      youtube: values.socialLinks.youtube ?? '',
+      tiktok: values.socialLinks.tiktok ?? '',
+    })
   }
 
-  function handleImportApply(draft: FacilityDraft, importId: string | null) {
+  function handleImportApply(draft: FacilityDraft, importId: string | null, importImage: boolean) {
     const { values, snapshot } = applyDraftToForm(draft, currentFormValues())
     // First apply wins as the restore point; a re-apply must not capture
     // already-imported values as the "manual" snapshot.
     setPreImportSnapshot((prev) => prev ?? snapshot)
     setFormValues(values)
     setAppliedImportId(importId)
+    setImportImageWanted(importImage)
     setDuplicates(null)
   }
 
@@ -95,6 +130,7 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
       setPreImportSnapshot(null)
     }
     setAppliedImportId(null)
+    setImportImageWanted(false)
     setDuplicates(null)
   }
 
@@ -147,6 +183,7 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
       email: email || null,
       address: address || null,
       openingHours: openingHours ? openingHoursToJson(openingHours) : null,
+      socialLinks: socialAsLinks(),
     }
     const bundling = isMaster && withEvent
     const result = bundling
@@ -177,7 +214,24 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
       ? (result as { facilityId?: string }).facilityId
       : (result as { id?: string }).id
     if (appliedImportId && createdSaunaId) {
-      await linkImportToSubmission(appliedImportId, createdSaunaId)
+      const { linked } = await linkImportToSubmission(appliedImportId, createdSaunaId)
+      // Slice 3C: consent-gated image copy — runs ONLY after a successful
+      // submission, only when the checkbox stayed selected, and never
+      // fails the submission (honest note instead).
+      if (importImageWanted) {
+        if (linked) {
+          const imageResult = await importSubmissionImage(appliedImportId, createdSaunaId)
+          setImageNote(
+            imageResult.ok
+              ? 'Zdjęcie ze strony zostało dodane do zgłoszenia.'
+              : `${imageResult.message} — możesz dodać zdjęcie ręcznie później.`
+          )
+        } else {
+          setImageNote(
+            'Zdjęcia nie udało się zaimportować automatycznie — możesz dodać je ręcznie później.'
+          )
+        }
+      }
     }
 
     // atomic bundle (SP-037B): either the whole submission succeeded or an
@@ -196,6 +250,11 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
             : 'Dziękujemy. Zgłoszenie trafi do moderacji i po zatwierdzeniu sauna pojawi się na mapie.'}
           {' '}Status znajdziesz poniżej na tej stronie.
         </p>
+        {imageNote && (
+          <p className="mb-6 rounded-xl bg-gray-50 px-4 py-2 text-xs text-gray-600">
+            📷 {imageNote}
+          </p>
+        )}
         <button
           onClick={() => router.refresh()}
           className="mr-2 rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
@@ -352,6 +411,28 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
             </p>
           </div>
         )}
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Profile społecznościowe (opcjonalnie)
+          </label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {SOCIAL_PLATFORMS.map((p) => (
+              <input
+                key={p}
+                type="url"
+                value={social[p]}
+                onChange={(e) => setSocial((prev) => ({ ...prev, [p]: e.target.value }))}
+                placeholder={`${SOCIAL_LABELS[p]} (https://...)`}
+                aria-label={`Adres profilu ${SOCIAL_LABELS[p]}`}
+                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            Tylko adresy https na właściwej platformie zostaną zapisane.
+          </p>
+        </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">

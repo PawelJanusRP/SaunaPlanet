@@ -62,7 +62,7 @@ export default async function AdminPage({
     supabase.from('certificate_types').select('id, name, category, is_active, sort_order').order('sort_order'),
     supabase
       .from('saunas')
-      .select('id, name, city, category, status, description, website, latitude, longitude, created_by, created_at')
+      .select('id, name, city, category, status, description, website, social_links, latitude, longitude, created_by, created_at')
       .order('name'),
     supabase
       .from('sauna_events')

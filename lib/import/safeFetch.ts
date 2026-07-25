@@ -34,7 +34,10 @@ export type SafeFetchTransport = {
   /** Resolves a hostname to its IP addresses (A + AAAA). */
   resolve(hostname: string): Promise<string[]>
   /** Performs ONE request without following redirects, connecting only to `addresses`. */
-  request(url: string, opts: { signal: AbortSignal; addresses: string[] }): Promise<TransportResponse>
+  request(
+    url: string,
+    opts: { signal: AbortSignal; addresses: string[]; accept?: string }
+  ): Promise<TransportResponse>
 }
 
 export type SafeFetchOptions = {
@@ -77,7 +80,7 @@ type PinnedLookupCallback = (
 function undiciTransport(): SafeFetchTransport {
   return {
     resolve: resolveAddresses,
-    async request(url, { signal, addresses }) {
+    async request(url, { signal, addresses, accept }) {
       const pinnedLookup = (
         _hostname: string,
         options: { all?: boolean },
@@ -96,7 +99,7 @@ function undiciTransport(): SafeFetchTransport {
         dispatcher: agent,
         headers: {
           'user-agent': USER_AGENT,
-          accept: 'text/html,application/xhtml+xml',
+          accept: accept ?? 'text/html,application/xhtml+xml',
           'accept-language': 'pl,en;q=0.8',
         },
       })
@@ -110,10 +113,10 @@ function undiciTransport(): SafeFetchTransport {
   }
 }
 
-function isHtmlContentType(contentType: string | null): boolean {
-  if (!contentType) return false
-  const mime = contentType.split(';')[0].trim().toLowerCase()
-  return ALLOWED_CONTENT_TYPES.includes(mime)
+/** "text/html; charset=utf-8" → "text/html" (lowercased). */
+export function mimeOf(contentType: string | null): string | null {
+  if (!contentType) return null
+  return contentType.split(';')[0].trim().toLowerCase()
 }
 
 function charsetFrom(contentType: string | null): string {
@@ -151,15 +154,31 @@ async function readBody(
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
 
+export type SafeFetchBytesSuccess = {
+  ok: true
+  finalUrl: string
+  status: number
+  bytes: Uint8Array
+  contentType: string | null
+}
+
+export type SafeFetchBytesResult = SafeFetchBytesSuccess | SafeFetchFailure
+
 /**
- * Fetches a public HTML document with the full SSRF policy applied.
- * Accepts only https URLs on port 443, follows at most `maxRedirects`
- * validated redirects, enforces a total deadline and a decompressed size
- * cap, and accepts only HTML content types.
+ * The generic SSRF-safe fetch policy loop (Slice 3C refactor — behavior
+ * identical to the original HTML-only fetcher): https on port 443 only,
+ * every hop re-validated, DNS results pinned to the socket, at most
+ * `maxRedirects` redirects, a total deadline, a streamed size cap and a
+ * caller-supplied content-type allowlist. Returns raw bytes; callers add
+ * format-specific validation (HTML decode, image signatures).
  */
-export async function safeFetchHtml(rawUrl: string, options: SafeFetchOptions = {}): Promise<SafeFetchResult> {
+export async function safeFetchBytes(
+  rawUrl: string,
+  allowedContentTypes: string[],
+  options: SafeFetchOptions & { accept?: string } = {}
+): Promise<SafeFetchBytesResult> {
   if (typeof window !== 'undefined') {
-    throw new Error('safeFetchHtml is server-only')
+    throw new Error('safeFetchBytes is server-only')
   }
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES
@@ -192,7 +211,11 @@ export async function safeFetchHtml(rawUrl: string, options: SafeFetchOptions = 
 
     let response: TransportResponse
     try {
-      response = await transport.request(target.url.toString(), { signal, addresses })
+      response = await transport.request(target.url.toString(), {
+        signal,
+        addresses,
+        accept: options.accept,
+      })
     } catch (error) {
       if (signal.aborted || (error instanceof Error && error.name === 'AbortError')) {
         return { ok: false, code: 'timeout' }
@@ -220,7 +243,8 @@ export async function safeFetchHtml(rawUrl: string, options: SafeFetchOptions = 
       }
 
       const contentType = response.headers.get('content-type')
-      if (!isHtmlContentType(contentType)) {
+      const mime = mimeOf(contentType)
+      if (!mime || !allowedContentTypes.includes(mime)) {
         return { ok: false, code: 'unsupported-content-type' }
       }
       const contentLength = response.headers.get('content-length')
@@ -244,11 +268,29 @@ export async function safeFetchHtml(rawUrl: string, options: SafeFetchOptions = 
         ok: true,
         finalUrl: target.url.toString(),
         status: response.status,
-        html: decode(read.bytes, charsetFrom(contentType)),
+        bytes: read.bytes,
+        contentType,
       }
     } finally {
       await response.close?.()
     }
   }
   return { ok: false, code: 'too-many-redirects' }
+}
+
+/**
+ * Fetches a public HTML document with the full SSRF policy applied.
+ * Accepts only https URLs on port 443, follows at most `maxRedirects`
+ * validated redirects, enforces a total deadline and a decompressed size
+ * cap, and accepts only HTML content types.
+ */
+export async function safeFetchHtml(rawUrl: string, options: SafeFetchOptions = {}): Promise<SafeFetchResult> {
+  const fetched = await safeFetchBytes(rawUrl, ALLOWED_CONTENT_TYPES, options)
+  if (!fetched.ok) return fetched
+  return {
+    ok: true,
+    finalUrl: fetched.finalUrl,
+    status: fetched.status,
+    html: decode(fetched.bytes, charsetFrom(fetched.contentType)),
+  }
 }

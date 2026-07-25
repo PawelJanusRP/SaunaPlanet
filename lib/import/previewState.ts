@@ -7,6 +7,7 @@
 // components/ImportFromUrlSection.tsx is a thin renderer.
 
 import type { ExtractDraftResult, ExtractDraftSuccess } from './actionCore'
+import { socialLinksFromUrls, type SocialLinks } from './social'
 import type { FacilityDraft, OpeningHoursDraft } from './types'
 
 export type ImportPreviewState = {
@@ -90,6 +91,8 @@ export type ImportableFormValues = {
   email: string
   address: string
   openingHours: OpeningHoursDraft | null
+  /** Keyed by platform; only recognized platforms, blanks never stored. */
+  socialLinks: SocialLinks
 }
 
 /**
@@ -116,6 +119,11 @@ export function applyDraftToForm(
   if (draft.email) values.email = draft.email.value
   if (draft.address) values.address = draft.address.value
   if (draft.openingHours) values.openingHours = draft.openingHours.value
+  if (draft.socialLinks) {
+    // Per-platform overwrite mirrors the per-field rule above; platforms
+    // absent from the import keep their manual values.
+    values.socialLinks = { ...current.socialLinks, ...socialLinksFromUrls(draft.socialLinks.value) }
+  }
   return { values, snapshot }
 }
 
@@ -152,12 +160,11 @@ export function clearImportedValues(snapshot: ImportableFormValues): ImportableF
  * Draft fields that have no form input yet (kept visible in the preview's
  * information area and preserved in import_log.extracted — extracted
  * values are never silently discarded). Slice 3 moved address, phone,
- * email and openingHours into the form.
+ * email and openingHours into the form; Slice 3C moved socialLinks into
+ * the form and gave imageUrl its own consent checkbox.
  */
 export const UNMAPPED_DRAFT_KEYS = [
   'country',
-  'imageUrl',
-  'socialLinks',
   'sourceTitle',
 ] as const satisfies ReadonlyArray<keyof FacilityDraft>
 
