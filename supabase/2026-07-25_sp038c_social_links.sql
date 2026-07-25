@@ -51,25 +51,36 @@ alter table public.saunas
 --    PENDING submission (or moderation). All existing upload paths
 --    ({sauna_id}/{ts}.{ext} from AddPhotoModal / AddSaunaForm) keep
 --    working verbatim through the non-imported arm.
+--
+--    INCIDENT NOTE (2026-07-25, post-apply): the first committed version
+--    of the imported_own policy used the UNQUALIFIED identifier `name`
+--    inside the EXISTS subquery; PostgreSQL bound it to public.saunas.name
+--    (the inner relation), producing storage.foldername(s.name) in the
+--    stored definition — fail-closed for owners. Every target-table column
+--    reference below is therefore fully qualified (storage.objects.*);
+--    the already-applied production policy is repaired by the forward
+--    hotfix 2026-07-25_sp038c_fix_imported_storage_policy.sql.
+--    LESSON: in RLS policy subqueries ALWAYS qualify target-table columns
+--    and verify pg_policies.with_check after applying.
 -- ---------------------------------------------------------------------------
 drop policy if exists "sauna_images_insert_authenticated" on storage.objects;
 create policy "sauna_images_insert_authenticated" on storage.objects
   for insert to authenticated
   with check (
-    bucket_id = 'sauna-images'
-    and coalesce((storage.foldername(name))[1], '') <> 'imported'
+    storage.objects.bucket_id = 'sauna-images'
+    and coalesce((storage.foldername(storage.objects.name))[1], '') <> 'imported'
   );
 
 drop policy if exists "sauna_images_insert_imported_own" on storage.objects;
 create policy "sauna_images_insert_imported_own" on storage.objects
   for insert to authenticated
   with check (
-    bucket_id = 'sauna-images'
-    and (storage.foldername(name))[1] = 'imported'
+    storage.objects.bucket_id = 'sauna-images'
+    and (storage.foldername(storage.objects.name))[1] = 'imported'
     and (
       public.is_platform_moderator()
       or exists (select 1 from public.saunas s
-                 where s.id::text = (storage.foldername(name))[2]
+                 where s.id::text = (storage.foldername(storage.objects.name))[2]
                    and s.status = 'pending'
                    and s.created_by = auth.uid())
     )
