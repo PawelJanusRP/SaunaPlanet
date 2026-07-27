@@ -23,6 +23,16 @@ export type OwnMasterProfile = {
   status: 'pending' | 'approved' | 'rejected'
   /** Legacy home sauna — read-only transitional data (Decision 016). */
   homeSauna: { id: string; name: string } | null
+  // SP-039 expanded profile fields (all optional/nullable)
+  slug: string | null
+  city: string | null
+  specialties: string[] | null
+  languages: string[] | null
+  experienceSinceYear: number | null
+  socialLinks: Record<string, string> | null
+  website: string | null
+  coverImageUrl: string | null
+  isFoundingPartner: boolean
 }
 
 export type MasterAffiliation = {
@@ -49,7 +59,12 @@ export async function loadMasterStudioScope(
 ): Promise<MasterStudioScope> {
   const { data: profileRaw } = await supabase
     .from('sauna_masters')
-    .select('id, name, level, bio, avatar_url, status, home_sauna_id, saunas:home_sauna_id(id, name)')
+    .select(
+      'id, name, level, bio, avatar_url, status, home_sauna_id, ' +
+        'slug, city, specialties, languages, experience_since_year, ' +
+        'social_links, website, cover_image_url, is_founding_partner, ' +
+        'saunas:home_sauna_id(id, name)'
+    )
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -67,6 +82,15 @@ export async function loadMasterStudioScope(
     avatarUrl: p.avatar_url ?? null,
     status: p.status,
     homeSauna: p.saunas ? { id: p.saunas.id, name: p.saunas.name } : null,
+    slug: p.slug ?? null,
+    city: p.city ?? null,
+    specialties: p.specialties ?? null,
+    languages: p.languages ?? null,
+    experienceSinceYear: p.experience_since_year ?? null,
+    socialLinks: p.social_links ?? null,
+    website: p.website ?? null,
+    coverImageUrl: p.cover_image_url ?? null,
+    isFoundingPartner: p.is_founding_partner ?? false,
   }
 
   const { data: affiliationsRaw } = await supabase

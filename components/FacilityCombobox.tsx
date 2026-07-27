@@ -1,19 +1,11 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
+import { foldPolishDiacritics as fold } from '@/lib/master/slug'
 
 export type FacilityOption = { id: string; name: string; city: string | null }
 
 const VISIBLE_LIMIT = 100
-
-/** Fold Polish diacritics so "maltanskie" finds "Maltańskie". */
-function fold(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/ł/g, 'l')
-}
 
 /**
  * Ranking (SP-037B UX fix): exact name (0) → name starts with query (1) →

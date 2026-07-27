@@ -5,7 +5,7 @@ import WorkspaceShell from '@/components/workspace/WorkspaceShell'
 import WorkspaceSection from '@/components/workspace/WorkspaceSection'
 import StudioAccessNotice from '@/components/studio/StudioAccessNotice'
 import MasterProfileForm from '@/components/studio/MasterProfileForm'
-import UploadAvatarButton from '@/components/UploadAvatarButton'
+import UploadAvatarButton, { UploadMasterImageButton } from '@/components/UploadAvatarButton'
 import {
   MASTER_NAV,
   MASTER_STATUS_LABELS,
@@ -39,7 +39,7 @@ export default async function StudioProfilePage() {
       activeNavKey="profile"
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title="📷 Avatar">
+        <WorkspaceSection title="📷 Zdjęcia profilu">
           <div className="flex items-center gap-4">
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -48,6 +48,21 @@ export default async function StudioProfilePage() {
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-200 text-3xl">🧖</div>
             )}
             <UploadAvatarButton masterId={profile.id} currentAvatarUrl={profile.avatarUrl} />
+          </div>
+          <div className="mt-4">
+            {profile.coverImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.coverImageUrl}
+                alt="Zdjęcie w tle profilu"
+                className="mb-2 h-28 w-full rounded-xl object-cover"
+              />
+            )}
+            <UploadMasterImageButton
+              masterId={profile.id}
+              kind="cover"
+              currentUrl={profile.coverImageUrl}
+            />
           </div>
         </WorkspaceSection>
 
@@ -63,17 +78,32 @@ export default async function StudioProfilePage() {
             </span>
           </div>
           <p className="mb-4 text-xs text-gray-400">
-            Poziom i status zmienia moderacja (poziom wynika z certyfikacji) — edytujesz imię,
-            nazwisko i opis.
+            Poziom i status zmienia moderacja (poziom wynika z certyfikacji) — pozostałe dane
+            profilu edytujesz tutaj.
           </p>
-          <MasterProfileForm initialName={profile.name} initialBio={profile.bio} />
+          <MasterProfileForm
+            initial={{
+              name: profile.name,
+              bio: profile.bio,
+              slug: profile.slug,
+              city: profile.city,
+              specialties: profile.specialties,
+              languages: profile.languages,
+              experienceSinceYear: profile.experienceSinceYear,
+              socialLinks: profile.socialLinks,
+              website: profile.website,
+            }}
+          />
         </WorkspaceSection>
 
         <WorkspaceSection title="🌍 Profil publiczny">
           <p className="text-sm text-gray-600">
             Tak widzą Cię użytkownicy:{' '}
-            <Link href={`/masters/${profile.id}`} className="font-semibold text-orange-700 hover:underline">
-              /masters/{profile.id.substring(0, 8)}… →
+            <Link
+              href={`/masters/${profile.slug ?? profile.id}`}
+              className="font-semibold text-orange-700 hover:underline"
+            >
+              /masters/{profile.slug ?? `${profile.id.substring(0, 8)}…`} →
             </Link>
           </p>
           <p className="mt-2 text-xs text-gray-400">

@@ -2,6 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { slugWithSuffix } from '@/lib/master/slug'
+import {
+  buildOwnMasterProfilePatch,
+  type OwnMasterProfileUpdate,
+} from '@/lib/master/profileUpdate'
 
 /**
  * SP-035: Master Studio + affiliation lifecycle (Decision 016, W-16).
@@ -67,27 +72,74 @@ function friendlyInsertError(message: string) {
 // Own master profile
 // ============================================================
 
-export async function updateOwnMasterProfile(data: { name: string; bio: string | null }) {
-  const supabase = await createClient()
-  const user = await requireUser(supabase)
+/**
+ * SP-039: explicit-payload profile update (validation lives in the pure
+ * lib/master/profileUpdate builder). Only self-editable fields are
+ * accepted here — privileged columns (level, status, founding badge,
+ * rating) have no path through this action and the database guard blocks
+ * them independently.
+ *
+ * Expected failures are RETURNED as { error } instead of thrown (D1):
+ * Next.js strips thrown server-action messages in production builds —
+ * same convention as app/saunas/actions.ts.
+ *
+ * NOTE (2026-07-27 regression fix): a `'use server'` module may only
+ * export async Server Action functions. A type-only re-export
+ * (`export type { OwnMasterProfileUpdate }`) is NOT reliably erased by
+ * the Turbopack "use server" transform — it left a runtime binding to an
+ * undefined name and crashed the whole module graph at evaluation
+ * (ReferenceError). The type lives in lib/master/profileUpdate and is
+ * imported here purely for the signature; consumers import it from there.
+ */
+export async function updateOwnMasterProfile(
+  data: OwnMasterProfileUpdate
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Musisz być zalogowany' }
 
-  if (!data.name.trim()) throw new Error('Imię i nazwisko nie może być puste')
+    const own = await getOwnMaster(supabase, user.id)
+    if (!own) return { error: 'Brak profilu saunamistrza powiązanego z tym kontem' }
 
-  const own = await getOwnMaster(supabase, user.id)
-  if (!own) throw new Error('Brak profilu saunamistrza powiązanego z tym kontem')
+    const built = buildOwnMasterProfilePatch(data)
+    if (!built.ok) return { error: built.error }
+    if (Object.keys(built.patch).length === 0) return {}
 
-  const { data: updated, error } = await supabase
-    .from('sauna_masters')
-    .update({ name: data.name.trim(), bio: data.bio?.trim() || null })
-    .eq('id', own.id)
-    .select('id')
+    const { data: updated, error } = await supabase
+      .from('sauna_masters')
+      .update(built.patch)
+      .eq('id', own.id)
+      .select('id, slug')
 
-  if (error) throw new Error(error.message)
-  if (!updated || updated.length === 0) throw new Error('Brak uprawnień do edycji tego profilu')
+    if (error) {
+      if (
+        built.requestedSlug &&
+        (error.code === '23505' || error.message.includes('sauna_masters_slug_unique'))
+      ) {
+        return {
+          error: `Adres „${built.requestedSlug}" jest już zajęty — spróbuj np. „${slugWithSuffix(built.requestedSlug, 2)}"`,
+        }
+      }
+      // our own guard messages are user-oriented Polish — pass them through
+      if (error.message.includes('Pola uprzywilejowane')) return { error: error.message }
+      console.error('updateOwnMasterProfile db error:', error.message)
+      return { error: 'Nie udało się zapisać profilu — spróbuj ponownie' }
+    }
+    if (!updated || updated.length === 0) {
+      return { error: 'Brak uprawnień do edycji tego profilu' }
+    }
 
-  revalidatePath('/studio')
-  revalidatePath('/studio/profile')
-  revalidatePath(`/masters/${own.id}`)
+    revalidatePath('/studio')
+    revalidatePath('/studio/profile')
+    revalidatePath(`/masters/${own.id}`)
+    const newSlug = (updated[0] as { slug?: string | null }).slug
+    if (newSlug) revalidatePath(`/masters/${newSlug}`)
+    return {}
+  } catch (e) {
+    console.error('updateOwnMasterProfile failed:', e)
+    return { error: 'Nie udało się zapisać profilu — spróbuj ponownie' }
+  }
 }
 
 // ============================================================
