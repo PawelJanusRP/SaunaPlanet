@@ -25,17 +25,38 @@ const m4 = read(`${S}2026-07-27_sp039_m4_admin_rpcs.sql`)
 const m4r = read(`${S}2026-07-27_sp039_m4_admin_rpcs_rollback.sql`)
 const m5 = read(`${S}2026-07-27_sp039_m5_master_delete_guard.sql`)
 
-describe('M0 — masters_delete versioning preserves behavior', () => {
-  it('fails loud unless the live predecessor references is_admin()', () => {
-    expect(m0).toContain("position('is_admin' in v_qual) = 0")
-    expect(m0).toContain('refusing to silently replace an unknown policy')
-    expect(m0).toContain("v_cmd <> 'DELETE'")
+describe('M0 — masters_delete versioning preserves admin+moderator (production drift reconciled)', () => {
+  it('does NOT use the false is_admin() assumption (drift-corrected)', () => {
+    // the old assumption (using (public.is_admin())) must be gone from the SQL
+    // (comments may still MENTION it to document the drift)
+    expect(stripComments(m0)).not.toContain('using (public.is_admin())')
+    expect(stripComments(m0r)).not.toContain('using (public.is_admin())')
   })
-  it('recreates the identical admin-only DELETE policy (no widening)', () => {
-    expect(m0).toContain('for delete')
-    expect(m0).toContain('using (public.is_admin())')
-    expect(m0).not.toContain('is_platform_moderator')
-    expect(m0r).toContain('using (public.is_admin())')
+  it('PRE-APPLY drift guard matches the actual live inline admin/moderator policy', () => {
+    // requires the profiles admin+moderator EXISTS, and rejects an is_admin() qual
+    expect(m0).toContain("position('profiles' in v_qual) = 0")
+    expect(m0).toContain("position('admin' in v_qual) = 0")
+    expect(m0).toContain("position('moderator' in v_qual) = 0")
+    expect(m0).toContain("position('is_admin' in v_qual) > 0")
+    expect(m0).toContain("v_cmd <> 'DELETE'")
+    expect(m0).toContain('this is the pre-drift assumption')
+  })
+  it('recreates an authorization-equivalent policy preserving admin AND moderator', () => {
+    const start = m0.indexOf('create policy "masters_delete"')
+    const block = m0.slice(start, m0.indexOf(';', m0.indexOf('for delete', start)))
+    expect(block).toContain('for delete')
+    expect(block).toContain('from public.profiles')
+    expect(block).toContain("array['admin'::text, 'moderator'::text]")
+    expect(block).toContain('profiles.id = auth.uid()')
+    // minimum-dependency versioning: no helper introduced
+    expect(block).not.toContain('is_admin')
+    expect(block).not.toContain('is_platform_moderator')
+  })
+  it('rollback restores the exact inline admin/moderator predecessor', () => {
+    expect(m0r).toContain("array['admin'::text, 'moderator'::text]")
+    expect(m0r).toContain('from public.profiles')
+    // no is_admin in the executable SQL (comments may reference it)
+    expect(stripComments(m0r)).not.toContain('is_admin')
   })
   it('does not modify is_admin() in M0', () => {
     expect(m0).not.toMatch(/create or replace function public\.is_admin/)
@@ -47,9 +68,14 @@ describe('M1 — origin column + guard hardening', () => {
     expect(m1).toContain("add column origin text not null default 'self_registered'")
     expect(m1).toContain("check (origin in ('self_registered', 'admin_prepared'))")
   })
-  it('PRE-APPLY asserts the current seven-field body before adding origin', () => {
+  it('PRE-APPLY drift-guards BOTH confirmed production predecessors', () => {
+    // UPDATE guard: seven-field body, not yet origin
     expect(m1).toContain('is not the SP-039 seven-field body')
-    expect(m1).toContain("position('origin' in v_src) > 0")
+    expect(m1).toContain("position('origin' in v_upd) > 0")
+    // INSERT guard: level-only clamp, not yet origin (production-confirmed)
+    expect(m1).toContain('is not the SP-035 level-only clamp')
+    expect(m1).toContain("position('new.level' in v_ins) = 0")
+    expect(m1).toContain("position('origin' in v_ins) > 0")
   })
   it('UPDATE guard protects all seven original fields PLUS origin', () => {
     for (const f of [
@@ -253,5 +279,36 @@ describe('M5 — master delete guard', () => {
     expect(m5).toContain('old.user_id is not null')
     expect(m5).toContain('from public.master_claim_invitations')
     expect(m5).toContain('where master_id = old.id')
+  })
+  it('applies the restrictive grant for the new guard (no client EXECUTE)', () => {
+    expect(m5).toContain('revoke execute on function public.guard_master_delete() from public')
+    // never grants client EXECUTE on the guard
+    expect(m5).not.toMatch(/grant execute on function public\.guard_master_delete/)
+  })
+})
+
+describe('legacy grants + helpers left unchanged (drift-safe)', () => {
+  it('M0/M1/M5 do not touch legacy helper/trigger-function grants', () => {
+    for (const sql of [m0, m1, m5]) {
+      // no grant/revoke of the legacy helpers or trigger functions
+      expect(sql).not.toMatch(/(grant|revoke)[^\n]*is_admin/)
+      expect(sql).not.toMatch(/(grant|revoke)[^\n]*is_platform_moderator/)
+      expect(sql).not.toMatch(/(grant|revoke)[^\n]*guard_master_privileged_columns/)
+      expect(sql).not.toMatch(/(grant|revoke)[^\n]*guard_master_insert_level/)
+    }
+  })
+  it('M1 does not modify is_platform_moderator() or is_admin()', () => {
+    expect(m1).not.toMatch(/create or replace function public\.is_platform_moderator/)
+    expect(m1).not.toMatch(/create or replace function public\.is_admin/)
+  })
+  it('M1 forward fully qualifies the moderator helper it calls', () => {
+    expect(m1).toContain('public.is_platform_moderator()')
+  })
+})
+
+describe('Variant A — DB-side token generation (production-confirmed)', () => {
+  it('M4 uses the extensions-schema pgcrypto functions, no Node fallback', () => {
+    expect(m4).toContain('extensions.gen_random_bytes(32)')
+    expect(m4).toContain("extensions.digest(v_token, 'sha256')")
   })
 })

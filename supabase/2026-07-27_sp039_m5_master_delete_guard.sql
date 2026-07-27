@@ -51,6 +51,18 @@ create trigger sauna_masters_delete_guard
   before delete on public.sauna_masters
   for each row execute function public.guard_master_delete();
 
+-- Restrictive grant for the NEWLY-created guard (repository's safest posture for
+-- new functions; contrast with the legacy trigger functions whose broad grants
+-- are LEFT UNCHANGED and tracked as separate security debt). A `returns trigger`
+-- function CANNOT be invoked directly through SQL (PostgreSQL rejects calling a
+-- trigger function outside trigger context), and trigger FIRING does NOT depend
+-- on the triggering user's EXECUTE privilege (the trigger runs as part of the
+-- DELETE, as its SECURITY DEFINER owner). Revoking EXECUTE from clients is
+-- therefore pure defense-in-depth with ZERO behavioral impact on the delete
+-- guard. No client EXECUTE is granted; the owner (postgres) retains implicit
+-- rights for migration administration.
+revoke execute on function public.guard_master_delete() from public;
+
 commit;
 
 notify pgrst, 'reload schema';

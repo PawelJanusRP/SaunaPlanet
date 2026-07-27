@@ -1,69 +1,60 @@
 -- ============================================================================
 -- SP-039 Slice 3B1 — M0: version the live `masters_delete` policy.
 --
--- The live DELETE policy on public.sauna_masters is UNVERSIONED: it exists only
+-- The live DELETE policy on public.sauna_masters is UNVERSIONED (it exists only
 -- in the historical aggregate supabase/all_scripts_history.sql, never in a
--- reviewed migration. Its live form is:
---   create policy "masters_delete" on public.sauna_masters
---     for delete using (public.is_admin());
--- (DELETE, role membership via is_admin() = profiles.role = 'admin').
+-- reviewed migration). The 2026-07-28 production read-only preflight CONFIRMED
+-- its actual live form is NOT `using (public.is_admin())` (an earlier assumption
+-- that was PROVEN FALSE) but an INLINE admin-OR-moderator check:
 --
--- This migration records that EXACT behavior in version control WITHOUT changing
--- it: same command (DELETE), same roles (default — PUBLIC, gated by the USING),
--- same USING (public.is_admin()), no WITH CHECK (not applicable to DELETE).
--- Moderator access is NOT widened. `is_admin()` itself is NOT modified here
--- (out of scope for M0 — see the SECURITY OBSERVATION below).
+--   policy:      masters_delete
+--   command:     DELETE
+--   permissive:  PERMISSIVE
+--   roles:       {public}
+--   with_check:  none
+--   using:
+--     EXISTS (SELECT 1 FROM profiles
+--             WHERE profiles.id = auth.uid()
+--               AND profiles.role = ANY (ARRAY['admin'::text, 'moderator'::text]))
+--
+-- i.e. it authorizes BOTH admin AND moderator (semantically the same set as
+-- public.is_platform_moderator()). This migration versions that EXACT behavior
+-- WITHOUT changing effective authorization: same command (DELETE), same
+-- PERMISSIVE mode, same roles (PUBLIC, gated by USING), same admin+moderator
+-- authorization, no WITH CHECK. It deliberately does NOT reduce the policy to
+-- public.is_admin() (that would REMOVE moderator DELETE access) and does NOT
+-- introduce a helper dependency — the goal is exact behavior versioning with the
+-- minimum change, so the inline EXISTS is reproduced verbatim (with the
+-- reference qualified as public.profiles).
+--
+-- NORMALIZATION NOTE: pg_policies renders the STORED expression. Because
+-- `public` is on the parse-time search_path, PostgreSQL may render the qualified
+-- `public.profiles` back as unqualified `profiles` in pg_policies.qual (and
+-- `= ANY (ARRAY[...])` vs `IN (...)` may normalize). Post-apply verification
+-- compares SEMANTICS (admin+moderator, no is_admin, no with_check), not textual
+-- identity — see V1.
+--
+-- is_admin() is NOT referenced by this policy and NOT touched here; its unpinned
+-- search_path is classified as SEPARATE security debt (docs/SP039_SLICE3_ADMIN_
+-- INVITATIONS.md §is_admin) — it is NOT a blocker for M0–M5.
 --
 -- Companion rollback: 2026-07-27_sp039_m0_masters_delete_version_rollback.sql
 --
--- ============================================================================
--- SECURITY CHECKPOINT / NAMED BLOCKER (do NOT fix in M0):
---   public.is_admin() — unpinned search_path hardening.
---
--- Repository history defines public.is_admin() as `language sql security definer
--- stable` WITHOUT a pinned search_path. A SECURITY DEFINER function without a
--- pinned search_path resolves unqualified names (e.g. `profiles`) against the
--- CALLER's search_path. In Supabase's default model authenticated/anon roles
--- cannot CREATE schemas/tables, so this is a latent hardening gap, not a
--- confirmed exploit — but it MUST be treated as a required pre-production
--- security checkpoint for the claim-foundation window:
---
---   1. The EXACT live is_admin() definition MUST be confirmed by the read-only
---      production preflight (this environment had no DB access; the versioned
---      history body may not match live).
---   2. A SEPARATE, reviewed hardening migration should redefine it as:
---        SECURITY DEFINER, STABLE, SET search_path = '',
---        with fully-qualified public.profiles and auth.uid().
---   3. That hardening must land BEFORE or DURING the controlled production
---      claim-foundation window, and MUST drift-guard the exact live predecessor
---      first — it must NOT be bundled blindly.
---
--- M0 itself changes NOTHING about is_admin(): it only re-declares the identical
--- masters_delete DELETE policy (which references is_admin()) so that policy is
--- versioned without widening or altering authorization. The is_admin hardening
--- migration is intentionally NOT authored here because the repository lacks
--- authoritative live evidence to drift-guard it safely; it remains a named
--- blocker for the application checkpoint.
--- ============================================================================
---
 -- PRE-APPLY (read-only; run FIRST — on ANY mismatch STOP and review):
--- P1. Exactly one DELETE policy named masters_delete, USING is is_admin(),
---     no WITH CHECK (expect 1 row: cmd=DELETE, qual mentions is_admin(),
---     with_check IS NULL):
---   select policyname, cmd, qual, with_check, roles
+-- P1. The live masters_delete is the inline admin+moderator DELETE policy, no
+--     WITH CHECK (record it for the report):
+--   select policyname, cmd, permissive, roles, qual, with_check
 --   from pg_policies
 --   where schemaname='public' and tablename='sauna_masters'
 --     and policyname='masters_delete';
--- P2. is_admin() exists and is the admin-role check (record its exact body,
---     security mode, volatility, search_path, owner for the report):
---   select p.prosecdef, p.provolatile, p.proconfig, pg_get_functiondef(p.oid)
---   from pg_proc p join pg_namespace n on n.oid=p.pronamespace
---   where n.nspname='public' and p.proname='is_admin';
+--   -- expect: cmd=DELETE, qual = the profiles admin/moderator EXISTS,
+--   --         with_check IS NULL, and qual does NOT contain is_admin.
 -- ============================================================================
 begin;
 
--- Fail loud unless the live predecessor is EXACTLY the reviewed definition:
--- a DELETE policy whose USING references is_admin() and which has no WITH CHECK.
+-- Fail loud unless the live predecessor is EXACTLY the confirmed production
+-- policy: a DELETE policy whose USING is the profiles admin+moderator EXISTS,
+-- does NOT reference is_admin(), and has no WITH CHECK.
 do $$
 declare
   v_cmd        text;
@@ -84,9 +75,18 @@ begin
     raise exception
       'M0 GUARD: masters_delete is % (expected DELETE) — unexpected; stop and review', v_cmd;
   end if;
-  if v_qual is null or position('is_admin' in v_qual) = 0 then
+  -- must be the inline admin+moderator EXISTS over profiles
+  if v_qual is null
+     or position('profiles' in v_qual) = 0
+     or position('admin' in v_qual) = 0
+     or position('moderator' in v_qual) = 0 then
     raise exception
-      'M0 GUARD: masters_delete USING does not reference is_admin() (found: %) — refusing to silently replace an unknown policy', coalesce(v_qual, '<null>');
+      'M0 GUARD: masters_delete USING is not the expected inline admin/moderator profiles check (found: %) — refusing to replace an unknown policy', coalesce(v_qual, '<null>');
+  end if;
+  -- must NOT be the (false) is_admin()-only form
+  if position('is_admin' in v_qual) > 0 then
+    raise exception
+      'M0 GUARD: masters_delete USING references is_admin() — this is the pre-drift assumption, NOT the confirmed production predecessor; stop and review';
   end if;
   if v_with_check is not null then
     raise exception
@@ -94,12 +94,22 @@ begin
   end if;
 end $$;
 
--- Re-declare deterministically with the IDENTICAL behavior (idempotent record
--- of the live policy). No behavior change: same command, same authorization.
+-- Re-declare deterministically, AUTHORIZATION-EQUIVALENT to the live policy:
+-- admin OR moderator, DELETE, PERMISSIVE (default), roles PUBLIC (default), no
+-- WITH CHECK. The inline EXISTS is reproduced verbatim with the table reference
+-- qualified as public.profiles (minimum-dependency versioning; no is_admin, no
+-- is_platform_moderator introduced).
 drop policy "masters_delete" on public.sauna_masters;
 create policy "masters_delete" on public.sauna_masters
   for delete
-  using (public.is_admin());
+  using (
+    exists (
+      select 1
+      from public.profiles
+      where profiles.id = auth.uid()
+        and profiles.role = any (array['admin'::text, 'moderator'::text])
+    )
+  );
 
 commit;
 
@@ -107,18 +117,20 @@ notify pgrst, 'reload schema';
 
 -- ============================================================================
 -- POST-APPLY VERIFICATION (read-only)
--- V1. Policy present, unchanged shape:
---   select policyname, cmd, qual, with_check from pg_policies
+-- V1. Policy present, SEMANTICALLY unchanged (ignore schema-qualification
+--     normalization, see NORMALIZATION NOTE):
+--   select policyname, cmd, permissive, roles, qual, with_check from pg_policies
 --   where schemaname='public' and tablename='sauna_masters'
 --     and policyname='masters_delete';
---   -- expect: cmd=DELETE, qual = (is_admin()), with_check IS NULL.
+--   -- expect: cmd=DELETE, PERMISSIVE, roles {public}, with_check IS NULL,
+--   --         qual = profiles admin/moderator EXISTS, and NO is_admin.
 -- V2. Behavior unchanged (rolled-back impersonation):
---   as an admin  -> delete of an arbitrary sauna_masters row is permitted by RLS;
---   as moderator -> DELETE denied (is_admin() false) — moderator NOT widened;
---   as user/anon -> DELETE denied.
--- V3. is_admin() untouched: pg_get_functiondef unchanged from the pre-apply
---     snapshot (P2).
--- ROLLBACK LIMITATION: the rollback reproduces the identical policy; there is
--- no data to lose. If P1 failed, DO NOT force this migration — investigate the
--- real live policy first.
+--   as an admin     -> DELETE of an arbitrary sauna_masters row permitted by RLS;
+--   as a moderator  -> DELETE permitted (moderator access PRESERVED — the whole
+--                      point of the drift fix);
+--   as user/anon    -> DELETE denied.
+-- V3. is_admin() untouched (it is unrelated to this policy).
+-- ROLLBACK LIMITATION: the rollback reproduces the identical inline policy;
+-- there is no data to lose. If P1 failed, DO NOT force this migration —
+-- investigate the real live policy first.
 -- ============================================================================

@@ -46,24 +46,43 @@
 -- ============================================================================
 begin;
 
--- Fail loud unless the UPDATE guard is EXACTLY the current seven-field body
--- (protecting origin on top of an unknown/older body would be unsafe).
+-- Fail loud unless BOTH guards are EXACTLY the confirmed production predecessors
+-- (2026-07-28 preflight): the seven-field UPDATE guard and the level-only INSERT
+-- guard. Protecting origin on top of an unknown/older body would be unsafe.
 do $$
-declare v_src text;
+declare
+  v_upd text;
+  v_ins text;
 begin
-  select prosrc into v_src from pg_proc
+  -- UPDATE guard: confirmed seven-field body, no origin yet.
+  select prosrc into v_upd from pg_proc
   where pronamespace = 'public'::regnamespace
     and proname = 'guard_master_privileged_columns';
-  if v_src is null then
+  if v_upd is null then
     raise exception 'M1 GUARD: guard_master_privileged_columns not found; stop and review';
   end if;
-  if position('is_founding_partner' in v_src) = 0
-     or position('new.rating' in v_src) = 0
-     or position('new.review_count' in v_src) = 0 then
+  if position('is_founding_partner' in v_upd) = 0
+     or position('new.rating' in v_upd) = 0
+     or position('new.review_count' in v_upd) = 0 then
     raise exception 'M1 GUARD: UPDATE guard is not the SP-039 seven-field body; stop and review';
   end if;
-  if position('origin' in v_src) > 0 then
+  if position('origin' in v_upd) > 0 then
     raise exception 'M1 GUARD: UPDATE guard already references origin — already applied or drift; stop and review';
+  end if;
+
+  -- INSERT guard: confirmed level-only clamp, no origin yet.
+  select prosrc into v_ins from pg_proc
+  where pronamespace = 'public'::regnamespace
+    and proname = 'guard_master_insert_level';
+  if v_ins is null then
+    raise exception 'M1 GUARD: guard_master_insert_level not found; stop and review';
+  end if;
+  if position('is_platform_moderator' in v_ins) = 0
+     or position('new.level' in v_ins) = 0 then
+    raise exception 'M1 GUARD: INSERT guard is not the SP-035 level-only clamp; stop and review';
+  end if;
+  if position('origin' in v_ins) > 0 then
+    raise exception 'M1 GUARD: INSERT guard already references origin — already applied or drift; stop and review';
   end if;
 end $$;
 

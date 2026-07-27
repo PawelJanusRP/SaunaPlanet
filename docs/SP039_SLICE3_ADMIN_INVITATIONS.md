@@ -505,19 +505,67 @@ seven-field body and fail loud on drift before adding `origin`.
 
 ---
 
-## 13. `masters_delete` drift & versioning plan
+## 13. `masters_delete` drift & versioning (reconciled with production 2026-07-28)
 
-Live definition (from `all_scripts_history.sql`, to be re-confirmed read-only in
-production): `create policy "masters_delete" on public.sauna_masters for delete
-using (public.is_admin())` — DELETE, role **admin** only.
+**Production drift discovered.** The pre-drift assumption — that `masters_delete`
+was `using (public.is_admin())` (admin-only) — was **PROVEN FALSE** by the
+2026-07-28 production read-only preflight. The **actual live policy** is:
 
-Plan: a **separate security-housekeeping migration sequenced FIRST** (before the
-claim-table migrations) that (a) PRE-APPLY reads the live `pg_policies` `qual`
-for `masters_delete` and asserts it is exactly `is_admin()`, **failing loud on
-drift**; (b) `drop policy` + recreate it **identically** (`using
-(public.is_admin())`) under version control; (c) changes **no behavior**. Doing
-this first removes the drift before the invitation FK / delete-guard (§14) reason
-about delete semantics against a versioned policy. **Not applied in 3A.**
+```sql
+-- masters_delete: DELETE, PERMISSIVE, roles {public}, no WITH CHECK
+using (
+  exists (select 1 from profiles
+          where profiles.id = auth.uid()
+            and profiles.role = any (array['admin'::text, 'moderator'::text]))
+)
+```
+
+i.e. it authorizes **admin OR moderator** via an inline `EXISTS` over
+`profiles.role` — semantically the same set as `is_platform_moderator()`, and it
+does **not** call `is_admin()`. Applying the old M0 as written would have
+**removed moderator DELETE access** (a production authorization regression).
+
+**Corrected M0 strategy (implemented).** M0 now versions the **exact live
+inline admin/moderator policy** without changing effective authorization: same
+command (DELETE), PERMISSIVE mode, roles PUBLIC, no WITH CHECK, admin+moderator
+authorization. The PRE-APPLY drift guard asserts the live `qual` contains the
+`profiles` admin/moderator `EXISTS`, **does not** contain `is_admin`, and has no
+WITH CHECK — failing loud otherwise. The forward reproduces the inline `EXISTS`
+verbatim with the reference qualified as `public.profiles` (minimum-dependency
+versioning — no `is_admin`, no `is_platform_moderator` introduced); the rollback
+restores the identical predecessor. **Normalization note:** `pg_policies` may
+render `public.profiles` back as `profiles` and `= ANY(ARRAY[...])` differently,
+so post-apply verification compares **semantics**, not textual identity.
+
+**`is_admin()` — separate security debt (NOT a blocker for M0–M5).** Production
+confirms `public.is_admin()` is `SECURITY DEFINER STABLE` with **no pinned
+`search_path`** and body `select exists(select 1 from public.profiles where id =
+auth.uid() and role = 'admin')`. Because `masters_delete` (and M0–M5) do **not**
+depend on `is_admin()`, its unpinned search_path is **not** a blocker for the
+claim foundation. Recorded as a **backlog security item**: a future reviewed
+helper-hardening migration should redefine it `SET search_path=''` with qualified
+refs — but must **first inventory all live and repository usages** of `is_admin()`
+(it still gates other tables' write policies, per `all_scripts_history.sql`).
+**No `M0B` is created in this slice.**
+
+**EXECUTE-grant decision (this slice).** The live trigger/helper functions
+(`guard_master_privileged_columns`, `guard_master_insert_level`, `is_admin`,
+`is_platform_moderator`) carry broad legacy EXECUTE grants (PUBLIC / anon /
+authenticated / postgres / service_role). These are **left UNCHANGED** — changing
+them would add another production-behavior variable to a drift-sensitive
+deployment; broad legacy grants are a **separate security-hardening topic** with
+its own Preview behavioral verification. The **new** `guard_master_delete()`
+adopts the restrictive posture for new functions: `revoke execute … from public`
+(no client EXECUTE). This is safe and zero-impact because a `returns trigger`
+function cannot be invoked directly via SQL and trigger firing does not depend on
+the caller's EXECUTE privilege. The M4 admin RPCs keep their designed
+`revoke … from public, anon` + `grant execute … to authenticated` model.
+
+**Sequencing:** M0 is applied **first** (removes the versioning gap before the
+claim tables/guard reason about delete semantics). **Variant A is final**
+(pgcrypto 1.3 in `extensions`; `extensions.gen_random_bytes(integer)` +
+`extensions.digest(text,text)` present; advisory-lock functions present) — no
+Node runtime fallback.
 
 ---
 
