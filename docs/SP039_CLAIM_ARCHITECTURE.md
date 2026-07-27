@@ -5,7 +5,8 @@ security model, SQL/RLS design, threat analysis and implementation plan for the
 profile-claim onboarding workflow. No application code, SQL, migration, test or
 Supabase change is produced by this slice. Implementation begins in Slice 3
 (admin prepare + invitations) and Slice 4 (authentication return + atomic claim)
-only after the unresolved decisions in §22 are approved.
+after separate authorization. The owner decisions in §22.1 are **approved**
+(2026-07-27); §22.2 lists implementation details to confirm during build.
 
 Related sources of truth: `docs/ROADMAP.md` §SP-039, `docs/BACKLOG.md` §SP-039,
 `docs/USER_MODEL.md`, `docs/RLS.md`, `docs/DATABASE.md`, `docs/WORKFLOWS.md`
@@ -167,7 +168,7 @@ pre-auth, by the token-scoped preview RPC (§7).
 ```
 id             uuid  pk default gen_random_uuid()
 master_id      uuid  not null references sauna_masters(id) on delete cascade
-token_hash     bytea not null                         -- HMAC-SHA256(pepper, token); UNIQUE
+token_hash     bytea not null                         -- SHA-256(token), UNIQUE (no pepper — MVP, §4)
 token_prefix   text  not null                         -- first 8 chars of token, NON-secret, for support/diagnostics
 status         text  not null default 'created'
                check (status in ('created','ready','sent','opened','claimed','expired','revoked'))
@@ -192,17 +193,35 @@ Indexes / constraints:
 * `create unique index master_claim_invitations_token_hash_uidx on (token_hash);`
 * `create unique index master_claim_invitations_active_uidx on (master_id)
    where status in ('created','ready','sent','opened');` — **at most one active
-   invitation per master** (§3).
+   invitation per master** (§3). The predicate lists **explicit lifecycle
+   statuses only**; it must **never** reference `now()`, `expires_at`, or any
+   volatile expression (a partial index predicate must be immutable, and a
+   time-based predicate would silently and non-deterministically change which
+   rows are "active").
 * `create index master_claim_invitations_master_idx on (master_id);`
 * CHECK `claimed_by is not null = (status = 'claimed')` (no ambiguous half-claim).
 * CHECK `revoked_by is not null = (status = 'revoked')`.
 
-`expires_at` is stored explicitly and is authoritative. Status `expired` is a
-**derived** display state: any read/claim path treats
-`now() >= expires_at AND status in ('created','ready','sent','opened')` as
-expired regardless of the stored label. A lazy cleanup job MAY set
-`status='expired'` for the admin list but is never the correctness boundary —
-this eliminates the "`sent` but past expiry" ambiguity.
+**Expiration contract (authoritative — approved 2026-07-27).**
+
+* `expires_at` is **always authoritative for claim validity**. `get_claim_preview`
+  and `claim_master_profile` **check `expires_at` directly** (`now() < expires_at`)
+  on every call.
+* An invitation is **never** accepted merely because its stored `status` still
+  looks active — a row with `status='sent'` but `now() >= expires_at` is treated
+  as expired and rejected.
+* `status='expired'` is a **materialized lifecycle label**, set only by a
+  controlled cleanup job or the invitation-management/generation RPC (for admin
+  clarity and to free the active slot). It is a convenience projection, never the
+  correctness boundary.
+* The active-status partial unique index (above) therefore operates purely on the
+  explicit status set `{created, ready, sent, opened}` and is unaffected by the
+  passage of time; materialization moves a row out of that set by writing
+  `status='expired'`, not by any time predicate.
+
+See §3 for the exact active status set, legal transitions, and the
+lock-then-materialize generation sequence that keeps "at most one active" true
+under concurrency.
 
 ### 2.4 New table `public.master_claim_events` (audit, append-only)
 
@@ -233,21 +252,64 @@ moderator SELECT; no UPDATE/DELETE.
 
 ---
 
-## 3. Invitation cardinality
+## 3. Invitation cardinality & state machine
+
+**Active status set (authoritative):** `{created, ready, sent, opened}`.
+**Terminal statuses:** `{claimed, expired, revoked}`. The single-active partial
+unique index (§2.3) is defined over exactly the active set.
+
+**Legal transitions** (all other transitions are illegal and rejected by the
+management RPCs / a guard):
+
+```
+created  → ready | sent | opened | claimed | expired | revoked
+ready    → sent  | opened | claimed | expired | revoked
+sent     → opened | claimed | expired | revoked
+opened   → claimed | expired | revoked
+claimed  → (terminal — no outbound transition)
+expired  → (terminal)
+revoked  → (terminal)
+```
+
+`sent`/`opened` may be reached without stepping through every intermediate label
+(e.g. a link opened before it was marked `sent`); the ordering above is a partial
+order, not a mandatory staircase. `claimed` is reachable only through
+`claim_master_profile` (§7); `expired` only through materialization (§2.3);
+`revoked` only through the admin revoke/regenerate RPC.
+
+Cardinality rules:
 
 * One prepared profile may have **many invitation rows over time** but **at most
-  one active** (partial unique index in §2.3). Active = `created`/`ready`/
-  `sent`/`opened`.
-* Regeneration = **revoke the current row** (`status='revoked'`, keep it) **+
-  insert a new row** with a fresh token. Tokens are **never rotated in place** —
-  each token keeps its own immutable lifecycle for audit.
+  one active** (partial unique index in §2.3).
+* Regeneration = **revoke or expire the current active row** (keep it) **+ insert
+  a new row** with a fresh token. Tokens are **never rotated in place** — each
+  token keeps its own immutable lifecycle for audit.
 * Revoked / expired / claimed rows **remain in history** (never deleted; only
   `token_hash` may be nulled after they can no longer be used, §16).
 * A claimed profile normally receives **no** further invitation. A new
   invitation for an already-claimed profile is possible **only** after an
   explicit moderator detach (§9), which frees the active-invitation slot.
-* Manual recovery: a moderator can revoke + regenerate at any time from the
-  admin panel; the old link dies immediately, a new link is issued.
+
+**Lock-then-materialize generation sequence (concurrency-safe).** Before
+creating a replacement invitation the admin generation RPC must, in one
+transaction:
+
+1. `SELECT … FROM master_claim_invitations WHERE master_id = :m AND status IN
+   ('created','ready','sent','opened') FOR UPDATE` — lock any active row(s) for
+   this master.
+2. For each locked row where `now() >= expires_at`, **materialize** it:
+   `status='expired'` (+ `invitation_expired` audit event). This frees the active
+   slot for a genuinely expired-but-still-labelled row.
+3. If an active, **not-yet-expired** row still remains, either reject
+   ("an active invitation already exists — revoke it first") or, when the caller
+   asked to regenerate, set it `status='revoked'` (+ audit).
+4. `INSERT` the new invitation.
+
+Concurrent generation attempts serialize on the `FOR UPDATE` locks from step 1;
+the `master_claim_invitations_active_uidx` partial unique index is the final
+backstop, so **at most one active invitation per master** holds even if two
+admins race. Manual recovery: a moderator can revoke + regenerate at any time
+from the admin panel; the old link dies immediately, a new link is issued.
 
 ---
 
@@ -262,17 +324,19 @@ moderator SELECT; no UPDATE/DELETE.
   token does not linger in the address bar, browser history, or subsequent
   `Referer` headers (§6). `Referrer-Policy: no-referrer` is set on `/claim/*`,
   and no third-party/analytics scripts run on that route.
-* **Hashing at rest:** `token_hash = hmac_sha256(pepper, token)` where `pepper`
-  is a server-only secret (env var, **not** in the DB). SHA-256/HMAC is correct
-  here (not bcrypt/argon2): the secret is high-entropy random, so slow hashing
-  buys nothing; a fast keyed hash + DB-side equality lookup is the right choice.
-* **The database never stores the raw token.** Only `token_hash` (secret,
-  keyed) and `token_prefix` (first 8 chars, non-secret, for support lookups).
+* **Hashing at rest (approved):** `token_hash = sha256(token)` — plain SHA-256,
+  **no pepper for the MVP**. For a 256-bit CSPRNG token, plain SHA-256 is
+  sufficient: the input is not a guessable/low-entropy secret, so neither slow
+  hashing (bcrypt/argon2) nor a keyed HMAC pepper adds meaningful defense — a
+  leaked hash is not brute-forceable regardless. A pepper is deliberately **not**
+  introduced unless a concrete repository constraint later justifies it (avoids a
+  new secret to manage/rotate). The hash is computed in the Next.js server layer
+  (or a DEFINER helper) before the DB lookup.
+* **The database never stores the raw token.** Only `token_hash` and
+  `token_prefix` (first 8 chars, non-secret, for support lookups).
 * **Comparison:** the claim/preview RPCs look the invitation up **by
   `token_hash`** (indexed equality) — there is no raw-secret string compare, so
-  there is no token-timing side channel to exploit. The pepper is applied in the
-  application before the RPC call (or inside a DEFINER helper that reads the
-  pepper from a GUC), never logged.
+  there is no token-timing side channel to exploit.
 * **One-time use:** claim flips `status → 'claimed'` atomically; any later claim
   with the same token sees `claimed` and returns the already-claimed conflict
   (idempotent for the same `claimed_by`, §7/§8).
@@ -298,8 +362,9 @@ Before authentication a token holder may see only a **whitelisted** subset:
 `specialties`, `languages`, and the flag "prepared by SaunaPlanet".
 Never exposed: `user_id`/auth UUID, moderation notes, `admin_note`, contact data,
 internal audit, certificate files, rating/`review_count` internals, or
-pending/rejected affiliations. Whether approved-affiliation **names** appear is
-an unresolved decision (§22).
+pending/rejected affiliations. **Approved-affiliation names may be shown**
+(approved decision §22.1.5) — only names of `approved` affiliations, which are
+already public.
 
 Mechanism: a **SECURITY DEFINER RPC** `get_claim_preview(p_token text)` that
 hashes the token, resolves the invitation, validates it is not expired / revoked
@@ -320,34 +385,66 @@ Goal: the claim context survives sign-in, registration, email confirmation,
 callback, refresh, and second-device open — without exposing the token to
 JS-readable storage.
 
-Design:
+**Claim cookie contract (MVP, approved).** The `sp_claim` cookie carries the
+**raw token** and MUST be:
+
+* `HttpOnly` — never readable by JavaScript;
+* `Secure` — HTTPS only;
+* `SameSite=Lax` — survives the top-level return navigation from an email/OAuth
+  link, but is not sent on cross-site subrequests;
+* `Path=/claim` — sent only to claim routes, never to the rest of the app;
+* **lifetime ≤ the invitation's remaining validity** (`Max-Age = min(session
+  cap, expires_at − now())`) — the cookie can never outlive the token;
+* **cleared after a successful claim**;
+* **cleared after any terminal handling** — revoked, expired, malformed, or
+  otherwise rejected invitation;
+* **never** copied to `localStorage`, `sessionStorage`, a client-readable
+  (non-HttpOnly) cookie, analytics, query strings, or logs.
+
+**Token-leakage prevention on the token-bearing request.** The initial
+`GET /claim/<token>` response sets `Referrer-Policy: no-referrer`, and the
+`/claim/*` routes load **no third-party analytics, no remote images, and no other
+cross-origin resources** — nothing that could receive the token through a
+`Referer` header — *before* the token-less redirect. Immediately after the cookie
+is safely set the server **302-redirects to the canonical token-less route
+`/claim`**, so the raw token leaves the address bar and browser history at once.
+
+Flow:
 
 1. `GET /claim/<token>` (server) → `get_claim_preview` validates and returns the
-   preview. The server sets an **HTTP-only, Secure, SameSite=Lax** cookie
-   `sp_claim` carrying the **raw token** (justified: HTTP-only + Secure is not
-   "insecure persistent browser storage" — it is unreadable by JS, sent only to
-   our origin, `SameSite=Lax` survives the top-level return navigation from the
-   email link, `Max-Age ≈ 60 min`). It 302-redirects to token-less `/claim`.
+   preview → set `sp_claim` per the contract above → **302 → `/claim`**
+   (token-less). No client-side script ever sees the token.
 2. `/claim` renders the preview and, if unauthenticated, links to
    `/auth/login?next=/claim` and `/auth/register?next=/claim`.
 3. **Login** and **register** are extended to read `next` and thread it:
    `signInWithPassword` → `router.push(next)`; `signUp` →
    `emailRedirectTo = ${origin}/auth/callback?next=/claim`.
 4. `auth/callback` is hardened to **validate `next` against an allow-list**
-   (must be a relative path matching `^/claim(?:/|$)` or another explicitly
-   listed internal path) before redirecting — closing the current open-redirect
-   surface. Absolute URLs and protocol-relative `//host` are rejected → fall
-   back to `/`.
+   (relative path matching `^/claim(?:/|$)` or another explicitly listed internal
+   path) before redirecting — closing the current open-redirect surface. Absolute
+   URLs and protocol-relative `//host` are rejected → fall back to `/`.
 5. Back on `/claim` (now authenticated), the server reads `sp_claim`, re-runs the
-   preview for context, and shows the explicit **"This is my profile"** button
-   which calls the claim RPC (§7). The token comes from the cookie, so the claim
-   RPC still re-proves possession server-side.
+   preview for context, and shows the explicit **"This is my profile"** button,
+   whose submission goes to the server (§7), which reads the token from the
+   cookie and invokes the claim RPC. The token is never in client code.
 
-Edge cases: **wrong account already signed in** → `/claim` detects the session,
-shows "you are signed in as X — claim as this account or switch"; the claim RPC
-enforces the one-profile-per-account rule regardless. **Second device / cleared
-cookie** → no `sp_claim`; the user re-opens the original link (token in URL) to
-re-establish it. **Expired cookie** → same. The **raw token is never written to
+**Email-confirmation return.** Registration requires email confirmation. Because
+`Path=/claim` and `SameSite=Lax`, the `sp_claim` cookie persists in the browser
+while the user leaves to their inbox and is present again when the confirmation
+link lands on `/auth/callback?next=/claim` (validated in step 4) and forwards to
+`/claim`. The claim then proceeds using the cookie — the token never travels
+through the email link itself. If the cookie has expired by the time the user
+confirms (slow inbox), `/claim` shows "re-open your invitation link"; re-opening
+`/claim/<token>` re-establishes the cookie.
+
+**Second device.** Opening the confirmation or claim on a different device/browser
+has no `sp_claim` cookie there; the user re-opens the original `/claim/<token>`
+link on that device, which re-establishes the cookie. The token is bound to
+possession-of-link, not to a single device.
+
+**Wrong account already signed in** → `/claim` detects the session, shows "signed
+in as X — claim as this account or switch"; the claim RPC enforces the
+one-profile-per-account rule regardless. The **raw token is never written to
 `localStorage`/`sessionStorage`.**
 
 Alternative (recommended for post-MVP, §22): replace the token-bearing cookie
@@ -402,6 +499,38 @@ conditional `WHERE user_id IS NULL` + the unique index are the two independent
 backstops. Idempotency: a client retry after a lost response re-enters, sees
 `claimed_by = auth.uid()`, and returns success without side effects.
 
+### 7.1 Server-to-RPC invocation model (mandatory)
+
+The browser **must not** call `claim_master_profile(p_token)` directly through
+the Supabase browser client — doing so would require the raw token in client-side
+code. The claim is submitted through the Next.js server layer:
+
+1. The browser submits the **"This is my profile"** confirmation to a **Next.js
+   Server Action** (or Route Handler) — it carries **no token**, only the intent.
+2. The server reads the raw token **from the HttpOnly `sp_claim` cookie**.
+3. The server invokes `claim_master_profile` via the **server** Supabase client
+   (the caller's session provides `auth.uid()`; the token is passed as the RPC
+   argument).
+4. The **RPC performs the complete authorization and atomicity checks** (§7) —
+   it remains the database authorization boundary.
+5. On **terminal** completion (success, or a terminal rejection: claimed by
+   another, expired, revoked, malformed) the server **clears the `sp_claim`
+   cookie** and maps the result to a safe user-facing outcome / redirect.
+
+The Next.js server layer is responsible for: keeping the **raw token out of all
+client-side code**; safe user-facing result mapping (generic messages, no token,
+no internal detail); supplying **rate-limit context** (IP/account, §14); the
+**cookie lifecycle** (set on preview, clear on terminal, §6); and **redirect
+behavior** (to `/studio` on success; to a safe error screen otherwise). The RPC
+never trusts client-supplied identity — `auth.uid()` and the token-hash lookup
+are the only authority.
+
+**Raw tokens are prohibited in:** client logs, analytics, query caches (React
+Query / SWR / Next data cache), browser storage (`localStorage`/`sessionStorage`/
+client-readable cookies), audit metadata (`master_claim_events.metadata` stores
+at most `token_prefix`), and error reports. Only the HttpOnly cookie and the
+server-side call path ever hold the raw token.
+
 ---
 
 ## 8. Conflict cases
@@ -427,22 +556,62 @@ Duplicate profiles are **never auto-merged**; they open a moderator review task.
 
 ---
 
-## 9. Reversal & recovery
+## 9. Reversal & recovery restrictions
 
-* A claim **can be reversed** by a **moderator only**, via a dedicated
-  privileged RPC `moderator_detach_master_claim(p_master_id uuid, p_reason text)`
-  (SECURITY DEFINER, moderator-checked): sets `user_id = NULL`,
-  `claimed_at = NULL`, keeps `status` = pending (or moderator-chosen), writes an
-  `ownership_detached` audit event with the reason. It does **not** ad-hoc-edit
-  rows outside this operation.
-* The original invitation stays `claimed` in history; **a fresh invitation is
-  issued** for a re-claim (detach frees the active-invitation slot).
-* Images, events, affiliations, certificates created by the wrongly-claimed
-  owner are **not** silently reassigned — detach flags them for moderator review
-  (documented follow-up), because they may belong to the wrong person.
-* Reversal **after public activity exists** (published profile, live events) is
-  allowed but explicitly flagged high-risk and audited; the moderator decides
-  per case. No automatic profile merge.
+Core rules (approved):
+
+* A **consumed invitation is never reusable** — once `status='claimed'` it stays
+  terminal; any re-claim requires a **newly generated** invitation.
+* Reversal is **moderator-only** and runs through a dedicated privileged RPC
+  `moderator_detach_master_claim(p_master_id uuid, p_reason text)` (SECURITY
+  DEFINER, moderator-checked) with a **mandatory non-empty `reason`**. It never
+  happens through ad-hoc row edits.
+* Every reversal writes an **append-only `ownership_detached` audit event**
+  (actor, reason, timestamp).
+* Detach is **not** allowed to reset privileged/derived state: `level`,
+  `status`, `is_founding_partner`, `identity_verified_at`,
+  `qualifications_verified_at`, `rating`, `review_count`, and moderation history
+  are **not** automatically changed by detachment — only `user_id`/`claimed_at`
+  are cleared (a return to unclaimed), and only when simple detach is permitted.
+
+**Simple detach vs manual conflict case.** Simple detach (clear
+`user_id`/`claimed_at`, re-invite) is permitted **only before meaningful
+owner-created activity exists**. Blocking activity — any of:
+
+* owner-created **events** (as organizer) or event participations;
+* **material affiliation changes** the owner made (new/accepted/ended
+  `master_affiliations`);
+* **owner-uploaded content** (avatar/cover or other Storage objects under
+  `<master_id>/…` written after claim);
+* **certificate submissions** by the owner;
+* any other **durable public activity** attributable to the owner —
+
+**blocks simple detach**. When blocking activity exists, the system **opens a
+manual conflict/recovery case** (`duplicate_conflict_opened`) for a moderator to
+resolve by hand rather than auto-detaching. **Profile duplicates are never
+automatically merged.**
+
+**Storage & account preconditions.** Before any detach the moderator reviews
+**Storage ownership/cleanup implications** — owner-uploaded objects live under
+`<master_id>/…` and are re-associated with whoever next claims that
+`master_id`; they must be reviewed (and removed via the **supported Storage API**,
+never SQL) if they belong to the wrong person. **Account-takeover cases require
+account-security recovery first** — a compromised account must be secured (via
+Supabase auth recovery) **before** any profile reassignment; profile detach is
+not a substitute for account recovery.
+
+Explicit recovery behavior:
+
+| Scenario | Behavior |
+|---|---|
+| Wrong-account claim caught **immediately** (no edits/activity) | Simple moderator detach + `ownership_detached` audit; generate a **new** invitation for the correct person. |
+| Wrong-account claim **after profile edits** (no public activity) | Simple detach still permitted; moderator reviews owner-uploaded Storage objects first; new invitation issued. Privileged/verification fields untouched. |
+| Wrong-account claim **after public activity** (events/affiliations/published) | **No auto-detach** — open a manual conflict case; moderator resolves ownership of the durable activity by hand before any reassignment. |
+| **Duplicate self-registered profile** (invitee already has their own) | Never auto-merged; `duplicate_conflict_opened`; moderator decides which profile survives and links the account manually. |
+| **Compromised account** | Account-security recovery first (secure the account); only then, if needed, detach/reassign the profile. |
+
+Reversal after public activity is high-risk, always audited, and always a manual
+moderator decision — never automatic.
 
 ---
 
@@ -625,8 +794,8 @@ email/Messenger/WhatsApp manually.
 
 ## 18. Test matrix
 
-* **Unit (Vitest):** token generation (length/entropy/base64url), pepper HMAC
-  determinism, `next` allow-list validator (relative-only, reject `//` and
+* **Unit (Vitest):** token generation (length/entropy/base64url), SHA-256
+  hashing determinism, `next` allow-list validator (relative-only, reject `//` and
   absolute), preview field whitelist, expiry derivation.
 * **SQL contract:** columns/constraints/indexes present; `origin` CHECK; active-
   invitation partial unique; token-hash unique; audit append-only (no
@@ -717,60 +886,70 @@ the pending onboarding editor; Slice 6 the E2E/production readiness.
 
 ---
 
-## 22. Unresolved decisions requiring owner approval
+## 22. Decisions
 
-For each: **recommendation** · alternatives · security · product · operations.
+### 22.1 Approved owner decisions (2026-07-27)
 
-1. **Are unclaimed prepared profiles public?** — **Rec: No** (moderator-only +
-   token preview). Alt: public "coming soon". Security: public exposes admin data
-   pre-consent. Product: privacy before the master opts in. Ops: no extra public
-   surface.
-2. **One active invitation per master enforced?** — **Rec: Yes** (partial unique
-   index). Alt: multiple concurrent tokens. Security: fewer live secrets. Product:
-   clearer state. Ops: regenerate = revoke+new.
-3. **Invitation expiry duration?** — **Rec: 14 days** (pilot). Alt: 72 h / 30 d.
-   Security: shorter = smaller window. Product: masters are slow to respond. Ops:
-   easy re-issue.
-4. **Does opening a link change status?** — **Rec: Yes**, record `opened`/
-   `open_count` (informational only, nothing gated on it). Alt: don't track.
-   Security: neutral. Product: admin visibility. Ops: minor writes, rate-limited.
-5. **Does the claim preview show affiliations?** — **Rec: Show approved
-   affiliation *names* only.** Alt: hide entirely. Security: names are already
-   public for approved affiliations. Product: helps recognition. Ops: none.
-6. **Token in path or query?** — **Rec: Path** `/claim/<token>` + immediate
-   cookie exchange + token-less redirect + `no-referrer`. Alt: query; fragment
-   `#`. Security: path+redirect leaks least. Product: clean links. Ops: standard.
-7. **Claim context via cookie or server-side state?** — **Rec: HTTP-only Secure
-   `SameSite=Lax` cookie carrying the token (MVP)**; migrate to a server-side
-   `pending_claim` row post-MVP. Alt: server-side now. Security: both keep the
-   token out of JS storage; server-side adds revocation/cross-device. Product:
-   cookie is simplest. Ops: server-side needs a table + cleanup.
-8. **May claimed pending masters edit immediately?** — **Rec: Yes**, edit
-   profile + images; publication stays blocked. Alt: block until approved.
-   Security: guard still protects privileged columns. Product: momentum. Ops:
-   pending editor is Slice 5.
-9. **Do claimed profiles need moderator review before publication?** — **Rec:
-   Yes** (stay pending until approved). Alt: auto-approve / unverified badge.
-   Security/Product: human check before public. Ops: +1 moderation step per
-   master (fine for 10).
-10. **Is an incorrect claim reversible?** — **Rec: Yes, moderator-only detach
-    RPC**, no auto-merge, audited. Alt: irreversible. Security: recover from
-    wrong-account. Product: safety net. Ops: re-invite after detach.
-11. **Retention for expired/claimed invitations?** — **Rec: 90 d then null
-    `token_hash` (skeleton kept); claimed kept, hash nullable; audit 12 mo.**
-    Alt: delete. Security: no stale secrets. Product/Ops: investigable history.
-12. **Store manual delivery-channel metadata?** — **Rec: Yes** (optional
-    `delivery_channel` + `sent_at`). Alt: omit. Security: none. Product: pilot
-    analytics. Ops: manual entry.
-13. **Automatic email delivery in MVP?** — **Rec: Out of MVP** (copyable message,
-    manual send). Alt: transactional email now. Security: fewer moving parts.
-    Product: 10 masters don't need automation. Ops: revisit with SP-040.
+The following are **approved** and binding for Slice 3+ implementation; they are
+no longer open recommendations.
 
-Additional operational decision surfaced in §20: **version `masters_delete`
-explicitly** while touching `sauna_masters` (stop relying on the undocumented
-live policy). **Rec: Yes.**
+1. **Unclaimed prepared profiles are not public** — moderator-only at the table
+   level; pre-auth exposure only through the token-scoped `get_claim_preview`
+   projection (§5, §10).
+2. **Only one active invitation per master** — enforced by the partial unique
+   index over the active status set `{created, ready, sent, opened}` (§2.3, §3).
+3. **Default invitation validity is 14 days** (`expires_at = created_at +
+   interval '14 days'`; §2.3, §16).
+4. **Opening an invitation is recorded as an informational lifecycle event** —
+   `opened`/`open_count`/`opened_at` + an `invitation_opened` audit event; nothing
+   is gated on it (§5, §13).
+5. **The limited claim preview may show names of approved affiliations** (approved
+   affiliation names are already public); nothing else beyond the §5 whitelist.
+6. **The initial raw token is transported in the URL path** — `/claim/<token>`
+   with immediate cookie exchange, `no-referrer`, and a token-less redirect (§4,
+   §6).
+7. **Claim context uses a secure HttpOnly cookie for the MVP** (`Path=/claim`,
+   `Secure`, `SameSite=Lax`, lifetime ≤ remaining validity; §6). Server-side
+   `pending_claim` state is deferred to post-MVP.
+8. **A claimed pending master may immediately edit permitted profile fields**
+   (text fields + avatar/cover); privileged columns stay guard-locked (§11).
+9. **Moderator approval is required before the profile becomes public** — claim
+   never publishes; `status` stays `pending` until a moderator approves (§12).
+10. **Claim reversal is moderator-only** and subject to the §9 recovery
+    restrictions (mandatory reason, audit, no reuse of consumed invitations, no
+    auto-merge, activity-gated simple detach).
+11. **Expired and revoked invitation records are retained for 90 days**, after
+    which `token_hash` is nulled while the audit skeleton remains (§16).
+12. **Manual delivery-channel metadata is stored** (`delivery_channel` +
+    `sent_at`; §2.3, §17).
+13. **Automatic email delivery remains outside the MVP** — copyable message,
+    manual send (§17).
+14. **The live `masters_delete` policy must be explicitly inspected and
+    versioned** in a future reviewed migration (stop relying on the undocumented
+    live definition; §20).
+
+### 22.2 Genuinely unresolved implementation details (settle during Slice 3/4)
+
+These do not change the approved architecture; they are implementation choices to
+confirm against the live schema and code at build time:
+
+* **Exact `Max-Age` session cap** for `sp_claim` when the remaining validity is
+  long (e.g. cap at 60 min of inactivity vs the full remaining validity) — a UX
+  vs re-open trade-off; default: `min(60 min, expires_at − now())`.
+* **Preview `open_count` write throttling** — whether repeated opens within a
+  short window coalesce into one audit event to avoid noise (rate-limit windows
+  in §14 apply regardless).
+* **Whether pending claimed masters may submit affiliation proposals** before
+  approval (§11 recommends deferring to approved) — product confirmation.
+* **Bio truncation length** for the preview projection (§5).
+* **`token_hash` column type** (`bytea` vs `text` hex) and where SHA-256 is
+  computed (Node vs a DEFINER helper) — to match repository crypto conventions.
+* **Cleanup cadence** for the retention/materialization job (§16) and whether it
+  is a scheduled RPC vs an admin-triggered maintenance action.
+* **Final admin-panel route placement** under `/admin` (§17) — naming/layout only.
 
 ---
 
-*End of SP-039 Slice 2 architecture & security review. Awaiting explicit owner
-decisions (§22) and authorization before Slice 3 implementation.*
+*End of SP-039 Slice 2 architecture & security review. Owner decisions in §22.1
+are approved; §22.2 lists implementation details to confirm during build.
+Awaiting authorization before Slice 3 implementation.*

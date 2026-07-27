@@ -434,8 +434,9 @@ Unresolved architectural decisions to settle in Slice 2 (for review):
 
 The full Slice 2 design resolving these — data model, invitation state
 machine, token security, atomic claim RPC contract, RLS matrix, threat
-model, migration sequencing — is `docs/SP039_CLAIM_ARCHITECTURE.md`; its §22
-lists the decisions still awaiting explicit owner approval.
+model, migration sequencing — is `docs/SP039_CLAIM_ARCHITECTURE.md`. Owner
+decisions are **approved** (§22.1, 2026-07-27); §22.2 lists the remaining
+build-time implementation details.
 
 ## Slice 3 — Admin-Prepared Profiles and Claim Invitations
 
