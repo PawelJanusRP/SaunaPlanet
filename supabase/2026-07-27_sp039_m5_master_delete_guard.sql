@@ -14,6 +14,10 @@
 -- table owner, it bypasses RLS. It does NOT replace masters_delete authorization
 -- — it only refuses unsafe deletes that pass authorization.
 --
+-- HARDENED: `set search_path = ''` with every object fully qualified
+-- (public.master_claim_invitations, OLD.*). A newly authored SECURITY DEFINER
+-- function does not inherit the legacy `search_path = public` convention.
+--
 -- Sequenced LAST (needs master_claim_invitations from M2).
 -- Companion rollback: 2026-07-27_sp039_m5_master_delete_guard_rollback.sql
 --
@@ -40,7 +44,7 @@ begin
       using errcode = 'P0001';
   end if;
   return old;
-end $$ language plpgsql security definer set search_path = public;
+end $$ language plpgsql security definer set search_path = '';
 
 drop trigger if exists sauna_masters_delete_guard on public.sauna_masters;
 create trigger sauna_masters_delete_guard

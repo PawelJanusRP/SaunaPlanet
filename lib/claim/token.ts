@@ -1,11 +1,26 @@
-// SP-039 Slice 3B1 — claim-token encoding contract (pure).
+// SP-039 Slice 3B1 — claim-token encoding contract (pure reference lib).
 //
-// The authoritative token generation happens in PostgreSQL (pgcrypto) inside
-// admin_create_master_claim_invitation; the DB stores only SHA-256(token) as
-// bytea and returns the raw token exactly once. These helpers pin the SAME
-// base64url encoding for (a) the Node fallback used only if preflight proves
-// pgcrypto unavailable, and (b) deterministic unit tests. The raw token is a
-// secret: never log it, never persist it outside the one-time RPC result.
+// TOKEN-GENERATION CONTRACT (approved decision A):
+//
+//   Variant A — pgcrypto confirmed (the CURRENTLY IMPLEMENTED design): token
+//   generation happens ENTIRELY in PostgreSQL inside
+//   admin_create_master_claim_invitation / _regenerate_ (extensions.gen_random_bytes
+//   + extensions.digest); the DB stores only SHA-256(token) as bytea and returns
+//   the raw token exactly once. The helpers here are used ONLY for deterministic
+//   unit tests that pin the SAME base64url/SHA-256 encoding.
+//
+//   Variant B — pgcrypto unavailable (proven by read-only preflight): STOP
+//   before applying M4. Do NOT deploy the current RPC and do NOT switch at
+//   runtime. The trusted server-to-RPC contract must be REDESIGNED in a separate
+//   reviewed change (the RPC would then accept a server-computed hash instead of
+//   generating). This module is a TESTED REFERENCE / FALLBACK implementation
+//   only — it is NOT wired into any runtime code path and NOT an automatically
+//   active parallel token generator while the RPC generates the token itself.
+//   (`claimActions.ts` deliberately does not import this module.)
+//
+// In BOTH variants the browser never generates or submits token material. The
+// raw token is a secret: never log it, never persist it outside the one-time
+// RPC result.
 
 import { createHash, randomBytes } from 'node:crypto'
 

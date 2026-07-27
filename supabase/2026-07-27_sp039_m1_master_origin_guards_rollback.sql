@@ -7,6 +7,11 @@
 -- applied). Dropping the column is provided only in the commented DATA-LOSS
 -- section below.
 --
+-- NOTE: this restores the EXACT legacy predecessor, which used
+-- `set search_path = public`. That is intentional — the rollback reproduces the
+-- pre-M1 live state faithfully; M1 forward hardens both bodies to
+-- `set search_path = ''`.
+--
 -- Companion forward: 2026-07-27_sp039_m1_master_origin_guards.sql
 -- ============================================================================
 begin;

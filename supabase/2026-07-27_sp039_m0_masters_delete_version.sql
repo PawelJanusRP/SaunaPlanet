@@ -16,16 +16,35 @@
 --
 -- Companion rollback: 2026-07-27_sp039_m0_masters_delete_version_rollback.sql
 --
--- SECURITY OBSERVATION (report, do NOT fix in this slice): the repository
--- history defines public.is_admin() as `language sql security definer stable`
--- WITHOUT a pinned search_path. A SECURITY DEFINER function without a pinned
--- search_path resolves unqualified names (`public.profiles`) against the
--- CALLER's search_path. In Supabase's default model the authenticated/anon
--- roles cannot CREATE schemas/tables, so this is a latent hardening gap rather
--- than a confirmed exploit; versioning is_admin with `set search_path = ''` and
--- fully-qualified refs belongs in a separate reviewed security migration, not
--- M0. The live is_admin() body must be confirmed by the read-only preflight
--- before application (this environment had no DB access).
+-- ============================================================================
+-- SECURITY CHECKPOINT / NAMED BLOCKER (do NOT fix in M0):
+--   public.is_admin() — unpinned search_path hardening.
+--
+-- Repository history defines public.is_admin() as `language sql security definer
+-- stable` WITHOUT a pinned search_path. A SECURITY DEFINER function without a
+-- pinned search_path resolves unqualified names (e.g. `profiles`) against the
+-- CALLER's search_path. In Supabase's default model authenticated/anon roles
+-- cannot CREATE schemas/tables, so this is a latent hardening gap, not a
+-- confirmed exploit — but it MUST be treated as a required pre-production
+-- security checkpoint for the claim-foundation window:
+--
+--   1. The EXACT live is_admin() definition MUST be confirmed by the read-only
+--      production preflight (this environment had no DB access; the versioned
+--      history body may not match live).
+--   2. A SEPARATE, reviewed hardening migration should redefine it as:
+--        SECURITY DEFINER, STABLE, SET search_path = '',
+--        with fully-qualified public.profiles and auth.uid().
+--   3. That hardening must land BEFORE or DURING the controlled production
+--      claim-foundation window, and MUST drift-guard the exact live predecessor
+--      first — it must NOT be bundled blindly.
+--
+-- M0 itself changes NOTHING about is_admin(): it only re-declares the identical
+-- masters_delete DELETE policy (which references is_admin()) so that policy is
+-- versioned without widening or altering authorization. The is_admin hardening
+-- migration is intentionally NOT authored here because the repository lacks
+-- authoritative live evidence to drift-guard it safely; it remains a named
+-- blocker for the application checkpoint.
+-- ============================================================================
 --
 -- PRE-APPLY (read-only; run FIRST — on ANY mismatch STOP and review):
 -- P1. Exactly one DELETE policy named masters_delete, USING is is_admin(),

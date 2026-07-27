@@ -556,6 +556,14 @@ land with the claim-table migration (M1) or the M3 RPC set; **design only in 3A*
 
 ## 15. Rate limiting & abuse protection
 
+**Precise scope (as implemented in M4):** these are a rolling-hour throttle on
+**successful** privileged invitation operations — they count audit events, which
+are written **only on success**. They protect against accidental or abusive
+**mass generation by an authorized moderator**; they are **not** a full
+invalid-attempt / malformed-request / network-abuse limiter (rejected calls
+write no event and are not throttled). Comprehensive attempt-rate monitoring and
+alerting is deferred to **SP-040**.
+
 Reuse the rolling-window pattern over `master_claim_events`
 (`(actor_user_id, event_type, created_at)` index) + the per-master advisory lock:
 
@@ -733,14 +741,29 @@ Run these read-only before M0–M3 in Preview/Production; **do not apply anythin
    (expect the seven-field SP-039 body) and `guard_master_insert_level`.
 5. Exact `masters_delete`: `pg_policies` `qual` (expect `is_admin()`); confirm
    role/cmd (DELETE).
+5b. **`is_admin()` hardening checkpoint (named blocker):** confirm the exact live
+   `is_admin()` body/config (`pg_get_functiondef`, `proconfig`). If it lacks a
+   pinned `search_path` (as the repo history shows), a **separate reviewed**
+   migration must redefine it `SECURITY DEFINER STABLE SET search_path = ''` with
+   fully-qualified `public.profiles`/`auth.uid()`, drift-guarding the exact live
+   predecessor first, and land **before/during** the claim-foundation window. M0
+   does **not** touch `is_admin()` (see the M0 migration header).
 6. Policy inventory on `sauna_masters` (`pg_policies`).
 7. Function/RPC namespace — no `admin_create_master_claim_invitation` etc.
    (`pg_proc` join `pg_namespace`).
-8. Extension availability: `pgcrypto` (`select * from pg_extension where
-   extname='pgcrypto'`) — required for `gen_random_bytes`/`digest`; if absent,
-   fall back to Node-side generation (decision 5 alternative).
+8. **Extension availability & exact functions (pgcrypto Variant A/B):** confirm
+   `pgcrypto` and its schema, and the exact signatures
+   `extensions.gen_random_bytes(integer)` + `extensions.digest(text,text)`
+   (plus core `hashtextextended(text,bigint)`, `pg_advisory_xact_lock(bigint)`).
+   **Variant A (confirmed):** apply M4 as-is. **Variant B (unavailable):** STOP
+   before M4 — do not deploy the RPC, do not switch at runtime; redesign the
+   server-to-RPC contract in a separate reviewed change (the Node helper in
+   `lib/claim/token.ts` is a tested reference only, never an auto-active path).
 9. Object-name collisions for every proposed table/index/function/policy.
 10. Current audit/log table pattern (`import_log`) still append-only.
+11. **Guard search_path:** M1/M5 re-author the guards with `set search_path = ''`;
+    confirm no unexpected live drift in `guard_master_privileged_columns` /
+    `guard_master_insert_level` bodies before replacement.
 
 ---
 

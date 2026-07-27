@@ -11,6 +11,13 @@
 -- 'self_registered'; no backfill; no data change. Deferred (NOT added here):
 -- claimed_at, identity_verified_at, qualifications_verified_at (Slice 4+).
 --
+-- SECURITY: both guard bodies are re-authored with `set search_path = ''` (NOT
+-- the legacy `search_path = public`). The only object reference in either body
+-- is the already-qualified public.is_platform_moderator(); everything else is
+-- NEW/OLD trigger columns, so the hardening is behavior-preserving. The rollback
+-- deliberately restores the exact legacy predecessor (which used
+-- `search_path = public`).
+--
 -- The master DELETE guard is intentionally NOT here — it references
 -- master_claim_invitations, which is created in M2. It ships in M5, after the
 -- invitation table exists. Application order: M0 -> M1 -> M2 -> M3 -> M4 -> M5.
@@ -95,7 +102,7 @@ begin
   end if;
 
   return new;
-end $$ language plpgsql security definer set search_path = public;
+end $$ language plpgsql security definer set search_path = '';
 -- trigger sauna_masters_guard (SP-035) already points at this function.
 
 -- ---------------------------------------------------------------------------
@@ -111,7 +118,7 @@ begin
     new.origin := 'self_registered';
   end if;
   return new;
-end $$ language plpgsql security definer set search_path = public;
+end $$ language plpgsql security definer set search_path = '';
 -- trigger sauna_masters_insert_guard (SP-035) already points at this function.
 
 commit;

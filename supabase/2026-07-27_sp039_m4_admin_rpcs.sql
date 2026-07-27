@@ -14,6 +14,16 @@
 -- / extensions.digest. Core funcs (pg_advisory_xact_lock, hashtextextended, now,
 -- encode, translate, rtrim, left, make_interval) resolve from pg_catalog.
 --
+-- RATE-LIMIT SCOPE (precise): the per-actor rolling-hour limits below count
+-- SUCCESSFUL privileged lifecycle operations (they count audit events, which are
+-- written only when an operation succeeds). They protect against accidental or
+-- abusive MASS GENERATION by an already-authorized moderator. They are NOT a
+-- full invalid-attempt / malformed-request / network-abuse limiter — rejected
+-- calls (not_authorized, not_eligible, invalid_transition, ...) do not write
+-- events and are not throttled here. Comprehensive attempt-rate monitoring and
+-- alerting is deferred to SP-040. Thresholds: create+regenerate 30/hour,
+-- mark_sent+revoke 60/hour, per moderator.
+--
 -- >>> PREFLIGHT (read-only, MANDATORY before apply — this env had no DB access):
 --   select extnamespace::regnamespace, extname from pg_extension where extname='pgcrypto';
 --   select pg_get_functiondef('extensions.gen_random_bytes(integer)'::regprocedure);
@@ -67,7 +77,11 @@ begin
     p_valid_days := 14;
   end if;
 
-  -- Rate limit: create + regenerate, 30 / actor / rolling hour. Fail closed.
+  -- Throttle on SUCCESSFUL create+regenerate operations: 30 / moderator /
+  -- rolling hour (counts audit events, which are written ONLY on success —
+  -- see the RATE-LIMIT SCOPE note in the header). Guards against accidental or
+  -- abusive mass generation by an authorized moderator; it is NOT an
+  -- invalid-attempt or network-abuse limiter (that is SP-040's job).
   select count(*) into v_recent
   from public.master_claim_events
   where actor_user_id = v_actor

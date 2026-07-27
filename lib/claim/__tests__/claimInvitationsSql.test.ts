@@ -69,6 +69,14 @@ describe('M1 — origin column + guard hardening', () => {
     expect(m1).toContain("new.origin := 'self_registered'")
     expect(m1).toContain("new.level := 'guest'")
   })
+  it('both guards are hardened to search_path = \'\' (not the legacy public)', () => {
+    // exactly the two re-authored guard bodies end with the empty search_path
+    expect(m1.match(/security definer set search_path = ''/g)).toHaveLength(2)
+    // the forward migration must NOT keep the legacy public search_path
+    expect(m1).not.toContain('security definer set search_path = public')
+    // rollback deliberately restores the legacy predecessor
+    expect(m1r).toContain('security definer set search_path = public')
+  })
   it('rollback restores the seven-field guard verbatim (no origin)', () => {
     const start = m1r.indexOf('create or replace function public.guard_master_privileged_columns')
     const body = m1r.slice(start, m1r.indexOf('language plpgsql', start))
@@ -205,6 +213,18 @@ describe('M4 — admin RPCs', () => {
     // exactly the two generators reference v_token in their result
     expect(m4.match(/'raw_token',\s+v_token/g)).toHaveLength(2)
   })
+  it('the raw token never enters an audit-event insert (only token_prefix does)', () => {
+    const sql = stripComments(m4)
+    // every INSERT into the audit table must not reference the raw token var
+    const inserts = sql.match(/insert into public\.master_claim_events[\s\S]*?;/g) ?? []
+    expect(inserts.length).toBeGreaterThanOrEqual(3)
+    for (const stmt of inserts) {
+      expect(stmt).not.toContain('v_token')
+      expect(stmt).not.toContain('raw_token')
+    }
+    // the created event carries the non-secret prefix only
+    expect(sql).toContain("jsonb_build_object('token_prefix', v_prefix)")
+  })
   it('rate limits create/regenerate (30) and sent/revoke (60) per hour', () => {
     expect(m4).toContain('v_recent >= 30')
     expect(m4).toContain('v_recent >= 60')
@@ -225,7 +245,9 @@ describe('M5 — master delete guard', () => {
   it('is a BEFORE DELETE trigger backed by a SECURITY DEFINER function', () => {
     expect(m5).toContain('before delete on public.sauna_masters')
     expect(m5).toContain('create or replace function public.guard_master_delete')
-    expect(m5).toContain('security definer set search_path = public')
+    // hardened: newly authored DEFINER function uses empty search_path
+    expect(m5).toContain("security definer set search_path = ''")
+    expect(m5).not.toContain('security definer set search_path = public')
   })
   it('blocks deletion when owned or when any invitation history exists', () => {
     expect(m5).toContain('old.user_id is not null')
