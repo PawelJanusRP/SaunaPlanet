@@ -252,7 +252,10 @@ upload behavior before and after claim; failure and rollback behavior.
 
 The six independent states above must be modelled explicitly, not
 collapsed. Slice 2 stops after architecture, SQL/RLS design, threat
-analysis, and implementation plan.
+analysis, and implementation plan. **Design delivered:**
+`docs/SP039_CLAIM_ARCHITECTURE.md` (data model, invitation state machine,
+token security, atomic claim RPC, RLS matrix, threat model, migration
+sequence, and the unresolved decisions awaiting owner approval).
 
 ## Slice 3 — Admin-Prepared Profiles and Claim Invitations
 
