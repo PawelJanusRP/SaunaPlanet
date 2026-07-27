@@ -2,6 +2,15 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { sanitizeSocialLinks } from '@/lib/import/social'
+import { slugWithSuffix, validateSlug } from '@/lib/master/slug'
+import {
+  normalizeCity,
+  normalizeLanguages,
+  normalizeSpecialties,
+  sanitizeWebsiteUrl,
+  validateExperienceYear,
+} from '@/lib/master/validate'
 
 /**
  * SP-035: Master Studio + affiliation lifecycle (Decision 016, W-16).
@@ -67,27 +76,112 @@ function friendlyInsertError(message: string) {
 // Own master profile
 // ============================================================
 
-export async function updateOwnMasterProfile(data: { name: string; bio: string | null }) {
+/**
+ * SP-039: explicit-payload profile update. A field that is `undefined` is
+ * NOT touched; an explicit `null` clears it. Only self-editable fields are
+ * accepted here — privileged columns (level, status, founding badge,
+ * rating) have no path through this action and the database guard blocks
+ * them independently.
+ */
+export type OwnMasterProfileUpdate = {
+  name?: string
+  bio?: string | null
+  slug?: string | null
+  city?: string | null
+  specialties?: string[] | null
+  languages?: string[] | null
+  experienceSinceYear?: number | null
+  socialLinks?: Record<string, string> | null
+  website?: string | null
+}
+
+const WEBSITE_ERRORS: Record<string, string> = {
+  'invalid-url': 'Podaj poprawny adres strony (https://...)',
+  'not-https': 'Strona WWW musi używać https://',
+  credentials: 'Adres strony nie może zawierać danych logowania',
+  port: 'Adres strony nie może używać niestandardowego portu',
+}
+
+const SLUG_ERRORS: Record<string, string> = {
+  'too-short': 'Adres profilu musi mieć co najmniej 3 znaki',
+  'too-long': 'Adres profilu może mieć najwyżej 40 znaków',
+  'invalid-shape': 'Adres profilu może zawierać tylko małe litery, cyfry i pojedyncze myślniki',
+  reserved: 'Ten adres profilu jest zarezerwowany — wybierz inny',
+  'uuid-like': 'Ten adres profilu wygląda jak identyfikator techniczny — wybierz inny',
+}
+
+export async function updateOwnMasterProfile(data: OwnMasterProfileUpdate) {
   const supabase = await createClient()
   const user = await requireUser(supabase)
-
-  if (!data.name.trim()) throw new Error('Imię i nazwisko nie może być puste')
 
   const own = await getOwnMaster(supabase, user.id)
   if (!own) throw new Error('Brak profilu saunamistrza powiązanego z tym kontem')
 
+  const patch: Record<string, unknown> = {}
+
+  if (data.name !== undefined) {
+    if (!data.name.trim()) throw new Error('Imię i nazwisko nie może być puste')
+    patch.name = data.name.trim()
+  }
+  if (data.bio !== undefined) patch.bio = data.bio?.trim() || null
+  if (data.city !== undefined) patch.city = normalizeCity(data.city)
+  if (data.specialties !== undefined) patch.specialties = normalizeSpecialties(data.specialties)
+  if (data.languages !== undefined) patch.languages = normalizeLanguages(data.languages)
+  if (data.socialLinks !== undefined) patch.social_links = sanitizeSocialLinks(data.socialLinks)
+
+  if (data.website !== undefined) {
+    const website = sanitizeWebsiteUrl(data.website)
+    if (!website.ok) throw new Error(WEBSITE_ERRORS[website.reason])
+    patch.website = website.value
+  }
+
+  if (data.experienceSinceYear !== undefined) {
+    const year = validateExperienceYear(data.experienceSinceYear)
+    if (!year.ok) {
+      throw new Error(
+        year.reason === 'future'
+          ? 'Rok rozpoczęcia nie może być w przyszłości'
+          : 'Podaj poprawny rok rozpoczęcia (od 1980)'
+      )
+    }
+    patch.experience_since_year = year.value
+  }
+
+  let requestedSlug: string | null = null
+  if (data.slug !== undefined) {
+    if (data.slug === null || data.slug.trim() === '') {
+      patch.slug = null
+    } else {
+      const validated = validateSlug(data.slug)
+      if (!validated.ok) throw new Error(SLUG_ERRORS[validated.reason])
+      requestedSlug = validated.slug
+      patch.slug = validated.slug
+    }
+  }
+
+  if (Object.keys(patch).length === 0) return
+
   const { data: updated, error } = await supabase
     .from('sauna_masters')
-    .update({ name: data.name.trim(), bio: data.bio?.trim() || null })
+    .update(patch)
     .eq('id', own.id)
-    .select('id')
+    .select('id, slug')
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (requestedSlug && (error.code === '23505' || error.message.includes('sauna_masters_slug_unique'))) {
+      throw new Error(
+        `Adres „${requestedSlug}" jest już zajęty — spróbuj np. „${slugWithSuffix(requestedSlug, 2)}"`
+      )
+    }
+    throw new Error(error.message)
+  }
   if (!updated || updated.length === 0) throw new Error('Brak uprawnień do edycji tego profilu')
 
   revalidatePath('/studio')
   revalidatePath('/studio/profile')
   revalidatePath(`/masters/${own.id}`)
+  const newSlug = (updated[0] as { slug?: string | null }).slug
+  if (newSlug) revalidatePath(`/masters/${newSlug}`)
 }
 
 // ============================================================
