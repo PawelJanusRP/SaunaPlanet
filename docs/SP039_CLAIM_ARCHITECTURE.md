@@ -872,6 +872,10 @@ first, then production, per the SP-036+ checkpoint discipline.
 
 ## 21. Slice 3 implementation scope (next, after approval)
 
+**Implementation-ready Slice 3A design:** `docs/SP039_SLICE3_ADMIN_INVITATIONS.md`
+(exact schema, RPC contracts, locking, eligibility, admin UI, migration
+sequence, and Slice-3A decisions). Summary below.
+
 Admin-prepared profiles + invitations only (no claim yet):
 
 * Moderator create/edit of all pilot fields on `admin_prepared` rows; mark ready.
