@@ -331,16 +331,39 @@ export default async function SaunaPage({
           </section>
         )}
 
-        {sauna.website && (
-          <a
-            href={sauna.website}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block rounded-xl bg-orange-600 px-4 py-2 text-white"
-          >
-            Strona obiektu
-          </a>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {sauna.website && (
+            <a
+              href={sauna.website}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block rounded-xl bg-orange-600 px-4 py-2 text-white"
+            >
+              Strona obiektu
+            </a>
+          )}
+          {/* SP-038 slice 3C: only known platforms with non-empty values render */}
+          {([
+            ['facebook', 'Facebook'],
+            ['instagram', 'Instagram'],
+            ['youtube', 'YouTube'],
+            ['tiktok', 'TikTok'],
+          ] as const).map(([key, label]) => {
+            const href = (sauna.social_links as Record<string, string> | null)?.[key]
+            if (!href) return null
+            return (
+              <a
+                key={key}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block rounded-xl border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                {label}
+              </a>
+            )
+          })}
+        </div>
       </main>
     </>
   )

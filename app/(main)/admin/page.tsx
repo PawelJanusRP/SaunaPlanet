@@ -11,6 +11,9 @@ import DeleteReviewButton from '@/components/DeleteReviewButton'
 import UserRoleSelector from '@/components/UserRoleSelector'
 import ManagerApprovalActions from '@/components/ManagerApprovalActions'
 import FacilityModerationActions from '@/components/FacilityModerationActions'
+import ImportProvenancePanel, {
+  type ImportLogProvenanceRow,
+} from '@/components/ImportProvenancePanel'
 
 const statusLabel: Record<string, { label: string; className: string }> = {
   pending:   { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
@@ -59,7 +62,7 @@ export default async function AdminPage({
     supabase.from('certificate_types').select('id, name, category, is_active, sort_order').order('sort_order'),
     supabase
       .from('saunas')
-      .select('id, name, city, category, status, description, website, latitude, longitude, created_by, created_at')
+      .select('id, name, city, category, status, description, website, social_links, latitude, longitude, created_by, created_at')
       .order('name'),
     supabase
       .from('sauna_events')
@@ -110,13 +113,21 @@ export default async function AdminPage({
     pendingManagerCount + pendingSaunaCount
 
   const pendingSaunaIds = pendingSaunas.map((s) => s.id)
-  const [{ data: bundledEventsRaw }, duplicateResults] = await Promise.all([
+  const [{ data: bundledEventsRaw }, { data: importLogsRaw }, duplicateResults] = await Promise.all([
     pendingSaunaIds.length > 0
       ? supabase
           .from('sauna_events')
           .select('id, title, event_date, event_time, sauna_id, organizer:sauna_masters!sauna_events_organizer_master_id_fkey(id, name)')
           .in('sauna_id', pendingSaunaIds)
           .eq('bundled_with_submission', true)
+      : Promise.resolve({ data: [] }),
+    // SP-038 slice 3: import provenance for linked submissions (moderator
+    // SELECT arm on import_log; at most one linked row per sauna).
+    pendingSaunaIds.length > 0
+      ? supabase
+          .from('import_log')
+          .select('id, sauna_id, url, source_kind, result, created_at, extracted')
+          .in('sauna_id', pendingSaunaIds)
       : Promise.resolve({ data: [] }),
     // Duplicate context per pending submission (warn-only RPC; moderators
     // make the final call). Failures degrade to no-context server-side.
@@ -147,6 +158,11 @@ export default async function AdminPage({
   pendingSaunas.forEach((s, i) => {
     duplicatesBySaunaId[s.id] = duplicateResults[i] ?? []
   })
+  const importBySaunaId: Record<string, ImportLogProvenanceRow> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const l of (importLogsRaw ?? []) as any[]) {
+    importBySaunaId[l.sauna_id] = l as ImportLogProvenanceRow
+  }
 
   // Resolve manager + facility-submitter user names in one lookup
   const managerUserIds = [...new Set([
@@ -256,6 +272,7 @@ export default async function AdminPage({
               const isPendingSubmission = s.status === 'pending'
               const duplicates = duplicatesBySaunaId[s.id] ?? []
               const bundledEvents = bundledBySaunaId[s.id] ?? []
+              const importProvenance = importBySaunaId[s.id]
               return (
                 <div
                   key={s.id}
@@ -336,6 +353,8 @@ export default async function AdminPage({
                           ))}
                         </div>
                       )}
+
+                      {importProvenance && <ImportProvenancePanel row={importProvenance} />}
 
                       <FacilityModerationActions saunaId={s.id} />
                     </div>

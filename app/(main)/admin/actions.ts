@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { sanitizeSocialLinks } from '@/lib/import/social'
 
 async function assertAdmin() {
   const role = await getCurrentUserRole()
@@ -158,6 +159,8 @@ export async function updateSaunaAdmin(
     website: string | null
     category: string
     status: string
+    /** Slice 3C — keyed social URLs; sanitized server-side, null clears. */
+    socialLinks?: Record<string, string> | null
   }
 ) {
   await assertAdmin()
@@ -173,6 +176,9 @@ export async function updateSaunaAdmin(
       website: data.website?.trim() || null,
       category: data.category,
       status: data.status,
+      ...(data.socialLinks !== undefined
+        ? { social_links: sanitizeSocialLinks(data.socialLinks) }
+        : {}),
     })
     .eq('id', id)
 

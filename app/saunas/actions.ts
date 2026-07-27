@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { sanitizeSocialLinks } from '@/lib/import/social'
 
 /**
  * SP-036 facility submission workflow (docs/SP036_ARCHITECTURE.md §5.1).
@@ -21,6 +22,18 @@ export type FacilitySubmissionInput = {
   website?: string | null
   latitude: number | null
   longitude: number | null
+  // SP-038 slice 3 — additive optional contact/detail fields (columns
+  // existed before; opening_hours added by the slice 3 migration). The
+  // opening-hours value must be a JSON OBJECT (DB CHECK) shaped like
+  // {"specifications": [...], "raw": [...], "note": null}.
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  openingHours?: Record<string, unknown> | null
+  // Slice 3C — keyed social profile URLs; server-side sanitization
+  // (sanitizeSocialLinks) enforces https + matching platform host and
+  // stores NULL instead of an empty object.
+  socialLinks?: Record<string, string> | null
 }
 
 export type SimilarFacility = {
@@ -132,6 +145,11 @@ export async function submitFacility(
         website: data.website?.trim() || null,
         latitude: data.latitude,
         longitude: data.longitude,
+        phone: data.phone?.trim() || null,
+        email: data.email?.trim() || null,
+        address: data.address?.trim() || null,
+        opening_hours: data.openingHours ?? null,
+        social_links: sanitizeSocialLinks(data.socialLinks),
         // Moderation keeps the pre-SP-036 direct-to-map behavior; everyone
         // else enters the moderated queue. RLS enforces the same rule.
         status: isModeration ? 'active' : 'pending',
@@ -202,6 +220,28 @@ export async function submitFacilityWithEvent(
   if (error) return { error: translateDbError(error.message) }
 
   const result = data as { facility_id: string; event_id: string }
+
+  // SP-038 slice 3: the bundled RPC intentionally keeps its signature —
+  // the additive detail fields are applied afterwards under the caller's
+  // own-pending UPDATE policy. Best-effort: the bundle itself already
+  // succeeded atomically; missing extras never fail the submission.
+  const extras = {
+    phone: facility.phone?.trim() || null,
+    email: facility.email?.trim() || null,
+    address: facility.address?.trim() || null,
+    opening_hours: facility.openingHours ?? null,
+    social_links: sanitizeSocialLinks(facility.socialLinks),
+  }
+  if (extras.phone || extras.email || extras.address || extras.opening_hours || extras.social_links) {
+    const { error: extrasError } = await supabase
+      .from('saunas')
+      .update(extras)
+      .eq('id', result.facility_id)
+    if (extrasError) {
+      console.error('bundled submission extras update failed:', extrasError.message)
+    }
+  }
+
   revalidatePath('/admin')
   revalidatePath('/studio/events')
   return {

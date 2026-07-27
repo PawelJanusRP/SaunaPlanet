@@ -473,3 +473,58 @@ checks, consistent with the platform's Server Actions + RLS boundary).
 Implementation candidates when scoped: Vercel Cron for the collector,
 Supabase `pg_stat_*` views and the Supabase/Vercel management APIs as
 sources, existing admin panel as the UI shell.
+
+---
+
+# SP-042 Facility Data Improvement Proposals
+
+Status: PLANNED (recorded 2026-07-20, discovered during SP-038 Smart
+Facility Import). Backlog entry only — **explicitly out of scope for
+SP-038**. In SP-038 only the extension point is documented
+(`docs/SP038_SMART_IMPORT_ARCHITECTURE.md`) and the existing warn-only
+duplicate behavior is preserved unchanged.
+
+## Motivation
+
+When an import (or any future contribution path) matches an existing
+facility but carries newer or more complete data — fresh opening hours,
+a missing phone number, corrected coordinates — the platform currently
+offers only two bad outcomes: create a duplicate or overwrite the
+active record. Neither is acceptable. The system must eventually
+support a **controlled facility data improvement proposal**: a
+moderated, auditable "suggest an update" workflow instead of a write.
+
+## Required properties (binding for the future design)
+
+* **Managed and unmanaged facilities both covered** — for managed
+  facilities the approved staff resolves proposals (platform moderation
+  retains override); for unmanaged facilities platform moderation
+  resolves them. Consistent with the SP-036/SP-037B consent model:
+  nothing fabricates facility consent.
+* **Field-level diffs** — a proposal is a set of per-field changes
+  (current value → proposed value), not a full-record replacement.
+* **Provenance per proposed value** — where the value came from
+  (import source URL, extraction origin/confidence per the SP-038
+  `ExtractedField` model, or manual user input) and when it was
+  retrieved.
+* **Partial acceptance** — the resolver accepts or rejects each field
+  independently; accepting some fields must not force the rest.
+* **Platform moderator override** — moderation can resolve any
+  proposal regardless of facility management state.
+* **Full audit history** — who proposed, from what source, who
+  resolved, what was accepted/rejected, when; history is never deleted
+  on resolution (unlike the current MVP withdrawal-deletes-history
+  pattern noted in KNOWN_ISSUES).
+* **Never touches the active record until acceptance** — the active
+  facility row changes only at explicit field acceptance; proposals are
+  additive rows, RLS-guarded, moderated.
+
+## Relationship to existing work
+
+* SP-038 duplicate detection (`find_similar_saunas`) stays warn-only;
+  when a duplicate is detected during import, the future UX offers
+  "propose an update to X" instead of submitting a near-duplicate.
+* The SP-038 provenance model (field origin/confidence/source hint,
+  `import_log`) is the intended data source for proposal provenance.
+* Candidate future extension of the same mechanism: PTS re-sync and
+  community corrections from facility pages.
