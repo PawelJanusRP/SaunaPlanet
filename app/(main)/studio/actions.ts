@@ -82,9 +82,15 @@ function friendlyInsertError(message: string) {
  * Expected failures are RETURNED as { error } instead of thrown (D1):
  * Next.js strips thrown server-action messages in production builds —
  * same convention as app/saunas/actions.ts.
+ *
+ * NOTE (2026-07-27 regression fix): a `'use server'` module may only
+ * export async Server Action functions. A type-only re-export
+ * (`export type { OwnMasterProfileUpdate }`) is NOT reliably erased by
+ * the Turbopack "use server" transform — it left a runtime binding to an
+ * undefined name and crashed the whole module graph at evaluation
+ * (ReferenceError). The type lives in lib/master/profileUpdate and is
+ * imported here purely for the signature; consumers import it from there.
  */
-export type { OwnMasterProfileUpdate }
-
 export async function updateOwnMasterProfile(
   data: OwnMasterProfileUpdate
 ): Promise<{ error?: string }> {
