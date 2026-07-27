@@ -265,11 +265,23 @@ Zakres:
 
 # SP-038 Smart Facility Import (Universal Import Engine)
 
-Status: PLANNED (recorded 2026-07-18). Roadmap/backlog entry only — no
-implementation now. **Supersedes the "URL-assisted submission" phase
-originally sketched as SP-036 slice 4** (docs/SP036_ARCHITECTURE.md §1.3,
-§9.4 phase 4 — deliberately detachable there; the honest-constraints
-analysis of FB/IG extraction in §1.3 remains the reference).
+Status: **CLOSED — deployed to production 2026-07-27**
+(docs/SP038_SMART_IMPORT_ARCHITECTURE.md). Slices 1–3C delivered: website
+provider (Open Graph / metadata / JSON-LD with deterministic per-field
+merge), SSRF-safe fetch, duplicate detection, editable preview on
+`/submit`, import→submission linking, social links, controlled image
+import with explicit consent, Storage authorization hardening, moderation
+provenance panel. **Deferred to backlog slices** (not blocking): Facebook
+best-effort extraction, paste-text fallback, AI-assisted extraction, and
+the SP-038 operational items now tracked under "Security and operations
+backlog" below (HTML-entity decoding of extracted text, supported-API
+Storage cleanup for orphaned blobs, import_log retention). The original
+scope below is preserved for reference.
+
+**Supersedes the "URL-assisted submission" phase originally sketched as
+SP-036 slice 4** (docs/SP036_ARCHITECTURE.md §1.3, §9.4 phase 4 —
+deliberately detachable there; the honest-constraints analysis of FB/IG
+extraction in §1.3 remains the reference).
 
 ## Goal
 
@@ -344,11 +356,313 @@ complete integration with the SP-036 submission workflow.
 
 ---
 
-# SP-040 Architecture, Performance & Scalability Review
+# SP-039 Saunamaster Pilot Foundation
 
-Status: PLANNED (recorded 2026-07-18). This is an **architecture review
-sprint, not a feature sprint** — no optimizations are implemented during
-it; the deliverable is an evidence-based optimization roadmap.
+Status: **ACTIVE PRODUCT SPRINT** (Slice 1 CLOSED/deployed 2026-07-27;
+Slices 2–6 planned). Full slice structure and pilot phase:
+docs/ROADMAP.md §SP-039 / §SP-039P.
+
+Highest current product priority: a controlled private pilot with the first
+10 sauna masters. The sprint delivers the master profile plus a
+**profile-claim onboarding workflow** — administration prepares a profile
+and issues a secure claim link; the invited master authenticates with
+**their own account** (administration never creates passwords or
+transferable credentials) and atomically claims the prepared profile.
+
+**Six independent states — never collapse into one boolean/status:**
+profile *prepared* by SaunaPlanet · profile *claimed* by an authenticated
+owner · *identity verified* · *qualifications verified* · *Founding
+Partner* · profile *approved / published*.
+
+## Slice 1 — Expanded Master Profile Foundation — CLOSED
+
+Merged + deployed to production 2026-07-27
+(SHA `e3b037c3da880a1f5f22d5391cc517a1c43e09ca`). Delivered: expanded
+profile model (slug + UUID/slug dual lookup, city, specialties, languages,
+experience year, social links, website, cover image, Founding Partner
+badge, approved affiliations, hide-empty, rating hidden when
+`review_count = 0`), completeness library, Studio editor for approved
+masters, avatar/cover upload, privileged-field guard + Storage hardening,
+production-safe Server Action error handling, restored `masters_select`
+own-row visibility. Migrations:
+`supabase/2026-07-27_sp039_master_profile.sql`,
+`supabase/2026-07-27_sp039_masters_select_fix.sql`. Deferred to Slice 5:
+pending-master profile editor (currently hidden by `StudioAccessNotice`).
+
+## Slice 2 — Claim Architecture and Security Review (NEXT)
+
+Architecture/security review only — **no implementation**. Must define:
+prepared-profile lifecycle; claim-invitation lifecycle; profile-ownership
+lifecycle; claim-token model (high-entropy random generation, hashed at
+rest, expiry, revocation, one-time use, replay protection, rate limiting);
+claim audit trail; sign-in / registration / email-confirmation return
+flows with claim-context preservation across authentication; atomic
+ownership assignment; conflict handling (duplicate account, duplicate
+master profile, concurrent claim); manual moderator recovery; publication
+and moderation states; RLS boundaries; `SECURITY DEFINER` RPC boundaries;
+public preview data boundaries; privacy implications; pending-master Studio
+access; image upload before/after claim; failure and rollback behavior.
+Stops after architecture, SQL/RLS design, threat analysis and
+implementation plan.
+
+Unresolved architectural decisions to settle in Slice 2 (for review):
+
+* **Where the prepared-profile state lives** — reuse `sauna_masters` with
+  an `unclaimed`/prepared marker and a null `user_id`, or a separate
+  `prepared_master_profiles` staging table promoted on claim. Trade-off:
+  reusing `sauna_masters` keeps one profile identity and existing public
+  rendering, but requires new RLS to keep unclaimed rows out of public
+  read; a staging table isolates them but duplicates the profile shape.
+* **Invitation ↔ profile cardinality** — one invitation per prepared
+  profile (simplest) vs regenerate-able tokens against the same profile.
+* **Token transport** — token in the URL path/fragment vs an opaque id +
+  secret; hashing algorithm and per-token salt.
+* **Claim-context preservation** across sign-in / register / email
+  confirm — signed state param vs a short-lived server-side pending-claim
+  row keyed to the token.
+* **`masters_select` interaction** — unclaimed prepared profiles must not
+  leak publicly nor to arbitrary authenticated users before claim; define
+  the exact SELECT arm (and reconcile with the Slice 1 own-row policy).
+* **Duplicate-master-profile guard** — the live `sauna_masters.user_id`
+  unique index already enforces one profile per account; the atomic claim
+  must fail closed against it and surface a clear conflict path.
+* **Founding Partner assignment** stays moderator-only (privileged-column
+  guard) and is never granted by the claim itself.
+* **Public preview boundary** — which prepared-profile fields the claim
+  preview screen may show before authentication (name/photo yes; contact
+  and any private notes no).
+
+## Slice 3 — Admin-Prepared Profiles and Claim Invitations
+
+Admin draft creation + editing of all pilot fields; readiness status;
+invitation creation with secure token generation and token-hash
+persistence; expiry, revoke, regenerate; sent/opened/claimed timestamps;
+invitation status management; pilot-candidate table; copyable invitation
+message for manual sending via email / Messenger / WhatsApp — **no
+mandatory automated email delivery in the MVP**. Suggested invitation
+states: `created`, `ready`, `sent`, `opened`, `claimed`, `expired`,
+`revoked` (final names after repository-convention inspection).
+
+## Slice 4 — Authentication Return and Atomic Claim
+
+Invitation preview; sign-in; registration; email confirmation; return to
+claim after authentication; explicit **"This is my profile"** confirmation;
+atomic claim RPC; ownership assignment; invitation consumption; audit
+entry; redirect to the prefilled Studio editor. The atomic operation
+revalidates server-side: authenticated user; valid token; correct token
+hash; not expired; not revoked; not already used; target profile not
+already claimed; account not already attached to another master profile;
+no conflicting concurrent claim succeeded. Negative + concurrency tests
+documented.
+
+## Slice 5 — Pilot Onboarding Experience
+
+"We prepared your profile" screen; prefilled profile editor; pending-master
+Studio mode (**resolves the Slice 1 deferred `StudioAccessNotice`
+behavior**); completeness checklist; useful empty states; preview before
+publication; incorrect-data and incorrect-affiliation reporting;
+verification labels; moderator-only Founding Partner assignment; pilot
+instructions; admin onboarding-status view for the 10 participants.
+
+## Slice 6 — Pilot E2E and Production Readiness
+
+Authorization matrix; RLS/RPC tests; token expiry / revocation / replay;
+claim concurrency; new-account and existing-account paths;
+email-confirmation return path; mobile flow; moderator recovery; rollback;
+Preview E2E; Production migration + verification; launch readiness for the
+first two participants.
+
+---
+
+# SP-039P Controlled Sauna Master Pilot
+
+Status: PRODUCT / OPERATIONAL PHASE (not a large implementation sprint).
+Full definition: docs/ROADMAP.md §SP-039P. Runs after SP-039's claim +
+onboarding workflow is ready, and is **gated by SP-040** (free-tier
+guardrails must be live before broad invitations).
+
+Waves: **2 → 3 → 5** masters, stopping to collect feedback and fix blockers
+between waves. Metrics: profiles prepared / invitations generated / sent /
+links opened / registration started / email confirmed / claim completed /
+profile completeness / published / time-to-claim / time-to-publication /
+admin interventions / duplicate-conflict cases / corrected prepared data /
+rejected prepared data / qualitative feedback / public sharing. Entry and
+exit criteria: docs/ROADMAP.md §SP-039P.
+
+---
+
+# SP-040 Platform Operations and Free-Tier Guardrails
+
+Status: PLANNED (recorded 2026-07-27). **Supersedes and absorbs the earlier
+"Platform Capacity & System Health Dashboard"** (same theme; the earlier
+capacity-dashboard scope is preserved as Slices 2–4 below). Must be
+completed **before invitations go to all 10 SP-039P pilot participants**.
+Documentation/backlog entry only — nothing is implemented, no migrations
+exist.
+
+## Goal
+
+Provide an internal administration dashboard that shows whether Supabase
+and Vercel usage is approaching free-tier capacity, reliability,
+performance or cost limits, so the platform never silently exceeds a
+provider limit before or during the pilot.
+
+## Principles
+
+* **Do not hardcode current plan limits without verification** — provider
+  limits can change; limit values and thresholds must be configurable.
+* **Every metric identifies its source** and shows its **last refresh
+  time**.
+* **Do not display metrics that cannot be obtained reliably.**
+* **Begin with an API and observability feasibility review** — verify what
+  is actually available before designing the UI.
+* The dashboard must NOT query infrastructure providers directly from the
+  browser: a scheduled collector writes a snapshot table (candidate
+  `system_metrics_snapshots`) consumed by `/admin/system` (admin-only; RLS
+  + server-side checks, consistent with the Server Actions + RLS boundary).
+* Guard against the monitoring itself consuming excessive resources.
+
+## Slice 1 — Observability and Provider Capability Review
+
+Determine: which Supabase metrics are available through API vs only in
+Supabase Studio; which Vercel metrics are available through API vs require
+a paid plan; which metrics can be calculated internally; refresh frequency;
+data-retention strategy; security of provider credentials; risk that
+monitoring itself consumes excessive resources.
+
+## Slice 2 — Internal Application Metrics
+
+Users; registrations; sauna masters; claimed profiles; events; photos;
+imports; audit rows; largest tables; daily growth; monthly growth;
+application errors; RLS failures; RPC failures.
+
+## Slice 3 — Provider Usage Dashboard (where technically available)
+
+**Supabase** — database size; Storage size; bandwidth; Auth usage; active
+users; Realtime usage; function usage; table growth; error indicators.
+**Vercel** — requests; transfer; function invocations; function execution
+duration; deployment failures; 4xx/5xx errors; image optimization; cache
+usage; billing-period context.
+
+## Slice 4 — Guardrails and Alerts
+
+Configurable thresholds: **60% Information / 75% Warning / 90% Critical**.
+Anomaly detection: sudden Storage growth; registration spike; photo-upload
+spike; import abuse; error spike; serverless execution spike; predicted
+time-to-limit based on recent growth. Initially alerts may be visible only
+inside the administration dashboard (notification channels later).
+
+---
+
+# SP-041 Recurring Sauna Sessions
+
+Status: PLANNED (recorded 2026-07-27). **Relocated out of the SP-039
+architecture** — recurrence is important but must not block the claim
+pilot. Authoritative session model: docs/EVENT_SESSION_MODEL.md.
+
+## Approved recurrence decisions (preserved)
+
+* weekly; biweekly; up to **3 selected weekdays**;
+* maximum **3 months** horizon; maximum **40 generated occurrences**;
+* **no infinite recurrence**; require confirm/extend after the horizon;
+* deterministic **date preview** before submission;
+* **atomic generation** (the whole approved series and its occurrences, or
+  nothing);
+* store a recurrence-series definition **and generate concrete event
+  occurrences** — never a virtual calendar rule with no concrete records;
+* each generated occurrence remains independently editable, cancellable,
+  moderateable and usable by existing event workflows;
+* managed / unmanaged facility routing (reuse SP-037/SP-037B);
+* **whole-series manager acceptance** for managed facilities (one decision,
+  not per occurrence);
+* individual occurrence editing; **"this and future"** split semantics;
+  series extension (up to another 3 months);
+* **non-destructive cancellation metadata** — past occurrences are never
+  rewritten and event history is preserved (evaluate additive cancellation
+  fields rather than deleting generated events);
+* Today-Queue reminders ~14 days before a series ends.
+
+## Do not implement (out of MVP)
+
+Second-Tuesday-of-month and similar patterns; last business day; arbitrary
+RRULE editing; infinite recurrence; yearly patterns. Daily recurrence is
+outside the MVP.
+
+## Architecture direction (from SP-039 planning, to confirm in the sprint)
+
+`sauna_event_series` table + `sauna_events.series_id` and occurrence
+metadata; generation is timezone-safe by operating on local wall-clock
+dates (`sauna_events.event_time` carries no timezone), which makes it
+DST-immune; series creation runs through a controlled transactional
+`SECURITY DEFINER` RPC that reuses the existing managed/unmanaged routing.
+Confirm exact column names against the live schema during the sprint.
+
+---
+
+# SP-042 Facility Data Improvement Proposals
+
+Status: PLANNED (recorded 2026-07-20, discovered during SP-038 Smart
+Facility Import). Backlog entry only — **explicitly out of scope for
+SP-038**. In SP-038 only the extension point is documented
+(`docs/SP038_SMART_IMPORT_ARCHITECTURE.md`) and the existing warn-only
+duplicate behavior is preserved unchanged.
+
+## Motivation
+
+When an import (or any future contribution path) matches an existing
+facility but carries newer or more complete data — fresh opening hours,
+a missing phone number, corrected coordinates — the platform currently
+offers only two bad outcomes: create a duplicate or overwrite the
+active record. Neither is acceptable. The system must eventually
+support a **controlled facility data improvement proposal**: a
+moderated, auditable "suggest an update" workflow instead of a write.
+
+## Required properties (binding for the future design)
+
+* **Managed and unmanaged facilities both covered** — for managed
+  facilities the approved staff resolves proposals (platform moderation
+  retains override); for unmanaged facilities platform moderation
+  resolves them. Consistent with the SP-036/SP-037B consent model:
+  nothing fabricates facility consent.
+* **Field-level diffs** — a proposal is a set of per-field changes
+  (current value → proposed value), not a full-record replacement.
+* **Provenance per proposed value** — where the value came from
+  (import source URL, extraction origin/confidence per the SP-038
+  `ExtractedField` model, or manual user input) and when it was
+  retrieved.
+* **Partial acceptance** — the resolver accepts or rejects each field
+  independently; accepting some fields must not force the rest.
+* **Platform moderator override** — moderation can resolve any
+  proposal regardless of facility management state.
+* **Full audit history** — who proposed, from what source, who
+  resolved, what was accepted/rejected, when; history is never deleted
+  on resolution (unlike the current MVP withdrawal-deletes-history
+  pattern noted in KNOWN_ISSUES).
+* **Never touches the active record until acceptance** — the active
+  facility row changes only at explicit field acceptance; proposals are
+  additive rows, RLS-guarded, moderated.
+
+## Relationship to existing work
+
+* SP-038 duplicate detection (`find_similar_saunas`) stays warn-only;
+  when a duplicate is detected during import, the future UX offers
+  "propose an update to X" instead of submitting a near-duplicate.
+* The SP-038 provenance model (field origin/confidence/source hint,
+  `import_log`) is the intended data source for proposal provenance.
+* Candidate future extension of the same mechanism: PTS re-sync and
+  community corrections from facility pages.
+
+---
+
+# SP-043 Architecture, Performance & Scalability Review
+
+Status: PLANNED (**renumbered 2026-07-27 from the earlier SP-040** when
+SP-040 became Platform Operations and Free-Tier Guardrails; no
+implementation had started, so the identifier could move — see the
+renumbering note in docs/ROADMAP.md and docs/SPRINT_HISTORY.md). This is an
+**architecture review sprint, not a feature sprint** — no optimizations are
+implemented during it; the deliverable is an evidence-based optimization
+roadmap.
 
 ## Goal
 
@@ -405,126 +719,88 @@ benefit. Every recommendation classified:
 
 ---
 
-# SP-041 Platform Capacity & System Health Dashboard
+# Later backlog (unscheduled)
 
-Status: PLANNED (recorded 2026-07-18; renumbered from the provisional
-SP-040 when the Architecture Review sprint claimed that number).
-Documentation/backlog entry only — nothing is implemented, no migrations
-exist.
+Normalized future themes — recorded so they are not lost; not yet assigned
+sprint numbers or a slice plan.
 
-## Motivation
+## Notifications and invitation lifecycle
 
-SaunaPlanet should proactively monitor platform capacity and infrastructure
-usage before production growth requires emergency scaling. The goal is not
-only observability, but **operational decision support**. The platform
-should clearly answer:
+* claim-invitation notifications (SP-039 claim links);
+* invitation expiry reminders;
+* claim reminders;
+* event-invitation notifications (W-10 facility→master invitations);
+* withdrawal history (retain history for withdrawn requests/invitations
+  instead of the current delete-on-withdraw MVP — see KNOWN_ISSUES);
+* notification digest.
+* (Existing follow-up already recorded above: **ParticipationModerationActions
+  route refresh** — the SP-037 request queue still relies on
+  `revalidatePath` alone.)
 
-* How healthy is the system?
-* Which resource is becoming the bottleneck?
-* How much capacity remains?
-* When should we scale or optimize?
-* Are users currently experiencing degradation?
+## Master discovery and following
 
-## Scope (future sprint)
+* master directory; search; filters by city, region, language and
+  specialty (SP-039 Slice 1 added the underlying fields: `city`,
+  `specialties`, `languages`);
+* follow a master; event notifications for followed masters;
+* shareable profile (SP-039 slug is the shareable canonical URL);
+* profile QR code.
 
-New administration section: **`/admin/system`** — privileged administrators
-only. The dashboard should eventually include:
+## Reviews and reputation
 
-**Platform Health** — overall system status (healthy / warning / critical),
-last refresh timestamp.
-
-**Database** — database size, growth trend, active connections, connection
-limit usage, slow queries, storage growth, estimated capacity exhaustion.
-
-**Storage** — storage usage, image count, monthly transfer, growth trend,
-estimated exhaustion.
-
-**Traffic** — requests, active users, response times (p95), error rates,
-API health.
-
-**Product Metrics** — users, saunas, events, reviews, photos, pending
-moderation queue, reservations, realtime connections.
-
-**Forecasts** — trends instead of only current values: remaining capacity,
-estimated limit date, weekly growth, monthly growth.
-
-**Alerts** — configurable thresholds; suggested defaults: 60% → Watch,
-75% → Warning, 90% → Critical. Future notification channels: email, admin
-notifications, optional Discord/Slack.
-
-## Architecture notes
-
-The dashboard must NOT query infrastructure providers directly from the
-browser. Data flows through a scheduled collector and a snapshot table:
-
-```
-Infrastructure Providers (Vercel / Supabase / internal metrics)
-        ↓
-scheduled collector
-        ↓
-system_metrics_snapshots
-        ↓
-Admin Dashboard (/admin/system)
-```
-
-Access: privileged administrators only (admin role; RLS + server-side
-checks, consistent with the platform's Server Actions + RLS boundary).
-
-Implementation candidates when scoped: Vercel Cron for the collector,
-Supabase `pg_stat_*` views and the Supabase/Vercel management APIs as
-sources, existing admin panel as the UI shell.
+* event-linked reviews; moderation; replies; verified participation;
+* **strict separation** of profile ownership, identity verification,
+  qualification verification, and rating (mirrors the SP-039 independent
+  states — never a single boolean);
+* ranking only after sufficient trusted data (see SP-023);
+* NB: `sauna_masters.rating` / `review_count` are legacy display columns,
+  now moderation-only (SP-039 privileged-column guard); a real master
+  review system does not yet exist.
 
 ---
 
-# SP-042 Facility Data Improvement Proposals
+# Security and operations backlog
 
-Status: PLANNED (recorded 2026-07-20, discovered during SP-038 Smart
-Facility Import). Backlog entry only — **explicitly out of scope for
-SP-038**. In SP-038 only the extension point is documented
-(`docs/SP038_SMART_IMPORT_ARCHITECTURE.md`) and the existing warn-only
-duplicate behavior is preserved unchanged.
+Preserve or add — cross-cutting hardening and operational hygiene items.
+Several were surfaced during SP-038 / SP-039 and are recorded here so they
+are not lost.
 
-## Motivation
-
-When an import (or any future contribution path) matches an existing
-facility but carries newer or more complete data — fresh opening hours,
-a missing phone number, corrected coordinates — the platform currently
-offers only two bad outcomes: create a duplicate or overwrite the
-active record. Neither is acceptable. The system must eventually
-support a **controlled facility data improvement proposal**: a
-moderated, auditable "suggest an update" workflow instead of a write.
-
-## Required properties (binding for the future design)
-
-* **Managed and unmanaged facilities both covered** — for managed
-  facilities the approved staff resolves proposals (platform moderation
-  retains override); for unmanaged facilities platform moderation
-  resolves them. Consistent with the SP-036/SP-037B consent model:
-  nothing fabricates facility consent.
-* **Field-level diffs** — a proposal is a set of per-field changes
-  (current value → proposed value), not a full-record replacement.
-* **Provenance per proposed value** — where the value came from
-  (import source URL, extraction origin/confidence per the SP-038
-  `ExtractedField` model, or manual user input) and when it was
-  retrieved.
-* **Partial acceptance** — the resolver accepts or rejects each field
-  independently; accepting some fields must not force the rest.
-* **Platform moderator override** — moderation can resolve any
-  proposal regardless of facility management state.
-* **Full audit history** — who proposed, from what source, who
-  resolved, what was accepted/rejected, when; history is never deleted
-  on resolution (unlike the current MVP withdrawal-deletes-history
-  pattern noted in KNOWN_ISSUES).
-* **Never touches the active record until acceptance** — the active
-  facility row changes only at explicit field acceptance; proposals are
-  additive rows, RLS-guarded, moderated.
-
-## Relationship to existing work
-
-* SP-038 duplicate detection (`find_similar_saunas`) stays warn-only;
-  when a duplicate is detected during import, the future UX offers
-  "propose an update to X" instead of submitting a near-duplicate.
-* The SP-038 provenance model (field origin/confidence/source hint,
-  `import_log`) is the intended data source for proposal provenance.
-* Candidate future extension of the same mechanism: PTS re-sync and
-  community corrections from facility pages.
+* **Remove public auth-UUID exposure** — audit public read surfaces for
+  leaked `auth.users` UUIDs (e.g. `master_affiliations.created_by/
+  resolved_by` for approved rows, noted during SP-035/SP-037).
+* **Audit-log retention** — define retention for audit rows.
+* **import_log retention / test-operation metadata** — a policy for the
+  append-only `import_log` (E2E left benign anonymized audit rows during
+  SP-038; distinguish/retire test operations without a broad DELETE path).
+* **Storage deletion through supported APIs** — the `master-avatars` and
+  `sauna-images` buckets have no client DELETE policy, so temporary blobs
+  can only be removed via Supabase Studio/service role; deleting
+  `storage.objects` rows via SQL is blocked by `protect_delete` and
+  orphans the binary. Provide a supported cleanup path.
+* **Orphaned blob cleanup** — a supported job to remove blobs whose owning
+  row was deleted (SP-038 image import + SP-039 avatar/cover uploads).
+* **Safe `master-avatars` object deletion** — a moderator/owner-scoped
+  delete path for master images (currently INSERT-only policies; no
+  authenticated DELETE).
+* **History for withdrawn requests and invitations** — event-participation
+  withdrawal and facility invitations currently delete the row (MVP), losing
+  history (KNOWN_ISSUES).
+* **Public-view security audit** — periodic review that no unclaimed
+  prepared profile, pending/rejected record, or private field leaks through
+  a public read path (critical for SP-039 claim: unclaimed prepared
+  profiles must not be publicly enumerable before claim).
+* **Claim rate limiting** — rate-limit token submission/claim attempts
+  (SP-039 Slice 2 threat model); reuse the rolling-window pattern from the
+  SP-038 import rate limit where applicable.
+* **Invalid-token monitoring** — surface repeated invalid/expired claim
+  token attempts (replay / brute-force signal) into the SP-040 dashboard.
+* **Schema drift detection** — detect live-vs-repo policy/schema drift.
+  Motivated by the SP-039 discovery that the live `masters_select` policy
+  had drifted from the versioned SP-035d definition (own-row arm missing),
+  fixed by `supabase/2026-07-27_sp039_masters_select_fix.sql`.
+* **Version undocumented live policies** — capture policies that exist on
+  the live database but are not in versioned SQL, e.g. `masters_delete`
+  (observed during SP-039 preflight), so the repo is the true source of
+  truth.
+* **HTML-entity decoding in extracted text (SP-038)** — decode entities such
+  as `&amp;` in imported JSON-LD/metadata values.

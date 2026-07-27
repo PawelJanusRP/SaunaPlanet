@@ -29,7 +29,7 @@ Workflow index:
 | W-05 | Owner manages facilities | Partial |
 | W-06 | Owner creates an event | Implemented (SP-034) |
 | W-07 | Sauna Master onboarding | Implemented (verification badge future) |
-| W-08 | Sauna Master creates a session | Future (planned: SP-039) |
+| W-08 | Sauna Master creates a session | Future (planned: SP-041 Recurring Sauna Sessions; relocated from SP-039) |
 | W-09 | Sauna Master creates an event | Implemented (SP-037B: managed/unmanaged routing, bundled submission) |
 | W-10 | Owner invites a Sauna Master | Implemented (SP-037B: consent-based invitations; notifications future) |
 | W-11 | Sauna Master applies to an event | Implemented (SP-037: participation requests) |

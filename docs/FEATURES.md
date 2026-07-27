@@ -887,16 +887,21 @@ Completed:
 * Master-contributed facilities — community submissions, moderation, dedup, RLS hardening (SP-036)
 * Master event participation — requests, staff moderation, lineup/map visibility (SP-037)
 * Master events & invitations — organizer routing, atomic proposals/bundles, facility invitations with master consent (SP-037B)
+* Smart Facility Import — website provider (OG/metadata/JSON-LD per-field merge), SSRF-safe fetch, dedup, editable preview, import→submission link, social links, consent-gated image import, moderation provenance (SP-038)
+* Expanded master profile — slug + UUID/slug dual lookup, city, specialties, languages, experience year, social links, website, cover, Founding Partner badge, affiliations, completeness, Studio editor (SP-039 Slice 1)
 
 Planned:
 
-* Sauna Sessions — first-class Session entity independent from Events (SP-039)
-* Smart Facility Import — URL/OG import pipeline (SP-038)
+* Saunamaster pilot claim + onboarding — admin-prepared profiles, secure claim token, atomic ownership assignment, pending-master onboarding (SP-039 Slices 2–6)
+* Controlled sauna master pilot — waves of 2 → 3 → 5 (SP-039P)
+* Platform operations & free-tier guardrails — /admin/system usage dashboard (SP-040)
+* Recurring Sauna Sessions — series + generated occurrences (SP-041; relocated from SP-039)
+* Facility data improvement proposals — moderated field-level updates (SP-042)
+* Architecture, performance & scalability review (SP-043; renumbered from SP-040)
 * Bookings (SP-022)
 * Payments (SP-024)
 * Private Saunas (SP-025)
 * Verification
-* Recurring events
 * Sauna and master rankings (SP-023)
 * Rating parameters admin panel (SP-027)
 * Native Mobile App — Expo, 3 phases: Architecture → Android → iOS (SP-030)

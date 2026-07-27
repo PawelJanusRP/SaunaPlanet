@@ -1,6 +1,6 @@
 # SaunaPlanet — Current Project State
 
-Last updated: 2026-07-20 (branch `feature/sp-036-facility-moderation`).
+Last updated: 2026-07-27 (`main` @ `e3b037c`, SP-039 Slice 1 deployed).
 
 This is the canonical **handover document** for ongoing development. Its purpose
 is orientation: a new AI or human session should understand the current project
@@ -31,10 +31,14 @@ What already exists and works on `main`:
 * the shared Workspace architecture: Personal Workspace (`/profile`) and
   Owner Workspace (`/workspace`)
 
-There are no tests, no migration structure (the live Supabase project is the
-schema source of truth) and no production-deployment documentation. See
-`docs/REPOSITORY_AUDIT.md` for the full repository map — read it before any
-code exploration.
+Since SP-038 the project has a **Vitest suite** (`lib/**/__tests__`, 173
+tests as of `e3b037c`, run with `npm test`) and **versioned SQL migrations**
+under `supabase/*.sql` that are applied to the live database through a
+controlled preflight → apply → post-apply-verify checkpoint flow (the live
+Supabase project remains the schema source of truth, but every applied
+change is now in Git). The map/list era code still has no automated tests.
+See `docs/REPOSITORY_AUDIT.md` for the full repository map — read it before
+any code exploration.
 
 ---
 
@@ -139,14 +143,33 @@ Supabase project and runtime-verified before the merge (2026-07-17).
 
 ---
 
+Also merged into `main` since the summary above:
+
+* **SP-036 / SP-037 / SP-037B** merged to `main` and deployed 2026-07-20
+  (`351d7a2`) — production and `main` are in sync again.
+* **SP-038 — Smart Facility Import** merged + deployed 2026-07-27 (`4147963`):
+  website provider (OG/metadata/JSON-LD with deterministic per-field merge),
+  SSRF-safe fetch, duplicate detection, editable `/submit` preview,
+  import→submission linking, social links, consent-gated controlled image
+  import, Storage authorization hardening, moderation provenance panel
+  (docs/SP038_SMART_IMPORT_ARCHITECTURE.md).
+* **SP-039 Slice 1 — Saunamaster Pilot Foundation** merged + deployed
+  2026-07-27 (`e3b037c`): expanded master profile (slug + UUID/slug dual
+  lookup, city, specialties, languages, experience year, social links,
+  website, cover image, Founding Partner badge), public profile redesign,
+  approved-affiliation display, hide-empty, rating hidden at zero reviews,
+  completeness library, Studio profile editor, avatar/cover upload,
+  privileged-field guard + Storage hardening, restored `masters_select`
+  own-row visibility.
+
 ## In Review
 
-Branch `feature/sp-036-facility-moderation` is ~35 commits ahead of `main`
-(SP-036 moderation slices + SP-037 + SP-037B). It is **deployed to
-production** (manual `vercel --prod`; production is ahead of `main`) but
-**not merged** — merge to `main` is the next repository step. All SP-037/
-SP-037B SQL scripts under `supabase/` were applied manually to the live
-database and verified.
+Nothing in review — `main == origin/main == production == e3b037c`. All
+applied migrations are versioned in Git under `supabase/`.
+
+The next work is **SP-039 Slice 2 — Claim Architecture and Security Review**
+(architecture/security review only; no implementation) for the private
+10-master pilot. See docs/ROADMAP.md §SP-039.
 
 ---
 
@@ -167,8 +190,16 @@ permissions: `docs/USER_MODEL.md`):
 
 Planned, not yet implemented:
 
-* **Session** — first-class ritual entity independent from Events (SP-039;
-  authoritative model: `docs/EVENT_SESSION_MODEL.md`)
+* **Prepared / claimed master profile** — admin-prepared profiles claimed by
+  the authenticated master via a secure token (SP-039 Slices 2–6; the six
+  independent states — prepared / claimed / identity-verified /
+  qualifications-verified / Founding Partner / published — must never be
+  collapsed; see docs/ROADMAP.md §SP-039)
+* **Recurring session series** — `sauna_event_series` + generated concrete
+  occurrences (SP-041, relocated out of SP-039; authoritative model:
+  `docs/EVENT_SESSION_MODEL.md`)
+* **Platform operations dashboard** — free-tier guardrails at `/admin/system`
+  (SP-040; must precede broad pilot invitations)
 * **Payments / transactions** — no tables yet (SP-024)
 * **Private sauna ownership** — marketplace entities (SP-025)
 
@@ -205,19 +236,30 @@ Every future sprint must respect these (full reasoning: `docs/DECISIONS.md`):
 
 ## Current Roadmap
 
-Next stages (do not duplicate — see `docs/ROADMAP.md` Phase 4 and
+Next stages (do not duplicate — see `docs/ROADMAP.md` and
 `docs/BACKLOG.md`):
 
-* **SP-036** — Master-Contributed Facilities & Events: completed
-  (`docs/SP036_ARCHITECTURE.md`; URL import moved to SP-038).
-* **SP-037 / SP-037B** — Master Event Participation, Master Events &
-  Invitations (W-09/W-10/W-11): **completed** 2026-07-20
-  (`docs/SP037_MASTER_EVENTS_ARCHITECTURE.md`).
-* **SP-038 / SP-040 / SP-041** — allocated in `docs/BACKLOG.md` (Smart
-  Facility Import; Architecture Review; Capacity Dashboard).
-* **SP-039** — Sauna Sessions as a first-class entity
-  (`docs/EVENT_SESSION_MODEL.md`); renumbered from the original SP-036/037
-  reservation.
+* **SP-039 — Saunamaster Pilot Foundation** (active sprint): Slice 1 closed
+  and deployed; next is **Slice 2 — Claim Architecture and Security Review**
+  (review only), then Slices 3–6 (admin-prepared profiles, atomic claim,
+  onboarding, pilot E2E). Highest current product priority: a controlled
+  private pilot with the first 10 sauna masters.
+* **SP-039P — Controlled Sauna Master Pilot**: operational waves of 2 → 3 → 5
+  masters, gated by SP-040.
+* **SP-040 — Platform Operations and Free-Tier Guardrails**: `/admin/system`
+  usage/capacity dashboard; must precede broad pilot invitations
+  (supersedes the earlier "Capacity Dashboard").
+* **SP-041 — Recurring Sauna Sessions**: recurrence engine relocated out of
+  SP-039 (`docs/EVENT_SESSION_MODEL.md`).
+* **SP-042 — Facility Data Improvement Proposals**: unchanged.
+* **SP-043 — Architecture, Performance & Scalability Review**: renumbered
+  from the earlier SP-040 (2026-07-27 pilot reprioritization; see the
+  renumbering note in `docs/ROADMAP.md`).
+
+> Numbering note: the 2026-07-27 pilot reprioritization moved three
+> *planned, not-yet-started* identifiers (old SP-040 Architecture Review →
+> SP-043; old SP-041 Capacity Dashboard → absorbed into the new SP-040).
+> Started sprints (SP-038, SP-039 Slice 1) keep their numbers permanently.
 
 ---
 
