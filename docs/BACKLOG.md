@@ -445,10 +445,11 @@ invitation creation with secure token generation and token-hash
 persistence; expiry, revoke, regenerate; sent/opened/claimed timestamps;
 invitation status management; pilot-candidate table; copyable invitation
 message for manual sending via email / Messenger / WhatsApp — **no
-mandatory automated email delivery in the MVP**. Invitation states:
-`created`, `ready`, `sent`, `opened`, `claimed`, `expired`, `revoked`.
-Implementation-ready Slice 3A design (schema, RPCs, RLS, migration sequence,
-sub-slices 3B1–3B4): `docs/SP039_SLICE3_ADMIN_INVITATIONS.md`.
+mandatory automated email delivery in the MVP**. Final invitation states
+(MVP): `ready`, `sent`, `opened`, `claimed`, `expired`, `revoked` (the unused
+`created` state was dropped). Finalized Slice 3A design (schema, RPCs, RLS,
+FK/delete model, migration sequence, sub-slices 3B1–3B4):
+`docs/SP039_SLICE3_ADMIN_INVITATIONS.md`.
 
 ## Slice 4 — Authentication Return and Atomic Claim
 

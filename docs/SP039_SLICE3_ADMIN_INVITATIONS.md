@@ -108,11 +108,11 @@ timestamptz null`.
 
 ```
 id                   uuid  primary key default gen_random_uuid()
-master_id            uuid  not null references public.sauna_masters(id) on delete cascade
+master_id            uuid  not null references public.sauna_masters(id) on delete restrict
 token_hash           bytea                              -- SHA-256(token) raw 32 bytes; UNIQUE; nullable ONLY after retention cleanup (§16 arch)
-token_prefix         text  not null                     -- first 8 chars of base64url token; NON-secret, diagnostics
+token_prefix         text  not null                     -- first 8 chars of base64url token; NON-secret, diagnostic-only (§5.1)
 status               text  not null default 'ready'
-                     check (status in ('created','ready','sent','opened','claimed','expired','revoked'))
+                     check (status in ('ready','sent','opened','claimed','expired','revoked'))
 expires_at           timestamptz not null               -- authoritative validity (default created_at + 14 days)
 delivery_channel     text  check (delivery_channel in ('email','messenger','whatsapp','sms','other'))
 delivery_target_hint text                               -- REDACTED hint only (e.g. 'j***@gmail.com'); never a full address/number
@@ -132,19 +132,21 @@ revoked_by           uuid  references auth.users(id) on delete set null
 
 Keys / constraints:
 
-* `master_id` FK **`on delete cascade`** — an invitation is meaningless without
-  its profile (delete is gated separately, §14).
+* `master_id` FK **`on delete restrict`** (approved decision B) — invitation
+  history (including expired/revoked/claimed skeletons) must **never** disappear
+  through a cascade; the FK is the hard integrity backstop, and a BEFORE DELETE
+  guard adds the clearer domain error (§14).
 * `create unique index master_claim_invitations_token_hash_uidx on (token_hash)
    where token_hash is not null;` — partial so retention-nulled rows don't
    collide.
 * `create unique index master_claim_invitations_active_uidx on (master_id)
-   where status in ('created','ready','sent','opened');` — **one active per
-   master**; predicate is **explicit statuses only**, never `now()`/`expires_at`.
+   where status in ('ready','sent','opened');` — **one active per master**;
+   predicate is **explicit statuses only**, never `now()`/`expires_at`.
 * `create index master_claim_invitations_master_idx on (master_id, created_at desc);`
 * CHECK `token_hash is not null or status in ('claimed','expired','revoked')` —
   the hash may be nulled only after a terminal state (retention).
 * CHECK `(status = 'claimed') = (claimed_by is not null)` — no half-claim
-  (reserved for Slice 4; created rows are never `claimed`).
+  (reserved for Slice 4; Slice-3 rows are never `claimed`).
 * CHECK `(status = 'revoked') = (revoked_by is not null)`.
 * CHECK `sent_at is null or status in ('sent','opened','claimed','expired','revoked')`
   — a send timestamp implies the row progressed past generation.
@@ -163,8 +165,8 @@ handle (approved: manual delivery, decision 12; privacy).
 
 ```
 id            uuid primary key default gen_random_uuid()
-invitation_id uuid references public.master_claim_invitations(id) on delete set null
-master_id     uuid references public.sauna_masters(id) on delete set null
+invitation_id uuid references public.master_claim_invitations(id) on delete set null   -- nullable; SET NULL (events are NEVER cascade-deleted)
+master_id     uuid references public.sauna_masters(id) on delete set null              -- nullable; SET NULL (forensic row survives)
 event_type    text not null check (event_type in (
                  'profile_prepared','invitation_created','invitation_sent',
                  'invitation_revoked','invitation_regenerated','invitation_expired'
@@ -197,25 +199,41 @@ created_at    timestamptz not null default now()
   in the same transaction as the corresponding row change, so divergence is only
   possible via out-of-band surgery (itself audited).
 
-`event_type` is emitted in Slice 3 for exactly: `profile_prepared` (optional, on
-first admin_prepared insert), `invitation_created`, `invitation_sent`,
-`invitation_revoked`, `invitation_regenerated`, `invitation_expired`
-(materialization). Everything else is reserved and unimplemented.
+`event_type` is emitted in Slice 3 for exactly: `profile_prepared`,
+`invitation_created`, `invitation_sent`, `invitation_revoked`,
+`invitation_regenerated`, `invitation_expired` (materialization). Everything else
+is reserved and unimplemented.
+
+**Audit-FK behavior (approved decision B / §3):** both FKs are **nullable** and
+use **`ON DELETE SET NULL`**, never cascade — an event row is forensic evidence
+and must outlive its parents. `invitation_id → SET NULL`: because
+`master_claim_invitations.master_id` is `ON DELETE RESTRICT`, an invitation is
+almost never deleted; if one ever is (e.g. a future dedicated recovery
+procedure), the event survives with a null link. `master_id → SET NULL`:
+consistent with the approved architecture — a master row can only be deleted once
+it has **no invitation history** (§14), so the sole events that outlive a master
+deletion are `profile_prepared`-type rows with no invitation, which keep their
+denormalized context and lose only the link. **`profile_prepared`** is emitted
+(approved decision C) when an admin-prepared profile is created, or when a
+controlled moderator operation first establishes `origin='admin_prepared'` — once
+per profile, **not** on ordinary edits, in the **same transaction** as the
+preparation, carrying no raw invitation secrets or unnecessary PII.
 
 ---
 
-## 5. Final invitation state transitions
+## 5. Final invitation status vocabulary & transitions
 
-Approved vocabulary retained in the CHECK for forward-compatibility, but Slice 3
-**emits the minimal set**:
+**Final vocabulary (MVP): `ready`, `sent`, `opened`, `claimed`, `expired`,
+`revoked`.** The `created` state is **removed** (approved correction 1): it had no
+writer and no operational meaning — a generated invitation always carries a live
+token, so there is no persisted pre-ready state, and no administration operation
+requires one. It is dropped from the status CHECK, the active partial unique
+index, the state machine, the RPC contracts, the tests, and the migration plan.
+No `admin_mark_master_claim_ready` RPC exists.
 
-* **Creation starts at `ready`** (approved decision 2 recommendation): a generated
-  invitation carries a live token and is immediately usable — there is no
-  meaningful pre-ready invitation state. `created` stays a legal-but-**unused**
-  value (kept only so the active-index predicate and Slice-2 vocabulary are
-  stable); no code emits it and no `admin_mark_master_claim_ready` RPC exists.
-* **Active statuses:** `{created, ready, sent, opened}` (index predicate
-  unchanged). In Slice 3 the reachable active set is `{ready, sent}`.
+* **Creation starts at `ready`**.
+* **Active statuses: `{ready, sent, opened}`** (index predicate). In Slice 3 the
+  reachable active set is `{ready, sent}` (`opened` is Slice 4).
 
 | Transition | When | Slice |
 |---|---|---|
@@ -231,6 +249,26 @@ Approved vocabulary retained in the CHECK for forward-compatibility, but Slice 3
 sufficient** — reads/claims check `now() < expires_at`. Expired active rows are
 **materialized to `expired` before any replacement generation** (§6).
 
+### 5.1 Token-prefix rule
+
+`token_prefix` (first **8** base64url chars of the token) is **diagnostic only**:
+
+* it is **never** accepted as authentication and never participates in any claim
+  or lookup-for-auth path — the only auth artifact is `token_hash` compared
+  against `digest(token,'sha256')` (Slice 4);
+* it is **not unique** (no unique index) — it is a support-correlation label, not
+  an identifier;
+* 8 chars ≈ 48 bits of the token surface, leaving ≈ 208 bits of the 256-bit token
+  secret — far more than enough that the prefix does not materially reduce token
+  secrecy; the remaining entropy makes the full token unguessable;
+* it may be **displayed only to moderators** (admin projection, §7/§11) for
+  correlating a support report to an invitation row;
+* it is **never** included in public/end-user error messages, analytics, or logs
+  visible outside moderation.
+
+The 8-char length is retained as the balance between human-usable correlation and
+negligible secrecy loss.
+
 ---
 
 ## 6. Active-invitation locking & concurrency
@@ -240,10 +278,11 @@ invitation row** — there is no row to `FOR UPDATE`, so row locks alone cannot
 serialize them. Recommended combination:
 
 1. **Advisory transaction lock keyed by `master_id`** at the top of
-   create/regenerate: `perform pg_advisory_xact_lock(hashtextextended(
-   p_master_id::text, 0))`. Serializes all generation for one master, even with
-   zero existing rows. (Same strategy as `guard_sauna_submission_cap`.)
-2. `SELECT … WHERE master_id = :m AND status IN ('created','ready','sent','opened')
+   create/regenerate (see §6.1 for the exact key derivation):
+   `perform pg_advisory_xact_lock(hashtextextended(p_master_id::text, 0));`.
+   Serializes all generation for one master, even with zero existing rows.
+   (Same strategy as `guard_sauna_submission_cap`.)
+2. `SELECT … WHERE master_id = :m AND status IN ('ready','sent','opened')
    FOR UPDATE` — lock existing active rows.
 3. **Materialize** any locked row with `now() >= expires_at` → `status='expired'`
    (+ `invitation_expired` audit).
@@ -258,6 +297,25 @@ serialize them. Recommended combination:
 This is race-safe with zero prior rows (advisory lock) and race-safe against
 index-level double-insert (partial unique). Both layers are independent.
 
+### 6.1 Advisory-lock key derivation
+
+* **Function:** `pg_advisory_xact_lock(bigint)` — the **transaction-scoped**
+  single-key form (auto-released at commit/rollback; no manual unlock, no leak
+  across pooled connections). Part of core PostgreSQL, always available.
+* **Key:** `hashtextextended(p_master_id::text, 0)` → a deterministic `bigint`
+  from the `master_id` UUID text. Deterministic (same master → same key every
+  time) and **server-derived** — never a client-supplied lock key. `hashtext`
+  (32-bit) is an acceptable alternative but the 64-bit `hashtextextended` makes
+  incidental collisions negligible.
+* **Collision safety:** two different `master_id`s hashing to the same key would
+  merely **serialize** those two generations (a rare, harmless slowdown) — it can
+  **never** cause an authorization or uniqueness failure, because the
+  `master_claim_invitations_active_uidx` partial unique index remains the hard
+  correctness backstop (one active row per master regardless of lock behavior).
+* **Preflight:** Slice 3B1 read-only preflight confirms the exact functions
+  (`pg_advisory_xact_lock(bigint)`, `hashtextextended(text, integer)`) exist in
+  the production catalog before use.
+
 ---
 
 ## 7. Admin invitation RPCs (contracts)
@@ -271,21 +329,25 @@ decision 5): the RPC is the single trust boundary for entropy + hashing + auth +
 atomicity, so the browser/server can never inject a chosen hash.
 
 ### `admin_create_master_claim_invitation(p_master_id uuid, p_valid_days int default 14, p_admin_note text default null)`
-* Auth: moderator. Lock: advisory (§6). Validate: master exists;
-  `user_id IS NULL`; `origin = 'admin_prepared'`; not claimed; eligible (§7 rules).
-* Materialize expired active rows; if a **live** active row remains → return
-  `{ok:false, code:'active_invitation_exists'}` (does **not** auto-revoke —
-  approved decision 3).
-* Generate: `v_token := translate(encode(gen_random_bytes(32),'base64'),'+/','-_')`
-  with `=` trimmed (base64url, 256-bit); `v_hash := digest(v_token,'sha256')`;
+* Auth: moderator. Lock: advisory (§6.1). Validate: master exists;
+  `user_id IS NULL`; `origin = 'admin_prepared'`; not claimed; eligible (§8 rules).
+* **Materialize actually-expired active rows first**; if a **non-expired active**
+  invitation still remains → return `{ok:false, code:'active_invitation_exists'}`.
+  It **must not silently revoke a valid invitation** (approved correction 2 /
+  decision 3).
+* Generate (approved decision A — `pgcrypto`): `v_token :=
+  rtrim(translate(encode(gen_random_bytes(32),'base64'),'+/','-_'), '=')`
+  (base64url, 256-bit); `v_hash := digest(v_token,'sha256')` stored as `bytea`;
   `v_prefix := left(v_token, 8)`.
 * Insert `ready` row (`expires_at = now() + make_interval(days => p_valid_days)`);
   write `invitation_created` audit (metadata `{token_prefix}`, **no raw token**).
-* Return `{ok:true, code:'created', data:{ invitation_id, token_prefix,
-  expires_at, raw_token }}` — **`raw_token` returned exactly once**, never stored,
-  never in audit/logs.
+* Return `{ok:true, code:'ok', data:{ invitation_id, token_prefix,
+  expires_at, raw_token }}` — **`raw_token` returned exactly once** to the Next.js
+  server layer, never stored, never in audit/logs. **The browser never calls this
+  RPC directly** (§11). Node `crypto.randomBytes(32)` is the documented fallback
+  only if preflight proves `pgcrypto` `gen_random_bytes`/`digest` are unavailable.
 
-### `admin_mark_master_claim_ready` — **not implemented** (created starts `ready`, §5).
+### `admin_mark_master_claim_ready` — **not implemented** (creation starts `ready`; `created` state removed, §5).
 
 ### `admin_mark_master_claim_sent(p_invitation_id uuid, p_delivery_channel text, p_delivery_target_hint text default null)`
 * Auth: moderator. Legal transition only: `ready → sent` (idempotent: already
@@ -303,11 +365,16 @@ atomicity, so the browser/server can never inject a chosen hash.
   hash retained** (nulled later by the 90-day retention job, approved decision
   11 — not at revoke time). Audit `invitation_revoked` (+ reason).
 
-### `admin_regenerate_master_claim_invitation(p_master_id uuid, p_reason text, p_valid_days int default 14)` — **separate RPC** (decision 4)
-* Auth: moderator. Advisory lock; materialize expired; **revoke** any live active
-  row (reason; audit `invitation_regenerated`, **never rotate the row in place**);
-  then run the same generate+insert as create. Returns the new `raw_token` once.
-* History preserved: the old row stays `revoked`; the new row is a fresh id/token.
+### `admin_regenerate_master_claim_invitation(p_master_id uuid, p_reason text, p_valid_days int default 14)` — **separate RPC** (approved correction 2 / decision 4)
+* A distinct, explicit operation (not a mode of create). Auth: moderator;
+  **`p_reason` required**. In **one transaction**: advisory lock (§6.1) →
+  materialize actually-expired rows → **revoke the current active invitation**
+  (reason; `revoked_at`/`revoked_by`; audit `invitation_regenerated`; **never
+  rotate the row in place**) → generate + insert a fresh `ready` row → return the
+  new `raw_token` **once**.
+* **History preserved:** the old row stays `revoked` (its `token_hash` retained
+  until the 90-day retention job), the new row is a fresh id/token. **The previous
+  raw token is never recoverable** (only its hash was ever stored).
 
 ### `admin_list_claim_invitations()` / `admin_get_claim_invitation(p_id uuid)` — read projection (decision 9)
 * Auth: moderator. **DEFINER projection that never selects `token_hash`** —
@@ -454,26 +521,36 @@ about delete semantics against a versioned policy. **Not applied in 3A.**
 
 ---
 
-## 14. Delete behavior (MVP)
+## 14. Delete behavior (MVP — approved corrected contract B)
 
-FKs: invitation `master_id → ON DELETE CASCADE`; audit `master_id → ON DELETE SET
-NULL` (+ `invitation_id → ON DELETE SET NULL`) so security history survives.
+**FKs (claim-history-preserving):** invitation `master_id → ON DELETE RESTRICT`
+(the **hard integrity backstop** — invitation history, including expired/revoked/
+claimed skeletons, can never vanish through a cascade); audit
+`master_id → ON DELETE SET NULL` and `invitation_id → ON DELETE SET NULL` (events
+are never cascade-deleted; a rare parent deletion only nulls the link, §4).
 
-MVP rule — a moderator-facing delete guard (BEFORE DELETE trigger
-`guard_master_delete` or a delete RPC) that:
+**Ordinary admin-delete path (`masters_delete` policy — authorization unchanged,
+still `is_admin()`, §13).** Deletion of a `sauna_masters` row through the ordinary
+path is permitted **only** when the row has **no claim history at all**:
 
 | Target | Behavior |
 |---|---|
-| Prepared master, **no** invitation | Allowed (admin) |
-| Prepared master, **active** invitation | **Blocked** — revoke first (`active_invitation_exists`) |
-| Prepared master, only **terminal** invitations | Allowed; invitation rows cascade, but `master_claim_events` audit survives (SET NULL) |
-| **Claimed** master | **Blocked** in MVP — detach first (Slice 4); a claimed profile is owned |
-| Pilot candidate with audit history | Allowed only under the rows above; audit is preserved regardless |
+| Prepared master, **no** invitation row **and** `user_id IS NULL` | **Allowed** — no claim history exists |
+| Any master with **`user_id IS NOT NULL`** (claimed) | **Blocked** — never delete an owned profile via the ordinary path |
+| Any master referenced by **any** `master_claim_invitations` row (ready/sent/opened/**expired/revoked/claimed** — i.e. any history) | **Blocked** — `RESTRICT` refuses; claim evidence & invitation skeletons are preserved |
 
-Storage: deleting a master row does **not** touch Storage; owner/admin images
-under `<master_id>/…` are cleaned via the **supported Storage API, never SQL**
-(flagged for the deletion procedure). This guard can land with the claim-table
-migration or the later delete RPC; **design only in 3A**.
+The **`ON DELETE RESTRICT` FK is the hard backstop**; a BEFORE DELETE guard
+(`guard_master_delete`) additionally raises a **clearer domain error** (e.g.
+`master_has_claim_history` / `master_is_claimed`) before the FK would, so the
+admin sees an actionable message rather than a raw FK violation. The guard never
+weakens the FK — it only improves the error.
+
+**Deletion or anonymization after claim history exists is out of scope for the
+ordinary path** — it requires a **later dedicated recovery procedure** (Slice 4+)
+that preserves audit and handles ownership/Storage explicitly. Storage is **never**
+cleaned by deleting Storage metadata through SQL; owner/admin images under
+`<master_id>/…` are removed only via the **supported Storage API**. This guard can
+land with the claim-table migration (M1) or the M3 RPC set; **design only in 3A**.
 
 ---
 
@@ -531,11 +608,12 @@ rollback:
 * **M0 — `masters_delete` versioning** (§13). **First**, removes drift.
 * **M1 — claim foundation schema:** `sauna_masters.origin` (+ CHECK); guard
   changes (§12: UPDATE guard +`origin`, INSERT guard clamp); `master_claim_invitations`
-  with indexes/constraints; RLS enabled; grants revoked.
-* **M2 — audit model:** `master_claim_events` (Slice-3 vocabulary), append-only
-  policies, indexes.
+  (`master_id` FK **`ON DELETE RESTRICT`**) with indexes/constraints; the BEFORE
+  DELETE `guard_master_delete` (approved B, §14); RLS enabled; grants revoked.
+* **M2 — audit model:** `master_claim_events` (Slice-3 vocabulary; FKs `SET NULL`),
+  append-only policies, indexes.
 * **M3 — admin RPCs:** `admin_create` / `admin_mark_sent` / `admin_revoke` /
-  `admin_regenerate` / `admin_list` / `admin_get` (+ optional delete guard §14);
+  `admin_regenerate` / `admin_list` / `admin_get`;
   `revoke … from public, anon` + `grant execute … to authenticated`.
 
 For each: PRE-APPLY probes assert exact live state (columns absent, indexes
@@ -590,17 +668,26 @@ Each is a testable vertical increment; no single oversized prompt.
 * **Unit (Vitest):** token base64url encoding/length, SHA-256 determinism,
   redacted `token_prefix`, delivery-hint redaction, eligibility predicate,
   status-transition legality, result-code → Polish mapping.
-* **SQL contract:** table/columns/constraints; partial unique **active** index
-  present and **free of volatile expressions**; token-hash partial unique;
+* **SQL contract:** table/columns/constraints; status CHECK = **6 values (no
+  `created`)**; partial unique **active** index over `{ready,sent,opened}` and
+  **free of volatile expressions**; token-hash partial unique; invitation
+  `master_id` FK = **`ON DELETE RESTRICT`**; audit FKs = **`ON DELETE SET NULL`**;
   grants (no client DML); RLS default-deny on invitations; `token_hash` absent
   from every projection/RPC result; audit append-only (no UPDATE/DELETE policy);
   guard body = seven fields **+ `origin`**; `masters_delete` versioned to exact
-  `is_admin()`.
+  `is_admin()` (role unchanged).
 * **Behavioral SQL/RLS (rolled-back impersonation):** moderator create; normal
   user denied; anon denied; one-active-invitation enforced; concurrent generation
   (advisory lock + index → exactly one); expired materialization before
-  regenerate; revoke; regenerate preserves history; mark-sent transition;
-  claimed/`user_id`-linked profile denied; ineligible origin/status denied.
+  regenerate; **create returns `active_invitation_exists`, never silently
+  revokes**; revoke; regenerate preserves history + new token; mark-sent
+  transition; claimed/`user_id`-linked profile denied; ineligible origin/status
+  denied. **Delete guard (approved B):** delete of a prepared master with **any**
+  invitation history (ready/sent/expired/revoked/claimed) is **blocked**
+  (RESTRICT + clearer guard error); delete of a `user_id IS NOT NULL` master is
+  **blocked**; delete of a prepared, unclaimed, invitation-free master is allowed;
+  a `profile_prepared`-only master (no invitation) is deletable and its audit
+  event survives (`SET NULL`).
 * **Integration:** server action generates token once; refresh does not reveal
   it; copy-link works from the one-time result; the link carries the raw token
   but the DB stored only the hash; raw token absent from logs **and** audit;
@@ -657,63 +744,75 @@ Run these read-only before M0–M3 in Preview/Production; **do not apply anythin
 
 ---
 
-## Slice 3A decisions (explicit recommendations)
+## Slice 3A decisions (finalized)
 
-For each: **recommendation** · alternatives · security · product · operations.
+Decisions 1–13 below are **finalized**; owner decisions **A, B, C are approved**
+(2026-07-27) and folded into the design above.
 
-1. **Additive `sauna_masters` fields now:** **only `origin`.** Alt: add all four.
-   Sec: fewer writable columns now. Prod: preparation needs only provenance. Ops:
-   `claimed_at`/verification land with their writers (Slice 4+), additive later.
-2. **Create as `created` or `ready`:** **`ready`** (drop `created` from emitted
-   flow; keep in CHECK for compat). Alt: keep `created`+ready RPC. Sec: neutral.
-   Prod: a generated invite is immediately live. Ops: one fewer state/RPC.
-3. **Generation on existing active invite:** **return `active_invitation_exists`**
-   (no auto-revoke). Alt: auto-revoke. Sec: no accidental link invalidation on a
-   double click. Prod: explicit. Ops: regenerate is the deliberate path.
-4. **Regenerate separate from create:** **separate RPC.** Alt: `p_force` on create.
-   Sec: no dangerous default. Prod: intent-revealing. Ops: shares internal helper.
-5. **Token in Node vs PostgreSQL:** **PostgreSQL (`pgcrypto`)** inside the DEFINER
-   RPC (entropy+hash+auth+atomicity one boundary; caller can't inject a hash).
-   Alt: Node `crypto` → RPC receives hash only. Sec: DB-side removes chosen-hash
-   trust. Prod: identical UX. Ops: needs `pgcrypto` (preflight #8; Node fallback).
+1. **Additive `sauna_masters` fields now:** **only `origin`** (`claimed_at`/
+   verification land with their writers in Slice 4+, additive later).
+2. **Create as `ready` (not `created`):** **`ready`.** `created` is **removed
+   entirely** (no writer, no meaning) from the CHECK, the active index, the state
+   machine, the RPCs, tests, and the migration plan (approved correction 1). A
+   generated invitation is immediately live; no `mark_ready` RPC.
+3. **Generation on existing active invite:** `admin_create` **returns
+   `active_invitation_exists`** after materializing actually-expired rows; it
+   **never silently revokes a valid invitation** (approved correction 2).
+4. **Regenerate separate from create:** **separate RPC** — revokes the current
+   active invitation (required reason) and creates the replacement in **one
+   transaction**, preserving the old row + audit; the previous raw token is
+   unrecoverable (approved correction 2).
+5. **Token generation (approved A):** **PostgreSQL `pgcrypto`** —
+   `gen_random_bytes(32)`, base64url encoding, `digest(token,'sha256')` as
+   `bytea`, raw token returned **once** to the server layer; the browser never
+   calls the RPC. Node `crypto.randomBytes(32)` is the **documented fallback**
+   only if 3B1 preflight proves the pgcrypto functions are unavailable.
 6. **Hash SQL type/encoding:** **`bytea`** raw 32-byte SHA-256, UNIQUE; token
-   URL-encoding **base64url**. Alt: hex/base64 `text`. Sec: exact binary compare
-   in Slice 4. Prod: none. Ops: compact, unambiguous.
-7. **Active-invitation locking:** **advisory `pg_advisory_xact_lock(master_id)` +
-   `FOR UPDATE` on existing active rows + partial unique index backstop.** Alt:
-   index-only. Sec/Ops: race-safe even with zero prior rows. Prod: none.
-8. **Pilot cohort table:** **no** — cohort = `origin='admin_prepared'` view. Alt:
-   `is_pilot_candidate`/table. Sec: none. Prod: no domain pollution for a
-   temporary campaign. Ops: operational filter only.
+   URL-encoding **base64url** (exact binary compare in Slice 4).
+7. **Active-invitation locking:** **`pg_advisory_xact_lock(hashtextextended(
+   master_id::text,0))` + `FOR UPDATE` on existing active rows + the partial
+   unique active index as the hard backstop** (§6.1). Server-derived key,
+   transaction-scoped; collisions only serialize, never break correctness.
+8. **Pilot cohort table:** **no** — cohort = `origin='admin_prepared'` view; no
+   domain pollution for a temporary campaign.
 9. **Direct moderator SELECT on invitations:** **no** — DEFINER projection
-   excluding `token_hash`. Alt: moderator SELECT policy / view. Sec: RLS can't
-   hide a column; projection guarantees the hash never ships. Ops: least-error.
-10. **`masters_delete` versioning:** **separate housekeeping migration, sequenced
-    first**, drift-guarded, identical `is_admin()` behavior. Alt: fold into M1.
-    Sec: removes drift before claim deps. Prod: none. Ops: clean baseline.
-11. **Delete with invitations/audit:** **block delete while active invitation or
-    claimed**; else allow with audit preserved (invitation cascade, events SET
-    NULL). Alt: hard cascade all. Sec: preserves security evidence. Prod: safe.
-    Ops: guard/RPC.
+   excluding `token_hash` (RLS can't hide a column; the hash never ships).
+10. **`masters_delete` versioning:** **separate housekeeping migration (M0),
+    sequenced first**, drift-guarded, **identical `is_admin()` behavior — the
+    authorized role is unchanged** (approved B).
+11. **Delete with invitations/audit (approved B):** invitation
+    `master_id → ON DELETE RESTRICT` (hard backstop); block the ordinary
+    admin-delete path whenever `user_id IS NOT NULL` **or** any invitation row
+    (incl. expired/revoked/claimed) references the master; audit FKs `SET NULL`,
+    never cascade; post-history deletion/anonymization needs a later dedicated
+    recovery procedure; Storage cleanup only via the supported API (§14).
 12. **Implementation sub-slices:** **3B1 foundations → 3B2 editor/list → 3B3
-    invitation UI → 3B4 E2E/deploy.** Alt: one prompt. Sec/Ops: testable
-    increments. Prod: incremental delivery.
+    invitation UI → 3B4 E2E/deploy** (testable increments).
 13. **Deferred to Slice 4:** `claim_master_profile` + guard `user_id` carve-out;
     `get_claim_preview`; `opened`/`claimed` transitions; HttpOnly cookie;
     login/register `next` + callback allow-list; email-confirmation return;
-    `sauna_masters.claimed_at`; (Slice 5) pending editor; (later) moderator
-    detach. Sec/Prod/Ops: keeps Slice 3 admin-only and end-user-claim-free.
+    `sauna_masters.claimed_at`; (Slice 5) pending Studio editor; (later)
+    moderator detach / recovery procedure.
 
-### Remaining owner decisions (need a yes/no before 3B1)
+### Approved owner decisions A–C (2026-07-27)
 
-* **A. `pgcrypto` DB-side generation vs Node-side** — recommend DB-side pending
-  preflight #8 confirming the extension; approve the Node fallback as backup.
-* **B. Delete-guard now vs with Slice 4** — recommend shipping the lightweight
-  BEFORE-DELETE guard in M1/M3 (cheap, protects audit) vs deferring; needs a call.
-* **C. `profile_prepared` audit event** — emit on first `admin_prepared` insert
-  (nice provenance) vs omit for MVP; recommend emit.
+* **A — token generation:** `pgcrypto` DB-side is the preferred boundary
+  (`gen_random_bytes(32)` → base64url → `digest(...,'sha256')` `bytea`, returned
+  once; browser never calls the RPC); Node `crypto.randomBytes(32)` is the
+  fallback only if 3B1 read-only preflight proves the pgcrypto functions are
+  unavailable. Preflight for the extension **and exact functions** is mandatory
+  before implementation/migration.
+* **B — deletion guard:** shipped in 3B1 with the corrected contract (§14) —
+  `ON DELETE RESTRICT` FK backstop + BEFORE DELETE guard for a clearer domain
+  error; ordinary delete blocked once `user_id IS NOT NULL` or any invitation
+  history exists; `masters_delete` authorization unchanged and versioned first.
+* **C — preparation audit:** emit `profile_prepared` when an admin-prepared
+  profile is created or a controlled moderator operation first sets
+  `origin='admin_prepared'`; not on ordinary edits; same transaction; no raw
+  secrets/unnecessary PII (§4).
 
 ---
 
-*End of SP-039 Slice 3A design & SQL/security review. No SQL/code/migration
-produced. Awaiting review + owner decisions A–C before Slice 3B1 implementation.*
+*End of SP-039 Slice 3A design & SQL/security review (finalized). No SQL/code/
+migration produced. Owner decisions A–C approved; ready for Slice 3B1
+implementation after separate authorization.*
