@@ -64,25 +64,26 @@ export default function MasterProfileForm({ initial }: { initial: MasterProfileF
       return
     }
     startTransition(async () => {
-      try {
-        const socialLinks: Record<string, string> = {}
-        for (const p of SOCIAL_PLATFORMS) {
-          if (social[p].trim()) socialLinks[p] = social[p].trim()
-        }
-        await updateOwnMasterProfile({
-          name,
-          bio: bio || null,
-          slug: slug.trim() || null,
-          city: city || null,
-          specialties,
-          languages,
-          experienceSinceYear: year.trim() === '' ? null : Number(year),
-          socialLinks,
-          website: website || null,
-        })
+      const socialLinks: Record<string, string> = {}
+      for (const p of SOCIAL_PLATFORMS) {
+        if (social[p].trim()) socialLinks[p] = social[p].trim()
+      }
+      // expected failures come back as { error } (D1) — production-safe
+      const result = await updateOwnMasterProfile({
+        name,
+        bio: bio || null,
+        slug: slug.trim() || null,
+        city: city || null,
+        specialties,
+        languages,
+        experienceSinceYear: year.trim() === '' ? null : Number(year),
+        socialLinks,
+        website: website || null,
+      })
+      if (result?.error) {
+        toast.error(result.error)
+      } else {
         toast.success('Profil zapisany')
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
       }
     })
   }

@@ -92,6 +92,42 @@ describe('forward migration', () => {
   })
 })
 
+describe('D2 masters_select fix migration', () => {
+  const fix = readFileSync('supabase/2026-07-27_sp039_masters_select_fix.sql', 'utf8')
+  const fixRollback = readFileSync(
+    'supabase/2026-07-27_sp039_masters_select_fix_rollback.sql', 'utf8')
+
+  it('guards on the expected drifted state before dropping', () => {
+    expect(fix).toContain("position('user_id' in v_qual) > 0")
+    expect(fix).toContain('D2 GUARD')
+  })
+
+  it('recreates the SP-035d three-arm definition verbatim', () => {
+    const start = fix.indexOf('create policy masters_select')
+    const block = fix.slice(start, fix.indexOf(';', start))
+    expect(block).toContain("status = 'approved'")
+    expect(block).toContain('user_id = auth.uid()')
+    expect(block).toContain('public.is_platform_moderator()')
+    expect(block).toContain('for select')
+  })
+
+  it('touches exactly one policy and reloads the PostgREST schema', () => {
+    expect(fix.match(/drop policy/g)).toHaveLength(1)
+    expect(fix.match(/create policy/g)).toHaveLength(1)
+    expect(fix).toContain("notify pgrst, 'reload schema'")
+    expect(fix).not.toMatch(/alter table/i)
+  })
+
+  it('rollback reproduces the drifted definition with a loud warning', () => {
+    expect(fixRollback).toContain('WARNING')
+    expect(fixRollback).toContain('REINTRODUCES')
+    const start = fixRollback.indexOf('create policy masters_select')
+    const block = fixRollback.slice(start, fixRollback.indexOf(';', start))
+    expect(block).not.toContain('user_id')
+    expect(block).toContain("profiles.role in ('admin', 'moderator')")
+  })
+})
+
 describe('rollback', () => {
   it('restores the SP-035 four-column guard verbatim', () => {
     const body = guardBody(rollback)
