@@ -241,15 +241,66 @@ describe('M4 — admin RPCs', () => {
   })
   it('the raw token never enters an audit-event insert (only token_prefix does)', () => {
     const sql = stripComments(m4)
-    // every INSERT into the audit table must not reference the raw token var
+    // every INSERT into the audit table must not reference the raw token var:
+    // create expired+created (2), mark_sent (1), revoke (1),
+    // regenerate expired+revoked+regenerated+created (4) = 8 audit inserts
     const inserts = sql.match(/insert into public\.master_claim_events[\s\S]*?;/g) ?? []
-    expect(inserts.length).toBeGreaterThanOrEqual(3)
+    expect(inserts).toHaveLength(8)
     for (const stmt of inserts) {
       expect(stmt).not.toContain('v_token')
       expect(stmt).not.toContain('raw_token')
     }
     // the created event carries the non-secret prefix only
     expect(sql).toContain("jsonb_build_object('token_prefix', v_prefix)")
+  })
+  it('regenerate writes the full audit chain: expired → revoked → regenerated → created', () => {
+    const start = m4.indexOf(
+      'create or replace function public.admin_regenerate_master_claim_invitation'
+    )
+    const end = m4.indexOf('create or replace function public.admin_list_master_claim_invitations')
+    const body = stripComments(m4.slice(start, end))
+    const inserts = body.match(/insert into public\.master_claim_events[\s\S]*?;/g) ?? []
+    expect(inserts).toHaveLength(4)
+    // in-order chain, each event tied to the correct invitation id
+    expect(inserts[0]).toContain("'invitation_expired'")
+    expect(inserts[0]).toContain("'materialized before regenerate'")
+    expect(inserts[1]).toContain("'invitation_revoked'")
+    expect(inserts[1]).toContain('v_old_id')
+    expect(inserts[1]).toContain('btrim(p_reason)')
+    expect(inserts[2]).toContain("'invitation_regenerated'")
+    expect(inserts[2]).toContain("'old_invitation_id', v_old_id")
+    expect(inserts[2]).toContain("'new_invitation_id', v_inv_id")
+    expect(inserts[3]).toContain("'invitation_created'")
+    expect(inserts[3]).toContain("'regenerated_from', v_old_id")
+    // the revoke event precedes the replacement insert; the regeneration link is
+    // written only AFTER the new id exists (no misleading metadata)
+    expect(body.indexOf("'invitation_revoked'")).toBeLessThan(
+      body.indexOf('returning id into v_inv_id')
+    )
+    expect(body.indexOf('returning id into v_inv_id')).toBeLessThan(
+      body.indexOf("'new_invitation_id', v_inv_id")
+    )
+  })
+  it('expired materialization writes one id-tied invitation_expired event per transitioned row', () => {
+    const sql = stripComments(m4)
+    // both create and regenerate use UPDATE ... RETURNING id feeding the audit insert
+    expect(sql.match(/with expired as \(/g)).toHaveLength(2)
+    expect(sql.match(/returning id\s*\)/g)).toHaveLength(2)
+    expect(sql).toContain(
+      "select e.id, p_master_id, 'invitation_expired', v_actor, 'materialized before create'"
+    )
+    expect(sql).toContain(
+      "select e.id, p_master_id, 'invitation_expired', v_actor, 'materialized before regenerate'"
+    )
+    // the legacy id-less generic event shape is gone
+    expect(sql).not.toContain(
+      'insert into public.master_claim_events (master_id, event_type, actor_user_id, reason)'
+    )
+  })
+  it('documents the event-count throttle model (regeneration consumes two units)', () => {
+    expect(m4).toContain('COUNTING MODEL')
+    expect(m4).toContain('consumes two units')
+    expect(m4).toContain('mark_sent+revoke pool')
   })
   it('rate limits create/regenerate (30) and sent/revoke (60) per hour', () => {
     expect(m4).toContain('v_recent >= 30')

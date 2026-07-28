@@ -24,6 +24,15 @@
 -- alerting is deferred to SP-040. Thresholds: create+regenerate 30/hour,
 -- mark_sent+revoke 60/hour, per moderator.
 --
+-- COUNTING MODEL (deliberate, documented — approved option A): the limits are
+-- EVENT-count based, not logical-operation based. Consequences: one successful
+-- regeneration of a LIVE invitation writes 'invitation_regenerated' +
+-- 'invitation_created' and therefore consumes two units of the 30/hour
+-- create+regenerate pool; its explicit 'invitation_revoked' event also consumes
+-- one unit of the shared 60/hour mark_sent+revoke pool (a regeneration IS a real
+-- revocation). 'invitation_expired' materialization events count toward NO pool.
+-- Acceptable headroom for the 10-master pilot; revisit with SP-040 telemetry.
+--
 -- >>> PREFLIGHT (read-only, MANDATORY before apply — this env had no DB access):
 --   select extnamespace::regnamespace, extname from pg_extension where extname='pgcrypto';
 --   select pg_get_functiondef('extensions.gen_random_bytes(integer)'::regprocedure);
@@ -113,15 +122,21 @@ begin
    where master_id = p_master_id and status in ('ready','sent','opened')
    for update;
 
-  update public.master_claim_invitations
-     set status = 'expired'
-   where master_id = p_master_id
-     and status in ('ready','sent','opened')
-     and expires_at <= now();
-  if found then
-    insert into public.master_claim_events (master_id, event_type, actor_user_id, reason)
-    select p_master_id, 'invitation_expired', v_actor, 'materialized before create';
-  end if;
+  -- One 'invitation_expired' event PER transitioned invitation, tied to its id
+  -- (UPDATE ... RETURNING feeds the audit insert — never a generic master-only
+  -- event when the transitioned invitation is known).
+  with expired as (
+    update public.master_claim_invitations
+       set status = 'expired'
+     where master_id = p_master_id
+       and status in ('ready','sent','opened')
+       and expires_at <= now()
+     returning id
+  )
+  insert into public.master_claim_events
+    (invitation_id, master_id, event_type, actor_user_id, reason)
+  select e.id, p_master_id, 'invitation_expired', v_actor, 'materialized before create'
+  from expired e;
 
   -- A non-expired active invitation still present -> conflict (no auto-revoke).
   select id into v_active from public.master_claim_invitations
@@ -277,8 +292,11 @@ end $$ language plpgsql security definer set search_path = '';
 
 -- ---------------------------------------------------------------------------
 -- admin_regenerate_master_claim_invitation — explicit revoke-then-create in ONE
--- transaction. Audit contract: revoke old row -> 'invitation_regenerated' (with
--- both ids in metadata) -> 'invitation_created' on the new row. Old row kept;
+-- transaction. Audit contract (approved chain): materialize expired (one
+-- 'invitation_expired' per transitioned row) -> revoke old row +
+-- 'invitation_revoked' -> insert replacement -> 'invitation_regenerated' on the
+-- old row (metadata carries old_invitation_id AND new_invitation_id) ->
+-- 'invitation_created' on the new row (metadata regenerated_from). Old row kept;
 -- token never rotated in place; previous raw token unrecoverable.
 -- ---------------------------------------------------------------------------
 create or replace function public.admin_regenerate_master_claim_invitation(
@@ -339,13 +357,26 @@ begin
    where master_id = p_master_id and status in ('ready','sent','opened')
    for update;
 
-  -- Materialize expired, then revoke any live active row (explicit regeneration).
-  update public.master_claim_invitations
-     set status = 'expired'
-   where master_id = p_master_id
-     and status in ('ready','sent','opened')
-     and expires_at <= now();
+  -- Materialize expired FIRST — same forensic semantics as create: one
+  -- 'invitation_expired' event per transitioned invitation, tied to its id.
+  with expired as (
+    update public.master_claim_invitations
+       set status = 'expired'
+     where master_id = p_master_id
+       and status in ('ready','sent','opened')
+       and expires_at <= now()
+     returning id
+  )
+  insert into public.master_claim_events
+    (invitation_id, master_id, event_type, actor_user_id, reason)
+  select e.id, p_master_id, 'invitation_expired', v_actor, 'materialized before regenerate'
+  from expired e;
 
+  -- Revoke any live active row (explicit regeneration). AUDIT CHAIN step 1/3:
+  -- 'invitation_revoked' on the old row — the same state transition as an
+  -- ordinary revoke gets the same forensic event. The regeneration LINK event
+  -- is written only after the replacement exists (so it can carry BOTH ids —
+  -- never misleading metadata before the new id is known).
   select id into v_old_id from public.master_claim_invitations
    where master_id = p_master_id and status in ('ready','sent','opened')
    limit 1;
@@ -354,10 +385,9 @@ begin
        set status = 'revoked', revoked_at = now(), revoked_by = v_actor
      where id = v_old_id;
     insert into public.master_claim_events
-      (invitation_id, master_id, event_type, actor_user_id, reason, metadata)
+      (invitation_id, master_id, event_type, actor_user_id, reason)
     values
-      (v_old_id, p_master_id, 'invitation_regenerated', v_actor, btrim(p_reason),
-       jsonb_build_object('old_invitation_id', v_old_id));
+      (v_old_id, p_master_id, 'invitation_revoked', v_actor, btrim(p_reason));
   end if;
 
   v_token  := rtrim(translate(encode(extensions.gen_random_bytes(32), 'base64'), '+/', '-_'), '=');
@@ -371,6 +401,19 @@ begin
     (p_master_id, v_hash, v_prefix, 'ready', v_expires, v_actor)
   returning id into v_inv_id;
 
+  -- AUDIT CHAIN step 2/3: the regeneration link on the OLD invitation, now able
+  -- to reference both lifecycle ids.
+  if v_old_id is not null then
+    insert into public.master_claim_events
+      (invitation_id, master_id, event_type, actor_user_id, reason, metadata)
+    values
+      (v_old_id, p_master_id, 'invitation_regenerated', v_actor, btrim(p_reason),
+       jsonb_build_object('old_invitation_id', v_old_id,
+                          'new_invitation_id', v_inv_id));
+  end if;
+
+  -- AUDIT CHAIN step 3/3: creation of the replacement (regenerated_from is null
+  -- when no live row existed — plain re-issue after expiry/revocation).
   insert into public.master_claim_events
     (invitation_id, master_id, event_type, actor_user_id, metadata)
   values
@@ -522,9 +565,13 @@ notify pgrst, 'reload schema';
 --     invalid_transition). revoke active->revoked (reason required; repeat ->
 --     already_revoked; terminal -> invitation_already_terminal); token_hash
 --     RETAINED after revoke.
--- V7. regenerate: old active row -> revoked (+ invitation_regenerated), new
---     ready row created (+ invitation_created with regenerated_from); exactly one
---     active row remains; two distinct token_hashes; old raw token unrecoverable.
+-- V7. regenerate: old active row -> revoked with the FULL audit chain, in order:
+--     invitation_revoked (old id) -> invitation_regenerated (old id; metadata
+--     old_invitation_id + new_invitation_id) -> invitation_created (new id;
+--     metadata regenerated_from); exactly one active row remains; two distinct
+--     token_hashes; old raw token unrecoverable. Expired materialization (create
+--     AND regenerate) writes one invitation_expired event PER transitioned row,
+--     each tied to its invitation_id.
 -- V8. Concurrency: two parallel create calls for the same fresh master -> exactly
 --     one active invitation (advisory lock + partial unique index).
 -- V9. list/get projections contain token_prefix and NEVER token_hash/raw_token

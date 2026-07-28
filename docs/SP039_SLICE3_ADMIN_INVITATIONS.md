@@ -285,10 +285,12 @@ serialize them. Recommended combination:
 2. `SELECT … WHERE master_id = :m AND status IN ('ready','sent','opened')
    FOR UPDATE` — lock existing active rows.
 3. **Materialize** any locked row with `now() >= expires_at` → `status='expired'`
-   (+ `invitation_expired` audit).
+   (+ one `invitation_expired` audit event **per transitioned invitation**, tied
+   to its `invitation_id` — identical semantics in create and regenerate).
 4. Decide per RPC (§7): `admin_create` → if a **live** active row remains, return
-   `active_invitation_exists`; `admin_regenerate` → revoke it (+ audit) then
-   insert.
+   `active_invitation_exists`; `admin_regenerate` → revoke it (audit
+   `invitation_revoked`, then the `invitation_regenerated` link once the
+   replacement exists) then insert.
 5. `INSERT` the new `ready` row.
 6. **`master_claim_invitations_active_uidx` is the final backstop** — even if the
    advisory lock were bypassed, the partial unique index rejects a second active
@@ -368,10 +370,19 @@ atomicity, so the browser/server can never inject a chosen hash.
 ### `admin_regenerate_master_claim_invitation(p_master_id uuid, p_reason text, p_valid_days int default 14)` — **separate RPC** (approved correction 2 / decision 4)
 * A distinct, explicit operation (not a mode of create). Auth: moderator;
   **`p_reason` required**. In **one transaction**: advisory lock (§6.1) →
-  materialize actually-expired rows → **revoke the current active invitation**
-  (reason; `revoked_at`/`revoked_by`; audit `invitation_regenerated`; **never
-  rotate the row in place**) → generate + insert a fresh `ready` row → return the
-  new `raw_token` **once**.
+  materialize actually-expired rows (one `invitation_expired` event **per
+  transitioned invitation**, tied to its id) → **revoke the current active
+  invitation** (reason; `revoked_at`/`revoked_by`; audit `invitation_revoked` —
+  the same state transition as an ordinary revoke gets the same forensic event;
+  **never rotate the row in place**) → generate + insert a fresh `ready` row →
+  audit `invitation_regenerated` on the **old** row (metadata `old_invitation_id`
+  + `new_invitation_id`, written only once the replacement id exists) → audit
+  `invitation_created` on the **new** row (metadata `regenerated_from`) → return
+  the new `raw_token` **once**.
+* **Full audit chain for a live-row regeneration (in order):**
+  `invitation_revoked` (old) → `invitation_regenerated` (old, linking both ids)
+  → `invitation_created` (new). With expiry materialization, each transitioned
+  row additionally yields its own `invitation_expired` event.
 * **History preserved:** the old row stays `revoked` (its `token_hash` retained
   until the 90-day retention job), the new row is a fresh id/token. **The previous
   raw token is never recoverable** (only its hash was ever stored).
@@ -622,6 +633,15 @@ Reuse the rolling-window pattern over `master_claim_events`
 | Mark-sent | 60 / hour | moderator |
 | Revoke | 60 / hour | moderator |
 | Copy-link | **no server call** — copies the one-time result client-side | — |
+
+**Counting model (approved option A — event-count based):** the windows count
+audit **events**, not logical operations. A successful regeneration of a live
+invitation writes `invitation_regenerated` + `invitation_created` and therefore
+consumes **two units** of the 30/hour create+regenerate pool; its explicit
+`invitation_revoked` event also consumes one unit of the shared 60/hour
+mark-sent+revoke pool (a regeneration *is* a real revocation).
+`invitation_expired` materialization events count toward no pool. Acceptable
+headroom for the 10-master pilot; revisit with SP-040 telemetry.
 
 **"Copy again" cannot reveal the token** — the raw token is never stored, so any
 later copy uses only the value still on the one-time result screen; a refresh
