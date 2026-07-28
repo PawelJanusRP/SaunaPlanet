@@ -588,9 +588,11 @@ claimed skeletons, can never vanish through a cascade); audit
 `master_id → ON DELETE SET NULL` and `invitation_id → ON DELETE SET NULL` (events
 are never cascade-deleted; a rare parent deletion only nulls the link, §4).
 
-**Ordinary admin-delete path (`masters_delete` policy — authorization unchanged,
-still `is_admin()`, §13).** Deletion of a `sauna_masters` row through the ordinary
-path is permitted **only** when the row has **no claim history at all**:
+**Ordinary delete path (`masters_delete` policy — authorization unchanged: the
+M0-versioned inline admin-OR-moderator profiles check — DELETE, PERMISSIVE,
+roles `{public}`, no WITH CHECK; never admin-only `is_admin()`, §13).** Deletion
+of a `sauna_masters` row through the ordinary path is permitted **only** when
+the row has **no claim history at all**:
 
 | Target | Behavior |
 |---|---|

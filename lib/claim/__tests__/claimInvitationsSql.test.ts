@@ -321,7 +321,11 @@ describe('M4 — admin RPCs', () => {
 describe('M5 — master delete guard', () => {
   it('is a BEFORE DELETE trigger backed by a SECURITY DEFINER function', () => {
     expect(m5).toContain('before delete on public.sauna_masters')
-    expect(m5).toContain('create or replace function public.guard_master_delete')
+    // fail-loud DDL: plain CREATE aborts on collision instead of replacing an
+    // unknown object; no drop-if-exists escape hatch for the trigger either
+    expect(m5).toContain('create function public.guard_master_delete')
+    expect(m5).not.toContain('create or replace function public.guard_master_delete')
+    expect(m5).not.toContain('drop trigger if exists sauna_masters_delete_guard')
     // hardened: newly authored DEFINER function uses empty search_path
     expect(m5).toContain("security definer set search_path = ''")
     expect(m5).not.toContain('security definer set search_path = public')
@@ -331,10 +335,18 @@ describe('M5 — master delete guard', () => {
     expect(m5).toContain('from public.master_claim_invitations')
     expect(m5).toContain('where master_id = old.id')
   })
-  it('applies the restrictive grant for the new guard (no client EXECUTE)', () => {
-    expect(m5).toContain('revoke execute on function public.guard_master_delete() from public')
+  it('revokes EXECUTE from every client role incl. Supabase defaults', () => {
+    // Supabase default privileges auto-grant EXECUTE to anon/authenticated/
+    // service_role on new public functions — revoking PUBLIC alone is not enough
+    expect(m5).toMatch(
+      /revoke execute on function public\.guard_master_delete\(\)\s+from public, anon, authenticated, service_role/,
+    )
     // never grants client EXECUTE on the guard
     expect(m5).not.toMatch(/grant execute on function public\.guard_master_delete/)
+  })
+  it('does not describe masters_delete as admin-only is_admin()', () => {
+    expect(m5).not.toContain('still is_admin()')
+    expect(m5).toContain('admin-OR-moderator')
   })
 })
 
