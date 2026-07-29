@@ -24,6 +24,8 @@ const m3 = read(`${S}2026-07-27_sp039_m3_claim_events.sql`)
 const m4 = read(`${S}2026-07-27_sp039_m4_admin_rpcs.sql`)
 const m4r = read(`${S}2026-07-27_sp039_m4_admin_rpcs_rollback.sql`)
 const m5 = read(`${S}2026-07-27_sp039_m5_master_delete_guard.sql`)
+const m6 = read(`${S}2026-07-30_sp039_m6_claim_actor_delete_compat.sql`)
+const m6r = read(`${S}2026-07-30_sp039_m6_claim_actor_delete_compat_rollback.sql`)
 
 describe('M0 — masters_delete versioning preserves admin+moderator (production drift reconciled)', () => {
   it('does NOT use the false is_admin() assumption (drift-corrected)', () => {
@@ -347,6 +349,87 @@ describe('M5 — master delete guard', () => {
   it('does not describe masters_delete as admin-only is_admin()', () => {
     expect(m5).not.toContain('still is_admin()')
     expect(m5).toContain('admin-OR-moderator')
+  })
+})
+
+describe('M6 — claim audit actor-deletion compatibility', () => {
+  it('pins the terminal state to the TIMESTAMPS and relaxes only the actors', () => {
+    expect(m6).toContain(
+      "check ((status = 'revoked') = (revoked_at is not null)\n         and (revoked_by is null or revoked_at is not null))"
+    )
+    expect(m6).toContain(
+      "check ((status = 'claimed') = (claimed_at is not null)\n         and (claimed_by is null or claimed_at is not null))"
+    )
+  })
+
+  it('keeps the established constraint names (no versioned renames)', () => {
+    expect(m6.match(/add constraint mci_revoked_consistency/g)).toHaveLength(1)
+    expect(m6.match(/add constraint mci_claimed_consistency/g)).toHaveLength(1)
+    expect(m6.match(/drop constraint mci_revoked_consistency/g)).toHaveLength(1)
+    expect(m6.match(/drop constraint mci_claimed_consistency/g)).toHaveLength(1)
+  })
+
+  it('changes EXACTLY the two CHECK constraints and nothing else', () => {
+    const sql = stripComments(m6)
+    expect(sql.match(/alter table/g)).toHaveLength(4) // 2x drop + 2x add
+    for (const banned of [
+      /create (or replace )?function/,
+      /create table/,
+      /create policy/,
+      /create trigger/,
+      /create index/,
+      /\bgrant\b/,
+      /\brevoke\b/,
+      /drop column/i,
+      /add column/i,
+      /not valid/i,
+      /\binsert into\b/,
+      /\bupdate public\./,
+      /\bdelete from\b/,
+    ]) {
+      expect(sql).not.toMatch(banned)
+    }
+  })
+
+  it('drift-guards the exact M2 predecessors and the already-applied state', () => {
+    expect(m6).toContain("position('(revoked_by IS NOT NULL)' in v_revoked) = 0")
+    expect(m6).toContain("position('(revoked_by IS NULL)' in v_revoked) > 0")
+    expect(m6).toContain("position('(claimed_by IS NOT NULL)' in v_claimed) = 0")
+    expect(m6).toContain("position('(claimed_by IS NULL)' in v_claimed) > 0")
+    expect(m6).toContain('M6 already applied?')
+  })
+
+  it('verifies the actor FKs are ON DELETE SET NULL before swapping', () => {
+    expect(m6).toContain("confdeltype = 'n'")
+    expect(m6).toContain('master_claim_invitations_revoked_by_fkey')
+    expect(m6).toContain('master_claim_invitations_claimed_by_fkey')
+  })
+
+  it('verifies zero rows violate the corrected definitions before the swap', () => {
+    expect(m6).toContain('would violate the corrected constraints')
+    expect(m6).toContain('select count(*) into v_bad from public.master_claim_invitations')
+  })
+
+  it('runs transactionally and reloads the schema cache', () => {
+    expect(m6.trimStart().indexOf('begin;')).toBeGreaterThan(-1)
+    expect(m6).toContain('commit;')
+    expect(m6).toContain("notify pgrst, 'reload schema';")
+  })
+
+  it('documents why actor IDs are intentionally nullable after account deletion', () => {
+    expect(m6).toContain('INTENTIONALLY nullable')
+    expect(m6).toContain('the acting account was later deleted')
+  })
+
+  it('rollback restores the M2 bodies verbatim and guards against anonymized actors', () => {
+    expect(m6r).toContain(
+      "check ((status = 'revoked') = (revoked_by is not null)\n         and (revoked_at is not null) = (revoked_by is not null))"
+    )
+    expect(m6r).toContain(
+      "check ((status = 'claimed') = (claimed_by is not null)\n         and (claimed_at is not null) = (claimed_by is not null))"
+    )
+    expect(m6r).toContain('anonymized actors')
+    expect(m6r).toContain('RE-INTRODUCES the account-deletion defect')
   })
 })
 
