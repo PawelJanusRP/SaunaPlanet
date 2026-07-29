@@ -4,12 +4,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildClaimUrl,
+  CLAIM_PUBLIC_ORIGIN_ENV,
   CLAIM_ROUTE_PREFIX,
   CLAIM_TOKEN_LENGTH,
-  DEFAULT_PUBLIC_BASE_URL,
   isValidClaimToken,
   parseTokenGrant,
-  resolvePublicBaseUrl,
+  resolveClaimPublicOrigin,
 } from '../claimLink'
 
 const TOKEN = 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_AbCdE'
@@ -39,29 +39,60 @@ describe('isValidClaimToken', () => {
   })
 })
 
-describe('resolvePublicBaseUrl', () => {
-  it('uses a configured valid https NEXT_PUBLIC_SITE_URL (origin only)', () => {
-    expect(resolvePublicBaseUrl({ NEXT_PUBLIC_SITE_URL: 'https://saunaplanet.pl' })).toBe(
-      'https://saunaplanet.pl'
-    )
-    expect(
-      resolvePublicBaseUrl({ NEXT_PUBLIC_SITE_URL: 'https://saunaplanet.pl/some/path' })
-    ).toBe('https://saunaplanet.pl')
+describe('resolveClaimPublicOrigin (server-only, fail-closed, no fallback)', () => {
+  const env = (value?: string) =>
+    value === undefined ? {} : { [CLAIM_PUBLIC_ORIGIN_ENV]: value }
+
+  it('accepts a valid absolute https root origin', () => {
+    expect(resolveClaimPublicOrigin(env('https://saunaplanet.pl'))).toEqual({
+      ok: true,
+      origin: 'https://saunaplanet.pl',
+    })
+  })
+
+  it('normalizes a trailing slash away deterministically', () => {
+    expect(resolveClaimPublicOrigin(env('https://saunaplanet.pl/'))).toEqual({
+      ok: true,
+      origin: 'https://saunaplanet.pl',
+    })
+  })
+
+  it('accepts a non-default port as part of the origin', () => {
+    expect(resolveClaimPublicOrigin(env('https://preview.saunaplanet.pl:8443'))).toEqual({
+      ok: true,
+      origin: 'https://preview.saunaplanet.pl:8443',
+    })
+  })
+
+  it.each([
+    ['missing variable', undefined],
+    ['empty', ''],
+    ['whitespace', '   '],
+  ])('fails closed as not_configured for %s', (_label, value) => {
+    expect(resolveClaimPublicOrigin(env(value))).toEqual({
+      ok: false,
+      code: 'claim_origin_not_configured',
+    })
   })
 
   it.each([
     ['http (not https)', 'http://saunaplanet.pl'],
-    ['garbage', 'not a url'],
     ['credentials', 'https://user:pass@saunaplanet.pl'],
-    ['empty', ''],
-  ])('falls back to the established host for %s', (_label, value) => {
-    expect(resolvePublicBaseUrl({ NEXT_PUBLIC_SITE_URL: value })).toBe(
-      DEFAULT_PUBLIC_BASE_URL
-    )
+    ['a path', 'https://saunaplanet.pl/claim'],
+    ['a query string', 'https://saunaplanet.pl/?x=1'],
+    ['a fragment', 'https://saunaplanet.pl/#top'],
+    ['garbage', 'not a url'],
+    ['schemaless', 'saunaplanet.pl'],
+  ])('fails closed as invalid for %s', (_label, value) => {
+    expect(resolveClaimPublicOrigin(env(value))).toEqual({
+      ok: false,
+      code: 'claim_origin_invalid',
+    })
   })
 
-  it('falls back when the variable is absent', () => {
-    expect(resolvePublicBaseUrl({})).toBe(DEFAULT_PUBLIC_BASE_URL)
+  it('never returns the rejected environment value', () => {
+    const result = resolveClaimPublicOrigin(env('http://leak.example.com'))
+    expect(JSON.stringify(result)).not.toContain('leak.example.com')
   })
 })
 

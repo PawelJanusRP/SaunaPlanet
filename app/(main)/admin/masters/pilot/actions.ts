@@ -26,7 +26,11 @@ import {
   type OwnMasterProfileUpdate,
 } from '@/lib/master/profileUpdate'
 import { isUuid, slugWithSuffix } from '@/lib/master/slug'
-import { buildClaimUrl, parseTokenGrant } from '@/lib/claim/claimLink'
+import {
+  buildClaimUrl,
+  parseTokenGrant,
+  resolveClaimPublicOrigin,
+} from '@/lib/claim/claimLink'
 import {
   invitationControlMessagePl,
   isDeliveryChannel,
@@ -276,6 +280,12 @@ export async function generateMasterInvitation(
     const denied = await requireModerator()
     if (denied) return deniedFailure(denied)
 
+    // The public origin MUST resolve BEFORE the RPC: create returns the raw
+    // token exactly once, and a config error discovered afterwards would leave
+    // an active invitation with no displayable link. Fail closed = no RPC.
+    const origin = resolveClaimPublicOrigin()
+    if (!origin.ok) return controlFailure(origin.code)
+
     const days = normalizeValidDays(validDays)
     const note =
       typeof adminNote === 'string' && adminNote.trim() !== ''
@@ -298,7 +308,7 @@ export async function generateMasterInvitation(
 
     const grant = parseTokenGrant(result.data)
     if (!grant) return controlFailure('payload_malformed')
-    const claimUrl = buildClaimUrl(grant.rawToken)
+    const claimUrl = buildClaimUrl(grant.rawToken, origin.origin)
     if (!claimUrl) return controlFailure('payload_malformed')
 
     revalidatePilotSurfaces()
@@ -337,6 +347,11 @@ export async function regenerateMasterInvitation(
     const denied = await requireModerator()
     if (denied) return deniedFailure(denied)
 
+    // Same fail-closed ordering as generate: no origin -> no regenerate RPC
+    // (a replacement token with no displayable link must never be minted).
+    const origin = resolveClaimPublicOrigin()
+    if (!origin.ok) return controlFailure(origin.code)
+
     const days = normalizeValidDays(validDays)
 
     const gate = await readInvitationGateState(masterId)
@@ -355,7 +370,7 @@ export async function regenerateMasterInvitation(
 
     const grant = parseTokenGrant(result.data)
     if (!grant) return controlFailure('payload_malformed')
-    const claimUrl = buildClaimUrl(grant.rawToken)
+    const claimUrl = buildClaimUrl(grant.rawToken, origin.origin)
     if (!claimUrl) return controlFailure('payload_malformed')
 
     revalidatePilotSurfaces()

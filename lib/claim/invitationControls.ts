@@ -227,21 +227,36 @@ export function normalizeValidDays(raw: unknown): number {
  *  - `payload_malformed` — RPC succeeded but returned an unparseable grant
  *    (the operation may have happened; the caller must refresh, never retry
  *    blindly);
- *  - `invalid_input` — application-side validation failed before any RPC call.
+ *  - `invalid_input` — application-side validation failed before any RPC call;
+ *  - `claim_origin_not_configured` / `claim_origin_invalid` — the server-only
+ *    CLAIM_PUBLIC_ORIGIN contract failed; resolved BEFORE the create/
+ *    regenerate RPC, so NO invitation exists when these are returned.
  */
-export type InvitationControlCode = ClaimResultCode | 'payload_malformed' | 'invalid_input'
+export type InvitationControlCode =
+  | ClaimResultCode
+  | 'payload_malformed'
+  | 'invalid_input'
+  | 'claim_origin_not_configured'
+  | 'claim_origin_invalid'
 
-const EXTRA_MESSAGES_PL: Record<'payload_malformed' | 'invalid_input', string> = {
+const EXTRA_MESSAGES_PL: Record<
+  Exclude<InvitationControlCode, ClaimResultCode>,
+  string
+> = {
   payload_malformed:
     'Nieprawidłowa odpowiedź serwera — zaproszenie mogło zostać utworzone. Odśwież stronę i sprawdź stan.',
   invalid_input: 'Nieprawidłowe dane formularza.',
+  claim_origin_not_configured:
+    'Nie skonfigurowano publicznego adresu strony przejęcia profilu. Zaproszenie nie zostało utworzone.',
+  claim_origin_invalid:
+    'Nie skonfigurowano poprawnego publicznego adresu strony przejęcia profilu. Zaproszenie nie zostało utworzone.',
 }
 
 export function invitationControlMessagePl(code: InvitationControlCode): string {
-  if (code === 'payload_malformed' || code === 'invalid_input') {
-    return EXTRA_MESSAGES_PL[code]
+  if (code in EXTRA_MESSAGES_PL) {
+    return EXTRA_MESSAGES_PL[code as keyof typeof EXTRA_MESSAGES_PL]
   }
-  return claimMessagePl(code)
+  return claimMessagePl(code as ClaimResultCode)
 }
 
 /**

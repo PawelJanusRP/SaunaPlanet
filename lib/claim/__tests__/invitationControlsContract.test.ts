@@ -133,11 +133,20 @@ describe('end-user claim route is NOT implemented in 3B3', () => {
   })
 })
 
-describe('claim URL base comes from configuration, never request headers', () => {
-  it('resolvePublicBaseUrl reads NEXT_PUBLIC_SITE_URL with the established fallback', () => {
-    expect(LINK).toContain('NEXT_PUBLIC_SITE_URL')
-    expect(LINK).toContain("'https://sauna-planet.vercel.app'")
-    for (const banned of ['headers()', 'x-forwarded-host', 'request.headers', 'next/headers']) {
+describe('claim origin: explicit server-only configuration, fail-closed', () => {
+  it('reads CLAIM_PUBLIC_ORIGIN — never a NEXT_PUBLIC_* variable', () => {
+    expect(LINK).toContain("'CLAIM_PUBLIC_ORIGIN'")
+    expect(LINK).not.toContain('NEXT_PUBLIC')
+  })
+
+  it('has NO hardcoded production/preview fallback host', () => {
+    expect(LINK).not.toContain('sauna-planet.vercel.app')
+    expect(LINK).not.toContain('vercel.app')
+    expect(LINK).not.toContain('VERCEL_URL')
+  })
+
+  it('never derives the origin from request headers', () => {
+    for (const banned of ['headers()', 'x-forwarded-host', 'request.headers', 'next/headers', 'referer']) {
       expect(LINK.toLowerCase().includes(banned.toLowerCase()), banned).toBe(false)
     }
   })

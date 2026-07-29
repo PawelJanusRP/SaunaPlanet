@@ -15,52 +15,71 @@ export const CLAIM_TOKEN_SHAPE = /^[A-Za-z0-9_-]{43}$/
  */
 export const CLAIM_ROUTE_PREFIX = '/claim/master/'
 
-/** Established public host (see components/studio/MasterProfileForm.tsx). */
-export const DEFAULT_PUBLIC_BASE_URL = 'https://sauna-planet.vercel.app'
-
 export function isValidClaimToken(raw: unknown): raw is string {
   return typeof raw === 'string' && CLAIM_TOKEN_SHAPE.test(raw)
 }
 
 /**
- * Public base URL for outward-facing links: the configured
- * NEXT_PUBLIC_SITE_URL when present and a valid https origin, otherwise the
- * repository's established public host. NEVER derived from request headers.
+ * SERVER-ONLY configuration contract for the public claim origin. Deliberately
+ * without the client-bundle env prefix: the value must never ship to the
+ * browser, and a missing value must FAIL CLOSED instead of silently pointing a
+ * Preview deployment at a guessed (or Production) host. There is NO fallback
+ * and NO request-header derivation — explicit configuration or nothing.
  */
-export function resolvePublicBaseUrl(
+export const CLAIM_PUBLIC_ORIGIN_ENV = 'CLAIM_PUBLIC_ORIGIN'
+
+export type ClaimOriginResolution =
+  | { ok: true; origin: string }
+  | { ok: false; code: 'claim_origin_not_configured' | 'claim_origin_invalid' }
+
+/**
+ * Resolves and validates CLAIM_PUBLIC_ORIGIN:
+ *  - missing/blank -> claim_origin_not_configured;
+ *  - anything that is not an absolute https ROOT origin -> claim_origin_invalid
+ *    (rejected: non-https, credentials, any path beyond '/', query, fragment);
+ *  - accepted values normalize deterministically to URL.origin (no trailing
+ *    slash). Env values never appear in results or logs.
+ */
+export function resolveClaimPublicOrigin(
   env: Record<string, string | undefined> = process.env
-): string {
-  const configured = (env.NEXT_PUBLIC_SITE_URL ?? '').trim()
-  if (configured) {
-    try {
-      const url = new URL(configured)
-      if (url.protocol === 'https:' && !url.username && !url.password) {
-        return url.origin
-      }
-    } catch {
-      // fall through to the established default
-    }
+): ClaimOriginResolution {
+  const configured = (env[CLAIM_PUBLIC_ORIGIN_ENV] ?? '').trim()
+  if (!configured) return { ok: false, code: 'claim_origin_not_configured' }
+  let url: URL
+  try {
+    url = new URL(configured)
+  } catch {
+    return { ok: false, code: 'claim_origin_invalid' }
   }
-  return DEFAULT_PUBLIC_BASE_URL
+  if (
+    url.protocol !== 'https:' ||
+    url.username !== '' ||
+    url.password !== '' ||
+    url.pathname !== '/' ||
+    url.search !== '' ||
+    url.hash !== ''
+  ) {
+    return { ok: false, code: 'claim_origin_invalid' }
+  }
+  return { ok: true, origin: url.origin }
 }
 
 /**
- * Builds the one-time claim URL. Fail-closed: any token that is not exactly
- * the expected 43-char base64url shape yields null (no partial links, no
- * URL-encoding surprises — the charset needs no escaping by construction).
+ * Builds the one-time claim URL against an ALREADY-RESOLVED origin (callers
+ * must go through resolveClaimPublicOrigin first — there is no default).
+ * Fail-closed: any token that is not exactly the expected 43-char base64url
+ * shape yields null (no partial links, no URL-encoding surprises — the
+ * charset needs no escaping by construction).
  */
-export function buildClaimUrl(
-  rawToken: unknown,
-  baseUrl: string = resolvePublicBaseUrl()
-): string | null {
+export function buildClaimUrl(rawToken: unknown, origin: string): string | null {
   if (!isValidClaimToken(rawToken)) return null
-  let origin: string
+  let normalized: string
   try {
-    origin = new URL(baseUrl).origin
+    normalized = new URL(origin).origin
   } catch {
     return null
   }
-  return `${origin}${CLAIM_ROUTE_PREFIX}${rawToken}`
+  return `${normalized}${CLAIM_ROUTE_PREFIX}${rawToken}`
 }
 
 /** Parsed one-time grant from the create/regenerate RPC `data` payload. */
