@@ -51,7 +51,8 @@ describe("pilot actions 'use server' export contract", () => {
 
   it('checks moderator authorization before every write', () => {
     expect(ACTIONS).toContain('requireModerator')
-    expect(ACTIONS.match(/await requireModerator\(\)/g)?.length).toBe(2)
+    // two 3B2 profile actions + four 3B3 invitation actions
+    expect(ACTIONS.match(/await requireModerator\(\)/g)?.length).toBe(6)
   })
 
   it('creates with the pilot invariants pinned server-side', () => {
@@ -116,7 +117,7 @@ describe('pilot UI security boundaries', () => {
     expect(src).toContain(".eq('origin', 'admin_prepared')")
   })
 
-  it('3B2 renders no invitation mutation controls (create/send/revoke/regenerate)', () => {
+  it('pilot UI never calls the claimActions mutation wrappers directly (3B3: mutations flow only through the pilot server actions)', () => {
     for (const file of PILOT_UI_FILES) {
       const src = readFileSync(file, 'utf8')
       expect(src.includes('createClaimInvitation'), file).toBe(false)

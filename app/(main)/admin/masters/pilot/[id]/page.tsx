@@ -2,8 +2,10 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { getClaimInvitation, listClaimInvitations } from '@/app/(main)/admin/claimActions'
+import InvitationControls from '@/components/admin/InvitationControls'
 import PilotProfileForm from '@/components/admin/PilotProfileForm'
 import UploadAvatarButton from '@/components/UploadAvatarButton'
+import { evaluateInvitationActions } from '@/lib/claim/invitationControls'
 import { isUuid } from '@/lib/master/slug'
 import { languageLabel, specialtyLabel } from '@/lib/master/specialties'
 import {
@@ -18,9 +20,10 @@ import {
   type PilotInvitationSummary,
 } from '@/lib/claim/pilot'
 
-// SP-039 Slice 3B2 — prepared-profile detail & editor (moderator only).
-// Invitation data is READ-ONLY here (state + history from the M4 projections);
-// generation / mark-sent / revoke / regenerate controls belong to Slice 3B3.
+// SP-039 Slice 3B2/3B3 — prepared-profile detail & editor (moderator only).
+// 3B3 adds the invitation controls (generate / one-time link / mark-sent /
+// revoke / regenerate) wired to the M4 RPC wrappers; the action-availability
+// matrix is computed server-side and the database stays authoritative.
 
 const MASTER_STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pending: { label: 'Oczekuje', className: 'bg-yellow-100 text-yellow-700' },
@@ -118,17 +121,16 @@ export default async function PilotProfileDetailPage({
     }
   }
 
-  const readiness = evaluatePilotReadiness(
-    {
-      userId: master.user_id,
-      origin: master.origin,
-      status: master.status,
-      name: master.name,
-      city: master.city,
-      bio: master.bio,
-    },
-    latest
-  )
+  const profileState = {
+    userId: master.user_id,
+    origin: master.origin,
+    status: master.status,
+    name: master.name,
+    city: master.city,
+    bio: master.bio,
+  }
+  const readiness = evaluatePilotReadiness(profileState, latest)
+  const availability = evaluateInvitationActions(profileState, latest)
   const readinessMeta = PILOT_READINESS_META[readiness.readiness]
   const claimed = master.user_id !== null
 
@@ -153,7 +155,9 @@ export default async function PilotProfileDetailPage({
         ← Pilot saunamistrzów
       </Link>
 
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
+        <h2 className="mb-3 text-sm font-bold">Stan profilu</h2>
+        <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {master.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -186,12 +190,13 @@ export default async function PilotProfileDetailPage({
             Przygotowany przez administrację
           </span>
         </div>
-      </div>
+        </div>
+      </section>
 
       <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
-        ℹ️ Generowanie, wysyłka i unieważnianie zaproszeń pojawią się w kolejnym etapie
-        pilotażu — na tej stronie zaproszenia są tylko do odczytu. Pochodzenie profilu
-        (przygotowany przez administrację) jest niezmienne.
+        ℹ️ Pochodzenie profilu (przygotowany przez administrację) jest niezmienne.
+        Strona przejęcia profilu dla saunamistrza zostanie uruchomiona w kolejnym etapie
+        — wygenerowany link zacznie działać dopiero po jej wdrożeniu.
       </div>
 
       {/* Readiness checklist */}
@@ -215,9 +220,9 @@ export default async function PilotProfileDetailPage({
         </p>
       </section>
 
-      {/* Invitation state — read-only */}
+      {/* Invitation state — read-only summary */}
       <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-bold">Zaproszenie do przejęcia profilu</h2>
+        <h2 className="mb-3 text-sm font-bold">Aktualne zaproszenie</h2>
         {!latest ? (
           <p className="text-sm text-gray-500">
             Brak zaproszeń dla tego profilu.
@@ -255,22 +260,30 @@ export default async function PilotProfileDetailPage({
           </div>
         )}
 
-        {history.length > 0 && (
-          <div className="mt-4 border-t pt-3">
-            <h3 className="mb-2 text-xs font-bold text-gray-500">Historia zdarzeń</h3>
-            <ul className="space-y-1 text-xs text-gray-500">
-              {history.map((e, i) => (
-                <li key={i}>
-                  {formatDateTimePl(e.created_at ?? null) ?? '—'} ·{' '}
-                  {EVENT_TYPE_LABELS_PL[e.event_type ?? ''] ?? e.event_type}
-                  {e.delivery_channel && ` (${e.delivery_channel})`}
-                  {e.reason && ` — ${e.reason}`}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
+
+      {/* Invitation controls + one-time link (client; secret in React state only) */}
+      <InvitationControls
+        masterId={master.id}
+        availability={availability}
+        latestInvitationId={latest?.invitationId ?? null}
+      />
+
+      {history.length > 0 && (
+        <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
+          <h2 className="mb-3 text-sm font-bold">Historia</h2>
+          <ul className="space-y-1 text-xs text-gray-500">
+            {history.map((e, i) => (
+              <li key={i}>
+                {formatDateTimePl(e.created_at ?? null) ?? '—'} ·{' '}
+                {EVENT_TYPE_LABELS_PL[e.event_type ?? ''] ?? e.event_type}
+                {e.delivery_channel && ` (${e.delivery_channel})`}
+                {e.reason && ` — ${e.reason}`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Profile editor / read-only view */}
       <section className="rounded-3xl border bg-white p-5 shadow-sm">

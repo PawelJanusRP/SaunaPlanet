@@ -33,12 +33,13 @@ function mapResult(res: ClaimRpcResult | null, hadError: boolean): ClaimActionRe
 
 export async function createClaimInvitation(
   masterId: string,
-  adminNote?: string | null
+  adminNote?: string | null,
+  validDays: number = 14
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('admin_create_master_claim_invitation', {
     p_master_id: masterId,
-    p_valid_days: 14,
+    p_valid_days: validDays,
     p_admin_note: adminNote ?? null,
   })
   const result = mapResult(data as ClaimRpcResult | null, !!error)
@@ -78,13 +79,14 @@ export async function revokeClaimInvitation(
 
 export async function regenerateClaimInvitation(
   masterId: string,
-  reason: string
+  reason: string,
+  validDays: number = 14
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('admin_regenerate_master_claim_invitation', {
     p_master_id: masterId,
     p_reason: reason,
-    p_valid_days: 14,
+    p_valid_days: validDays,
   })
   const result = mapResult(data as ClaimRpcResult | null, !!error)
   if (result.ok) revalidatePath('/admin')
