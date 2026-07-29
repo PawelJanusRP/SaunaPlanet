@@ -16,6 +16,50 @@ Many systems were implemented incrementally and have already been debugged.
 
 # SECURITY BACKLOG (high priority)
 
+## master_claim_invitations: revoked/claimed consistency CHECKs conflict with actor-FK ON DELETE SET NULL
+
+Status: Open — discovered 2026-07-29 during the SP-039 Slice 3B4 Preview E2E
+(account-cleanup step); NOT fixed in 3B4 (the slice prohibits migrations).
+
+The M2 constraint `mci_revoked_consistency` requires
+`(status = 'revoked') = (revoked_by IS NOT NULL)`, while the
+`revoked_by → auth.users ON DELETE SET NULL` FK tries to null `revoked_by`
+when the actor account is deleted — deleting ANY account that ever revoked
+an invitation therefore fails with 23514 on the revoked rows. This defeats
+the approved design intent ("the audit skeleton survives account deletion").
+The same conflict exists for `claimed_by` / `mci_claimed_consistency` once
+claims ship (Slice 4).
+
+Recommended fix (separate reviewed migration, "M6", using the established
+PRE/POST cutover protocol BEFORE the Slice 3 merge): pin the equivalence to
+the timestamps (which are never nulled) and relax the actor columns to an
+implication, e.g.
+`check ((status = 'revoked') = (revoked_at IS NOT NULL))` and
+`check (revoked_by IS NULL OR status = 'revoked')` (mirror for claimed).
+
+Operational residue until M6: the two 3B4 E2E test accounts
+(`sp039-3b4-mod@example.invalid`, `sp039-3b4-user@example.invalid`) cannot
+be deleted (the moderator account is referenced by `revoked_by`); their
+`profiles` rows are deleted (no role → no admin access) and the accounts
+are banned. Delete both accounts right after M6 is applied.
+
+---
+
+## Retained SP-039 3B4 E2E fixture (intentional, owner-approved)
+
+Status: Permanent by design — approved by the owner on 2026-07-29.
+
+`sauna_masters` row `57b00d12-e43a-4644-9556-6cb6ebd45f9b`
+(`SP039-3B4-E2E-RETAINED`, origin `admin_prepared`, status `pending`,
+unclaimed) is the dedicated Preview-E2E fixture for the claim-invitation
+flow. The M5 delete guard intentionally makes any master with invitation
+history undeletable, so this profile is retained on purpose and carries the
+3B4 invitation/audit history (4 invitations, all `revoked`; 11 audit
+events). It must never be approved/published and never linked to a user;
+future claim-flow E2E runs should reuse it.
+
+---
+
 ## sauna_events.created_by may expose an auth-user UUID via SELECT *
 
 Status: Open — recorded 2026-07-20 during the SP-037B bundled-RPC review;
