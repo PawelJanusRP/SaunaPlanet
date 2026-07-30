@@ -16,6 +16,26 @@ Many systems were implemented incrementally and have already been debugged.
 
 # SECURITY BACKLOG (high priority)
 
+## Retained SP-039 3B4 E2E fixture (intentional, owner-approved)
+
+Status: Permanent by design — approved by the owner on 2026-07-29.
+
+`sauna_masters` row `57b00d12-e43a-4644-9556-6cb6ebd45f9b`
+(`SP039-3B4-E2E-RETAINED`, origin `admin_prepared`, status `pending`,
+unclaimed) is the dedicated Preview-E2E fixture for the claim-invitation
+flow. The M5 delete guard intentionally makes any master with invitation
+history undeletable, so this profile is retained on purpose and carries the
+3B4 invitation/audit history (4 invitations, all `revoked`; 11 audit
+events). It must never be approved/published and never linked to a user;
+future claim-flow E2E runs should reuse it.
+
+After the M6 migration and the 3B4 account cleanup (2026-07-30), the actor
+columns on this history (`created_by`/`revoked_by` and event
+`actor_user_id`) are `NULL` — the acting test accounts were deleted. This is
+the intended anonymized state, not data loss.
+
+---
+
 ## sauna_events.created_by may expose an auth-user UUID via SELECT *
 
 Status: Open — recorded 2026-07-20 during the SP-037B bundled-RPC review;
@@ -72,6 +92,37 @@ Required follow-up (separate migration, after analysis):
   guard the rest,
 * verify the reservation UI flows (confirm/cancel) against the tightened
   policy before applying.
+
+---
+
+# master_claim_invitations: actor-deletion CHECK/FK conflict
+
+Status: Resolved 2026-07-30 by migration M6
+(`supabase/2026-07-30_sp039_m6_claim_actor_delete_compat.sql`), applied to
+Production through the established PRE/POST cutover protocol.
+
+History: discovered 2026-07-29 during the SP-039 Slice 3B4 Preview E2E
+(account-cleanup step). The M2 constraint `mci_revoked_consistency` required
+`(status = 'revoked') = (revoked_by IS NOT NULL)`, while the
+`revoked_by → auth.users ON DELETE SET NULL` FK nulls `revoked_by` when the
+actor account is deleted — so deleting ANY account that ever revoked an
+invitation failed with 23514, defeating the approved design intent ("the
+audit skeleton survives account deletion"). The same conflict existed for
+`claimed_by` / `mci_claimed_consistency`.
+
+Fix: both CHECKs (same constraint names) now pin the terminal-state
+equivalence to the timestamp columns (which are never nulled) and relax the
+actor columns to an implication — a NULL actor on a `revoked`/`claimed` row
+means "the acting account was later deleted". Verified behaviorally on
+Production: deleting the two 3B4 test accounts succeeded (previously
+blocked by 23514); all 4 revoked invitations and 11 audit events survived
+with actors anonymized to NULL; the claimed path was proven with a
+self-rolling-back SQL fixture.
+
+Note: the companion rollback
+(`supabase/2026-07-30_sp039_m6_claim_actor_delete_compat_rollback.sql`)
+refuses to run once any terminal row carries an anonymized actor — which is
+now the case, so M6 is effectively permanent. This is intended.
 
 ---
 

@@ -285,10 +285,12 @@ serialize them. Recommended combination:
 2. `SELECT … WHERE master_id = :m AND status IN ('ready','sent','opened')
    FOR UPDATE` — lock existing active rows.
 3. **Materialize** any locked row with `now() >= expires_at` → `status='expired'`
-   (+ `invitation_expired` audit).
+   (+ one `invitation_expired` audit event **per transitioned invitation**, tied
+   to its `invitation_id` — identical semantics in create and regenerate).
 4. Decide per RPC (§7): `admin_create` → if a **live** active row remains, return
-   `active_invitation_exists`; `admin_regenerate` → revoke it (+ audit) then
-   insert.
+   `active_invitation_exists`; `admin_regenerate` → revoke it (audit
+   `invitation_revoked`, then the `invitation_regenerated` link once the
+   replacement exists) then insert.
 5. `INSERT` the new `ready` row.
 6. **`master_claim_invitations_active_uidx` is the final backstop** — even if the
    advisory lock were bypassed, the partial unique index rejects a second active
@@ -368,10 +370,19 @@ atomicity, so the browser/server can never inject a chosen hash.
 ### `admin_regenerate_master_claim_invitation(p_master_id uuid, p_reason text, p_valid_days int default 14)` — **separate RPC** (approved correction 2 / decision 4)
 * A distinct, explicit operation (not a mode of create). Auth: moderator;
   **`p_reason` required**. In **one transaction**: advisory lock (§6.1) →
-  materialize actually-expired rows → **revoke the current active invitation**
-  (reason; `revoked_at`/`revoked_by`; audit `invitation_regenerated`; **never
-  rotate the row in place**) → generate + insert a fresh `ready` row → return the
-  new `raw_token` **once**.
+  materialize actually-expired rows (one `invitation_expired` event **per
+  transitioned invitation**, tied to its id) → **revoke the current active
+  invitation** (reason; `revoked_at`/`revoked_by`; audit `invitation_revoked` —
+  the same state transition as an ordinary revoke gets the same forensic event;
+  **never rotate the row in place**) → generate + insert a fresh `ready` row →
+  audit `invitation_regenerated` on the **old** row (metadata `old_invitation_id`
+  + `new_invitation_id`, written only once the replacement id exists) → audit
+  `invitation_created` on the **new** row (metadata `regenerated_from`) → return
+  the new `raw_token` **once**.
+* **Full audit chain for a live-row regeneration (in order):**
+  `invitation_revoked` (old) → `invitation_regenerated` (old, linking both ids)
+  → `invitation_created` (new). With expiry materialization, each transitioned
+  row additionally yields its own `invitation_expired` event.
 * **History preserved:** the old row stays `revoked` (its `token_hash` retained
   until the 90-day retention job), the new row is a fresh id/token. **The previous
   raw token is never recoverable** (only its hash was ever stored).
@@ -505,19 +516,67 @@ seven-field body and fail loud on drift before adding `origin`.
 
 ---
 
-## 13. `masters_delete` drift & versioning plan
+## 13. `masters_delete` drift & versioning (reconciled with production 2026-07-28)
 
-Live definition (from `all_scripts_history.sql`, to be re-confirmed read-only in
-production): `create policy "masters_delete" on public.sauna_masters for delete
-using (public.is_admin())` — DELETE, role **admin** only.
+**Production drift discovered.** The pre-drift assumption — that `masters_delete`
+was `using (public.is_admin())` (admin-only) — was **PROVEN FALSE** by the
+2026-07-28 production read-only preflight. The **actual live policy** is:
 
-Plan: a **separate security-housekeeping migration sequenced FIRST** (before the
-claim-table migrations) that (a) PRE-APPLY reads the live `pg_policies` `qual`
-for `masters_delete` and asserts it is exactly `is_admin()`, **failing loud on
-drift**; (b) `drop policy` + recreate it **identically** (`using
-(public.is_admin())`) under version control; (c) changes **no behavior**. Doing
-this first removes the drift before the invitation FK / delete-guard (§14) reason
-about delete semantics against a versioned policy. **Not applied in 3A.**
+```sql
+-- masters_delete: DELETE, PERMISSIVE, roles {public}, no WITH CHECK
+using (
+  exists (select 1 from profiles
+          where profiles.id = auth.uid()
+            and profiles.role = any (array['admin'::text, 'moderator'::text]))
+)
+```
+
+i.e. it authorizes **admin OR moderator** via an inline `EXISTS` over
+`profiles.role` — semantically the same set as `is_platform_moderator()`, and it
+does **not** call `is_admin()`. Applying the old M0 as written would have
+**removed moderator DELETE access** (a production authorization regression).
+
+**Corrected M0 strategy (implemented).** M0 now versions the **exact live
+inline admin/moderator policy** without changing effective authorization: same
+command (DELETE), PERMISSIVE mode, roles PUBLIC, no WITH CHECK, admin+moderator
+authorization. The PRE-APPLY drift guard asserts the live `qual` contains the
+`profiles` admin/moderator `EXISTS`, **does not** contain `is_admin`, and has no
+WITH CHECK — failing loud otherwise. The forward reproduces the inline `EXISTS`
+verbatim with the reference qualified as `public.profiles` (minimum-dependency
+versioning — no `is_admin`, no `is_platform_moderator` introduced); the rollback
+restores the identical predecessor. **Normalization note:** `pg_policies` may
+render `public.profiles` back as `profiles` and `= ANY(ARRAY[...])` differently,
+so post-apply verification compares **semantics**, not textual identity.
+
+**`is_admin()` — separate security debt (NOT a blocker for M0–M5).** Production
+confirms `public.is_admin()` is `SECURITY DEFINER STABLE` with **no pinned
+`search_path`** and body `select exists(select 1 from public.profiles where id =
+auth.uid() and role = 'admin')`. Because `masters_delete` (and M0–M5) do **not**
+depend on `is_admin()`, its unpinned search_path is **not** a blocker for the
+claim foundation. Recorded as a **backlog security item**: a future reviewed
+helper-hardening migration should redefine it `SET search_path=''` with qualified
+refs — but must **first inventory all live and repository usages** of `is_admin()`
+(it still gates other tables' write policies, per `all_scripts_history.sql`).
+**No `M0B` is created in this slice.**
+
+**EXECUTE-grant decision (this slice).** The live trigger/helper functions
+(`guard_master_privileged_columns`, `guard_master_insert_level`, `is_admin`,
+`is_platform_moderator`) carry broad legacy EXECUTE grants (PUBLIC / anon /
+authenticated / postgres / service_role). These are **left UNCHANGED** — changing
+them would add another production-behavior variable to a drift-sensitive
+deployment; broad legacy grants are a **separate security-hardening topic** with
+its own Preview behavioral verification. The **new** `guard_master_delete()`
+adopts the restrictive posture for new functions: `revoke execute … from public`
+(no client EXECUTE). This is safe and zero-impact because a `returns trigger`
+function cannot be invoked directly via SQL and trigger firing does not depend on
+the caller's EXECUTE privilege. The M4 admin RPCs keep their designed
+`revoke … from public, anon` + `grant execute … to authenticated` model.
+
+**Sequencing:** M0 is applied **first** (removes the versioning gap before the
+claim tables/guard reason about delete semantics). **Variant A is final**
+(pgcrypto 1.3 in `extensions`; `extensions.gen_random_bytes(integer)` +
+`extensions.digest(text,text)` present; advisory-lock functions present) — no
+Node runtime fallback.
 
 ---
 
@@ -529,9 +588,11 @@ claimed skeletons, can never vanish through a cascade); audit
 `master_id → ON DELETE SET NULL` and `invitation_id → ON DELETE SET NULL` (events
 are never cascade-deleted; a rare parent deletion only nulls the link, §4).
 
-**Ordinary admin-delete path (`masters_delete` policy — authorization unchanged,
-still `is_admin()`, §13).** Deletion of a `sauna_masters` row through the ordinary
-path is permitted **only** when the row has **no claim history at all**:
+**Ordinary delete path (`masters_delete` policy — authorization unchanged: the
+M0-versioned inline admin-OR-moderator profiles check — DELETE, PERMISSIVE,
+roles `{public}`, no WITH CHECK; never admin-only `is_admin()`, §13).** Deletion
+of a `sauna_masters` row through the ordinary path is permitted **only** when
+the row has **no claim history at all**:
 
 | Target | Behavior |
 |---|---|
@@ -556,6 +617,14 @@ land with the claim-table migration (M1) or the M3 RPC set; **design only in 3A*
 
 ## 15. Rate limiting & abuse protection
 
+**Precise scope (as implemented in M4):** these are a rolling-hour throttle on
+**successful** privileged invitation operations — they count audit events, which
+are written **only on success**. They protect against accidental or abusive
+**mass generation by an authorized moderator**; they are **not** a full
+invalid-attempt / malformed-request / network-abuse limiter (rejected calls
+write no event and are not throttled). Comprehensive attempt-rate monitoring and
+alerting is deferred to **SP-040**.
+
 Reuse the rolling-window pattern over `master_claim_events`
 (`(actor_user_id, event_type, created_at)` index) + the per-master advisory lock:
 
@@ -566,6 +635,15 @@ Reuse the rolling-window pattern over `master_claim_events`
 | Mark-sent | 60 / hour | moderator |
 | Revoke | 60 / hour | moderator |
 | Copy-link | **no server call** — copies the one-time result client-side | — |
+
+**Counting model (approved option A — event-count based):** the windows count
+audit **events**, not logical operations. A successful regeneration of a live
+invitation writes `invitation_regenerated` + `invitation_created` and therefore
+consumes **two units** of the 30/hour create+regenerate pool; its explicit
+`invitation_revoked` event also consumes one unit of the shared 60/hour
+mark-sent+revoke pool (a regeneration *is* a real revocation).
+`invitation_expired` materialization events count toward no pool. Acceptable
+headroom for the 10-master pilot; revisit with SP-040 telemetry.
 
 **"Copy again" cannot reveal the token** — the raw token is never stored, so any
 later copy uses only the value still on the one-time result screen; a refresh
@@ -733,14 +811,29 @@ Run these read-only before M0–M3 in Preview/Production; **do not apply anythin
    (expect the seven-field SP-039 body) and `guard_master_insert_level`.
 5. Exact `masters_delete`: `pg_policies` `qual` (expect `is_admin()`); confirm
    role/cmd (DELETE).
+5b. **`is_admin()` hardening checkpoint (named blocker):** confirm the exact live
+   `is_admin()` body/config (`pg_get_functiondef`, `proconfig`). If it lacks a
+   pinned `search_path` (as the repo history shows), a **separate reviewed**
+   migration must redefine it `SECURITY DEFINER STABLE SET search_path = ''` with
+   fully-qualified `public.profiles`/`auth.uid()`, drift-guarding the exact live
+   predecessor first, and land **before/during** the claim-foundation window. M0
+   does **not** touch `is_admin()` (see the M0 migration header).
 6. Policy inventory on `sauna_masters` (`pg_policies`).
 7. Function/RPC namespace — no `admin_create_master_claim_invitation` etc.
    (`pg_proc` join `pg_namespace`).
-8. Extension availability: `pgcrypto` (`select * from pg_extension where
-   extname='pgcrypto'`) — required for `gen_random_bytes`/`digest`; if absent,
-   fall back to Node-side generation (decision 5 alternative).
+8. **Extension availability & exact functions (pgcrypto Variant A/B):** confirm
+   `pgcrypto` and its schema, and the exact signatures
+   `extensions.gen_random_bytes(integer)` + `extensions.digest(text,text)`
+   (plus core `hashtextextended(text,bigint)`, `pg_advisory_xact_lock(bigint)`).
+   **Variant A (confirmed):** apply M4 as-is. **Variant B (unavailable):** STOP
+   before M4 — do not deploy the RPC, do not switch at runtime; redesign the
+   server-to-RPC contract in a separate reviewed change (the Node helper in
+   `lib/claim/token.ts` is a tested reference only, never an auto-active path).
 9. Object-name collisions for every proposed table/index/function/policy.
 10. Current audit/log table pattern (`import_log`) still append-only.
+11. **Guard search_path:** M1/M5 re-author the guards with `set search_path = ''`;
+    confirm no unexpected live drift in `guard_master_privileged_columns` /
+    `guard_master_insert_level` bodies before replacement.
 
 ---
 

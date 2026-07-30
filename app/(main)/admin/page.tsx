@@ -179,17 +179,20 @@ export default async function AdminPage({
     managerNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || 'Użytkownik'
   }
 
+  // SP-039 Slice 3B2: the pilot workspace lives on its own moderator-gated
+  // route (list + editor need sub-routes the ?tab= shell cannot host).
   const tabs = [
     { id: 'submissions', label: `Zgłoszenia (${submissions?.length ?? 0})` },
     { id: 'sauny',       label: `Sauny (${saunas?.length ?? 0})${pendingSaunaCount > 0 ? ` · ${pendingSaunaCount} oczekuje` : ''}` },
     { id: 'eventy',      label: `Eventy (${events?.length ?? 0})` },
     { id: 'recenzje',    label: `Recenzje (${reviews?.length ?? 0})` },
     { id: 'masters',     label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
+    { id: 'pilot',       label: '🧖 Pilot saunamistrzów', href: '/admin/masters/pilot' },
     { id: 'certyfikaty', label: `Certyfikaty${pendingCertCount > 0 ? ` (${pendingCertCount})` : ''}` },
     { id: 'slownik',     label: 'Słownik certyfikatów' },
     { id: 'managerowie', label: `Managerowie${pendingManagerCount > 0 ? ` (${pendingManagerCount})` : ''}` },
     { id: 'users',       label: `Użytkownicy (${profiles?.length ?? 0})` },
-  ]
+  ] as { id: string; label: string; href?: string }[]
 
   return (
     <main className="mx-auto max-w-5xl p-4">
@@ -207,10 +210,10 @@ export default async function AdminPage({
       </div>
 
       <div className="mb-6 flex flex-wrap gap-1 border-b">
-        {tabs.map(({ id, label }) => (
+        {tabs.map(({ id, label, href }) => (
           <Link
             key={id}
-            href={`/admin?tab=${id}`}
+            href={href ?? `/admin?tab=${id}`}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === id
                 ? 'border-black text-black'
