@@ -1,8 +1,13 @@
 # SP-039 Slice 4 — Public Master Claim (Architecture Decision Record)
 
-Status: Slice 4A accepted design (database foundation committed; **not applied**
-until the M7 PRE-APPLY package is authorized). Slices 4B (public UI + auth
-return), 4C+ (onboarding) implement against this contract.
+Status: Slice 4A accepted design. **M7 applied to Production and verified on
+2026-07-30** through the established PRE/POST cutover protocol: catalog V1–V4
+(functions hardened + exact grants, seven-type event vocabulary, guard claim
+arm) and a 23-assertion self-rolling-back behavioral suite (inspection states,
+anon denial, atomic claim, winner idempotency, loser outcome, expiry
+materialization, one-master-per-user, no partial state) — all GREEN, zero
+persistent fixtures. Slices 4B (public UI + auth return), 4C+ (onboarding)
+implement against this contract.
 
 Related: `docs/SP039_SLICE3_ADMIN_INVITATIONS.md` (admin side, M0–M6),
 `supabase/2026-07-30_sp039_m7_public_claim.sql` (+ rollback).
