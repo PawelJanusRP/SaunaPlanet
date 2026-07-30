@@ -16,6 +16,22 @@ Many systems were implemented incrementally and have already been debugged.
 
 # SECURITY BACKLOG (high priority)
 
+## Guard trigger functions retain default EXECUTE grants
+
+Status: Open — recorded 2026-07-30 during the M8 carve-out review; explicitly
+NOT changed in Slice 4C1 (scope discipline).
+
+The `sauna_masters` guard functions (`guard_master_privileged_columns`,
+`guard_master_insert_level`, `guard_master_delete`, and the M8
+`handle_master_owner_deletion` once applied) predate the strict
+revoke-then-grant posture; the older ones keep PostgreSQL's default PUBLIC
+EXECUTE. Impact is nil today — functions returning `trigger` cannot be
+invoked directly by clients ("trigger functions can only be called as
+triggers") — so this is posture hygiene, not an exposure. Align them with
+the M4/M7 revoke pattern in a future dedicated hardening migration.
+
+---
+
 ## Retained SP-039 3B4 E2E fixture (intentional, owner-approved)
 
 Status: Permanent by design — approved by the owner on 2026-07-29.

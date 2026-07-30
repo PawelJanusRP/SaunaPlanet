@@ -76,7 +76,7 @@ describe('M8 — guard: both carve-outs, nothing else weakened', () => {
     expect(m8s).toContain("i.status = 'claimed'")
     expect(m8s).toContain('i.claimed_by = auth.uid()')
   })
-  it('the deletion carve-out requires ALL THREE conditions', () => {
+  it('the deletion carve-out requires ALL FOUR conditions', () => {
     const arm = m8s.slice(
       m8s.indexOf('old.user_id is not null'),
       m8s.indexOf('or new.home_sauna_id')
@@ -84,6 +84,30 @@ describe('M8 — guard: both carve-outs, nothing else weakened', () => {
     expect(arm).toContain('old.user_id is not null')
     expect(arm).toContain('new.user_id is null')
     expect(arm).toContain('auth.uid() is null')
+    expect(arm).toContain("(to_jsonb(new) - 'user_id') = (to_jsonb(old) - 'user_id')")
+  })
+  it('the whole-row comparison covers EVERY column except user_id (not a field list)', () => {
+    // to_jsonb(row) compares the complete row — ordinary fields (name, city,
+    // bio, links) and any FUTURE column are included automatically; only
+    // user_id is subtracted. No enumerated-field comparison exists.
+    const arm = m8s.slice(
+      m8s.indexOf('old.user_id is not null'),
+      m8s.indexOf('or new.home_sauna_id')
+    )
+    expect(arm).not.toContain('new.name')
+    expect(arm).not.toContain('new.city')
+    expect(arm).not.toContain('new.bio')
+    expect((arm.match(/to_jsonb/g) ?? []).length).toBe(2)
+  })
+  it('mixed-field detach therefore keeps raising (carve-out is the only escape)', () => {
+    // the carve-out sits inside `and not (...)` of the user_id violation arm —
+    // if the row comparison fails, the original raise path is unchanged
+    const userIdArm = m8s.slice(
+      m8s.indexOf('(new.user_id is distinct from old.user_id'),
+      m8s.indexOf('or new.home_sauna_id')
+    )
+    expect(userIdArm).toContain('and not (')
+    expect(m8s).toContain('raise exception')
   })
   it('keeps the approved generic Polish exception message', () => {
     expect(m8).toContain(
@@ -113,7 +137,19 @@ describe('M8 — owner-deletion completion trigger', () => {
     expect(fn).toContain("if new.status = 'approved' then")
     expect(fn).toContain("new.status := 'pending'")
   })
-  it('appends ONE forensic event with a NULL actor and no secrets', () => {
+  it('fires ONLY for the UUID -> NULL shape (all other shapes excluded)', () => {
+    const fn = m8s.slice(
+      m8s.indexOf('create function public.handle_master_owner_deletion'),
+      m8s.indexOf('create trigger sauna_masters_owner_deletion')
+    )
+    // NULL -> NULL and NULL -> UUID: excluded by `old.user_id is not null`
+    expect(fn).toContain('old.user_id is not null')
+    // UUID A -> UUID B (and UUID -> UUID unchanged): excluded by `new... is null`
+    expect(fn).toContain('new.user_id is null')
+    // exactly ONE conditional insert exists in the function body
+    expect((fn.match(/insert into/g) ?? []).length).toBe(1)
+  })
+  it('appends ONE forensic event with a NULL actor and no account identifiers', () => {
     const fn = m8s.slice(
       m8s.indexOf('create function public.handle_master_owner_deletion'),
       m8s.indexOf('create trigger sauna_masters_owner_deletion')
@@ -121,7 +157,21 @@ describe('M8 — owner-deletion completion trigger', () => {
     expect(fn).toContain("'owner_account_deleted'")
     expect(fn).toContain('insert into public.master_claim_events (master_id, event_type, reason)')
     expect(fn).not.toContain('actor_user_id')
+    expect(fn).not.toContain('metadata')
     expect(fn).not.toContain('token')
+    // the deleted account's UUID/e-mail never enters the event: the insert
+    // carries only master id, type, and a FIXED reason string
+    const insert = fn.slice(fn.indexOf('insert into'))
+    expect(insert).not.toContain('old.user_id')
+    expect(insert).not.toContain('new.user_id')
+    expect(insert).not.toContain('email')
+  })
+  it('the trigger pair is BEFORE UPDATE with deterministic names', () => {
+    expect(m8s).toContain('create trigger sauna_masters_owner_deletion')
+    expect(m8s).toContain('before update of user_id on public.sauna_masters')
+    // the guard trigger (SP-035) is sauna_masters_guard — pinned by the M7
+    // PRE-APPLY trigger inventory; lexical order proves execution order
+    expect('sauna_masters_guard'.localeCompare('sauna_masters_owner_deletion') < 0).toBe(true)
   })
   it('is SECURITY DEFINER with an empty search_path and no client EXECUTE', () => {
     const defs = m8s.match(/security definer set search_path = ''/g) ?? []

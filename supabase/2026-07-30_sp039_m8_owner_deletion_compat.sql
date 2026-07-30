@@ -16,6 +16,10 @@
 --   1. The guard's user_id arm gains a SECOND data-derived carve-out for
 --      exactly the FK-driven anonymization:
 --        old.user_id IS NOT NULL AND new.user_id IS NULL AND auth.uid() IS NULL
+--        AND (to_jsonb(new) - 'user_id') = (to_jsonb(old) - 'user_id')
+--      The whole-row equality (minus user_id) makes the carve-out reject any
+--      UPDATE that simultaneously modifies ANY other column (ordinary or
+--      future) — only the pure FK shape passes.
 --      No PostgREST client can reach this transition: every client carries a
 --      role whose RLS UPDATE policies (masters_update_own USING/WITH CHECK
 --      user_id = auth.uid(); masters_update_moderation) either fail on the
@@ -146,9 +150,13 @@ begin
            -- Owner-account deletion (M8): the FK-driven anonymization runs
            -- with NO authenticated principal. Unreachable for clients: every
            -- RLS UPDATE path to this row implies a NON-NULL auth.uid().
+           -- The whole-row equality (minus user_id) pins the carve-out to the
+           -- EXACT FK shape: a trusted-context UPDATE that also touches ANY
+           -- other column — ordinary or future — keeps raising.
            old.user_id is not null
            and new.user_id is null
            and auth.uid() is null
+           and (to_jsonb(new) - 'user_id') = (to_jsonb(old) - 'user_id')
          ))
      or new.home_sauna_id is distinct from old.home_sauna_id
      or new.is_founding_partner is distinct from old.is_founding_partner
@@ -210,6 +218,8 @@ notify pgrst, 'reload schema';
 -- V4. Behavioral (self-rolling-back): owned+approved fixture -> auth user
 --     DELETE succeeds; master remains with user_id NULL and status 'pending';
 --     claimed invitation stays terminal; history intact + ONE
---     owner_account_deleted event; owner/anon detach attempts still raise;
---     M5 delete guard still blocks master deletion.
+--     owner_account_deleted event (actor NULL, reason carries NO account
+--     identifier); owner/anon detach attempts still raise; a MIXED-FIELD
+--     trusted-context detach (user_id -> NULL together with any other column
+--     change) raises; M5 delete guard still blocks master deletion.
 -- ============================================================================
