@@ -384,7 +384,7 @@ account-deletion path (expected direction: SET NULL plus a guard carve-out for
 the FK-update context, mirroring the M6/M7 techniques). Until then: do NOT
 delete any account that owns a master profile.
 
-### 12.4a M8 resolution (Slice 4C1 — committed 2026-07-30, pending apply)
+### 12.4a M8 resolution (Slice 4C1 — APPLIED AND VERIFIED 2026-07-30)
 
 Catalog probe confirmed `sauna_masters_user_id_fkey → auth.users(id) ON
 DELETE SET NULL` (nullable, 1:1 partial unique). M8
@@ -399,8 +399,22 @@ event. Documented post-deletion state: master remains, `user_id NULL`,
 terminal (nothing re-claimable without a NEW moderator invitation), history
 intact + explicit event; "previously claimed, owner deleted" is
 distinguishable (`user_id IS NULL` + claimed invitation + event). The
-operational no-owner-account-deletion restriction stays in force until M8 is
-applied and verified.
+carve-out was narrowed on owner review with the whole-row invariant
+`(to_jsonb(new) - 'user_id') = (to_jsonb(old) - 'user_id')` — only the PURE
+FK shape passes; a trusted-context UPDATE touching any other column keeps
+raising.
+
+Applied to Production 2026-07-30 through the established PRE/POST protocol:
+PRE-APPLY P1–P7 GREEN; POST-APPLY catalog GREEN (both guard arms + row
+invariant, eight-type vocabulary, BEFORE UPDATE OF user_id trigger pair in
+deterministic order, function ACL postgres-only); behavioral suite 16/16 via
+a self-rolling-back fixture (real auth-account deletion of an approved owned
+master SUCCEEDED; master retained with ownership anonymized and publication
+withdrawn to `pending`; exactly one identifier-free owner_account_deleted
+event; claimed invitation terminal with the M6-anonymized actor; mixed-field
+and self/stranger detach attempts blocked; M5 intact; zero persistent
+fixtures). **The operational no-owner-account-deletion restriction is
+LIFTED** — deleting an auth account that owns a master profile is safe.
 
 ### 12.6 Publication lifecycle — refined for Slice 4C2 (owner brief 2026-07-30)
 
