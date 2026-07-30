@@ -7,6 +7,7 @@ import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState'
 import TodayQueue from '@/components/workspace/TodayQueue'
 import StudioAccessNotice from '@/components/studio/StudioAccessNotice'
 import AffiliationDecisionActions from '@/components/studio/AffiliationDecisionActions'
+import PublicationStatusCard from '@/components/studio/PublicationStatusCard'
 import {
   MASTER_NAV,
   MASTER_STATUS_LABELS,
@@ -14,6 +15,16 @@ import {
   masterBreadcrumbs,
 } from '@/lib/workspace/master'
 import { loadMasterStudioScope } from '@/lib/workspace/masterServer'
+import { resolveStudioGate } from '@/lib/master/studioAccess'
+import {
+  effectivePublicationStatus,
+  resolveHardChecklist,
+} from '@/lib/master/publicationView'
+import {
+  loadPublicVisibility,
+  loadPublicationState,
+} from '@/lib/master/publicationServer'
+import { computeMasterCompleteness } from '@/lib/master/completeness'
 
 export default async function StudioDashboardPage() {
   const supabase = await createClient()
@@ -25,10 +36,54 @@ export default async function StudioDashboardPage() {
 
   const { profile, affiliations } = await loadMasterStudioScope(supabase, user.id)
 
+  // 4C2: claimed PENDING owners get the workspace too (edit + publication
+  // workflow start before platform moderation approves the master).
   if (!profile) return <StudioAccessNotice kind="none" />
-  if (profile.status !== 'approved') {
-    return <StudioAccessNotice kind={profile.status === 'pending' ? 'pending' : 'rejected'} masterId={profile.id} />
+  const gate = resolveStudioGate(profile.status)
+  if (gate.kind !== 'workspace') {
+    return <StudioAccessNotice kind="rejected" masterId={profile.id} />
   }
+  const isApproved = !gate.pendingModeration
+
+  const today = new Date().toISOString().substring(0, 10)
+  const [publication, publiclyVisible, { data: upcomingRaw }] = await Promise.all([
+    loadPublicationState(supabase, profile.id),
+    loadPublicVisibility(supabase, profile.id),
+    supabase
+      .from('sauna_event_masters')
+      .select('status, sauna_events(event_date)')
+      .eq('master_id', profile.id)
+      .eq('status', 'approved'),
+  ])
+  const publicationStatus = effectivePublicationStatus(
+    publication?.publicationStatus ?? null
+  )
+  const checklist = resolveHardChecklist({
+    name: profile.name,
+    city: profile.city,
+    bio: profile.bio,
+    avatarUrl: profile.avatarUrl,
+    specialties: profile.specialties,
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasUpcomingEvent = ((upcomingRaw ?? []) as any[]).some(
+    (row) => (row.sauna_events?.event_date ?? '') >= today
+  )
+  const completeness = computeMasterCompleteness(
+    {
+      avatarUrl: profile.avatarUrl,
+      bio: profile.bio,
+      slug: profile.slug,
+      city: profile.city,
+      specialties: profile.specialties,
+      socialLinks: profile.socialLinks,
+      website: profile.website,
+    },
+    {
+      hasAffiliation: affiliations.some((a) => a.status === 'approved'),
+      hasUpcomingEvent,
+    }
+  )
 
   const invitations = affiliations.filter(
     (a) => a.status === 'pending' && a.initiatedBy === 'facility'
@@ -38,6 +93,10 @@ export default async function StudioDashboardPage() {
   )
   const active = affiliations.filter((a) => a.status === 'approved')
   const primary = active.find((a) => a.isPrimary) ?? null
+
+  const recommended = completeness.items
+    .filter((item) => ['slug', 'links', 'affiliation', 'upcoming-event'].includes(item.key))
+    .map((item) => ({ key: item.key, label: item.label, done: item.done }))
 
   return (
     <WorkspaceShell
@@ -100,6 +159,20 @@ export default async function StudioDashboardPage() {
           </div>
         </WorkspaceSection>
 
+        <WorkspaceSection title="📣 Publikacja profilu">
+          <PublicationStatusCard
+            publicationStatus={publicationStatus}
+            publiclyVisible={publiclyVisible}
+            masterPendingModeration={!isApproved}
+            checklist={checklist}
+            completenessScore={completeness.score}
+            recommended={recommended}
+            reviewNote={publication?.reviewNote ?? null}
+            previewHref={`/masters/${profile.slug ?? profile.id}`}
+          />
+        </WorkspaceSection>
+
+        {isApproved && (
         <WorkspaceSection
           title="🤝 Afiliacje"
           action={
@@ -141,15 +214,18 @@ export default async function StudioDashboardPage() {
             </div>
           )}
         </WorkspaceSection>
+        )}
 
         <WorkspaceSection title="⚡ Szybkie akcje">
           <div className="flex flex-wrap gap-2">
+            {isApproved && (
             <Link
               href="/studio/affiliations"
               className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
             >
               🤝 Poproś o afiliację
             </Link>
+            )}
             <Link
               href={`/masters/${profile.id}`}
               className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"

@@ -17,6 +17,12 @@ type AuthContextType = {
    */
   access: WorkspaceAccess
   loading: boolean
+  /**
+   * Recompute the snapshot on demand (SP-039 4C2): entitlements can change
+   * mid-session without an auth event — e.g. right after claiming a master
+   * profile the Studio link must appear without a full reload.
+   */
+  refreshAccess: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   access: GUEST_ACCESS,
   loading: true,
+  refreshAccess: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -40,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccess((prev) => (prev.isAuthenticated ? prev : AUTHENTICATED_BASE_ACCESS))
 
     const supabase = createClient()
-    const [{ data: profile }, { count: membershipCount }, { count: masterCount }] =
+    const [{ data: profile }, { count: membershipCount }, { data: masterRows }] =
       await Promise.all([
         supabase.from('profiles').select('role').eq('id', userId).single(),
         supabase
@@ -48,20 +55,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('status', 'approved'),
-        supabase
-          .from('sauna_masters')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('status', 'approved'),
+        // Own rows are RLS-visible in any status (owner arm). 4C2: a
+        // pending claimed profile already unlocks the Studio destination.
+        supabase.from('sauna_masters').select('status').eq('user_id', userId),
       ])
 
+    const masterStatuses = (masterRows ?? []).map((row) => row.status as string)
     const nextRole = (profile?.role as GlobalRole) ?? 'user'
     setRole(nextRole)
     setAccess({
       isAuthenticated: true,
       role: nextRole,
       hasApprovedSaunaMembership: (membershipCount ?? 0) > 0,
-      hasLinkedMasterProfile: (masterCount ?? 0) > 0,
+      hasLinkedMasterProfile: masterStatuses.includes('approved'),
+      hasMasterStudioAccess:
+        masterStatuses.includes('approved') || masterStatuses.includes('pending'),
     })
   }
 
@@ -90,8 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe()
   }, [])
 
+  async function refreshAccess() {
+    if (user) await loadUserAndRole(user.id)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, role, access, loading }}>
+    <AuthContext.Provider value={{ user, role, access, loading, refreshAccess }}>
       {children}
     </AuthContext.Provider>
   )

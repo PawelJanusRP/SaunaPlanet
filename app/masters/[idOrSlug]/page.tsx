@@ -4,6 +4,7 @@ import EditSaunaMasterModal from '@/components/EditSaunaMasterModal'
 import AddCertificateModal from '@/components/AddCertificateModal'
 import Navbar from '@/components/Navbar'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { loadPublicVisibility } from '@/lib/master/publicationServer'
 import { isUuid } from '@/lib/master/slug'
 import { languageLabel, specialtyLabel } from '@/lib/master/specialties'
 import type { EventMasterRow } from '@/lib/types'
@@ -60,6 +61,11 @@ export default async function MasterPage({
     )
   }
   const id = master.id as string
+
+  // SP-039 4C2: the ONE public-visibility verdict is the M9 helper (never
+  // mirrored in TS). If this page rendered but the verdict is false, the
+  // viewer is necessarily the owner or moderation (RLS) — preview mode.
+  const publiclyVisible = await loadPublicVisibility(supabase, id)
 
   const { data: certificatesRaw } = await supabase
     .from('master_certificates')
@@ -123,6 +129,23 @@ export default async function MasterPage({
         <Link href="/masters" className="mb-4 inline-block rounded-xl border px-4 py-2">
           ← Powrót do saunamistrzów
         </Link>
+
+        {!publiclyVisible && (
+          <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-center">
+            <p className="text-sm font-bold uppercase tracking-wide text-amber-900">
+              PODGLĄD — profil nie jest jeszcze publiczny
+            </p>
+            <p className="mt-1 text-xs text-amber-800">
+              Tę stronę widzisz tylko Ty {canManageProfile && !isOwnProfile ? '(moderacja)' : ''}
+              — profil pojawi się w katalogu po publikacji.
+            </p>
+          </div>
+        )}
+        {publiclyVisible && canManageProfile && (
+          <p className="mb-4 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+            🌍 publiczny
+          </p>
+        )}
 
         {/* Hero (SP-039): cover, identity, badges, city, experience, links */}
         <section className="overflow-hidden rounded-3xl border bg-white shadow-sm">

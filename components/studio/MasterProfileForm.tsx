@@ -32,7 +32,15 @@ export type MasterProfileFormInitial = {
  * moderation and never appear here. The save sends the full visible field
  * set (values present in the form are intentional; blanks clear).
  */
-export default function MasterProfileForm({ initial }: { initial: MasterProfileFormInitial }) {
+export default function MasterProfileForm({
+  initial,
+  demotionWarning = false,
+}: {
+  initial: MasterProfileFormInitial
+  /** True when the profile is publicly visible: saving a material change
+   *  demotes it to moderation (M10 trigger) — warn BEFORE save. */
+  demotionWarning?: boolean
+}) {
   const [name, setName] = useState(initial.name)
   const [bio, setBio] = useState(initial.bio ?? '')
   const [slug, setSlug] = useState(initial.slug ?? '')
@@ -82,6 +90,10 @@ export default function MasterProfileForm({ initial }: { initial: MasterProfileF
       })
       if (result?.error) {
         toast.error(result.error)
+      } else if (demotionWarning) {
+        toast.success(
+          'Profil zapisany — wrócił do moderacji i jest tymczasowo niewidoczny publicznie'
+        )
       } else {
         toast.success('Profil zapisany')
       }
@@ -244,12 +256,22 @@ export default function MasterProfileForm({ initial }: { initial: MasterProfileF
         />
       </div>
 
+      {demotionWarning && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          ⚠️ Profil jest widoczny publicznie — zapis zmian tymczasowo ukryje go do
+          czasu ponownego zatwierdzenia przez moderację.
+        </p>
+      )}
       <button
         type="submit"
         disabled={isPending}
         className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
-        {isPending ? 'Zapisywanie...' : 'Zapisz zmiany'}
+        {isPending
+          ? 'Zapisywanie...'
+          : demotionWarning
+            ? 'Zapisz (profil wróci do moderacji)'
+            : 'Zapisz zmiany'}
       </button>
     </form>
   )

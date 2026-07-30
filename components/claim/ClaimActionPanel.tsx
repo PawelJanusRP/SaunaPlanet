@@ -12,6 +12,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { claimMasterProfile } from '@/app/claim/actions'
+import { useAuth } from '@/components/AuthProvider'
 import {
   TERMINAL_PUBLIC_CLAIM_CODES,
   type PublicClaimActionResult,
@@ -24,6 +25,7 @@ type Props = {
 
 export default function ClaimActionPanel({ token, masterName }: Props) {
   const router = useRouter()
+  const { refreshAccess } = useAuth()
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<PublicClaimActionResult | null>(null)
 
@@ -33,6 +35,9 @@ export default function ClaimActionPanel({ token, masterName }: Props) {
     const res = await claimMasterProfile(token)
     setResult(res)
     setPending(false)
+    // 4C2: the account just gained a master profile — refresh the workspace
+    // snapshot so the Studio link appears without a full page reload.
+    if (res.ok) void refreshAccess()
   }
 
   if (result?.ok) {

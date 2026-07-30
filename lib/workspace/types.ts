@@ -22,6 +22,12 @@ export type WorkspaceAccess = {
   hasApprovedSaunaMembership: boolean
   /** Has an approved `sauna_masters` profile linked via `user_id`. */
   hasLinkedMasterProfile: boolean
+  /**
+   * Has ANY non-rejected `sauna_masters` profile linked via `user_id`
+   * (SP-039 4C2): a freshly claimed PENDING owner needs the Studio link
+   * for the publication workflow before platform moderation approves.
+   */
+  hasMasterStudioAccess: boolean
 }
 
 export type WorkspaceDestinationKey =
