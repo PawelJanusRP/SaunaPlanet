@@ -499,6 +499,33 @@ exit criteria: docs/ROADMAP.md §SP-039P.
 
 ---
 
+# SP-039H Saunamaster Onboarding and Help
+
+Status: PLANNED (recorded 2026-07-30). Authoritative design + backlog:
+**docs/SP039H_SAUNAMASTER_ONBOARDING_HELP.md**.
+
+Layered onboarding so the pilot does not depend on direct owner support:
+(1) in-app Studio first-steps checklist derived from existing data (no
+duplicated business state), (2) contextual help at the point of use,
+(3) `/help/saunamaster` Quick Start page, (4) five short task videos,
+(5) pilot presentation. Includes an audit of the ACTUAL event workflow
+(SP-037B) with documented gaps — notably: no UI for a master to cancel or
+clearly edit an approved own event (G1/G2), `/studio/events` remains
+approved-only, reservations not implemented — which block Quick Start §8
+and video 4 until fixed or explicitly scoped out. First-draft Polish copy
+for claim / publication / events / support lives in the design doc; the
+support contact is a deliberate placeholder (deciding it is a pilot
+prerequisite).
+
+Delivery: H1 content+architecture (the doc, DONE with this entry) → H2
+in-app helper → H3 Quick Start page (after 4E E2E, UI stable) → H4 videos
+(after final E2E GREEN) → H5 presentation. **Extends the SP-039
+pilot-readiness gate**: no real invitation before the minimum help package
+(checklist or equivalent, claim + publication + event instructions,
+working support path, tested Quick Start page).
+
+---
+
 # SP-040 Platform Operations and Free-Tier Guardrails
 
 Status: PLANNED (recorded 2026-07-27). **Supersedes and absorbs the earlier
