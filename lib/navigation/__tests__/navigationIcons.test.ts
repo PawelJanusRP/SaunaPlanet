@@ -36,7 +36,8 @@ describe('icon mapping completeness', () => {
     }
   })
   it('every drawer entry has an icon, plus logout', () => {
-    for (const href of ['/auth/login', '/auth/register', '/submit', '/events', '/masters']) {
+    // /profile and /admin are linked directly by the SaunaMap account panel.
+    for (const href of ['/auth/login', '/auth/register', '/submit', '/events', '/masters', '/sauny', '/profile', '/admin']) {
       expect(DRAWER_NAV_ICONS[href], href).toBeTruthy()
     }
     expect(LOGOUT_ICON).toBeTruthy()
@@ -113,5 +114,49 @@ describe('accessible markup contracts', () => {
   it('active-state logic in WorkspaceNav is untouched (single implementation)', () => {
     expect(workspaceNav).toContain("if (activeKey !== undefined) return item.key === activeKey")
     expect(workspaceNav).toContain("return item.href.split('?')[0] === pathname")
+  })
+})
+
+// Main Map Burger Menu Polish — the drawer over the map must not dim or blur
+// the map, while its backdrop keeps capturing outside clicks; the account
+// panel joins the central Lucide icon system with unchanged routes/gating.
+describe('map drawer and transparent backdrops', () => {
+  const navbar = readFileSync('components/Navbar.tsx', 'utf8')
+  const saunaMap = readFileSync('components/SaunaMap.tsx', 'utf8')
+
+  it('drawer backdrops are fully transparent (no dimming, no blur)', () => {
+    expect(navbar).toContain('fixed inset-0 z-40 bg-transparent')
+    expect(saunaMap).toContain('fixed inset-0 z-[11000] flex justify-end bg-transparent')
+    expect(navbar).not.toContain('backdrop-blur')
+    expect(saunaMap).not.toContain('backdrop-blur')
+    expect(navbar).not.toMatch(/inset-0[^"']*bg-black\//)
+    // The only remaining full-screen dark overlay in SaunaMap is the photo
+    // lightbox — intentionally untouched.
+    const overlays = saunaMap.match(/fixed inset-0[^"']*/g) ?? []
+    for (const overlay of overlays) {
+      if (overlay.includes('z-[99999]')) continue
+      expect(overlay).not.toContain('bg-black')
+    }
+  })
+  it('backdrops still capture outside clicks and the panel swallows inner clicks', () => {
+    expect(navbar).toMatch(/bg-transparent"\s*onClick=\{close\}/)
+    expect(saunaMap).toMatch(/bg-transparent"\s*onClick=\{\(\) => setShowAccountPanel\(false\)\}/)
+    expect(saunaMap).toContain('onClick={(e) => e.stopPropagation()}')
+  })
+  it('map account panel uses the central Lucide mapping with accessible markup', () => {
+    expect(saunaMap).toContain("from '@/lib/navigation/icons'")
+    expect(saunaMap).toContain('aria-label="Menu"')
+    expect(saunaMap).toContain('aria-label="Zamknij menu"')
+    expect(saunaMap).toContain('aria-hidden="true"')
+  })
+  it('map account panel keeps its exact routes and authorization gate', () => {
+    for (const href of ['/auth/login', '/auth/register', '/profile', '/submit', '/admin', '/events', '/masters', '/sauny']) {
+      expect(saunaMap).toContain(`href="${href}"`)
+    }
+    expect(saunaMap).toContain("role === 'admin' || role === 'moderator'")
+  })
+  it('leaflet tiles and marker configuration are untouched', () => {
+    expect(saunaMap).toContain('url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"')
+    expect(saunaMap).toContain("iconUrl: '/leaflet/marker-icon.png'")
   })
 })

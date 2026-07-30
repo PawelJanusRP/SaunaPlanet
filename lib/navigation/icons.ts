@@ -64,7 +64,9 @@ export const WORKSPACE_NAV_ICONS: Record<string, LucideIcon> = {
   team: Users,
 }
 
-/** Public drawer navigation (components/Navbar.tsx), keyed by href. */
+/** Drawer navigation (components/Navbar.tsx and the SaunaMap account
+ *  panel), keyed by href. `/profile` and `/admin` reuse the workspace-hub
+ *  icons for the map panel, which links to those routes directly. */
 export const DRAWER_NAV_ICONS: Record<string, LucideIcon> = {
   '/auth/login': LogIn,
   '/auth/register': UserRoundPlus,
@@ -72,6 +74,8 @@ export const DRAWER_NAV_ICONS: Record<string, LucideIcon> = {
   '/events': CalendarDays,
   '/masters': UsersRound,
   '/sauny': Flame,
+  '/profile': UserRound,
+  '/admin': ShieldCheck,
 }
 
 export const LOGOUT_ICON: LucideIcon = LogOut
