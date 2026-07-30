@@ -122,9 +122,13 @@ describe('mutation boundaries', () => {
   })
 })
 
-describe('end-user claim route is NOT implemented in 3B3', () => {
-  it('no /claim route directory exists', () => {
-    expect(existsSync(join('app', 'claim'))).toBe(false)
+describe('end-user claim ROUTE is not implemented yet (4A ships actions only)', () => {
+  it('no /claim page or route handler exists (actions.ts alone is inert)', () => {
+    // Slice 4A added app/claim/actions.ts (server gateway, no URL); the public
+    // route materializes only with a page/route file — still forbidden pre-4B.
+    expect(existsSync(join('app', 'claim', 'page.tsx'))).toBe(false)
+    expect(existsSync(join('app', 'claim', 'route.ts'))).toBe(false)
+    expect(existsSync(join('app', 'claim', 'master'))).toBe(false)
     expect(existsSync(join('app', '(main)', 'claim'))).toBe(false)
   })
 
