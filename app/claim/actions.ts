@@ -23,16 +23,18 @@ import {
   toPublicClaimResultCode,
   toPublicClaimState,
   PUBLIC_CLAIM_RESULT_MESSAGES_PL,
-  PUBLIC_CLAIM_STATE_MESSAGES_PL,
+  PUBLIC_INSPECTION_MESSAGES_PL,
   type PublicClaimActionResult,
   type PublicInspectionResult,
 } from '@/lib/claim/publicClaim'
 import type { ClaimRpcResult } from '@/lib/claim/types'
 
-function inspectionFailure(state: 'invalid_or_unknown'): PublicInspectionResult {
+function inspectionFailure(
+  state: 'invalid_or_unknown' | 'unavailable'
+): PublicInspectionResult {
   return {
     state,
-    message: PUBLIC_CLAIM_STATE_MESSAGES_PL[state],
+    message: PUBLIC_INSPECTION_MESSAGES_PL[state],
     preview: null,
   }
 }
@@ -53,8 +55,9 @@ export async function inspectMasterClaimInvitation(
   )
   const res = data as ClaimRpcResult | null
   if (error || !res || typeof res.code !== 'string') {
-    // Never surface a raw PostgreSQL error; the generic negative is safe.
-    return inspectionFailure('invalid_or_unknown')
+    // Never surface a raw PostgreSQL error. A transport failure is RETRYABLE
+    // ('unavailable'), never conflated with the terminal generic negative.
+    return inspectionFailure('unavailable')
   }
 
   const state = toPublicClaimState(res.code === 'claimable' ? 'claimable' : res.code)
@@ -64,7 +67,7 @@ export async function inspectMasterClaimInvitation(
     // A claimable response without a valid payload is malformed — fail closed.
     return inspectionFailure('invalid_or_unknown')
   }
-  return { state, message: PUBLIC_CLAIM_STATE_MESSAGES_PL[state], preview }
+  return { state, message: PUBLIC_INSPECTION_MESSAGES_PL[state], preview }
 }
 
 /** Boundary B — authenticated atomic claim. */

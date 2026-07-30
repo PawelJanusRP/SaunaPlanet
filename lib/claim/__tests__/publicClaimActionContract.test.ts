@@ -101,12 +101,15 @@ describe('behavioral — inspection wrapper', () => {
     expect(res.preview?.masterName).toBe('Jan Para')
     expect(JSON.stringify(res)).not.toContain('leak-me')
   })
-  it('maps negative states and fails closed on transport errors', async () => {
+  it('maps negative states; transport errors become the RETRYABLE unavailable', async () => {
     rpcMock.mockResolvedValue({ data: { ok: false, code: 'revoked' }, error: null })
     expect((await inspectMasterClaimInvitation(TOKEN)).state).toBe('revoked')
 
+    // transport failure is deliberately NOT the terminal generic negative
     rpcMock.mockResolvedValue({ data: null, error: { message: 'boom' } })
-    expect((await inspectMasterClaimInvitation(TOKEN)).state).toBe('invalid_or_unknown')
+    const res = await inspectMasterClaimInvitation(TOKEN)
+    expect(res.state).toBe('unavailable')
+    expect(res.preview).toBeNull()
   })
   it('fails closed when a claimable response has no usable payload', async () => {
     rpcMock.mockResolvedValue({

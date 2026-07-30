@@ -122,13 +122,15 @@ describe('mutation boundaries', () => {
   })
 })
 
-describe('end-user claim ROUTE is not implemented yet (4A ships actions only)', () => {
-  it('no /claim page or route handler exists (actions.ts alone is inert)', () => {
-    // Slice 4A added app/claim/actions.ts (server gateway, no URL); the public
-    // route materializes only with a page/route file — still forbidden pre-4B.
+describe('end-user claim route lives EXACTLY at the designed path (4B)', () => {
+  it('the only claim route is /claim/master/[token]', () => {
+    expect(
+      existsSync(join('app', 'claim', 'master', '[token]', 'page.tsx'))
+    ).toBe(true)
+    // no stray siblings that would widen the public surface
     expect(existsSync(join('app', 'claim', 'page.tsx'))).toBe(false)
     expect(existsSync(join('app', 'claim', 'route.ts'))).toBe(false)
-    expect(existsSync(join('app', 'claim', 'master'))).toBe(false)
+    expect(existsSync(join('app', 'claim', 'master', 'page.tsx'))).toBe(false)
     expect(existsSync(join('app', '(main)', 'claim'))).toBe(false)
   })
 

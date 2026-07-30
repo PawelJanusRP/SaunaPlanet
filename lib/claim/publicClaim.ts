@@ -104,9 +104,20 @@ export type PublicInvitationPreview = {
   authRequired: boolean
 }
 
-/** Result of the inspection boundary as consumed by the (future 4B) page. */
+/** Inspection states as consumed by the claim page: the five DB-contract
+ *  states plus the FRONTEND-ONLY `unavailable` (transport/malformed-response
+ *  failure — retryable, deliberately distinct from the terminal generic
+ *  negative so the page can say "odśwież" instead of "link nieaktualny"). */
+export type PublicInspectionState = PublicClaimState | 'unavailable'
+
+export const PUBLIC_INSPECTION_MESSAGES_PL: Record<PublicInspectionState, string> = {
+  ...PUBLIC_CLAIM_STATE_MESSAGES_PL,
+  unavailable: 'Chwilowy problem techniczny — odśwież stronę i spróbuj ponownie.',
+}
+
+/** Result of the inspection boundary as consumed by the claim page. */
 export type PublicInspectionResult = {
-  state: PublicClaimState
+  state: PublicInspectionState
   message: string
   preview: PublicInvitationPreview | null
 }
