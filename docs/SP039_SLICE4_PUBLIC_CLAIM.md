@@ -521,6 +521,58 @@ Next migration milestone: M10 — transition RPCs (submit / approve /
 changes_requested / unpublish / suspend, moderator-gated internally) and the
 material-edit demotion trigger, each behind its own pre-apply review.
 
+### 12.6b M10 design — transition RPCs + material-edit demotion (prepared)
+
+`2026-07-30_sp039_m10_publication_transitions.sql` (+ rollback). The full
+transition matrix (caller x source x target x code x event) lives verbatim in
+the migration header — the file is the source of truth. Key decisions:
+
+* **Seven narrowly scoped DEFINER RPCs** (M4 pattern: jsonb `{ok, code,
+  data?}`, internal gating, advisory lock `hashtextextended(master_id)` in
+  the M4 order, then `FOR UPDATE` row locks): owner submit / withdraw,
+  owner-or-moderator unpublish, moderator approve / request-changes /
+  suspend / restore. All granted to `authenticated` only; role checks are
+  internal; no caller-supplied user id anywhere.
+* **Completeness gate on submit** (fail-closed, transactional): name, city,
+  bio (btrim length >= 80 — the shared `BIO_MIN_LENGTH` from
+  `lib/master/completeness.ts`), avatar_url, >= 1 specialty. Returns
+  `profile_incomplete` with `data.missing` = bounded field-code array
+  (name/city/bio/avatar/specialties) — never values. All five fields are
+  plain `sauna_masters` columns, so the check is fully transactional.
+* **Approve is double-gated**: the master row must already be
+  moderation-approved (`status='approved'`, else the distinct code
+  `master_not_approved`) and owned. Publication approval does NOT flip
+  `sauna_masters.status` — profile moderation and publication moderation
+  stay separate decisions (pilot flow: approve the master first, then the
+  publication; flagged for the owner in the M10 pre-apply report).
+* **Material-edit demotion is a TRIGGER, not an RPC rule**: owners can
+  UPDATE `sauna_masters` directly through PostgREST under
+  `masters_update_own`, so an RPC-only rule would be evadable. The AFTER
+  UPDATE trigger fires only for owner-context edits (`auth.uid() =
+  new.user_id`; trusted/FK contexts and moderator edits of other profiles
+  never demote) and only when one of the owner-editable public presentation
+  fields actually changed: name, slug, city, bio, avatar_url,
+  cover_image_url, specialties, languages, experience_since_year,
+  social_links, website. It demotes `published` AND `legacy_published` to
+  `submitted` (one `publication_demoted` event; no-op edits produce no
+  event).
+* **Legacy contract**: nothing in M10 can ever set `legacy_published`
+  (write-orphaned state). Exits: moderator unpublish -> draft, moderator
+  suspend -> suspended, owner material edit -> submitted (audited). Owner
+  submit/unpublish on a legacy row = `invalid_transition`.
+* **Restore lands on `draft`** (owner re-runs the workflow) and is the one
+  deliberately non-idempotent RPC: after restore the row is an ordinary
+  draft and a repeat returns `invalid_transition` (a draft origin is
+  ambiguous).
+* **Event vocabulary 7 -> 10**: adds `submission_withdrawn`,
+  `publication_restored`, `publication_demoted`. Idempotent repeats
+  (`already_*`) never write events.
+* **App boundary**: `lib/master/publicationTransitions.ts` — pure contract
+  module (RPC names, code narrowing, Polish messages, allow-list payload
+  parser). No UI, no server actions yet (M10 is a database milestone).
+* Rollback refuses once any M10-type event or M10-reachable state exists;
+  it never deletes history or mutates rows.
+
 ### 12.5 Delivery sequence (revised) and pilot-readiness gate
 
 * **4A** — claim architecture + atomic RPC foundation (M7) — DONE (applied+verified).
