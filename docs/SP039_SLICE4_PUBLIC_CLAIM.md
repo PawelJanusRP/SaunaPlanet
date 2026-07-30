@@ -477,6 +477,50 @@ suspended: moderator-only, from any state; owner-deleted: M8/M9 withdrawal
   banner when the viewer is owner/moderator and the profile is not published.
   No duplicate card implementation.
 
+### 12.6a M9 status — APPLIED AND VERIFIED (2026-07-30)
+
+`2026-07-30_sp039_m9_publication_schema.sql` (commit `0bc6078`) is live on
+Production. Procedural note: the forward ran BEFORE the formal GO/APPLY step
+(the owner executed the migration file while the P3 pre-apply probe was still
+outstanding); every pre-apply precondition had already been confirmed GREEN
+(P1/P2/P4/P5/P6, and P3 retrospectively via the pre-run trigger body), and the
+migration's own drift guards passed, so the deviation had no material effect.
+Recorded here for process honesty.
+
+Post-apply verification (all GREEN):
+
+* Catalog: `master_publication` with exactly the five `mp_*` CHECKs + PK +
+  two FKs; both new tables expose exactly one SELECT policy each and zero
+  write policies; table grants are `authenticated/SELECT` only (anon: none);
+  helper `is_master_publicly_visible` is SECURITY DEFINER, empty
+  `search_path`, EXECUTE limited to postgres/anon/authenticated (no PUBLIC);
+  `masters_select` is the helper-based three-arm policy.
+* Backfill: `8 / 8 / 8` — every approved master holds `legacy_published`
+  with `published_at`, one `legacy_publication_granted` event each; the
+  anon-visible set is IDENTICAL to the pre-M9 baseline (verified by id set).
+* Behavioral (self-rolling-back block, 22/22 exact): anon set identity and
+  `master_publication` SELECT denial; approved-without-publication-row stays
+  publicly invisible (the workflow gate); `published` + owner visible;
+  `mp_published_at_consistency` raises 23514; `legacy_published` visible
+  WITHOUT an owner; owner account deletion resets `published → draft`
+  (clears `published_at`, writes `owner_publication_withdrawn` +
+  `owner_account_deleted`) and hides the profile; owner deletion leaves
+  `legacy_published` rows untouched (profile hidden solely via the M8
+  status withdrawal, no spurious withdrawal event). A first fixture run also
+  proved the bonus negative: `published` with `user_id IS NULL` is NOT
+  visible (the owner arm of the helper predicate is load-bearing).
+* Post-rollback cleanliness: `0, 0, 8, 8, 4, 11` (no fixture residue;
+  backfill rows/events intact; claim history untouched).
+
+Behavioral-fixture lesson (recorded for M10+ verification blocks): fixture
+masters must be inserted UNDER moderator claims, or the M1 insert guard
+clamps `origin` to `self_registered` and the claim RPC correctly returns
+`master_not_eligible`.
+
+Next migration milestone: M10 — transition RPCs (submit / approve /
+changes_requested / unpublish / suspend, moderator-gated internally) and the
+material-edit demotion trigger, each behind its own pre-apply review.
+
 ### 12.5 Delivery sequence (revised) and pilot-readiness gate
 
 * **4A** — claim architecture + atomic RPC foundation (M7) — DONE (applied+verified).
