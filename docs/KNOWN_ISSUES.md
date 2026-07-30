@@ -30,6 +30,14 @@ invoked directly by clients ("trigger functions can only be called as
 triggers") — so this is posture hygiene, not an exposure. Align them with
 the M4/M7 revoke pattern in a future dedicated hardening migration.
 
+Related (recorded 2026-07-30 during the M10 post-apply review): the seven
+M10 publication-transition RPCs additionally carry Supabase's default
+`service_role` EXECUTE (the M10 revoke covered only `public, anon`; M7 had
+established an authenticated-only posture). Impact is nil — a service_role
+call has `auth.uid() = NULL`, so every RPC returns `not_authenticated`, and
+service_role bypasses RLS by design anyway. Fold the revoke into the same
+future hardening migration.
+
 ---
 
 ## Retained SP-039 3B4 E2E fixture (intentional, owner-approved)

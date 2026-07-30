@@ -573,6 +573,53 @@ the migration header — the file is the source of truth. Key decisions:
 * Rollback refuses once any M10-type event or M10-reachable state exists;
   it never deletes history or mutates rows.
 
+### 12.6c M10 + M10a status — APPLIED AND VERIFIED (2026-07-30)
+
+`2026-07-30_sp039_m10_publication_transitions.sql` (commit `67a8f1c`) and
+the `2026-07-30_sp039_m10a_submit_missing_array_fix.sql` hotfix (commit
+`bed2739`, applied under the explicit authorization phrase) are live on
+Production.
+
+* Pre-apply data report: 16 masters total (approved 8 — of which 2 owned:
+  the two profiles a future owner material edit can demote out of
+  grandfathering — pending 6, rejected 2); publication rows exactly the 8
+  M9 `legacy_published`; only 2 of 16 masters currently satisfy the full
+  hard completeness set (city missing on 10, bio < 80 on 13, avatar on 4,
+  specialties on 11) — the gate will do real work in the pilot.
+* Process deviation (second): the M10 forward was executed after the GO
+  verdict but WITHOUT the agreed exact authorization phrase. All pre-apply
+  probes were GREEN and the drift guards passed; recorded for honesty. The
+  M10a hotfix was then applied correctly under its exact phrase.
+* Defect found by the post-apply behavioral run (step B1) and fixed by
+  M10a: the submit body appended missing-field codes with
+  `v_missing || literal`; PostgreSQL resolves the untyped literal as
+  anyarray and fails 22P02 at runtime on the first INCOMPLETE submit.
+  Complete submits never executed the branch, no state was ever affected.
+  Lesson recorded: prefer `array_append` (unambiguous overload) in
+  plpgsql; text-pinning contract tests cannot catch runtime type
+  resolution — only behavioral runs can.
+* Post-apply verification (all GREEN): vocabulary = exactly 10 types; all
+  8 functions DEFINER with empty search_path (trigger fn postgres-only;
+  RPC ACLs carry a nil-impact default service_role EXECUTE — recorded in
+  KNOWN_ISSUES with the guard-grant hygiene backlog); demotion trigger
+  AFTER UPDATE enabled; zero data changes (8/8/8/8). Behavioral block:
+  full-lifecycle exact match — claim, incomplete submit
+  (`profile_incomplete` + missing codes), submit/withdraw/resubmit,
+  owner-cannot-approve, stranger `not_owner`/`not_authorized`, anon has no
+  EXECUTE, changes-requested loop with stored review note,
+  `master_not_approved` gate, approve + public visibility, material-edit
+  demotion + hiding, re-approve, owner unpublish, suspend (submit blocked
+  while suspended), restore-to-draft, invalid transitions, owned-legacy
+  demotion into the normal lifecycle, moderator unpublish of unowned
+  legacy, audit free of private values, exact per-type event tally
+  4-1-1-2-1-1-1-1 (no duplicates), owner deletion compatible with M8/M9,
+  the 8 real grandfathered rows untouched; cleanliness `0,0,8,8,4,11`.
+
+Next: Slice 4C2 app layer — Studio publication UI for claimed owners
+(lifting the Slice-2 deferral), moderation UI, preview banner — behind a
+separate owner brief. No UI exists yet; `lib/master/publicationTransitions.ts`
+is the only app-side artifact.
+
 ### 12.5 Delivery sequence (revised) and pilot-readiness gate
 
 * **4A** — claim architecture + atomic RPC foundation (M7) — DONE (applied+verified).
