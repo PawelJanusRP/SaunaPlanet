@@ -276,3 +276,131 @@ Vercel/Supabase configuration). The cutover checklist, in order:
 Out of scope here (4B+): the `/claim/master/[token]` page, inline auth UI,
 callback allow-listing, `Referrer-Policy`, opened-tracking decision, domain
 cutover, real invitations.
+
+---
+
+## 12. MANDATORY pilot scope: public profile card and publication lifecycle
+
+Owner decision (2026-07-30): the pilot is complete only when a claimed
+saunamaster can **complete, preview, explicitly publish, and later edit** a
+public profile card. This section records the current-state inspection and the
+accepted publication architecture. Implementation: Slice 4C (+ migration M8).
+
+### 12.1 Current state (inspected, not assumed)
+
+| Question | Finding |
+|---|---|
+| Public list route | `/masters` (`app/masters/page.tsx`) — non-admin query filters `.eq('status','approved')`; RLS enforces the same |
+| Individual route | `/masters/[idOrSlug]` — dual lookup: case-insensitive slug or UUID; slug preferred (unique partial index on `lower(slug)`) |
+| Public visibility predicate | `masters_select` RLS: `status='approved' OR user_id=auth.uid() OR is_platform_moderator()` (SP-035d) |
+| Statuses | `pending / approved / rejected` (`sauna_masters_status_check`); ONLY `approved` is public |
+| Visibility coupled to status? | YES — fully. There is NO owner-controlled publication state today |
+| `pending` behavior | visible to self + moderation only; Studio shows `StudioAccessNotice kind="pending"` and HIDES the editor (deferred Slice-2 decision) |
+| Separate publication field required? | YES — see §12.2 (claim must not auto-publish; owner-explicit publish must be separable from moderation) |
+| Completeness evaluator | `lib/master/completeness.ts` (8 weighted items) — REUSED for the "recommended fields" meter |
+| Studio editing | `/studio/profile` full form via `updateOwnMasterProfile` (server action, RLS `masters_update_own`, privileged-column guard) — **approved owners only today** |
+| Owner preview of unpublished profile | Already works structurally: the owner arm of `masters_select` renders the REAL `/masters/[idOrSlug]` page for a non-public profile — this IS the preview |
+| Related data on the card | approved affiliations (with primary highlight), next upcoming event, approved credentials, level badge, founding-partner badge, rating (hidden when `review_count=0`), specialties/languages chips, social/website (hide-empty) |
+
+### 12.2 Publication model (accepted design)
+
+Two orthogonal axes — moderation (`status`, moderator-managed, guard-protected)
+and publication (`published_at timestamptz`, NEW in M8, owner-controlled):
+
+| Conceptual state | Representation | Publicly visible? |
+|---|---|---|
+| prepared & unclaimed | `origin='admin_prepared'`, `user_id NULL`, `pending`, `published_at NULL` | no |
+| claimed draft | `user_id` set, `published_at NULL` | no (owner+moderation only) |
+| published | `status='approved'` AND `published_at NOT NULL` | **yes** |
+| submitted for publication (pilot) | `pending` + `published_at NOT NULL` | no — awaiting moderation; surfaced in the admin pilot list |
+| suspended | moderator flips `status` off `approved` (publication flag untouched) | no |
+
+M8 changes (versioned forward+rollback, PRE/POST protocol):
+1. `published_at timestamptz` column (nullable, additive).
+2. `masters_select` public arm becomes `status='approved' AND published_at IS
+   NOT NULL` (owner/moderator arms unchanged). **Backfill**: every existing
+   `approved` row gets `published_at = now()` (grandfathering — the current
+   public directory must not blink).
+3. DB checks (fail-closed):
+   `published_at IS NULL OR origin <> 'admin_prepared' OR user_id IS NOT NULL`
+   (an unclaimed admin-prepared profile can NEVER be published), and
+   `published_at IS NULL OR (name, city, bio all non-blank)` (a published
+   profile cannot be emptied below the minimum — the offending edit fails and
+   forces explicit unpublish first).
+4. `published_at` is NOT added to the privileged-column guard (owner-managed on
+   the own row via RLS); publish/unpublish ships as a dedicated server action
+   with server-side ownership re-read.
+
+Rules (explicit answers to the required questions):
+* **Minimum required for publication:** `name`, `city`, `bio` (the invitation
+  readiness trio — same vocabulary the moderator already prepared against).
+* **Soft recommendations:** avatar, cover, specialties, languages, social
+  links, website, experience year — surfaced via the completeness meter, never
+  blocking.
+* **Who publishes:** the claimed owner (explicit action); moderators may also
+  publish/unpublish (support cases).
+* **Who unpublishes:** the owner (their card) and moderation (suspension via
+  `status`, which hides the card regardless of the publication flag).
+* **Moderator approval for the pilot: REQUIRED.** Claimed profiles are
+  `pending`; the owner's "Opublikuj" sets `published_at`, and the card goes
+  live when moderation approves (`status='approved'`). Prepared content is
+  admin-authored, but post-claim edits are not — one approval gate before
+  first exposure is the CLAUDE.md-consistent choice. After approval,
+  subsequent owner edits of non-privileged fields are immediately public
+  (accepted for the pilot; field-level moderation is out of scope and flagged).
+* **Published-then-incomplete:** impossible below the DB minimum (check #3);
+  above it, it is the owner's card.
+* **Owner-account deletion:** OPEN — see the M8-blocking finding in §12.4.
+* **Moderator suspension:** `status` flip; re-approval restores the card
+  (publication flag persists).
+
+### 12.3 Pilot card field matrix
+
+| Field | Class |
+|---|---|
+| name, city, bio | **required for publication**, owner-editable |
+| avatar, cover, specialties, languages, social links, website, experience year | recommended, owner-editable |
+| affiliations (approved), upcoming events, credentials (approved), rating/review count | derived from other tables |
+| level, status, is_founding_partner, origin, user_id, rating fields | moderator-managed (privileged guard) |
+| publication state (`published_at`) | owner-managed (+ moderation override) |
+| last-updated | derived; display decision for 4C |
+
+Never on the public card (structurally separate tables with no public grants,
+verified in M2/M3): admin notes, invitation state, actor ids, delivery
+metadata, claim audit. Pre-existing `SELECT *` UUID-exposure backlog items
+(KNOWN_ISSUES) remain tracked separately; 4C must not widen them.
+
+### 12.4 NEW M6-class finding (M8 blocker, catalog probe required)
+
+The repository SQL does **not** record how `sauna_masters.user_id` was added,
+so its FK delete action is unknown. Every possibility conflicts with a live
+guard when the OWNER's auth account is deleted: `ON DELETE SET NULL` fires the
+M1/M7 UPDATE guard (deletion context has `auth.uid() NULL` → the claim
+carve-out does not apply → raise → account undeletable — the M6 defect pattern
+on a second table); `ON DELETE CASCADE` fires the M5 delete guard (raise) and
+would violate history preservation anyway; `RESTRICT`/no-FK block or orphan
+the link. M8 must probe `pg_constraint` for the live definition and design the
+account-deletion path (expected direction: SET NULL plus a guard carve-out for
+the FK-update context, mirroring the M6/M7 techniques). Until then: do NOT
+delete any account that owns a master profile.
+
+### 12.5 Delivery sequence (revised) and pilot-readiness gate
+
+* **4A** — claim architecture + atomic RPC foundation (M7) — DONE (applied+verified).
+* **4B** — public claim page + inline auth return, `Referrer-Policy`,
+  callback `next` allow-list, opened-tracking decision.
+* **4C** — Master Studio editing for CLAIMED `pending` owners (lifting the
+  Slice-2 deferral), preview affordance, publication lifecycle (M8:
+  `published_at`, predicate, checks, backfill, account-deletion fix).
+* **4D** — `sauna-planet.pl` domain + Supabase Auth cutover (§10).
+* **4E** — full pilot E2E:
+  `prepare → invite → authenticate → claim → edit → preview → publish → verify public page`.
+
+**Pilot-readiness gate — no real invitation is sent until ALL verified:**
+claim link works on the canonical domain; ownership assignment atomic; the
+user reaches Master Studio; profile fields owner-editable; an unpublished
+profile stays private (anon + stranger probes); publication is an explicit
+owner action behind the moderation gate; the public page renders correctly;
+the profile appears in `/masters`; unauthorized edit AND publish attempts
+fail; the flow works on mobile; no raw token or private claim metadata leaks
+anywhere in the flow.
