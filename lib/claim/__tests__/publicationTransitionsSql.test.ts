@@ -271,6 +271,43 @@ describe('M10 — grants and scope hygiene', () => {
   })
 })
 
+describe('M10a — submit missing-array hotfix', () => {
+  const m10a = read('supabase/2026-07-30_sp039_m10a_submit_missing_array_fix.sql')
+  const m10as = stripComments(m10a)
+  it('guards on the defective original and refuses double-apply', () => {
+    expect(m10a).toContain("position('array_append' in v_fn) > 0")
+    expect(m10a).toContain("position('v_missing || ' in v_fn) = 0")
+  })
+  it('replaces ONLY the submit RPC with unambiguous array_append', () => {
+    const appends = m10as.match(/array_append\(v_missing, '/g)
+    expect(appends?.length).toBe(5)
+    // the ambiguous-overload pattern that broke at runtime must be gone from
+    // the function body (the drift guard above still names it as a string)
+    const body = m10as.slice(m10as.indexOf('create or replace function'))
+    expect(body).not.toMatch(/v_missing \|\| '/)
+    const creates = m10as.match(/create or replace function/g)
+    expect(creates?.length).toBe(1)
+    expect(m10as).toContain(
+      'create or replace function public.submit_master_profile_for_publication('
+    )
+    expect(m10as).not.toContain('drop constraint')
+    expect(m10as).not.toContain('grant ')
+    expect(m10as).not.toContain('create trigger')
+  })
+  it('keeps the fixed body contract-identical to the M10 original', () => {
+    for (const marker of [
+      "'profile_incomplete'",
+      "jsonb_build_object('missing', to_jsonb(v_missing))",
+      'on conflict (master_id) do nothing',
+      'pg_advisory_xact_lock(hashtextextended(p_master_id::text, 0))',
+      "coalesce(char_length(btrim(v_master.bio)), 0) < 80",
+      "security definer set search_path = ''",
+    ]) {
+      expect(m10as).toContain(marker)
+    }
+  })
+})
+
 describe('M10 rollback — honest and guarded', () => {
   it('refuses once the workflow has been used', () => {
     expect(m10r).toContain(
