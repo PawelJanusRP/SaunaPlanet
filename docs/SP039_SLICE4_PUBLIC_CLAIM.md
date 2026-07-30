@@ -384,6 +384,75 @@ account-deletion path (expected direction: SET NULL plus a guard carve-out for
 the FK-update context, mirroring the M6/M7 techniques). Until then: do NOT
 delete any account that owns a master profile.
 
+### 12.4a M8 resolution (Slice 4C1 — committed 2026-07-30, pending apply)
+
+Catalog probe confirmed `sauna_masters_user_id_fkey → auth.users(id) ON
+DELETE SET NULL` (nullable, 1:1 partial unique). M8
+(`supabase/2026-07-30_sp039_m8_owner_deletion_compat.sql`) resolves the
+finding: a second data-derived guard carve-out for exactly the FK-driven
+shape (`old.user_id NOT NULL → NULL` with no authenticated principal —
+unreachable for clients through RLS), plus a dedicated
+`BEFORE UPDATE OF user_id` trigger that, in the SAME transaction, withdraws
+publication (`approved → pending`) and appends one `owner_account_deleted`
+event. Documented post-deletion state: master remains, `user_id NULL`,
+`pending` (pilot list buckets it as attention), claimed invitation stays
+terminal (nothing re-claimable without a NEW moderator invitation), history
+intact + explicit event; "previously claimed, owner deleted" is
+distinguishable (`user_id IS NULL` + claimed invitation + event). The
+operational no-owner-account-deletion restriction stays in force until M8 is
+applied and verified.
+
+### 12.6 Publication lifecycle — refined for Slice 4C2 (owner brief 2026-07-30)
+
+Explicit `publication_status` (M9, additive column with CHECK) instead of a
+bare timestamp — the moderation loop needs submitted/changes-requested states
+that a single timestamp cannot express unambiguously:
+
+```
+draft ──submit──► submitted ──approve──► published
+  ▲                  │  ▲                  │
+  │        changes_requested │            unpublish / material edit
+  └──────(owner edits)───────┘◄────────────┘
+suspended: moderator-only, from any state; owner-deleted: M8/M9 withdrawal
+```
+
+* States: `draft | submitted | changes_requested | published | suspended`.
+  "Unpublished" is `draft` reached from `published` (the transition is the
+  audited fact). Owner-deleted = `user_id IS NULL` (+ M9 extends the M8
+  trigger to force `publication_status` out of `published`).
+* Companions (M9): `published_at`, `publication_reviewed_at`,
+  `publication_reviewed_by uuid ON DELETE SET NULL`,
+  `publication_review_note text ≤2000` (moderator feedback, never public);
+  append-only `master_publication_events` table (M3 pattern; types:
+  profile_submitted, publication_approved, changes_requested,
+  profile_unpublished, profile_suspended, owner_publication_withdrawn —
+  meaningful transitions only, no per-keystroke noise; actors SET NULL).
+* Hard publication requirements (brief-mandated): name, city, bio, avatar,
+  ≥1 specialization, owner present (`user_id NOT NULL`), not suspended.
+  Soft: social links, facilities, events, credentials, level, website
+  (completeness meter reuses `lib/master/completeness.ts`).
+* Public predicate (M9 replaces the §12.2 draft):
+  `status='approved' AND publication_status='published' AND user_id IS NOT
+  NULL` (+ owner/moderator arms). ⚠️ DECISION FLAGGED, not silent: the
+  owner-present requirement HIDES the ~6 legacy approved unclaimed masters
+  from the current public directory. Options at M9 PRE-APPLY: (a) strict
+  (brief-literal; directory shrinks to owned profiles), (b) grandfather
+  legacy `self_registered` unclaimed rows. Owner decides at M9.
+* Editing after publication (conservative pilot rule, brief-preferred): ANY
+  owner edit of public profile fields on a `published` profile moves it to
+  `submitted` and clears `published_at` (hidden until re-approved). No
+  versioned-draft model in the pilot.
+* Authorization: owner — edit own draft, submit, unpublish own, preview own;
+  moderator — approve/reject(changes_requested)/unpublish/suspend + preview
+  any; owner can NEVER self-approve (transition RPCs are moderator-gated
+  internally, M4 pattern). All transitions via SECURITY DEFINER RPCs with
+  events in the same transaction; stable codes; idempotent where reasonable
+  (re-submit of submitted → no-op code).
+* Preview: reuse `/masters/[idOrSlug]` (the RLS owner/moderator arms already
+  render non-public profiles) + a visible "PODGLĄD — profil niepubliczny"
+  banner when the viewer is owner/moderator and the profile is not published.
+  No duplicate card implementation.
+
 ### 12.5 Delivery sequence (revised) and pilot-readiness gate
 
 * **4A** — claim architecture + atomic RPC foundation (M7) — DONE (applied+verified).
