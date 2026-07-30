@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
 import { getVisibleWorkspaceDestinations } from '@/lib/workspace/destinations'
+import { WORKSPACE_DESTINATION_ICONS } from '@/lib/navigation/icons'
 
 /**
  * Reusable workspace hub (docs/PLATFORM_WORKSPACES.md §3.1): lists exactly
@@ -20,14 +21,19 @@ export default function AvatarMenu({ onNavigate }: { onNavigate?: () => void }) 
 
   return (
     <ul className="space-y-1">
-      {destinations.map((destination) => (
+      {destinations.map((destination) => {
+        const Icon = WORKSPACE_DESTINATION_ICONS[destination.key]
+        return (
         <li key={destination.key}>
           <Link
             href={destination.href}
             onClick={onNavigate}
             className="flex items-center justify-between rounded-xl px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
           >
-            {destination.label}
+            <span className="flex items-center gap-2.5">
+              <Icon className="h-4 w-4 text-gray-500" aria-hidden="true" />
+              {destination.label}
+            </span>
             {destination.badge && (
               <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                 {destination.badge}
@@ -35,7 +41,8 @@ export default function AvatarMenu({ onNavigate }: { onNavigate?: () => void }) 
             )}
           </Link>
         </li>
-      ))}
+        )
+      })}
     </ul>
   )
 }

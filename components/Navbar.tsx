@@ -3,9 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Menu, X } from 'lucide-react'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import AvatarMenu from './workspace/AvatarMenu'
+import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
+
+const LogoutIcon = LOGOUT_ICON
 
 const roleLabel: Record<string, string> = {
   admin: 'Administrator',
@@ -46,11 +50,7 @@ export default function Navbar() {
           aria-label="Menu"
           className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-gray-100"
         >
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="3" y1="6" x2="19" y2="6" />
-            <line x1="3" y1="11" x2="19" y2="11" />
-            <line x1="3" y1="16" x2="19" y2="16" />
-          </svg>
+          <Menu className="h-[22px] w-[22px]" aria-hidden="true" />
         </button>
       </nav>
 
@@ -76,10 +76,7 @@ export default function Navbar() {
             aria-label="Zamknij menu"
             className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-100"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="2" y1="2" x2="16" y2="16" />
-              <line x1="16" y1="2" x2="2" y2="16" />
-            </svg>
+            <X className="h-[18px] w-[18px]" aria-hidden="true" />
           </button>
         </div>
 
@@ -125,8 +122,9 @@ export default function Navbar() {
             <div className="px-5 py-3">
               <button
                 onClick={handleLogout}
-                className="w-full rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 active:bg-red-100"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 active:bg-red-100"
               >
+                <LogoutIcon className="h-4 w-4" aria-hidden="true" />
                 Wyloguj się
               </button>
             </div>
@@ -152,6 +150,7 @@ function NavItem({
   highlight?: boolean
   badge?: string
 }) {
+  const Icon = DRAWER_NAV_ICONS[href]
   return (
     <Link
       href={href}
@@ -160,7 +159,15 @@ function NavItem({
         bold ? 'font-semibold' : ''
       } ${highlight ? 'bg-black text-white hover:bg-gray-800' : 'text-gray-700'}`}
     >
-      {children}
+      <span className="flex items-center gap-2.5">
+        {Icon && (
+          <Icon
+            className={`h-4 w-4 ${highlight ? 'text-white' : 'text-gray-500'}`}
+            aria-hidden="true"
+          />
+        )}
+        {children}
+      </span>
       {badge && (
         <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
           {badge}
