@@ -445,13 +445,23 @@ suspended: moderator-only, from any state; owner-deleted: M8/M9 withdrawal
   ≥1 specialization, owner present (`user_id NOT NULL`), not suspended.
   Soft: social links, facilities, events, credentials, level, website
   (completeness meter reuses `lib/master/completeness.ts`).
-* Public predicate (M9 replaces the §12.2 draft):
-  `status='approved' AND publication_status='published' AND user_id IS NOT
-  NULL` (+ owner/moderator arms). ⚠️ DECISION FLAGGED, not silent: the
-  owner-present requirement HIDES the ~6 legacy approved unclaimed masters
-  from the current public directory. Options at M9 PRE-APPLY: (a) strict
-  (brief-literal; directory shrinks to owned profiles), (b) grandfather
-  legacy `self_registered` unclaimed rows. Owner decides at M9.
+* Public predicate (M9 replaces the §12.2 draft) — **owner decision
+  2026-07-30**: existing verified legacy public profiles are explicitly
+  migrated to the distinct `legacy_published` state; all new and pilot
+  profiles require an owner and the normal workflow. Visibility:
+  `status='approved' AND (publication_status='legacy_published' OR
+  (publication_status='published' AND user_id IS NOT NULL))` (+ owner and
+  moderator arms), evaluated through a SECURITY DEFINER helper so the RLS
+  policy never sub-queries a protected table as the caller. The M9 backfill
+  marks EVERY currently-approved row `legacy_published` (one audited event
+  each), so the publicly visible set is IDENTICAL before and after the M9
+  cutover — zero directory/map blink; the workflow gate applies only from
+  the first pilot profile onward.
+* Publication state lives in a SEPARATE 1:1 table (`master_publication`),
+  not on `sauna_masters`: clients get no DML (deny-all RLS + DEFINER
+  transition RPCs in M10) — owners structurally cannot self-publish and the
+  privileged-column guard needs NO new carve-outs; append-only
+  `master_publication_events` mirrors the M3 pattern.
 * Editing after publication (conservative pilot rule, brief-preferred): ANY
   owner edit of public profile fields on a `published` profile moves it to
   `submitted` and clears `published_at` (hidden until re-approved). No
