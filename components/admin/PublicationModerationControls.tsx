@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/app/(main)/admin/masters/publication/actions'
 import type { PublicationTransitionResult } from '@/lib/master/publicationTransitions'
 import {
+  MASTER_NOT_APPROVED_GUIDANCE_PL,
   MODERATOR_ACTIONS_REQUIRING_REASON,
   type ModeratorPublicationAction,
 } from '@/lib/master/publicationView'
@@ -41,6 +43,11 @@ export default function PublicationModerationControls({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [reason, setReason] = useState('')
+  // SP-039P0: `master_not_approved` is a correct rejection (double gate) —
+  // the moderator additionally gets a pointer to the master-moderation tab.
+  // Approval of the base master stays a SEPARATE, manual decision; after it,
+  // the moderator returns here and approves the publication on its own.
+  const [showMasterNotApprovedHint, setShowMasterNotApprovedHint] = useState(false)
 
   function run(action: ModeratorPublicationAction) {
     const trimmed = reason.trim()
@@ -73,6 +80,7 @@ export default function PublicationModerationControls({
       } else {
         toast.error(result.message)
       }
+      setShowMasterNotApprovedHint(result.code === 'master_not_approved')
       router.refresh()
     })
   }
@@ -87,6 +95,20 @@ export default function PublicationModerationControls({
 
   return (
     <div className="space-y-3">
+      {showMasterNotApprovedHint && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <p>{MASTER_NOT_APPROVED_GUIDANCE_PL.message}</p>
+          <Link
+            href={MASTER_NOT_APPROVED_GUIDANCE_PL.actionHref}
+            className="mt-1.5 inline-block font-semibold text-amber-900 underline"
+          >
+            {MASTER_NOT_APPROVED_GUIDANCE_PL.actionLabel} →
+          </Link>
+          <p className="mt-1 text-xs text-amber-700">
+            Po zatwierdzeniu profilu wróć tutaj i osobno zatwierdź publikację.
+          </p>
+        </div>
+      )}
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
           Uzasadnienie / notatka dla właściciela

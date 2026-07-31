@@ -56,12 +56,15 @@ describe('routes and labels stay unchanged (icons are presentation only)', () =>
     ])
   })
   it('master studio nav keeps its exact routes and labels', () => {
+    // SP-039P0 appended the public Help destination; all pre-existing
+    // entries stay byte-identical.
     expect(MASTER_NAV).toEqual([
       { key: 'dashboard', label: 'Pulpit', href: '/studio' },
       { key: 'profile', label: 'Profil', href: '/studio/profile' },
       { key: 'events', label: 'Moje wydarzenia', href: '/studio/events' },
       { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
       { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
+      { key: 'help', label: 'Pomoc', href: '/help/saunamaster' },
     ])
   })
   it('personal nav keeps its exact routes and labels', () => {

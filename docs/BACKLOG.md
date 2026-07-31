@@ -524,6 +524,22 @@ pilot-readiness gate**: no real invitation before the minimum help package
 (checklist or equivalent, claim + publication + event instructions,
 working support path, tested Quick Start page).
 
+**SP-039P0 update (2026-07-30): the MINIMUM package of H2 + H3 shipped** —
+Studio first-steps card (derived, no stored onboarding state), public
+`/help/saunamaster` Quick Start page, Help entry in the Studio navigation,
+and a centralized temporary support path (`lib/help/support.ts`: contact
+the inviter; no support address exists yet — deciding a real channel is
+still a pilot-readiness item). H4 videos and H5 presentation remain open.
+
+**Still open — active-event owner controls (was G1/G2).** The Quick Start
+page documents the interim procedure honestly (changes to an ACTIVE event
+go through support). The future work remains required:
+
+* owner editing/correction of an active self-created event;
+* owner cancellation of an active self-created event;
+* moderation and audit requirements for both actions (who may change what
+  after an event is public, and how the change is recorded).
+
 ---
 
 # SP-040 Platform Operations and Free-Tier Guardrails

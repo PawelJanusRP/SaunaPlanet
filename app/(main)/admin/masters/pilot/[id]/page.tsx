@@ -193,10 +193,21 @@ export default async function PilotProfileDetailPage({
         </div>
       </section>
 
-      <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2 text-sm text-orange-700">
-        ℹ️ Pochodzenie profilu (przygotowany przez administrację) jest niezmienne.
-        Strona przejęcia profilu dla saunamistrza zostanie uruchomiona w kolejnym etapie
-        — wygenerowany link zacznie działać dopiero po jej wdrożeniu.
+      <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2.5 text-sm text-orange-700">
+        <p className="font-semibold">Jak przebiega przejęcie profilu:</p>
+        <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+          <li>Link z zaproszenia otwiera publiczną stronę przejęcia profilu.</li>
+          <li>Zaproszona osoba loguje się lub zakłada konto.</li>
+          <li>Następnie samodzielnie przejmuje profil przyciskiem na tej stronie.</li>
+          <li>
+            Przejęcie nie publikuje profilu — właściciel uzupełnia wizytówkę w
+            Master Studio i zgłasza ją do moderacji.
+          </li>
+          <li>Profil staje się publiczny dopiero po zatwierdzeniu.</li>
+        </ol>
+        <p className="mt-1.5 text-xs text-orange-600">
+          Pochodzenie profilu (przygotowany przez administrację) jest niezmienne.
+        </p>
       </div>
 
       {/* Readiness checklist */}

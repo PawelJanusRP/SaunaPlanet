@@ -95,6 +95,21 @@ export function resolveModeratorPublicationActions(
 export const MODERATOR_ACTIONS_REQUIRING_REASON: readonly ModeratorPublicationAction[] =
   ['request_changes', 'suspend', 'restore']
 
+/**
+ * SP-039P0 — moderator guidance for the `master_not_approved` result of the
+ * approve RPC. The double gate is intentional: the BASE master profile must
+ * be approved (admin panel, masters tab) before publication approval; the
+ * two decisions stay separate and the RPC result code stays authoritative.
+ */
+export const MASTER_NOT_APPROVED_GUIDANCE_PL = {
+  message:
+    'Najpierw zatwierdź profil saunamistrza. Publikacja wizytówki jest ' +
+    'możliwa dopiero po zatwierdzeniu profilu podstawowego.',
+  /** The real master-moderation surface: /admin, masters tab. */
+  actionHref: '/admin?tab=masters',
+  actionLabel: 'Przejdź do moderacji saunamistrzów',
+} as const
+
 /** Saving a material edit on a publicly visible profile demotes it (M10
  *  trigger) — the editor must warn BEFORE save. */
 export function needsMaterialEditWarning(status: PublicationStatus): boolean {

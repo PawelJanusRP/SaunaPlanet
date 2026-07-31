@@ -328,9 +328,17 @@ private data in any analytics payload.
 * **SP-039H2 — In-app helper**: Studio first-steps card (Layer 1),
   contextual help strings (Layer 2), event empty states, support links.
   Depends on: 4C2 shipped (yes); support contact decided.
+  *Minimum shipped with SP-039P0 (2026-07-30): the first-steps card
+  (components/studio/FirstStepsCard.tsx over lib/master/onboarding.ts —
+  fully derived, no stored onboarding state) plus the shared support block
+  (lib/help/support.ts, temporary contact-the-inviter path).*
 * **SP-039H3 — Quick Start page**: `/help/saunamaster`, screenshots,
   direct task links, printable layout. Depends on: UI declared stable
   after the 4E Preview E2E; G1/G2 fixed or §8 scoped out.
+  *Minimum shipped with SP-039P0 (2026-07-30): the public page with the ten
+  task sections; §8 active-event editing is scoped out with honest interim
+  wording (changes to an active event go through support). Screenshots and
+  PDF export remain open.*
 * **SP-039H4 — Video guides**: record + publish after final E2E GREEN;
   embed/link from the help page and Studio.
 * **SP-039H5 — Pilot presentation**: deck + feedback/support process for

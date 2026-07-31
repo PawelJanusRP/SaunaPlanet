@@ -10,6 +10,7 @@
 import {
   Building2,
   CalendarDays,
+  CircleHelp,
   Flame,
   Heart,
   LayoutDashboard,
@@ -59,6 +60,7 @@ export const WORKSPACE_NAV_ICONS: Record<string, LucideIcon> = {
   // master studio
   profile: UserRound,
   affiliations: Link,
+  help: CircleHelp,
   // owner workspace
   reservations: TicketCheck,
   team: Users,
