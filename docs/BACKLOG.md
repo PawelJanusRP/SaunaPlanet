@@ -359,8 +359,13 @@ complete integration with the SP-036 submission workflow.
 # SP-039 Saunamaster Pilot Foundation
 
 Status: **ACTIVE PRODUCT SPRINT** (Slice 1 CLOSED/deployed 2026-07-27;
-Slices 2–6 planned). Full slice structure and pilot phase:
-docs/ROADMAP.md §SP-039 / §SP-039P.
+Slices 2–3 deployed to Production 2026-07-30, merge `d960bc5`; remaining
+scope — public claim, publication workflow, onboarding/help, executed as
+sub-slices 4A–4E — complete on `feature/sp-039-master-public-claim` with
+Preview E2E GREEN and migrations M0–M10a applied+verified on Production;
+merge, Production deployment, domain and real invitations pending). Full
+slice structure and pilot phase: docs/ROADMAP.md §SP-039 / §SP-039P;
+delivery record: docs/SP039_SLICE4_PUBLIC_CLAIM.md §12.7.
 
 Highest current product priority: a controlled private pilot with the first
 10 sauna masters. The sprint delivers the master profile plus a
@@ -389,7 +394,7 @@ own-row visibility. Migrations:
 `supabase/2026-07-27_sp039_masters_select_fix.sql`. Deferred to Slice 5:
 pending-master profile editor (currently hidden by `StudioAccessNotice`).
 
-## Slice 2 — Claim Architecture and Security Review (NEXT)
+## Slice 2 — Claim Architecture and Security Review (DELIVERED 2026-07-27)
 
 Architecture/security review only — **no implementation**. Must define:
 prepared-profile lifecycle; claim-invitation lifecycle; profile-ownership
@@ -539,6 +544,36 @@ go through support). The future work remains required:
 * owner cancellation of an active self-created event;
 * moderation and audit requirements for both actions (who may change what
   after an event is public, and how the change is recorded).
+
+**Merge-readiness review follow-ups (2026-07-31, all non-blocking).** The
+final SP-039 review returned GO with these recorded items; none changes
+behavior incorrectly today:
+
+* *Before pilot wave 2:* the public profile page owner controls (avatar,
+  cover, edit modal) write material fields without the demotion warning
+  the Studio editor shows — a published owner editing from the public page
+  is silently (but correctly and audited) demoted to `submitted`; add the
+  same warning there. Also: pending owners see "Ustawienia" in the Studio
+  nav but the page still requires `approved` — gate it via
+  `resolveStudioGate` or hide the item (events/affiliations lockout is
+  intentional).
+* *Before the next migration:* migration filename sort order does not
+  match apply order (unpadded `m10 < m6…m9`, rollbacks interleaved);
+  adopt zero-padded sequence numbers or a rollback subfolder. Drift
+  guards make misordering fail-loud today.
+* *Cleanup:* `NavItem` (Navbar) and `PanelNavItem` (SaunaMap) are
+  near-identical twins — extract one shared drawer nav item component.
+* *Cosmetic / KNOWN_ISSUES candidate:* an approved owner with an
+  unpublished publication sees their own card on the public `/masters`
+  list (RLS owner arm); the detail page handles this correctly with the
+  preview banner.
+* *Dependency:* `npm audit` reports high-severity advisories in `sharp`
+  (transitive via `next@16.2.10`, pre-existing on `main`); resolving
+  requires a Next.js bump (16.2.12+) — schedule as its own verified
+  upgrade, never bundled into a feature merge.
+* Already recorded elsewhere and still open: tokenized claim paths in
+  infrastructure request logs (ADR §8, accepted for the pilot);
+  service-role / default EXECUTE grant hardening (KNOWN_ISSUES).
 
 ---
 

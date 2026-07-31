@@ -890,9 +890,12 @@ Completed:
 * Smart Facility Import — website provider (OG/metadata/JSON-LD per-field merge), SSRF-safe fetch, dedup, editable preview, import→submission link, social links, consent-gated image import, moderation provenance (SP-038)
 * Expanded master profile — slug + UUID/slug dual lookup, city, specialties, languages, experience year, social links, website, cover, Founding Partner badge, affiliations, completeness, Studio editor (SP-039 Slice 1)
 
+Implemented, awaiting merge/deploy (complete on `feature/sp-039-master-public-claim`; database M0–M10a live on Production):
+
+* Saunamaster pilot claim + onboarding — admin-prepared profiles, secure claim token, atomic ownership assignment, public claim page with inline auth, Master Studio for claimed pending owners, moderator-gated publication workflow, first-steps onboarding card, `/help/saunamaster` quick start (SP-039 Slices 2–6)
+
 Planned:
 
-* Saunamaster pilot claim + onboarding — admin-prepared profiles, secure claim token, atomic ownership assignment, pending-master onboarding (SP-039 Slices 2–6)
 * Controlled sauna master pilot — waves of 2 → 3 → 5 (SP-039P)
 * Platform operations & free-tier guardrails — /admin/system usage dashboard (SP-040)
 * Recurring Sauna Sessions — series + generated occurrences (SP-041; relocated from SP-039)

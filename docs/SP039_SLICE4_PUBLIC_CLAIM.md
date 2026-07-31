@@ -268,14 +268,17 @@ Vercel/Supabase configuration). The cutover checklist, in order:
 * `lib/claim/publicClaim.ts` — pure public contract (states, codes, PL
   messages, allow-list sanitizers, shape gate).
 * `app/claim/actions.ts` — the only app gateway to the M7 RPCs (fail-closed
-  wrappers; no route/page yet).
+  wrappers; at 4A time no route/page existed yet — 4B later shipped
+  `/claim/master/[token]`, see §12.7).
 * Tests: `claimPublicSql.test.ts` (migration contract),
   `publicClaim.test.ts` (pure model),
   `publicClaimActionContract.test.ts` (static + behavioral wrapper contract).
 
-Out of scope here (4B+): the `/claim/master/[token]` page, inline auth UI,
-callback allow-listing, `Referrer-Policy`, opened-tracking decision, domain
-cutover, real invitations.
+Out of scope for 4A (delivered later, except where noted): the
+`/claim/master/[token]` page, inline auth UI, callback allow-listing and
+`Referrer-Policy` (all shipped in 4B — §12.7); opened-tracking decision
+(still deferred — no tracking implemented); domain cutover and real
+invitations (still pending — §12.7).
 
 ---
 
@@ -615,22 +618,28 @@ Production.
   4-1-1-2-1-1-1-1 (no duplicates), owner deletion compatible with M8/M9,
   the 8 real grandfathered rows untouched; cleanliness `0,0,8,8,4,11`.
 
-Next: Slice 4C2 app layer — Studio publication UI for claimed owners
-(lifting the Slice-2 deferral), moderation UI, preview banner — behind a
-separate owner brief. No UI exists yet; `lib/master/publicationTransitions.ts`
-is the only app-side artifact.
+Slice 4C2 app layer — DELIVERED (commit `d39bc31`): Studio publication UI
+for claimed owners (lifting the Slice-2 deferral), moderator publication
+queue and review UI, public-page preview banner, with
+`lib/master/publicationServer.ts` as the single app-side boundary calling
+the M10 RPCs and the M9 visibility helper. See §12.7 for the delivery
+record.
 
 ### 12.5 Delivery sequence (revised) and pilot-readiness gate
 
 * **4A** — claim architecture + atomic RPC foundation (M7) — DONE (applied+verified).
 * **4B** — public claim page + inline auth return, `Referrer-Policy`,
-  callback `next` allow-list, opened-tracking decision.
+  callback `next` allow-list — DONE (commit `d7d820d`; opened-tracking
+  decision remains deferred, no tracking implemented).
 * **4C** — Master Studio editing for CLAIMED `pending` owners (lifting the
-  Slice-2 deferral), preview affordance, publication lifecycle (M8:
-  `published_at`, predicate, checks, backfill, account-deletion fix).
-* **4D** — `sauna-planet.pl` domain + Supabase Auth cutover (§10).
+  Slice-2 deferral), preview affordance, publication lifecycle — DONE
+  (database: M8–M10a applied+verified, §12.4a/§12.6a/§12.6c — the
+  `published_at` draft described in the original bullet was superseded by
+  the §12.6 `master_publication` model; app UI: 4C2, commit `d39bc31`).
+* **4D** — `sauna-planet.pl` domain + Supabase Auth cutover (§10) — PENDING.
 * **4E** — full pilot E2E:
-  `prepare → invite → authenticate → claim → edit → preview → publish → verify public page`.
+  `prepare → invite → authenticate → claim → edit → preview → publish → verify public page`
+  — DONE on Preview (GREEN, 2026-07-30 — §12.7).
 
 **Pilot-readiness gate — no real invitation is sent until ALL verified:**
 claim link works on the canonical domain; ownership assignment atomic; the
@@ -640,3 +649,32 @@ owner action behind the moderation gate; the public page renders correctly;
 the profile appears in `/masters`; unauthorized edit AND publish attempts
 fail; the flow works on mobile; no raw token or private claim metadata leaks
 anywhere in the flow.
+
+### 12.7 Delivery record (2026-07-31, pre-merge)
+
+Layer status at the end of the feature branch (HEAD of
+`feature/sp-039-master-public-claim`), keeping the four layers distinct:
+
+* **Schema (M7–M10a)** — applied AND verified on Production
+  (§12.4a, §12.6a, §12.6c), including behavioral verification blocks.
+* **RPC transitions (M10 + M10a)** — applied AND verified on Production;
+  app contract mirrored in `lib/master/publicationTransitions.ts`.
+* **Application UI** — delivered on the branch:
+  public claim page + inline auth (4B, `d7d820d`); Studio for claimed
+  pending owners, publication card, owner actions, moderator queue/review,
+  preview banner (4C2, `d39bc31`); navigation icons and map-drawer polish
+  (`64933bc`, `baac446`); SP-039P0 onboarding + minimum help package —
+  first-steps card, `/help/saunamaster`, central support notice, Studio
+  access-loader resilience (`62af713`).
+* **Preview E2E** — the combined claim/publication end-to-end run on the
+  Vercel Preview deployment PASSED (GREEN, 2026-07-30): full lifecycle
+  from moderator-prepared profile through invitation, claim, Studio
+  editing, submission, moderation loop, publication, demotion, suspension,
+  restore and owner-account deletion, plus negative probes and
+  no-overflow checks at 390/768/1440. Test accounts and invitations were
+  removed afterwards; only the documented permanent 3B4 fixture remains.
+
+Explicitly NOT done at the time of this record: merge to `main`,
+Production application deployment of the branch, `sauna-planet.pl`
+domain configuration, and any real pilot invitation. The pilot-readiness
+gate above remains the checklist for those steps.
