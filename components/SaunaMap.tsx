@@ -24,6 +24,7 @@ import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
@@ -641,6 +642,12 @@ export default function SaunaMap() {
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
   const loadSeqRef = useRef(0)
 
+  // SP-039I: `/?sauna=<uuid>` deep link — center on and open that sauna.
+  const searchParams = useSearchParams()
+  const deepLinkSaunaId = searchParams.get('sauna')
+  const deepLinkResolvedRef = useRef(false)
+  const deepLinkSelectedRef = useRef(false)
+
   const visibleItems = items.filter((item) => {
 	  if (mapMode === 'events' && !item.has_upcoming_event) {
 	    return false
@@ -788,6 +795,9 @@ export default function SaunaMap() {
 
   useEffect(() => {
     if (!navigator.geolocation) return
+    // SP-039I: a deep link owns the initial center — don't let geolocation
+    // steal it back to the user's position.
+    if (deepLinkSaunaId) return
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -813,7 +823,7 @@ export default function SaunaMap() {
         timeout: 10000,
       }
     )
-  }, [])
+  }, [deepLinkSaunaId])
 
   // Effect Event: realtime callbacks always see the current loadSaunas
   // (current location/radius) without resubscribing the channel on every
@@ -865,6 +875,59 @@ export default function SaunaMap() {
       }
     }, 700)
   }, [selectedSauna])
+
+  // SP-039I: resolve the deep-link sauna's coordinates and re-center data
+  // loading on it, so the target is fetched regardless of the current radius.
+  // Runs once; failure (invalid UUID / unknown sauna) falls back gracefully.
+  useEffect(() => {
+    if (!deepLinkSaunaId || deepLinkResolvedRef.current) return
+    deepLinkResolvedRef.current = true
+
+    let cancelled = false
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from('saunas')
+        .select('latitude, longitude')
+        .eq('id', deepLinkSaunaId)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (error || !data) {
+        toast.error('Nie znaleziono wskazanej sauny')
+        return
+      }
+
+      setUserLocation([data.latitude, data.longitude])
+      setSelectedLocation([data.latitude, data.longitude])
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [deepLinkSaunaId])
+
+  // SP-039I: once the recentre above has loaded the target into `items`, select
+  // it. Existing MapFocusController (flyTo zoom 16) and the popup effect above
+  // then run unchanged. Runs at most once per deep link.
+  useEffect(() => {
+    if (!deepLinkSaunaId || deepLinkSelectedRef.current) return
+
+    const target = items.find((item) => item.id === deepLinkSaunaId)
+    if (!target) return
+
+    // Defer so the selection lands as an async callback rather than a
+    // synchronous cascading render (react-hooks/set-state-in-effect). The
+    // guard is set inside the callback so a cleanup before it fires can't
+    // strand the deep link unselected.
+    const timer = setTimeout(() => {
+      deepLinkSelectedRef.current = true
+      setSelectedSauna(target)
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [items, deepLinkSaunaId])
 
   return (
     <div className="flex h-screen w-full">
@@ -1386,6 +1449,7 @@ export default function SaunaMap() {
                 <PanelNavItem href="/events" onClick={() => setShowAccountPanel(false)}>Wydarzenia</PanelNavItem>
                 <PanelNavItem href="/masters" onClick={() => setShowAccountPanel(false)}>Saunamistrzowie</PanelNavItem>
                 <PanelNavItem href="/sauny" onClick={() => setShowAccountPanel(false)}>Sauny</PanelNavItem>
+                <PanelNavItem href="/about" onClick={() => setShowAccountPanel(false)}>O aplikacji</PanelNavItem>
               </div>
 
               {user && (

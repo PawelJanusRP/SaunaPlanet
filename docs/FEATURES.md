@@ -782,6 +782,21 @@ Known MVP limitations: pending withdrawal is a DELETE (no history); in-app only 
 
 ---
 
+# SP-039I Pilot UX Polish & Public Changelog
+
+Status: DONE
+
+Implemented:
+
+* Event → map return: event managers (admin or the organizing master) get a "Powrót do mapy" button that deep-links to the associated sauna; ordinary browsing keeps "Powrót do wydarzeń"
+* Map deep link `/?sauna=<uuid>`: resolves the sauna's coordinates (radius-independent), recenters data loading on it, then reuses the existing selectedSauna → MapFocusController → popup flow; invalid/missing IDs fall back to normal map behaviour with a toast
+* Public `/about` page (no auth) with an "O aplikacji" section and "Ostatnie zmiany" changelog, linked from the main drawer and the map account panel for all visitors
+* Version-controlled public changelog source (`lib/changelog.ts`) rendered by `/about`; convention recorded in CLAUDE.md
+
+Notes: no schema changes; authorization model unchanged (deep link reuses the same public sauna read the map already relies on).
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED

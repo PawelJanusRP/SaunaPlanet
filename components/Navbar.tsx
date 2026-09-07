@@ -115,6 +115,7 @@ export default function Navbar() {
             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-gray-400">Odkrywaj</p>
             <NavItem href="/events" onClick={close}>Wydarzenia</NavItem>
             <NavItem href="/masters" onClick={close}>Saunamistrzowie</NavItem>
+            <NavItem href="/about" onClick={close}>O aplikacji</NavItem>
           </div>
 
           {/* Logout */}

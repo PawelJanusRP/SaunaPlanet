@@ -131,6 +131,14 @@ update relevant documentation:
 
 when applicable.
 
+### Public changelog
+
+Every production-facing release that changes user-visible behaviour must add a
+new entry to the public changelog (`lib/changelog.ts`), rendered on `/about`.
+Write it for users (what changed for them), newest first. Internal technical
+and security work stays in Git history and `docs/` — not in the public
+changelog unless it has a meaningful user-visible effect.
+
 ---
 
 ## Marketplace Compatibility
