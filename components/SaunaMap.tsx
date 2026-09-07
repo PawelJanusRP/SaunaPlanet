@@ -25,7 +25,7 @@ import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { Info, Menu, X } from 'lucide-react'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
 const LogoutIcon = LOGOUT_ICON
@@ -210,6 +210,16 @@ function getCategoryColor(category: string) {
       return '#f97316'
   }
 }
+
+// Object-type categories shown in the map's second filter row (excludes the
+// "Wszystko" reset); emoji + label come from the shared helpers above.
+const MAP_FILTER_CATEGORIES = [
+  'public_sauna',
+  'spa',
+  'hotel',
+  'event',
+  'outdoor',
+] as const
 
 const EVENT_PULSE_CLASS = 'sauna-event-pulse'
 
@@ -638,6 +648,7 @@ export default function SaunaMap() {
   const [onlyWithEvents, setOnlyWithEvents] = useState(false)
   const [mapMode, setMapMode] = useState<'saunas' | 'events' | 'all'>('all')
   const [clusterRefreshKey, setClusterRefreshKey] = useState(0)
+  const [showCategoryInfo, setShowCategoryInfo] = useState(false)
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
   const loadSeqRef = useRef(0)
@@ -1102,28 +1113,78 @@ export default function SaunaMap() {
           📍
         </button>
 
-        <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] gap-2 overflow-x-auto rounded-xl bg-white/90 p-2 shadow">
-          {[
-            { value: 'all', label: 'Wszystko' },
-            { value: 'public_sauna', label: '🧖' },
-            { value: 'spa', label: '♨️' },
-            { value: 'hotel', label: '🏨' },
-            { value: 'event', label: '🔥' },
-            { value: 'outdoor', label: '🌲' },
-          ].map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setCategoryFilter(cat.value)}
-              className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${
-                categoryFilter === cat.value
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] items-center gap-1 rounded-xl bg-white/90 p-2 shadow">
+          <div className="flex gap-2 overflow-x-auto">
+            {[
+              { value: 'all', label: 'Wszystko' },
+              { value: 'public_sauna', label: '🧖' },
+              { value: 'spa', label: '♨️' },
+              { value: 'hotel', label: '🏨' },
+              { value: 'event', label: '🔥' },
+              { value: 'outdoor', label: '🌲' },
+            ].map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setCategoryFilter(cat.value)}
+                className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${
+                  categoryFilter === cat.value
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Legenda kategorii — ikony w tym rzędzie to same emoji, więc (i)
+              wyjaśnia ich znaczenie. Przypięta poza obszarem przewijania. */}
+          <button
+            type="button"
+            onClick={() => setShowCategoryInfo((v) => !v)}
+            aria-label="Co oznaczają filtry kategorii?"
+            aria-expanded={showCategoryInfo}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
+              showCategoryInfo ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Info className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
+
+        {showCategoryInfo && (
+          <div className="absolute left-3 top-28 z-[10000] w-64 max-w-[calc(100vw-24px)] rounded-xl border bg-white p-3 text-sm shadow-lg">
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <p className="font-semibold text-gray-900">Kategorie obiektów</p>
+              <button
+                type="button"
+                onClick={() => setShowCategoryInfo(false)}
+                aria-label="Zamknij objaśnienie"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            <ul className="space-y-1.5">
+              <li className="flex items-center gap-2 text-gray-700">
+                <span className="w-5 text-center">✳️</span>
+                <span><span className="font-medium">Wszystko</span> — bez filtra kategorii</span>
+              </li>
+              {MAP_FILTER_CATEGORIES.map((value) => (
+                <li key={value} className="flex items-center gap-2 text-gray-700">
+                  <span className="w-5 text-center">{getCategoryEmoji(value)}</span>
+                  <span>{getCategoryLabel(value)}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-2 border-t pt-2 text-xs text-gray-500">
+              Górny rząd wybiera tryb mapy (sauny, eventy albo jedno i drugie),
+              a ten rząd filtruje po typie obiektu.
+            </p>
+          </div>
+        )}
 		<div className="absolute left-3 top-3 z-[9999] flex gap-2 rounded-xl bg-white/90 p-2 shadow">
 		{[
 			{ value: 'all', label: '🧖+🔥' },
