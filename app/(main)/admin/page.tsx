@@ -188,6 +188,7 @@ export default async function AdminPage({
     { id: 'recenzje',    label: `Recenzje (${reviews?.length ?? 0})` },
     { id: 'masters',     label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
     { id: 'pilot',       label: '🧖 Pilot saunamistrzów', href: '/admin/masters/pilot' },
+    { id: 'publikacje',  label: '📣 Publikacje', href: '/admin/masters/publication' },
     { id: 'certyfikaty', label: `Certyfikaty${pendingCertCount > 0 ? ` (${pendingCertCount})` : ''}` },
     { id: 'slownik',     label: 'Słownik certyfikatów' },
     { id: 'managerowie', label: `Managerowie${pendingManagerCount > 0 ? ` (${pendingManagerCount})` : ''}` },

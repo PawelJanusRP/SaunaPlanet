@@ -1,0 +1,28 @@
+# Line-ending policy (SP-039 pre-merge cleanup).
+#
+# The repository is developed on Windows; editor tooling has repeatedly
+# re-written files to CRLF, inflating diffs (BACKLOG.md, package files).
+# Policy: text files are stored with LF in the repository. Existing files
+# committed with CRLF are NOT mass-renormalized here — they converge to LF
+# individually as they are next modified, keeping diffs reviewable.
+* text=auto
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
+*.css text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary assets — never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

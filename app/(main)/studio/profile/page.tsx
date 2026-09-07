@@ -13,6 +13,12 @@ import {
   masterBreadcrumbs,
 } from '@/lib/workspace/master'
 import { loadMasterStudioScope } from '@/lib/workspace/masterServer'
+import { resolveStudioGate } from '@/lib/master/studioAccess'
+import {
+  effectivePublicationStatus,
+  needsMaterialEditWarning,
+} from '@/lib/master/publicationView'
+import { loadPublicationState } from '@/lib/master/publicationServer'
 
 export default async function StudioProfilePage() {
   const supabase = await createClient()
@@ -24,10 +30,17 @@ export default async function StudioProfilePage() {
 
   const { profile } = await loadMasterStudioScope(supabase, user.id)
 
+  // 4C2: pending owners edit too — only rejected/none keep the notice.
   if (!profile) return <StudioAccessNotice kind="none" />
-  if (profile.status !== 'approved') {
-    return <StudioAccessNotice kind={profile.status === 'pending' ? 'pending' : 'rejected'} masterId={profile.id} />
+  const gate = resolveStudioGate(profile.status)
+  if (gate.kind !== 'workspace') {
+    return <StudioAccessNotice kind="rejected" masterId={profile.id} />
   }
+
+  const publication = await loadPublicationState(supabase, profile.id)
+  const demotionWarning = needsMaterialEditWarning(
+    effectivePublicationStatus(publication?.publicationStatus ?? null)
+  )
 
   return (
     <WorkspaceShell
@@ -39,6 +52,16 @@ export default async function StudioProfilePage() {
       activeNavKey="profile"
     >
       <div className="space-y-4 sm:space-y-6">
+        {demotionWarning && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">⚠️ Profil jest widoczny publicznie.</p>
+            <p className="mt-1">
+              Zapisanie zmian w publicznych polach (w tym zdjęć) tymczasowo ukryje
+              profil z katalogu — wróci do moderacji i pojawi się ponownie po jej
+              zatwierdzeniu.
+            </p>
+          </div>
+        )}
         <WorkspaceSection title="📷 Zdjęcia profilu">
           <div className="flex items-center gap-4">
             {profile.avatarUrl ? (
@@ -82,6 +105,7 @@ export default async function StudioProfilePage() {
             profilu edytujesz tutaj.
           </p>
           <MasterProfileForm
+            demotionWarning={demotionWarning}
             initial={{
               name: profile.name,
               bio: profile.bio,

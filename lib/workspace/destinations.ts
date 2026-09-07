@@ -37,7 +37,8 @@ export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
     label: 'Studio',
     href: '/studio',
     status: 'available',
-    isVisible: (access) => access.isAuthenticated && access.hasLinkedMasterProfile,
+    // 4C2: pending claimed owners see the Studio too (publication workflow).
+    isVisible: (access) => access.isAuthenticated && access.hasMasterStudioAccess,
   },
   {
     key: 'admin',
@@ -54,6 +55,7 @@ export const GUEST_ACCESS: WorkspaceAccess = {
   role: null,
   hasApprovedSaunaMembership: false,
   hasLinkedMasterProfile: false,
+  hasMasterStudioAccess: false,
 }
 
 /**
@@ -67,6 +69,7 @@ export const AUTHENTICATED_BASE_ACCESS: WorkspaceAccess = {
   role: null,
   hasApprovedSaunaMembership: false,
   hasLinkedMasterProfile: false,
+  hasMasterStudioAccess: false,
 }
 
 /** Destinations the user may both see and navigate to (planned routes excluded). */

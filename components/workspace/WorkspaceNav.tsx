@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { WorkspaceNavItem } from '@/lib/workspace/types'
+import { WORKSPACE_NAV_ICONS } from '@/lib/navigation/icons'
 
 /**
  * Single navigation definition rendered in two responsive variants:
@@ -33,6 +34,7 @@ export default function WorkspaceNav({
       <ul className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:gap-0.5 md:overflow-visible md:pb-0">
         {items.map((item) => {
           const active = isActive(item)
+          const Icon = WORKSPACE_NAV_ICONS[item.key]
           return (
             <li key={item.key} className="shrink-0 md:shrink">
               <Link
@@ -44,6 +46,7 @@ export default function WorkspaceNav({
                     : 'text-gray-600 hover:bg-gray-100 hover:text-black'
                 }`}
               >
+                {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />}
                 <span className="truncate">{item.label}</span>
                 {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
                   <span

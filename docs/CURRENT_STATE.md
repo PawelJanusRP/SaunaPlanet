@@ -1,6 +1,8 @@
 # SaunaPlanet — Current Project State
 
-Last updated: 2026-07-27 (`main` @ `e3b037c`, SP-039 Slice 1 deployed).
+Last updated: 2026-07-31 (`main` @ `d960bc5` with SP-039 Slices 1–3
+deployed; Slice 4 complete on `feature/sp-039-master-public-claim`,
+merge-readiness review passed, merge pending).
 
 This is the canonical **handover document** for ongoing development. Its purpose
 is orientation: a new AI or human session should understand the current project
@@ -164,12 +166,24 @@ Also merged into `main` since the summary above:
 
 ## In Review
 
-Nothing in review — `main == origin/main == production == e3b037c`. All
-applied migrations are versioned in Git under `supabase/`.
+`main == origin/main == production == d960bc5` (SP-039 Slices 1–3: admin
+pilot preparation, invitations, M0–M6). All applied migrations are
+versioned in Git under `supabase/` — **including M7–M10a, which are applied
+AND verified on Production** although their app layer still lives on the
+feature branch.
 
-The next work is **SP-039 Slice 2 — Claim Architecture and Security Review**
-(architecture/security review only; no implementation) for the private
-10-master pilot. See docs/ROADMAP.md §SP-039.
+**`feature/sp-039-master-public-claim` is complete and awaiting merge
+authorization** (final merge-readiness review 2026-07-31: GO with
+non-blocking follow-ups). It delivers: public claim page with inline auth
+(4B), Master Studio for claimed pending owners + publication workflow UI
+for owners and moderators (4C2), navigation icons + map-drawer polish,
+SP-039H minimum help package and SP-039P0 onboarding (first-steps card,
+`/help/saunamaster`, support notice, Studio access-loader resilience).
+The combined claim/publication Preview E2E is GREEN (2026-07-30).
+
+NOT yet done: merge to `main`, Production deployment of the branch,
+`sauna-planet.pl` domain configuration, real pilot invitations.
+See docs/SP039_SLICE4_PUBLIC_CLAIM.md §12.7.
 
 ---
 
@@ -188,13 +202,13 @@ permissions: `docs/USER_MODEL.md`):
 * **Favorite / Interest** — `user_favorites`, `user_event_interests`
 * **Affiliation** — `master_affiliations` (SP-035; Decision 016)
 
-Planned, not yet implemented:
+* **Prepared / claimed master profile** — IMPLEMENTED (SP-039): admin
+  prepares profiles, one-time hashed claim tokens, atomic claim, publication
+  workflow (`master_publication` + moderator-gated transitions), account
+  deletion compatibility; database live on Production (M0–M10a), app UI on
+  the feature branch pending merge
 
-* **Prepared / claimed master profile** — admin-prepared profiles claimed by
-  the authenticated master via a secure token (SP-039 Slices 2–6; the six
-  independent states — prepared / claimed / identity-verified /
-  qualifications-verified / Founding Partner / published — must never be
-  collapsed; see docs/ROADMAP.md §SP-039)
+Planned, not yet implemented:
 * **Recurring session series** — `sauna_event_series` + generated concrete
   occurrences (SP-041, relocated out of SP-039; authoritative model:
   `docs/EVENT_SESSION_MODEL.md`)

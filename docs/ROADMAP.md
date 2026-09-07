@@ -158,6 +158,13 @@ Delivered (2026-07):
   **CLOSED — deployed to production** 2026-07-27
   (production SHA `e3b037c3da880a1f5f22d5391cc517a1c43e09ca`). SP-039
   continues with the profile-claim pilot (Slices 2–6, below).
+  **Status 2026-07-31:** Slices 2–3 deployed to Production (merge
+  `d960bc5`, migrations M0–M6); the remaining scope (public claim, Studio
+  publication workflow, onboarding/help — executed as sub-slices 4A–4E,
+  see docs/SP039_SLICE4_PUBLIC_CLAIM.md §12.7) is complete on
+  `feature/sp-039-master-public-claim` with Preview E2E GREEN and
+  migrations M7–M10a applied+verified on Production; merge, Production
+  deployment, domain cutover and real invitations are still pending.
 
 Remaining:
 
@@ -235,7 +242,7 @@ for pending masters; pending owners can read their own row and are
 authorized by RLS/Storage, but the pending onboarding editor is exposed
 only in Slice 5.
 
-## Slice 2 — Claim Architecture and Security Review (NEXT)
+## Slice 2 — Claim Architecture and Security Review (DELIVERED 2026-07-27)
 
 Architecture and security review **only** — no claim functionality is
 implemented in this slice. It must define: prepared-profile lifecycle;
@@ -258,7 +265,7 @@ invitation state machine, token security, atomic claim RPC, RLS matrix,
 threat model, migration sequence; §22.1 approved decisions, §22.2
 remaining build-time implementation details).
 
-## Slice 3 — Admin-Prepared Profiles and Claim Invitations
+## Slice 3 — Admin-Prepared Profiles and Claim Invitations (DELIVERED — Production `d960bc5`, 2026-07-30)
 
 Admin draft creation and editing of all pilot fields; readiness status;
 invitation creation with secure token generation and token-hash
@@ -271,7 +278,7 @@ invitation message for manual sending via email / Messenger / WhatsApp —
 `revoked`/`expired`; `opened`/`claimed` are Slice 4). **Slice 3A implementation
 design (finalized):** `docs/SP039_SLICE3_ADMIN_INVITATIONS.md`.
 
-## Slice 4 — Authentication Return and Atomic Claim
+## Slice 4 — Authentication Return and Atomic Claim (DELIVERED on feature branch — M7 on Production, merge pending)
 
 Invitation preview; sign-in; account registration; email confirmation;
 return to claim after authentication; explicit **"This is my profile"**
@@ -283,7 +290,7 @@ profile not already claimed; account not already attached to another
 master profile; no conflicting concurrent claim succeeded. Negative and
 concurrency tests documented.
 
-## Slice 5 — Pilot Onboarding Experience
+## Slice 5 — Pilot Onboarding Experience (DELIVERED on feature branch — 4C2 + SP-039P0, merge pending)
 
 "We prepared your profile" screen; prefilled profile editor; pending-master
 Studio mode (**resolves the Slice 1 deferred `StudioAccessNotice`
@@ -292,7 +299,7 @@ before publication; incorrect-data and incorrect-affiliation reporting;
 verification labels; moderator-only Founding Partner assignment; pilot
 instructions; an admin onboarding-status view for the 10 participants.
 
-## Slice 6 — Pilot E2E and Production Readiness
+## Slice 6 — Pilot E2E and Production Readiness (Preview E2E GREEN 2026-07-30; merge/deploy/domain pending)
 
 Authorization matrix; RLS tests; RPC tests; token expiry / revocation /
 replay; claim concurrency; new-account path; existing-account path;
@@ -341,6 +348,12 @@ shares the profile publicly.
   reviewed data.
 * Moderator recovery path verified (a stuck/incorrect claim can be
   resolved without direct database surgery).
+* **Minimum saunamaster help package live** (gate extension per
+  docs/SP039H_SAUNAMASTER_ONBOARDING_HELP.md §8): Studio first-steps
+  checklist, public `/help/saunamaster` quick start, and a support path
+  with the security warning — delivered by SP-039P0; a decision on the
+  real support channel (beyond contact-the-inviter) accompanies the
+  first invitations.
 
 ## Exit criteria
 

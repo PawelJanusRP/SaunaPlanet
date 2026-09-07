@@ -24,6 +24,10 @@ import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
 import Link from 'next/link'
+import { Menu, X } from 'lucide-react'
+import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
+
+const LogoutIcon = LOGOUT_ICON
 
 type TopSauna = {
   sauna_id: string
@@ -1022,13 +1026,10 @@ export default function SaunaMap() {
       <div className="relative flex-1">
         <button
           onClick={() => setShowAccountPanel(true)}
+          aria-label="Menu"
           className="absolute right-4 top-4 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5"
         >
-          <div className="flex flex-col items-center gap-1">
-            <span className="block h-[2px] w-5 rounded bg-gray-800" />
-            <span className="block h-[2px] w-5 rounded bg-gray-800" />
-            <span className="block h-[2px] w-5 rounded bg-gray-800" />
-          </div>
+          <Menu className="h-[22px] w-[22px] text-gray-800" aria-hidden="true" />
         </button>
 
         <button
@@ -1332,7 +1333,7 @@ export default function SaunaMap() {
 
       {showAccountPanel && (
         <div
-          className="fixed inset-0 z-[11000] flex justify-end bg-black/40"
+          className="fixed inset-0 z-[11000] flex justify-end bg-transparent"
           onClick={() => setShowAccountPanel(false)}
         >
           <div
@@ -1344,9 +1345,10 @@ export default function SaunaMap() {
 
               <button
                 onClick={() => setShowAccountPanel(false)}
-                className="text-gray-500"
+                aria-label="Zamknij menu"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
               >
-                ✕
+                <X className="h-[18px] w-[18px]" aria-hidden="true" />
               </button>
             </div>
 
@@ -1362,29 +1364,28 @@ export default function SaunaMap() {
                 </div>
               ) : (
                 <div className="border-b px-4 py-4 space-y-2">
-                  <Link href="/auth/login" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 font-semibold text-gray-700 hover:bg-gray-100">Zaloguj się</Link>
-                  <Link href="/auth/register" onClick={() => setShowAccountPanel(false)} className="block rounded-xl bg-black px-3 py-2 text-center text-white hover:bg-gray-800">Zarejestruj się</Link>
+                  <PanelNavItem href="/auth/login" onClick={() => setShowAccountPanel(false)} bold>Zaloguj się</PanelNavItem>
+                  <PanelNavItem href="/auth/register" onClick={() => setShowAccountPanel(false)} highlight>Zarejestruj się</PanelNavItem>
                 </div>
               )}
 
               {user && (
                 <div className="border-b px-4 py-3 space-y-1">
-                  <Link href="/profile" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Mój profil</Link>
-                  <Link href="/submit" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Zgłoś saunę</Link>
+                  <PanelNavItem href="/profile" onClick={() => setShowAccountPanel(false)}>Mój profil</PanelNavItem>
+                  <PanelNavItem href="/submit" onClick={() => setShowAccountPanel(false)}>Zgłoś saunę</PanelNavItem>
                   {(role === 'admin' || role === 'moderator') && (
-                    <Link href="/admin" onClick={() => setShowAccountPanel(false)} className="flex items-center justify-between rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">
+                    <PanelNavItem href="/admin" onClick={() => setShowAccountPanel(false)} badge="Admin">
                       Panel admina
-                      <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">Admin</span>
-                    </Link>
+                    </PanelNavItem>
                   )}
                 </div>
               )}
 
               <div className="border-b px-4 py-3 space-y-1">
                 <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Odkrywaj</p>
-                <Link href="/events" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Wydarzenia</Link>
-                <Link href="/masters" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Saunamistrzowie</Link>
-                <Link href="/sauny" onClick={() => setShowAccountPanel(false)} className="block rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-100">Sauny</Link>
+                <PanelNavItem href="/events" onClick={() => setShowAccountPanel(false)}>Wydarzenia</PanelNavItem>
+                <PanelNavItem href="/masters" onClick={() => setShowAccountPanel(false)}>Saunamistrzowie</PanelNavItem>
+                <PanelNavItem href="/sauny" onClick={() => setShowAccountPanel(false)}>Sauny</PanelNavItem>
               </div>
 
               {user && (
@@ -1395,8 +1396,9 @@ export default function SaunaMap() {
                       setShowAccountPanel(false)
                       window.location.reload()
                     }}
-                    className="w-full rounded-xl bg-red-50 px-4 py-2.5 text-center text-sm font-medium text-red-600 hover:bg-red-100 active:bg-red-200"
+                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 active:bg-red-200"
                   >
+                    <LogoutIcon className="h-4 w-4" aria-hidden="true" />
                     Wyloguj
                   </button>
                 </div>
@@ -1431,7 +1433,52 @@ export default function SaunaMap() {
 			onClose={() => setEventSauna(null)}
 			onAdded={loadSaunas}
 		/>
-	  )}		
+	  )}
     </div>
+  )
+}
+
+// Account-panel link with the same rendering contract as the Navbar drawer:
+// Lucide icon from the central mapping beside the visible label; routes,
+// labels and authorization gating stay with the caller.
+function PanelNavItem({
+  href,
+  onClick,
+  children,
+  bold,
+  highlight,
+  badge,
+}: {
+  href: string
+  onClick: () => void
+  children: React.ReactNode
+  bold?: boolean
+  highlight?: boolean
+  badge?: string
+}) {
+  const Icon = DRAWER_NAV_ICONS[href]
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center justify-between rounded-xl px-3 py-2 transition-colors ${
+        bold ? 'font-semibold' : ''
+      } ${highlight ? 'bg-black text-white hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}`}
+    >
+      <span className="flex items-center gap-2.5">
+        {Icon && (
+          <Icon
+            className={`h-4 w-4 ${highlight ? 'text-white' : 'text-gray-500'}`}
+            aria-hidden="true"
+          />
+        )}
+        {children}
+      </span>
+      {badge && (
+        <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+          {badge}
+        </span>
+      )}
+    </Link>
   )
 }

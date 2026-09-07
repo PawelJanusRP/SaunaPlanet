@@ -17,6 +17,9 @@ export const MASTER_NAV: WorkspaceNavItem[] = [
   { key: 'events', label: 'Moje wydarzenia', href: '/studio/events' },
   { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
   { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
+  // SP-039P0: public Quick Start — reachable for every owner, including
+  // pending ones (help never depends on approved status).
+  { key: 'help', label: 'Pomoc', href: '/help/saunamaster' },
 ]
 
 /** Breadcrumb trail: platform root → studio home → optional current page. */

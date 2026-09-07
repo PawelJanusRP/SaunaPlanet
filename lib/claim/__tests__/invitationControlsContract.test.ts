@@ -122,9 +122,15 @@ describe('mutation boundaries', () => {
   })
 })
 
-describe('end-user claim route is NOT implemented in 3B3', () => {
-  it('no /claim route directory exists', () => {
-    expect(existsSync(join('app', 'claim'))).toBe(false)
+describe('end-user claim route lives EXACTLY at the designed path (4B)', () => {
+  it('the only claim route is /claim/master/[token]', () => {
+    expect(
+      existsSync(join('app', 'claim', 'master', '[token]', 'page.tsx'))
+    ).toBe(true)
+    // no stray siblings that would widen the public surface
+    expect(existsSync(join('app', 'claim', 'page.tsx'))).toBe(false)
+    expect(existsSync(join('app', 'claim', 'route.ts'))).toBe(false)
+    expect(existsSync(join('app', 'claim', 'master', 'page.tsx'))).toBe(false)
     expect(existsSync(join('app', '(main)', 'claim'))).toBe(false)
   })
 
