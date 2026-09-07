@@ -209,9 +209,18 @@ export default async function EventPage({
     <>
       <Navbar />
       <main className="mx-auto max-w-3xl p-4">
-        <Link href="/events" className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-          ← Powrót do wydarzeń
-        </Link>
+        {/* SP-039I: event managers (admin or the organizing master) return to
+            the associated sauna on the map; ordinary browsing keeps the event
+            list. The map deep link targets the sauna, not the event. */}
+        {(isAdmin || isOrganizerViewer) && sauna ? (
+          <Link href={`/?sauna=${sauna.id}`} className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
+            ← Powrót do mapy
+          </Link>
+        ) : (
+          <Link href="/events" className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
+            ← Powrót do wydarzeń
+          </Link>
+        )}
 
         {/* Header */}
         <section className="rounded-3xl border bg-white p-6 shadow-sm">

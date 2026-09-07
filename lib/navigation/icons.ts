@@ -13,6 +13,7 @@ import {
   CircleHelp,
   Flame,
   Heart,
+  Info,
   LayoutDashboard,
   Link,
   LogIn,
@@ -76,6 +77,7 @@ export const DRAWER_NAV_ICONS: Record<string, LucideIcon> = {
   '/events': CalendarDays,
   '/masters': UsersRound,
   '/sauny': Flame,
+  '/about': Info,
   '/profile': UserRound,
   '/admin': ShieldCheck,
 }
