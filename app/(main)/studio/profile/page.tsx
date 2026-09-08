@@ -42,6 +42,16 @@ export default async function StudioProfilePage() {
     effectivePublicationStatus(publication?.publicationStatus ?? null)
   )
 
+  // SP-044: the owner edits their REAL identity (RLS-restricted private table)
+  // plus pseudonym/privacy. profile.name is only the effective PUBLIC name.
+  const [{ data: identity }, { data: privacyRow }] = await Promise.all([
+    supabase.from('master_private_identity').select('full_name').eq('master_id', profile.id).maybeSingle(),
+    supabase.from('sauna_masters').select('nickname, show_nickname_only').eq('id', profile.id).maybeSingle(),
+  ])
+  const fullName = (identity as { full_name?: string } | null)?.full_name ?? profile.name
+  const nickname = (privacyRow as { nickname?: string | null } | null)?.nickname ?? null
+  const showNicknameOnly = (privacyRow as { show_nickname_only?: boolean } | null)?.show_nickname_only ?? false
+
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
@@ -107,7 +117,9 @@ export default async function StudioProfilePage() {
           <MasterProfileForm
             demotionWarning={demotionWarning}
             initial={{
-              name: profile.name,
+              fullName,
+              nickname,
+              showNicknameOnly,
               bio: profile.bio,
               slug: profile.slug,
               city: profile.city,

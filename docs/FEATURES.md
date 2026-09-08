@@ -797,6 +797,22 @@ Notes: no schema changes; authorization model unchanged (deep link reuses the sa
 
 ---
 
+# SP-044 Master Administration, Auto-Publish & Privacy
+
+Status: DONE (migrations authored, NOT yet applied/deployed)
+
+Implemented:
+
+* Admin-only master deletion — red trash control on `/masters` cards for `role='admin'` only (moderators excluded), inline confirmation. Deletion flows through the transactional `admin_delete_master_profile` DEFINER RPC: revokes + detokenizes claim invitations (no usable token survives), preserves audit (claim/publication events + invitations detach via SET NULL), cascades only functional/state rows, keeps historical `sauna_events` (organizer SET NULL), never touches `auth.users`. The direct `masters_delete` client policy is removed (RPC-only); the M5 guard gains an admin bypass.
+* Claim auto-publish — a successful admin-prepared claim now atomically sets `user_id` + `status=approved` + `master_publication='published'` (audit `claim_auto_published`); no extra moderator step. Scoped strictly to the controlled claim path via a guard carve-out; no general self-publish.
+* Pseudonym + privacy — `nickname` + `show_nickname_only` on `sauna_masters`; the real name moves to the owner/admin-only `master_private_identity` table (RLS), and `sauna_masters.name` becomes the effective public display name (pseudonym when privacy on), enforced by a DB CHECK invariant so the real name cannot leak via any anonymous read. Identity is written only through the `set_master_identity` RPC, which also drops a real-name-derived slug (UUID route) and suppresses publication demotion for privacy changes.
+
+Migrations (authored, not applied): `2026-09-08_sp044_a1_admin_master_delete.sql`, `2026-09-08_sp044_b1_claim_auto_publish.sql`, `2026-09-08_sp044_c1_master_privacy.sql` (+ rollbacks).
+
+SP-045 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — architecture only, not built here.
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED

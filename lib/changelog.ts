@@ -21,6 +21,15 @@ export type ChangelogEntry = {
 /** Newest release first. */
 export const changelog: ChangelogEntry[] = [
   {
+    date: '8 września 2026',
+    title: 'Zarządzanie saunamistrzami i prywatność',
+    items: [
+      'Administrator może teraz usuwać profile saunamistrzów bezpośrednio z listy saunamistrzów.',
+      'Po przejęciu przygotowanego profilu saunamistrz jest od razu widoczny publicznie — bez dodatkowego zatwierdzania.',
+      'Saunamistrzowie mogą używać pseudonimu i ukryć swoje imię i nazwisko — publicznie widoczny jest wtedy tylko pseudonim.',
+    ],
+  },
+  {
     date: '7 września 2026',
     title: 'Pilotaż saunamistrzów i ułatwienia nawigacji',
     items: [
