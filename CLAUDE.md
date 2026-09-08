@@ -133,11 +133,23 @@ when applicable.
 
 ### Public changelog
 
-Every production-facing release that changes user-visible behaviour must add a
-new entry to the public changelog (`lib/changelog.ts`), rendered on `/about`.
-Write it for users (what changed for them), newest first. Internal technical
-and security work stays in Git history and `docs/` — not in the public
-changelog unless it has a meaningful user-visible effect.
+**MANDATORY RELEASE STEP — every production release MUST end with updating the
+public changelog / "O aplikacji" window.** A release to production is not
+complete until a new entry has been added to `lib/changelog.ts` (the single,
+version-controlled source of truth rendered by `/about` — there is NO database
+table and NO CMS behind it) describing the user-visible changes.
+
+Rules:
+
+* Write it for users (what changed for them), newest first.
+* The entry's `date` records **production availability** — set it to the actual
+  deployment date at the release step (never fabricate a historical date; use
+  a placeholder like `W przygotowaniu` until deploy).
+* Internal technical/security work stays in Git history and `docs/` — not in the
+  public changelog unless it has a meaningful user-visible effect.
+
+This step is part of the release Definition of Done: no production deployment
+is considered finished until `/about` reflects what was just shipped.
 
 ---
 
