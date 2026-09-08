@@ -805,6 +805,57 @@ benefit. Every recommendation classified:
 
 ---
 
+# SP-045 Master Inbox & Client Communication
+
+Status: PLANNED — architecture required
+
+## Goal
+
+Enable direct, privacy-preserving communication between SaunaPlanet users and
+sauna masters WITHOUT exposing either side's personal contact details (e-mail,
+phone). Complements SP-044 pseudonym/privacy: a user can reach a master who
+hides their real identity, entirely in-app.
+
+## Future scope (to design; NOT built in SP-044)
+
+* in-app Inbox / Skrzynka
+* conversation between a user and a master
+* messages and replies; conversation history
+* unread / read state + unread badge
+* notification on a new message
+* notification when a user likes / reacts to a master profile
+* archive / mute a conversation
+* block user / master
+* report abuse / a message
+* rate limiting / anti-spam
+* moderation & audit requirements
+* NO exposure of private e-mail addresses at any layer
+* a GENERIC notifications model reusable by future event / claim notifications
+* architecture compatible with later e-mail and native push notifications
+* realtime MAY be evaluated but must NOT be assumed necessary
+* retention / deletion / privacy policy
+* GDPR / account-deletion behaviour (messages, notifications, reactions)
+* mobile / native-app compatibility
+
+## Candidate conceptual model (evaluate later — do not create now)
+
+```
+conversations
+conversation_participants  (typed user↔master endpoints)
+messages
+notifications              (generic, typed)
+master_reactions / follows
+blocks / reports
+```
+
+## Boundaries
+
+Do NOT create these tables, RPCs, or messaging UI as part of SP-044. This entry
+is backlog/design only. The notifications model must be designed generically so
+event, claim, and reaction notifications can reuse it.
+
+---
+
 # Later backlog (unscheduled)
 
 Normalized future themes — recorded so they are not lost; not yet assigned

@@ -142,6 +142,58 @@ export async function updateOwnMasterProfile(
   }
 }
 
+const IDENTITY_ERRORS: Record<string, string> = {
+  not_authenticated: 'Musisz być zalogowany',
+  not_authorized: 'Brak uprawnień do edycji tego profilu',
+  not_found: 'Nie znaleziono profilu saunamistrza',
+  invalid_input: 'Nieprawidłowe dane',
+  name_required: 'Imię i nazwisko nie może być puste',
+  name_too_long: 'Imię i nazwisko jest za długie (maks. 120 znaków)',
+  nickname_required: 'Włączenie trybu pseudonimu wymaga podania pseudonimu',
+  nickname_too_long: 'Pseudonim jest za długi (maks. 60 znaków)',
+  unexpected_error: 'Nie udało się zapisać danych — spróbuj ponownie',
+}
+
+/**
+ * SP-044: the SOLE app path for identity/privacy. Delegates to the trusted
+ * set_master_identity RPC, which stores the real name privately, derives the
+ * public display name (pseudonym when privacy is on), and enforces the
+ * name=nickname invariant + slug privacy. Real-name / privacy edits do NOT
+ * demote publication (the RPC suppresses re-moderation).
+ */
+export async function updateOwnMasterIdentity(
+  fullName: string,
+  nickname: string | null,
+  showNicknameOnly: boolean
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Musisz być zalogowany' }
+
+    const own = await getOwnMaster(supabase, user.id)
+    if (!own) return { error: 'Brak profilu saunamistrza powiązanego z tym kontem' }
+
+    const { data, error } = await supabase.rpc('set_master_identity', {
+      p_master_id: own.id,
+      p_full_name: fullName,
+      p_nickname: nickname,
+      p_show_nickname_only: showNicknameOnly,
+    })
+    if (error) return { error: IDENTITY_ERRORS.unexpected_error }
+
+    const res = (data ?? {}) as { ok?: boolean; code?: string }
+    if (!res.ok) return { error: IDENTITY_ERRORS[res.code ?? ''] ?? IDENTITY_ERRORS.unexpected_error }
+
+    revalidatePath('/studio')
+    revalidatePath('/studio/profile')
+    revalidatePath(`/masters/${own.id}`)
+    return {}
+  } catch {
+    return { error: IDENTITY_ERRORS.unexpected_error }
+  }
+}
+
 // ============================================================
 // Affiliation lifecycle — one model, both directions
 // ============================================================

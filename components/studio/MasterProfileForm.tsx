@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { updateOwnMasterProfile } from '@/app/(main)/studio/actions'
+import { updateOwnMasterProfile, updateOwnMasterIdentity } from '@/app/(main)/studio/actions'
 import { slugify } from '@/lib/master/slug'
 import { LANGUAGE_OPTIONS, SPECIALTY_OPTIONS } from '@/lib/master/specialties'
 import { SOCIAL_PLATFORMS } from '@/lib/import/social'
@@ -15,7 +15,12 @@ const SOCIAL_LABELS: Record<(typeof SOCIAL_PLATFORMS)[number], string> = {
 }
 
 export type MasterProfileFormInitial = {
-  name: string
+  /** Real imię i nazwisko (owner/admin only — never the public projection). */
+  fullName: string
+  /** Optional pseudonym. */
+  nickname: string | null
+  /** When true, the public identity everywhere is the pseudonym. */
+  showNicknameOnly: boolean
   bio: string | null
   slug: string | null
   city: string | null
@@ -41,7 +46,9 @@ export default function MasterProfileForm({
    *  demotes it to moderation (M10 trigger) — warn BEFORE save. */
   demotionWarning?: boolean
 }) {
-  const [name, setName] = useState(initial.name)
+  const [fullName, setFullName] = useState(initial.fullName)
+  const [nickname, setNickname] = useState(initial.nickname ?? '')
+  const [showNicknameOnly, setShowNicknameOnly] = useState(initial.showNicknameOnly)
   const [bio, setBio] = useState(initial.bio ?? '')
   const [slug, setSlug] = useState(initial.slug ?? '')
   const [city, setCity] = useState(initial.city ?? '')
@@ -67,20 +74,36 @@ export default function MasterProfileForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) {
+    if (!fullName.trim()) {
       toast.error('Imię i nazwisko nie może być puste')
       return
     }
+    if (showNicknameOnly && !nickname.trim()) {
+      toast.error('Włączenie trybu pseudonimu wymaga podania pseudonimu')
+      return
+    }
     startTransition(async () => {
+      // Identity/privacy FIRST (trusted RPC: sets the effective public name,
+      // stores the real name privately, drops a real-name slug when private).
+      const idResult = await updateOwnMasterIdentity(
+        fullName,
+        nickname.trim() || null,
+        showNicknameOnly
+      )
+      if (idResult?.error) {
+        toast.error(idResult.error)
+        return
+      }
+
       const socialLinks: Record<string, string> = {}
       for (const p of SOCIAL_PLATFORMS) {
         if (social[p].trim()) socialLinks[p] = social[p].trim()
       }
-      // expected failures come back as { error } (D1) — production-safe
+      // Rest of the profile (name is owned by the identity RPC above; under
+      // privacy the slug stays cleared so the URL can't leak the real name).
       const result = await updateOwnMasterProfile({
-        name,
         bio: bio || null,
-        slug: slug.trim() || null,
+        slug: showNicknameOnly ? null : (slug.trim() || null),
         city: city || null,
         specialties,
         languages,
@@ -106,10 +129,40 @@ export default function MasterProfileForm({
         <label className="mb-1 block text-xs font-semibold text-gray-500">Imię i nazwisko *</label>
         <input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
+        <p className="mt-1 text-xs text-gray-400">
+          Widoczne publicznie, chyba że włączysz tryb pseudonimu poniżej.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+        <label className="mb-1 block text-xs font-semibold text-gray-500">Pseudonim</label>
+        <input
+          type="text"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder="np. Mistrz Pary"
+          maxLength={60}
+          className="w-full rounded-xl border px-3 py-2 text-sm"
+        />
+        <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={showNicknameOnly}
+            onChange={(e) => setShowNicknameOnly(e.target.checked)}
+          />
+          Pokazuj tylko pseudonim
+        </label>
+        {showNicknameOnly && (
+          <p className="mt-1 text-xs text-gray-500">
+            Twoje imię i nazwisko nie będzie widoczne publicznie — wszędzie
+            pojawi się pseudonim. Publiczny link profilu użyje identyfikatora,
+            aby adres nie zdradzał prawdziwych danych.
+          </p>
+        )}
       </div>
 
       <div>
