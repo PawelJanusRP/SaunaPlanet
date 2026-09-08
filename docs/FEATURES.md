@@ -815,7 +815,7 @@ SP-046 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — a
 
 # SP-045 Mobile Map UX & Unified Search
 
-Status: DONE (deployed 2026-09-08)
+Status: DONE (deployed 2026-09-09)
 
 Implemented:
 

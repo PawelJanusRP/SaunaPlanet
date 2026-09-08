@@ -21,7 +21,7 @@ export type ChangelogEntry = {
 /** Newest release first. */
 export const changelog: ChangelogEntry[] = [
   {
-    date: '8 września 2026',
+    date: '9 września 2026',
     title: 'Mobilna mapa i wyszukiwanie saunamistrzów',
     items: [
       'Mobilna mapa zajmuje teraz niemal cały ekran, a wyszukiwanie i filtry otwierają się dopiero na żądanie.',
