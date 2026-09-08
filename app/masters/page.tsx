@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import AddMasterModal from '@/components/AddMasterModal'
 import BecomeMasterForm from '@/components/BecomeMasterForm'
+import DeleteMasterButton from '@/components/DeleteMasterButton'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 
 type Sauna = { id: string; name: string }
@@ -30,6 +31,8 @@ export default async function MastersPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const isAdmin = role === 'admin' || role === 'moderator'
+  // SP-044: destructive master deletion is ADMIN-ONLY — never moderators.
+  const isAdminOnly = role === 'admin'
   const isLoggedIn = !!user
 
   // Public directory shows approved profiles only (PLATFORM_WORKSPACES §5:
@@ -97,7 +100,7 @@ export default async function MastersPage() {
                 </Link>
                 <div className="grid gap-4 md:grid-cols-2">
                   {groupMasters.map((master) => (
-                    <MasterCard key={master.id} master={master} />
+                    <MasterCard key={master.id} master={master} canDelete={isAdminOnly} />
                   ))}
                 </div>
               </section>
@@ -108,7 +111,7 @@ export default async function MastersPage() {
                 <h2 className="mb-3 text-xl font-bold text-gray-500">Bez przypisanej sauny</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {unassigned.map((master) => (
-                    <MasterCard key={master.id} master={master} />
+                    <MasterCard key={master.id} master={master} canDelete={isAdminOnly} />
                   ))}
                 </div>
               </section>
@@ -120,12 +123,18 @@ export default async function MastersPage() {
   )
 }
 
-function MasterCard({ master }: { master: Master }) {
+function MasterCard({ master, canDelete }: { master: Master; canDelete?: boolean }) {
   return (
-    <Link
-      href={`/masters/${master.id}`}
-      className="rounded-2xl border bg-white p-4 shadow-sm hover:bg-orange-50"
-    >
+    <div className="relative">
+      {canDelete && (
+        <div className="absolute right-2 top-2 z-10">
+          <DeleteMasterButton masterId={master.id} masterName={master.name} />
+        </div>
+      )}
+      <Link
+        href={`/masters/${master.id}`}
+        className="block rounded-2xl border bg-white p-4 shadow-sm hover:bg-orange-50"
+      >
       <div className="flex items-center gap-3">
         {master.avatar_url ? (
           <img
@@ -155,6 +164,7 @@ function MasterCard({ master }: { master: Master }) {
         </div>
       </div>
       {master.bio && <p className="mt-3 text-sm text-gray-600">{master.bio}</p>}
-    </Link>
+      </Link>
+    </div>
   )
 }
