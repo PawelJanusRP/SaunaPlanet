@@ -49,9 +49,8 @@ export default function ClaimActionPanel({ token, masterName }: Props) {
         </h2>
         <p className="mb-4 text-sm text-green-800">
           Profil <strong>{masterName}</strong> został przypisany do Twojego
-          konta. Kolejny krok to uzupełnienie danych i publikacja profilu —
-          zrobisz to w Master Studio. Profil <strong>nie został jeszcze
-          opublikowany</strong> publicznie.
+          konta i jest już <strong>widoczny publicznie</strong>. W Master Studio
+          możesz teraz uzupełnić i edytować swoje dane.
         </p>
         <Link
           href="/studio"
@@ -76,8 +75,8 @@ export default function ClaimActionPanel({ token, masterName }: Props) {
     <div className="rounded-2xl border bg-white p-6">
       <p className="mb-4 text-sm text-gray-700">
         Przejmujesz profil <strong>{masterName}</strong>. Zostanie on trwale
-        powiązany z kontem, na które jesteś teraz zalogowany. Publikacja
-        profilu to osobny, późniejszy krok w Master Studio.
+        powiązany z kontem, na które jesteś teraz zalogowany, i od razu
+        widoczny publicznie. Dane uzupełnisz i zmienisz w Master Studio.
       </p>
       {result && (
         <p className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">
