@@ -1050,7 +1050,7 @@ export default function SaunaMap() {
   }, [items, deepLinkSaunaId])
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-dvh w-full lg:h-screen">
       <div className="hidden w-80 overflow-y-auto border-r bg-white lg:block">
         <div className="border-b p-3">
           <input
