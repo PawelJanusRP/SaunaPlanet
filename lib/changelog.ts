@@ -22,13 +22,15 @@ export type ChangelogEntry = {
 export const changelog: ChangelogEntry[] = [
   {
     date: '9 września 2026',
-    title: 'Mobilna mapa i wyszukiwanie saunamistrzów',
+    title: 'Nowa mapa i wyszukiwanie saunamistrzów',
     items: [
-      'Mobilna mapa zajmuje teraz niemal cały ekran, a wyszukiwanie i filtry otwierają się dopiero na żądanie.',
+      'Mapa zajmuje teraz niemal cały ekran, a wyszukiwanie i filtry otwierają się dopiero na żądanie.',
       'Wyszukiwarka mapy znajduje teraz zarówno sauny, jak i publiczne profile saunamistrzów.',
       'Profil saunamistrza pokazuje najbliższe wydarzenia wraz z obiektem, w którym się odbędą.',
       'Dotknięcie sauny przy wydarzeniu przenosi bezpośrednio do właściwego miejsca na mapie.',
-      'Okno sauny na smartfonie jest bardziej kompaktowe, a duże przyciski zastąpiono wygodnymi ikonami.',
+      'Okno sauny jest bardziej kompaktowe, a duże przyciski zastąpiono wygodnymi ikonami.',
+      'Mapa w wersji komputerowej korzysta teraz z tego samego lekkiego interfejsu co wersja mobilna — bez stałego panelu bocznego i pasków filtrów.',
+      'Wyszukiwanie saun i saunamistrzów oraz filtry otwierają się na żądanie także na komputerze, a okna saun i akcje są spójne na telefonie i desktopie.',
     ],
   },
   {

@@ -1,7 +1,7 @@
 'use client'
 
-// SP-045 Slice A — compact floating controls for the mobile map.
-// Four corner controls (44px touch targets, safe-area aware, lg:hidden) that
+// SP-045 — compact floating map controls, shared across ALL breakpoints
+// (desktop parity). Four safe-area-aware corner controls (44px targets) that
 // keep the map the dominant surface. Business logic stays in the caller; this
 // component only renders the controls and forwards intent.
 
@@ -16,9 +16,11 @@ type Props = {
   filtersActive?: boolean
 }
 
+// Shared on every breakpoint, with pointer affordances for desktop.
 const BTN =
   'flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-800 shadow-lg ' +
-  'ring-1 ring-black/5 active:scale-95 transition lg:hidden absolute z-[10000]'
+  'ring-1 ring-black/5 transition active:scale-95 cursor-pointer hover:bg-gray-50 ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 absolute z-[10000]'
 
 // Safe-area-aware corner offsets (notch / home indicator).
 const TL = { top: 'calc(env(safe-area-inset-top) + 0.75rem)', left: 'calc(env(safe-area-inset-left) + 0.75rem)' }
@@ -26,7 +28,7 @@ const TR = { top: 'calc(env(safe-area-inset-top) + 0.75rem)', right: 'calc(env(s
 const BL = { bottom: 'calc(env(safe-area-inset-bottom) + 1rem)', left: 'calc(env(safe-area-inset-left) + 0.75rem)' }
 const BR = { bottom: 'calc(env(safe-area-inset-bottom) + 1rem)', right: 'calc(env(safe-area-inset-right) + 0.75rem)' }
 
-export default function MobileMapControls({
+export default function MapControls({
   onSearch,
   onFilters,
   onMenu,

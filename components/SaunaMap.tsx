@@ -25,10 +25,10 @@ import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Info, Menu, X, Camera, Globe, Pencil, Flame } from 'lucide-react'
-import MobileMapControls from '@/components/map/MobileMapControls'
-import MobileSearchPanel from '@/components/map/MobileSearchPanel'
-import MobileFiltersPanel from '@/components/map/MobileFiltersPanel'
+import { Info, X, Camera, Globe, Pencil, Flame } from 'lucide-react'
+import MapControls from '@/components/map/MapControls'
+import MapSearchPanel from '@/components/map/MapSearchPanel'
+import MapFiltersPanel from '@/components/map/MapFiltersPanel'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
 const LogoutIcon = LOGOUT_ICON
@@ -213,16 +213,6 @@ function getCategoryColor(category: string) {
       return '#f97316'
   }
 }
-
-// Object-type categories shown in the map's second filter row (excludes the
-// "Wszystko" reset); emoji + label come from the shared helpers above.
-const MAP_FILTER_CATEGORIES = [
-  'public_sauna',
-  'spa',
-  'hotel',
-  'event',
-  'outdoor',
-] as const
 
 const EVENT_PULSE_CLASS = 'sauna-event-pulse'
 
@@ -466,7 +456,7 @@ function SaunaPopup({
               src={currentImage}
               alt={sauna.name}
               onClick={() => setFullscreen(true)}
-              className="h-28 w-full cursor-pointer object-cover lg:h-44"
+              className="h-28 w-full cursor-pointer object-cover"
             />
 
             {images.length > 1 && (
@@ -500,7 +490,7 @@ function SaunaPopup({
             )}
           </div>
         ) : (
-          <div className="mb-3 flex h-24 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400 lg:h-40">
+          <div className="mb-3 flex h-24 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400">
             Brak zdjęcia
           </div>
         )}
@@ -515,7 +505,7 @@ function SaunaPopup({
 		)}
 		
         {sauna.description && (
-          <p className="mb-3 line-clamp-2 text-sm text-gray-700 lg:line-clamp-none">{sauna.description}</p>
+          <p className="mb-3 line-clamp-2 text-sm text-gray-700">{sauna.description}</p>
         )}
 
         <div className="mb-3 flex flex-wrap gap-2 text-xs">
@@ -534,23 +524,6 @@ function SaunaPopup({
           </span>
         </div>
 
-		<Link
-		href={`/sauna/${sauna.id}`}
-		className="mb-2 hidden rounded-xl bg-blue-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-blue-700 lg:block"
-		>
-		📖 Szczegóły obiektu
-		</Link>
-		
-		{sauna.website && (
-		<a
-			href={sauna.website}
-			target="_blank"
-			rel="noreferrer"
-			className="mb-2 hidden rounded-xl bg-green-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-green-700 lg:block"
-		>
-			🌍 Oficjalna strona
-		</a>
-		)}
 
 		{events.length > 0 && (
 		<div className="mb-3 rounded-xl border border-orange-200 bg-orange-50 p-2">
@@ -587,8 +560,8 @@ function SaunaPopup({
 		</div>
 		)}
 		
-        {/* SP-045: compact pictogram actions (mobile) — same actions + auth. */}
-        <div className="flex items-center gap-2 lg:hidden">
+        {/* SP-045: compact pictogram actions on ALL breakpoints — same actions + auth. */}
+        <div className="flex items-center gap-2">
           <Link
             href={`/sauna/${sauna.id}`}
             aria-label="Szczegóły obiektu"
@@ -638,28 +611,6 @@ function SaunaPopup({
           </button>
         </div>
 
-        <div className="hidden flex-col gap-2 lg:flex">
-          <button
-            className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
-            onClick={() => onAddPhoto(sauna.id)}
-          >
-            📷 Dodaj zdjęcie
-          </button>
-
-		  <button
-		  	className="rounded-xl bg-orange-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
-		  	onClick={() => onAddEvent(sauna)}
-		  >
-		  	🔥 Dodaj event
-		  </button>
-  
-          <button
-            className="rounded-xl bg-gray-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-900"
-            onClick={() => onEdit(sauna)}
-          >
-            ✏️ Edytuj saunę
-          </button>
-        </div>
       </div>
     </>
   )
@@ -681,14 +632,13 @@ export default function SaunaMap() {
   const { user, role } = useAuth()
   const [items, setItems] = useState<Sauna[]>([])
   const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
-  const [loading, setLoading] = useState(true)
+  const [, setUpcomingEvents] = useState<UpcomingEvent[]>([])
+  const [, setLoading] = useState(true)
   const [uploadItemId, setUploadItemId] = useState<string | null>(null)
   const [editingSauna, setEditingSauna] = useState<Sauna | null>(null)
   const [eventSauna, setEventSauna] = useState<Sauna | null>(null)
   const [selectedSauna, setSelectedSauna] = useState<Sauna | null>(null)
   const [onlyWithPhotos, setOnlyWithPhotos] = useState(false)
-  const [searchText, setSearchText] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [userLocation, setUserLocation] = useState<[number, number]>(fallbackCenter)
   const [centerTrigger, setCenterTrigger] = useState(0)
@@ -705,9 +655,8 @@ export default function SaunaMap() {
   const [onlyWithEvents, setOnlyWithEvents] = useState(false)
   const [mapMode, setMapMode] = useState<'saunas' | 'events' | 'all'>('all')
   const [clusterRefreshKey, setClusterRefreshKey] = useState(0)
-  const [showCategoryInfo, setShowCategoryInfo] = useState(false)
 
-  // SP-045: any filter differing from its default lights the mobile Filters dot.
+  // SP-045: any filter differing from its default lights the Filters dot.
   const filtersActive =
     onlyWithPhotos || onlyWithEvents || categoryFilter !== 'all' ||
     mapMode !== 'all' || radiusKm !== 1000
@@ -725,24 +674,7 @@ export default function SaunaMap() {
 	  if (mapMode === 'events' && !item.has_upcoming_event) {
 	    return false
 	  }
-  const search = searchText.toLowerCase().trim()
-  
-  if (search) {
-  	const name = item.name?.toLowerCase() ?? ''
-  	const description = item.description?.toLowerCase() ?? ''
-  	const category = item.category?.toLowerCase() ?? ''
-  	const city = item.city?.toLowerCase() ?? ''
-  
-  	if (
-  	!name.includes(search) &&
-  	!description.includes(search) &&
-  	!category.includes(search) &&
-  	!city.includes(search)
-  	) {
-  	return false
-  	}
-  }
-  
+
   if (onlyWithPhotos && (item.image_urls?.length ?? 0) === 0) {
   	return false
   }
@@ -1051,181 +983,11 @@ export default function SaunaMap() {
 
   return (
     <div className="flex h-dvh w-full lg:h-screen">
-      <div className="hidden w-80 overflow-y-auto border-r bg-white lg:block">
-        <div className="border-b p-3">
-          <input
-            className="mb-3 w-full rounded-xl border p-2 text-sm"
-            placeholder="Szukaj sauny, miasta, kategorii..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-
-          <div className="font-bold">
-            {loading ? 'Ładowanie...' : `Znaleziono: ${visibleItems.length}`}
-          </div>
-		  {topSaunas.length > 0 && (
-		  <div className="mt-3 rounded-xl bg-yellow-50 p-3">
-		  	<div className="mb-2 text-sm font-bold text-yellow-700">
-		  	🏆 TOP SaunaPlanet
-		  	</div>
-		  
-		  	<div className="space-y-2">
-		  	{topSaunas.map((sauna, index) => (
-		  		<a
-		  		key={sauna.sauna_id}
-		  		href={`/sauna/${sauna.sauna_id}`}
-		  		className="block rounded-lg bg-white p-2 text-xs hover:bg-yellow-100"
-		  		>
-		  		<div className="font-semibold">
-		  			{index + 1}. {sauna.sauna_name}
-		  		</div>
-		  
-		  		<div className="text-yellow-700">
-		  			⭐ {Number(sauna.avg_rating).toFixed(1)} ({sauna.review_count})
-		  		</div>
-		  		</a>
-		  	))}
-		  	</div>
-		  </div>
-		  )}
-        </div>
-
-        <label className="flex items-center gap-2 border-b p-3 text-sm">
-          <input
-            type="checkbox"
-            checked={onlyWithPhotos}
-            onChange={(e) => setOnlyWithPhotos(e.target.checked)}
-          />
-          📷 Tylko ze zdjęciem
-        </label>
-
-		<label className="flex items-center gap-2 border-b p-3 text-sm">
-		<input
-			type="checkbox"
-			checked={onlyWithEvents}
-			onChange={(e) => setOnlyWithEvents(e.target.checked)}
-		/>
-		🔥 Tylko sauny z eventem w 7 dni
-		</label>
-				
-		<button
-		onClick={() => setOnlyWithEvents((v) => !v)}
-		className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			onlyWithEvents
-			? 'bg-orange-600 text-white'
-			: 'bg-gray-100 text-gray-700'
-		}`}
-		>
-		
-		🔥 Eventy 7 dni
-		</button>
-        {mapMode === 'events' ? (
-  <div className="p-3">
-    <div className="mb-3 text-sm font-bold text-orange-700">
-      🔥 Nadchodzące eventy
-    </div>
-
-    <div className="space-y-2">
-      {upcomingEvents.map((event) => (
-        <Link
-		key={event.event_id}
-		href={`/events/${event.event_id}`}
-		className="block rounded-xl border bg-white p-3 text-sm hover:bg-orange-50"
-		>
-          <div className="font-semibold text-orange-700">
-            🔥 {event.title}
-          </div>
-
-          <div className="mt-1 text-xs font-medium text-gray-800">
-            {event.sauna_name}
-          </div>
-
-          <div className="mt-1 text-xs text-gray-500">
-            {event.event_date.substring(0, 10)}
-            {event.event_time
-              ? ` ${event.event_time.substring(0, 5)}`
-              : ''}
-          </div>
-
-          {event.price && (
-            <div className="mt-1 text-xs font-semibold text-orange-700">
-              {event.price.includes('zł') ? event.price : `${event.price} zł`}
-            </div>
-          )}
-        </Link>
-      ))}
-    </div>
-  </div>
-) : (
-  visibleItems.map((item) => {
-    const img = item.image_urls?.[0] ?? item.cover_image_url
-
-    return (
-      <div
-        key={item.id}
-        className={`cursor-pointer border-b p-2 hover:bg-gray-100 ${
-          selectedSauna?.id === item.id ? 'bg-blue-50' : ''
-        }`}
-        onClick={() => {
-          setSelectedSauna(item)
-          setSelectedLocation([item.latitude, item.longitude])
-        }}
-      >
-        {img ? (
-          <img
-            src={img}
-            alt={item.name}
-            className="mb-2 h-24 w-full rounded object-cover"
-          />
-        ) : (
-          <div className="mb-2 flex h-24 w-full items-center justify-center rounded bg-gray-200 text-xs">
-            Brak zdjęcia
-          </div>
-        )}
-
-        <div className="mb-1 text-sm font-semibold">
-          {getCategoryEmoji(item.category)} {item.name}
-        </div>
-
-        {item.avg_rating && (
-          <div className="mb-1 text-xs font-semibold text-yellow-600">
-            ⭐ {Number(item.avg_rating).toFixed(1)} ({item.review_count})
-          </div>
-        )}
-
-        {item.city && (
-          <div className="mb-1 text-xs text-gray-500">{item.city}</div>
-        )}
-
-        <div className="text-xs text-gray-500">
-          {Math.round(item.distance_m)} m
-        </div>
-      </div>
-    )
-  })
-)}
-      </div>
 
       <div className="relative flex-1">
-        {/* Desktop-only menu + geolocation (mobile uses MobileMapControls). */}
-        <button
-          onClick={() => setShowAccountPanel(true)}
-          aria-label="Menu"
-          className="absolute right-4 top-4 z-[10000] hidden h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5 lg:flex"
-        >
-          <Menu className="h-[22px] w-[22px] text-gray-800" aria-hidden="true" />
-        </button>
-
-        <button
-          onClick={centerOnUserLocation}
-          aria-label="Moja lokalizacja"
-          className="absolute bottom-24 right-4 z-[9999] hidden h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-xl transition hover:scale-105 active:scale-95 lg:flex"
-        >
-          📍
-        </button>
 
         {/* SP-045: compact mobile controls (search / filters / menu / geo). */}
-        <MobileMapControls
+        <MapControls
           onSearch={() => setMobileSearchOpen(true)}
           onFilters={() => setMobileFiltersOpen(true)}
           onMenu={() => setShowAccountPanel(true)}
@@ -1233,98 +995,6 @@ export default function SaunaMap() {
           filtersActive={filtersActive}
         />
 
-        <div className="absolute left-3 top-16 z-[9999] hidden max-w-[calc(100vw-24px)] items-center gap-1 rounded-xl bg-white/90 p-2 shadow lg:flex">
-          <div className="flex gap-2 overflow-x-auto">
-            {[
-              { value: 'all', label: 'Wszystko' },
-              { value: 'public_sauna', label: '🧖' },
-              { value: 'spa', label: '♨️' },
-              { value: 'hotel', label: '🏨' },
-              { value: 'event', label: '🔥' },
-              { value: 'outdoor', label: '🌲' },
-            ].map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setCategoryFilter(cat.value)}
-                className={`whitespace-nowrap rounded-full px-3 py-1 text-sm ${
-                  categoryFilter === cat.value
-                    ? 'bg-black text-white'
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Legenda kategorii — ikony w tym rzędzie to same emoji, więc (i)
-              wyjaśnia ich znaczenie. Przypięta poza obszarem przewijania. */}
-          <button
-            type="button"
-            onClick={() => setShowCategoryInfo((v) => !v)}
-            aria-label="Co oznaczają filtry kategorii?"
-            aria-expanded={showCategoryInfo}
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
-              showCategoryInfo ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <Info className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-
-        {showCategoryInfo && (
-          <div className="absolute left-3 top-28 z-[10000] w-64 max-w-[calc(100vw-24px)] rounded-xl border bg-white p-3 text-sm shadow-lg">
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <p className="font-semibold text-gray-900">Kategorie obiektów</p>
-              <button
-                type="button"
-                onClick={() => setShowCategoryInfo(false)}
-                aria-label="Zamknij objaśnienie"
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-
-            <ul className="space-y-1.5">
-              <li className="flex items-center gap-2 text-gray-700">
-                <span className="w-5 text-center">✳️</span>
-                <span><span className="font-medium">Wszystko</span> — bez filtra kategorii</span>
-              </li>
-              {MAP_FILTER_CATEGORIES.map((value) => (
-                <li key={value} className="flex items-center gap-2 text-gray-700">
-                  <span className="w-5 text-center">{getCategoryEmoji(value)}</span>
-                  <span>{getCategoryLabel(value)}</span>
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-2 border-t pt-2 text-xs text-gray-500">
-              Górny rząd wybiera tryb mapy (sauny, eventy albo jedno i drugie),
-              a ten rząd filtruje po typie obiektu.
-            </p>
-          </div>
-        )}
-		<div className="absolute left-3 top-3 z-[9999] hidden gap-2 rounded-xl bg-white/90 p-2 shadow lg:flex">
-		{[
-			{ value: 'all', label: '🧖+🔥' },
-			{ value: 'saunas', label: '🧖 Sauny' },
-			{ value: 'events', label: '🔥 Eventy' },
-		].map((mode) => (
-			<button
-			key={mode.value}
-			onClick={() => setMapMode(mode.value as 'saunas' | 'events' | 'all')}
-			className={`rounded-full px-3 py-1 text-sm font-semibold ${
-				mapMode === mode.value
-				? 'bg-black text-white'
-				: 'bg-gray-100 text-gray-700'
-			}`}
-			>
-			{mode.label}
-			</button>
-		))}
-		</div>
-		
         <MapContainer center={userLocation} zoom={14} className="h-full w-full">
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
@@ -1444,16 +1114,17 @@ export default function SaunaMap() {
         )}
       </div>
 
-      <MobileSearchPanel
+      <MapSearchPanel
         open={mobileSearchOpen}
         onClose={() => setMobileSearchOpen(false)}
         saunas={items}
+        topSaunas={topSaunas}
         categoryEmoji={getCategoryEmoji}
         onSelectSauna={focusSauna}
         onFocusEventSauna={focusSauna}
       />
 
-      <MobileFiltersPanel
+      <MapFiltersPanel
         open={mobileFiltersOpen}
         onClose={() => setMobileFiltersOpen(false)}
         mapMode={mapMode}
