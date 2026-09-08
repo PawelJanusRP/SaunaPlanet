@@ -21,9 +21,7 @@ export type ChangelogEntry = {
 /** Newest release first. */
 export const changelog: ChangelogEntry[] = [
   {
-    // SP-044 — NOT yet deployed. Replace the placeholder with the real
-    // production deployment date at the release step (do not fabricate it).
-    date: 'W przygotowaniu',
+    date: '8 września 2026',
     title: 'Zarządzanie saunamistrzami i prywatność',
     items: [
       'Administrator może teraz usuwać profile saunamistrzów bezpośrednio z listy saunamistrzów.',
