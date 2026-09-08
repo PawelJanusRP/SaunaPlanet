@@ -811,14 +811,25 @@ Status: CLOSED / DEPLOYED (2026-09-09)
 
 ## Goal
 
-Mobile-first optimization of the SaunaPlanet map: the map becomes the dominant
-smartphone surface. Replaces the permanent ~40vh bottom search sheet and the
-two permanent top filter bars with small floating controls (search / filters /
-geolocation / menu), a compact sauna popup with a pictogram action row, a
-unified on-demand search across sauna facilities AND publicly-visible sauna
-masters, a compact map-native master profile card with the master's upcoming
-events, and tap-through from a master's event sauna back to the map. Desktop
-sidebar/filter behaviour is preserved.
+Map-first optimization of the SaunaPlanet map on mobile AND desktop: the map
+becomes the dominant surface on every breakpoint. Replaces the permanent ~40vh
+bottom search sheet, the two permanent top filter bars, AND the legacy permanent
+desktop sauna/search sidebar with a single shared set of small floating controls
+(search / filters / geolocation / menu), a compact sauna popup with a pictogram
+action row, a unified on-demand search across sauna facilities AND
+publicly-visible sauna masters, a compact map-native master profile card with the
+master's upcoming events, and tap-through from a master's event sauna back to the
+map. The interaction model is shared across breakpoints; only the presentation
+differs — on desktop Search and Filters open as floating side panels (not
+full-screen sheets), and the former sidebar's TOP SaunaPlanet list is preserved
+in the Search empty state.
+
+Desktop parity (extension released after the initial mobile sprint, owner
+desktop QA GREEN 2026-09-09): no permanent desktop sidebar, no permanent desktop
+map-mode/category ribbons; shared floating controls, unified search, on-demand
+filters, and the compact popup + pictogram actions are used on desktop too. One
+shared implementation per interaction concept (`MapControls`, `MapSearchPanel`,
+`MapFiltersPanel`); responsive presentation via CSS. ZERO database changes.
 
 Privacy: master search uses ONLY the effective public identity
 (`sauna_masters.name` / pseudonym via the SP-044 model) and the
