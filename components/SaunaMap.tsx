@@ -27,6 +27,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Info, Menu, X } from 'lucide-react'
 import MobileMapControls from '@/components/map/MobileMapControls'
+import MobileSearchPanel from '@/components/map/MobileSearchPanel'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
 const LogoutIcon = LOGOUT_ICON
@@ -646,6 +647,7 @@ export default function SaunaMap() {
   // SP-045: mobile map is dominant by default — the search/list surface opens
   // on demand (was a permanent ~40vh 3-state sheet). Desktop uses the sidebar.
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [showAccountPanel, setShowAccountPanel] = useState(false)
   const [radiusKm, setRadiusKm] = useState(1000)
   const [onlyWithEvents, setOnlyWithEvents] = useState(false)
@@ -803,6 +805,53 @@ export default function SaunaMap() {
       }
     )
   }
+
+  // SP-045: ONE shared sauna-focus path (search result, master-event sauna,
+  // deep link, sidebar). It centers the CAMERA on the target (via selectedSauna
+  // -> MapFocusController) and NEVER redefines userLocation, so the real
+  // geolocation / distance origin is preserved. An off-radius target (e.g. a
+  // master's event in another city) is resolved and merged into the loaded set
+  // so it becomes selectable/visible without moving the data origin.
+  const focusSauna = useCallback(
+    (target: { id: string; latitude: number; longitude: number }) => {
+      setMobileSearchOpen(false)
+      setMobileSheetOpen(false)
+      setShowAddForm(false)
+
+      const existing = items.find((i) => i.id === target.id)
+      if (existing) {
+        setSelectedSauna(existing)
+        setSelectedLocation([existing.latitude, existing.longitude])
+        return
+      }
+
+      void (async () => {
+        const { data } = await supabase
+          .from('saunas')
+          .select('*')
+          .eq('id', target.id)
+          .maybeSingle()
+        if (!data) return
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const row = data as any
+        const resolved: Sauna = {
+          ...row,
+          distance_m: 0,
+          image_urls: row.image_urls ?? null,
+          cover_image_url: row.cover_image_url ?? null,
+          avg_rating: null,
+          review_count: 0,
+          masters: [],
+          has_upcoming_event: false,
+        }
+        setItems((prev) => (prev.some((i) => i.id === resolved.id) ? prev : [...prev, resolved]))
+        setClusterRefreshKey((k) => k + 1)
+        setSelectedSauna(resolved)
+        setSelectedLocation([resolved.latitude, resolved.longitude])
+      })()
+    },
+    [items]
+  )
 
   useEffect(() => {
     async function load() {
@@ -1125,7 +1174,7 @@ export default function SaunaMap() {
 
         {/* SP-045: compact mobile controls (search / filters / menu / geo). */}
         <MobileMapControls
-          onSearch={() => setMobileSheetOpen(true)}
+          onSearch={() => setMobileSearchOpen(true)}
           onFilters={() => setMobileSheetOpen(true)}
           onMenu={() => setShowAccountPanel(true)}
           onGeolocate={centerOnUserLocation}
@@ -1477,6 +1526,15 @@ export default function SaunaMap() {
           />
         )}
       </div>
+
+      <MobileSearchPanel
+        open={mobileSearchOpen}
+        onClose={() => setMobileSearchOpen(false)}
+        saunas={items}
+        categoryEmoji={getCategoryEmoji}
+        onSelectSauna={focusSauna}
+        onFocusEventSauna={focusSauna}
+      />
 
       {showAccountPanel && (
         <div
