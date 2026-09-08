@@ -885,20 +885,18 @@ sprint numbers or a slice plan.
 
 ## Public profile URL & slug UX
 
-**Target: next production release.**
-
-* **Canonical domain in the slug hint** — the Master Studio "Adres profilu"
-  helper text still shows `sauna-planet.vercel.app/masters/...`; update it to
-  the canonical `sauna-planet.pl`. Also update the import User-Agent string in
-  `lib/import/safeFetch.ts` (cosmetic, outbound only). The functional
-  claim/auth redirects already use the runtime origin / `CLAIM_PUBLIC_ORIGIN`
-  and are unaffected.
-* **Prefer slug in profile links** — profile links are inconsistent: most
-  surfaces (map satellites in `SaunaMap`, `/masters` list, event lineups,
-  sauna page, admin) link by UUID (`/masters/${id}`), while Studio/publication
-  screens use `/masters/${slug ?? id}`. Unify to `slug ?? id` so shareable
-  links use the human-readable slug where one exists (UUID stays the fallback
-  and keeps resolving via the dual-lookup route).
+* **Canonical domain in the slug hint** — DONE (Studio "Adres profilu" helper
+  and `lib/import/safeFetch.ts` User-Agent now use `sauna-planet.pl`).
+* **Prefer slug in profile links** — PARTIAL: the `/masters` directory now
+  links `slug ?? id`. Still on UUID (follow-up): map satellites in `SaunaMap`
+  (needs `slug` added to the `get_saunas_nearby` RPC JSON — a DB change), event
+  lineups/organizer, and the sauna page. UUID keeps resolving via the
+  dual-lookup route, so these are cosmetic.
+* **`CLAIM_PUBLIC_ORIGIN` must be the canonical domain** — the claim-invitation
+  link is built from the `CLAIM_PUBLIC_ORIGIN` Vercel env var (fail-closed, no
+  fallback). It must be set to `https://sauna-planet.pl` in Vercel Production;
+  if it holds the old `*.vercel.app` value the generated claim link uses that
+  domain. Config-only (dashboard), not a code change.
 
 * **"Adres profilu" field shows the full URL prefix (edit UX)** — in the
   profile edit form the slug input should render a fixed, non-editable prefix
