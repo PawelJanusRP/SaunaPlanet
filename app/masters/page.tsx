@@ -10,6 +10,7 @@ type Sauna = { id: string; name: string }
 type Master = {
   id: string
   name: string
+  slug: string | null
   avatar_url: string | null
   bio: string | null
   rating: number | null
@@ -41,7 +42,7 @@ export default async function MastersPage() {
   // moderators too, who can read every row.
   const mastersQuery = supabase
     .from('sauna_masters')
-    .select('id, name, avatar_url, bio, rating, status, home_sauna_id, saunas:home_sauna_id(id, name)')
+    .select('id, name, slug, avatar_url, bio, rating, status, home_sauna_id, saunas:home_sauna_id(id, name)')
     .order('name')
 
   const [{ data: mastersRaw }, { data: saunasRaw }] = await Promise.all([
@@ -132,7 +133,7 @@ function MasterCard({ master, canDelete }: { master: Master; canDelete?: boolean
         </div>
       )}
       <Link
-        href={`/masters/${master.id}`}
+        href={`/masters/${master.slug ?? master.id}`}
         className="block rounded-2xl border bg-white p-4 shadow-sm hover:bg-orange-50"
       >
       <div className="flex items-center gap-3">

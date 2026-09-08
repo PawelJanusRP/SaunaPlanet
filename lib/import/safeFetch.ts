@@ -19,7 +19,7 @@ export const DEFAULT_TIMEOUT_MS = 8_000
 export const DEFAULT_MAX_BYTES = 2_000_000 // decompressed HTML cap
 export const DEFAULT_MAX_REDIRECTS = 3
 
-const USER_AGENT = 'SaunaPlanetImport/1.0 (+https://sauna-planet.vercel.app)'
+const USER_AGENT = 'SaunaPlanetImport/1.0 (+https://sauna-planet.pl)'
 const ALLOWED_CONTENT_TYPES = ['text/html', 'application/xhtml+xml']
 
 export type TransportResponse = {

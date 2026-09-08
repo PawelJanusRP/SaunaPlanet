@@ -883,6 +883,28 @@ sprint numbers or a slice plan.
 * shareable profile (SP-039 slug is the shareable canonical URL);
 * profile QR code.
 
+## Public profile URL & slug UX
+
+* **Canonical domain in the slug hint** — DONE (Studio "Adres profilu" helper
+  and `lib/import/safeFetch.ts` User-Agent now use `sauna-planet.pl`).
+* **Prefer slug in profile links** — PARTIAL: the `/masters` directory now
+  links `slug ?? id`. Still on UUID (follow-up): map satellites in `SaunaMap`
+  (needs `slug` added to the `get_saunas_nearby` RPC JSON — a DB change), event
+  lineups/organizer, and the sauna page. UUID keeps resolving via the
+  dual-lookup route, so these are cosmetic.
+* **`CLAIM_PUBLIC_ORIGIN` must be the canonical domain** — the claim-invitation
+  link is built from the `CLAIM_PUBLIC_ORIGIN` Vercel env var (fail-closed, no
+  fallback). It must be set to `https://sauna-planet.pl` in Vercel Production;
+  if it holds the old `*.vercel.app` value the generated claim link uses that
+  domain. Config-only (dashboard), not a code change.
+
+* **"Adres profilu" field shows the full URL prefix (edit UX)** — in the
+  profile edit form the slug input should render a fixed, non-editable prefix
+  adornment to its left containing the domain and the whole left side of the
+  address (e.g. `sauna-planet.pl/masters/` ▸ `[ jan-kowalski ]`), so the user
+  edits only the slug segment while seeing the complete public URL being built.
+  Use the canonical domain; keep the existing `slugify`/`validateSlug` rules.
+
 ## Reviews and reputation
 
 * event-linked reviews; moderation; replies; verified participation;

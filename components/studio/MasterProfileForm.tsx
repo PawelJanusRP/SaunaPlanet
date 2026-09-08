@@ -190,7 +190,7 @@ export default function MasterProfileForm({
         />
         <p className="mt-1 text-xs text-gray-400">
           {slug.trim()
-            ? `Twój link: sauna-planet.vercel.app/masters/${slugify(slug) || '…'}`
+            ? `Twój link: sauna-planet.pl/masters/${slugify(slug) || '…'}`
             : 'Małe litery, cyfry i myślniki (3–40 znaków). Bez adresu działa link techniczny.'}
         </p>
         {initial.slug && slugChanged && (
