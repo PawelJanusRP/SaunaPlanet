@@ -805,7 +805,34 @@ benefit. Every recommendation classified:
 
 ---
 
-# SP-045 Master Inbox & Client Communication
+# SP-045 Mobile Map UX & Unified Search
+
+Status: IN PROGRESS (feature branch; not deployed)
+
+## Goal
+
+Mobile-first optimization of the SaunaPlanet map: the map becomes the dominant
+smartphone surface. Replaces the permanent ~40vh bottom search sheet and the
+two permanent top filter bars with small floating controls (search / filters /
+geolocation / menu), a compact sauna popup with a pictogram action row, a
+unified on-demand search across sauna facilities AND publicly-visible sauna
+masters, a compact map-native master profile card with the master's upcoming
+events, and tap-through from a master's event sauna back to the map. Desktop
+sidebar/filter behaviour is preserved.
+
+Privacy: master search uses ONLY the effective public identity
+(`sauna_masters.name` / pseudonym via the SP-044 model) and the
+`is_master_publicly_visible()` boundary — it must NEVER read or expose
+`master_private_identity.full_name`, even for admin/moderator viewers (public
+discovery, not administration).
+
+Renumbered 2026-09-08: previously the "Mobile Map UX & Unified Search" work was
+tentatively SP-046; it was promoted above Master Inbox and is now SP-045. The
+Master Inbox sprint (unimplemented) moved to SP-046 below.
+
+---
+
+# SP-046 Master Inbox & Client Communication
 
 Status: PLANNED — architecture required
 
@@ -815,6 +842,10 @@ Enable direct, privacy-preserving communication between SaunaPlanet users and
 sauna masters WITHOUT exposing either side's personal contact details (e-mail,
 phone). Complements SP-044 pseudonym/privacy: a user can reach a master who
 hides their real identity, entirely in-app.
+
+(Renumbered 2026-09-08 from SP-045 → SP-046; not yet implemented, so the
+identifier moved safely. Any earlier "SP-045 Inbox" cross-reference now points
+here.)
 
 ## Future scope (to design; NOT built in SP-044)
 

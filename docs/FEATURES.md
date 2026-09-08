@@ -809,7 +809,7 @@ Implemented:
 
 Migrations (authored, not applied): `2026-09-08_sp044_a1_admin_master_delete.sql`, `2026-09-08_sp044_b1_claim_auto_publish.sql`, `2026-09-08_sp044_c1_master_privacy.sql` (+ rollbacks).
 
-SP-045 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — architecture only, not built here.
+SP-046 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — architecture only, not built here. (Renumbered 2026-09-08 from SP-045; SP-045 is now Mobile Map UX & Unified Search.)
 
 ---
 
