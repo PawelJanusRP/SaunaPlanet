@@ -941,3 +941,9 @@ are not lost.
   truth.
 * **HTML-entity decoding in extracted text (SP-038)** — decode entities such
   as `&amp;` in imported JSON-LD/metadata values.
+* **Dedicated test/staging environment (post-pilot)** — during the controlled
+  pilot, Production is the only Supabase environment; schema/RLS/RPC and
+  destructive-flow verification was done via rolled-back synthetic transactions
+  against Production (accepted exception, SP-044 cutover). After the pilot,
+  stand up a separate Supabase staging project wired to Vercel Preview so future
+  changes are verified off Production. See the SP-044 cutover notes.
