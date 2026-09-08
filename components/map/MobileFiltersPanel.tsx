@@ -50,7 +50,7 @@ export default function MobileFiltersPanel(p: Props) {
     <div className="fixed inset-0 z-[11000] lg:hidden" role="dialog" aria-modal="true" aria-label="Filtry">
       <div className="absolute inset-0 bg-black/30" onClick={p.onClose} aria-hidden="true" />
       <div
-        className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl"
+        className="absolute bottom-0 left-0 right-0 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
       >
         <div className="mb-3 flex items-center justify-between">
