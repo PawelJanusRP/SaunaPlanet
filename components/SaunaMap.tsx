@@ -25,9 +25,10 @@ import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Info, Menu, X } from 'lucide-react'
+import { Info, Menu, X, Camera, Globe, Pencil, Flame } from 'lucide-react'
 import MobileMapControls from '@/components/map/MobileMapControls'
 import MobileSearchPanel from '@/components/map/MobileSearchPanel'
+import MobileFiltersPanel from '@/components/map/MobileFiltersPanel'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
 const LogoutIcon = LOGOUT_ICON
@@ -465,7 +466,7 @@ function SaunaPopup({
               src={currentImage}
               alt={sauna.name}
               onClick={() => setFullscreen(true)}
-              className="h-44 w-full cursor-pointer object-cover"
+              className="h-28 w-full cursor-pointer object-cover lg:h-44"
             />
 
             {images.length > 1 && (
@@ -499,7 +500,7 @@ function SaunaPopup({
             )}
           </div>
         ) : (
-          <div className="mb-3 flex h-40 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400">
+          <div className="mb-3 flex h-24 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400 lg:h-40">
             Brak zdjęcia
           </div>
         )}
@@ -514,7 +515,7 @@ function SaunaPopup({
 		)}
 		
         {sauna.description && (
-          <p className="mb-3 text-sm text-gray-700">{sauna.description}</p>
+          <p className="mb-3 line-clamp-2 text-sm text-gray-700 lg:line-clamp-none">{sauna.description}</p>
         )}
 
         <div className="mb-3 flex flex-wrap gap-2 text-xs">
@@ -535,7 +536,7 @@ function SaunaPopup({
 
 		<Link
 		href={`/sauna/${sauna.id}`}
-		className="mb-2 block rounded-xl bg-blue-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-blue-700"
+		className="mb-2 hidden rounded-xl bg-blue-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-blue-700 lg:block"
 		>
 		📖 Szczegóły obiektu
 		</Link>
@@ -545,7 +546,7 @@ function SaunaPopup({
 			href={sauna.website}
 			target="_blank"
 			rel="noreferrer"
-			className="mb-2 block rounded-xl bg-green-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-green-700"
+			className="mb-2 hidden rounded-xl bg-green-600 px-3 py-2 text-center text-sm font-semibold !text-white transition hover:bg-green-700 lg:block"
 		>
 			🌍 Oficjalna strona
 		</a>
@@ -558,7 +559,7 @@ function SaunaPopup({
 			</div>
 		
 			<div className="space-y-2">
-			{events.slice(0, 3).map((event) => (
+			{events.slice(0, 2).map((event) => (
 				<Link
 				key={event.id}
 				href={`/events/${event.id}`}
@@ -586,7 +587,58 @@ function SaunaPopup({
 		</div>
 		)}
 		
-        <div className="flex flex-col gap-2">
+        {/* SP-045: compact pictogram actions (mobile) — same actions + auth. */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            href={`/sauna/${sauna.id}`}
+            aria-label="Szczegóły obiektu"
+            title="Szczegóły obiektu"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 !text-white"
+          >
+            <Info className="h-5 w-5" aria-hidden="true" />
+          </Link>
+          {sauna.website && (
+            <a
+              href={sauna.website}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Oficjalna strona"
+              title="Oficjalna strona"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600 !text-white"
+            >
+              <Globe className="h-5 w-5" aria-hidden="true" />
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => onAddPhoto(sauna.id)}
+            aria-label="Dodaj zdjęcie"
+            title="Dodaj zdjęcie"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 bg-white text-gray-700"
+          >
+            <Camera className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onAddEvent(sauna)}
+            aria-label="Dodaj event"
+            title="Dodaj event"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-600 text-white"
+          >
+            <Flame className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onEdit(sauna)}
+            aria-label="Edytuj saunę"
+            title="Edytuj saunę"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-800 text-white"
+          >
+            <Pencil className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="hidden flex-col gap-2 lg:flex">
           <button
             className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
             onClick={() => onAddPhoto(sauna.id)}
@@ -646,7 +698,7 @@ export default function SaunaMap() {
   const [contextMenuLocation, setContextMenuLocation] = useState<[number, number] | null>(null)
   // SP-045: mobile map is dominant by default — the search/list surface opens
   // on demand (was a permanent ~40vh 3-state sheet). Desktop uses the sidebar.
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [showAccountPanel, setShowAccountPanel] = useState(false)
   const [radiusKm, setRadiusKm] = useState(1000)
@@ -815,7 +867,7 @@ export default function SaunaMap() {
   const focusSauna = useCallback(
     (target: { id: string; latitude: number; longitude: number }) => {
       setMobileSearchOpen(false)
-      setMobileSheetOpen(false)
+      setMobileFiltersOpen(false)
       setShowAddForm(false)
 
       const existing = items.find((i) => i.id === target.id)
@@ -1175,7 +1227,7 @@ export default function SaunaMap() {
         {/* SP-045: compact mobile controls (search / filters / menu / geo). */}
         <MobileMapControls
           onSearch={() => setMobileSearchOpen(true)}
-          onFilters={() => setMobileSheetOpen(true)}
+          onFilters={() => setMobileFiltersOpen(true)}
           onMenu={() => setShowAccountPanel(true)}
           onGeolocate={centerOnUserLocation}
           filtersActive={filtersActive}
@@ -1373,141 +1425,6 @@ export default function SaunaMap() {
           </MarkerClusterGroup>
         </MapContainer>
 
-        <div
-          className={`
-            absolute bottom-0 left-0 right-0 z-[10001]
-            h-[85vh] rounded-t-3xl bg-white shadow-2xl lg:hidden
-            transition-transform duration-300
-            ${mobileSheetOpen ? 'translate-y-0' : 'translate-y-full'}
-          `}
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Szukaj i filtruj"
-        >
-          <div className="flex items-center justify-between px-3 pt-2">
-            <button
-              type="button"
-              className="flex flex-1 justify-center py-2"
-              onClick={() => setMobileSheetOpen(false)}
-              aria-label="Zamknij"
-            >
-              <div className="h-1.5 w-12 rounded-full bg-gray-300" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileSheetOpen(false)}
-              aria-label="Zamknij"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
-            >
-              <X className="h-5 w-5" aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="max-h-[calc(85vh-3rem)] overflow-y-auto p-3">
-            <div className="mb-3 text-sm font-bold">
-              <input
-                className="mb-3 w-full rounded-xl border p-2 text-sm"
-                placeholder="Szukaj sauny..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-
-              {visibleItems.length} saun w pobliżu
-            </div>
-
-            <div className="mb-3 flex flex-wrap gap-2">
-              <button
-                onClick={() => setOnlyWithPhotos((v) => !v)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  onlyWithPhotos
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                📷 Zdjęcia
-              </button>
-			  <button
-			  onClick={() => setOnlyWithEvents((v) => !v)}
-			  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-			  	onlyWithEvents
-			  	? 'bg-orange-600 text-white'
-			  	: 'bg-gray-100 text-gray-700'
-			  }`}
-			  >
-			  🔥 Eventy 7 dni
-			  </button>
-            </div>
-
-            <div className="mb-3 flex flex-wrap gap-2">
-              {[3, 10, 30, 100].map((radius) => (
-                <button
-                  key={radius}
-                  onClick={() => setRadiusKm(radius)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    radiusKm === radius
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {radius} km
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {visibleItems.map((item) => {
-                const img = item.image_urls?.[0] ?? item.cover_image_url
-
-                return (
-                  <div
-                    key={item.id}
-                    className="flex cursor-pointer gap-3 rounded-xl border p-2 active:bg-gray-100"
-                    onClick={() => {
-                      setSelectedSauna(item)
-                      setSelectedLocation([item.latitude, item.longitude])
-                      setShowAddForm(false)
-                      setMobileSheetOpen(false)
-                    }}
-                  >
-                    {img ? (
-                      <img
-                        src={img}
-                        alt={item.name}
-                        className="h-16 w-16 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200 text-xs">
-                        brak
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">
-                        {getCategoryEmoji(item.category)} {item.name}
-                      </div>
-					  {item.avg_rating && (
-					  <div className="mt-1 text-xs font-semibold text-yellow-600">
-					  	⭐ {Number(item.avg_rating).toFixed(1)} ({item.review_count})
-					  </div>
-					  )}
-
-                      {item.city && (
-                        <div className="mt-1 text-xs text-gray-500">
-                          {item.city}
-                        </div>
-                      )}
-
-                      <div className="mt-1 text-xs text-gray-500">
-                        {Math.round(item.distance_m)} m
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
 
         {showAddForm && (
           <AddSaunaForm
@@ -1534,6 +1451,29 @@ export default function SaunaMap() {
         categoryEmoji={getCategoryEmoji}
         onSelectSauna={focusSauna}
         onFocusEventSauna={focusSauna}
+      />
+
+      <MobileFiltersPanel
+        open={mobileFiltersOpen}
+        onClose={() => setMobileFiltersOpen(false)}
+        mapMode={mapMode}
+        setMapMode={setMapMode}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        onlyWithPhotos={onlyWithPhotos}
+        setOnlyWithPhotos={setOnlyWithPhotos}
+        onlyWithEvents={onlyWithEvents}
+        setOnlyWithEvents={setOnlyWithEvents}
+        radiusKm={radiusKm}
+        setRadiusKm={setRadiusKm}
+        hasActiveFilters={filtersActive}
+        onReset={() => {
+          setMapMode('all')
+          setCategoryFilter('all')
+          setOnlyWithPhotos(false)
+          setOnlyWithEvents(false)
+          setRadiusKm(1000)
+        }}
       />
 
       {showAccountPanel && (
