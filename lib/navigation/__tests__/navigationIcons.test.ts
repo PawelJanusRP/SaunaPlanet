@@ -126,6 +126,9 @@ describe('accessible markup contracts', () => {
 describe('map drawer and transparent backdrops', () => {
   const navbar = readFileSync('components/Navbar.tsx', 'utf8')
   const saunaMap = readFileSync('components/SaunaMap.tsx', 'utf8')
+  // SP-045 desktop parity: the Menu trigger now lives in the shared floating
+  // MapControls (one control set on every breakpoint), not in SaunaMap itself.
+  const mapControls = readFileSync('components/map/MapControls.tsx', 'utf8')
 
   it('drawer backdrops are fully transparent (no dimming, no blur)', () => {
     expect(navbar).toContain('fixed inset-0 z-40 bg-transparent')
@@ -148,7 +151,9 @@ describe('map drawer and transparent backdrops', () => {
   })
   it('map account panel uses the central Lucide mapping with accessible markup', () => {
     expect(saunaMap).toContain("from '@/lib/navigation/icons'")
-    expect(saunaMap).toContain('aria-label="Menu"')
+    // Menu trigger lives in the shared MapControls; the account panel it opens
+    // still carries the accessible close control inside SaunaMap.
+    expect(mapControls).toContain('aria-label="Menu"')
     expect(saunaMap).toContain('aria-label="Zamknij menu"')
     expect(saunaMap).toContain('aria-hidden="true"')
   })

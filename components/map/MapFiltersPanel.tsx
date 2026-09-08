@@ -44,13 +44,16 @@ const chip = (active: boolean) =>
     active ? 'bg-black text-white' : 'bg-gray-100 text-gray-700'
   }`
 
-export default function MobileFiltersPanel(p: Props) {
+export default function MapFiltersPanel(p: Props) {
   if (!p.open) return null
   return (
-    <div className="fixed inset-0 z-[11000] lg:hidden" role="dialog" aria-modal="true" aria-label="Filtry">
-      <div className="absolute inset-0 bg-black/30" onClick={p.onClose} aria-hidden="true" />
+    <div className="fixed inset-0 z-[11000]" role="dialog" aria-modal="true" aria-label="Filtry">
+      {/* Backdrop for click-outside; dimmed on mobile, transparent on desktop. */}
+      <div className="absolute inset-0 bg-black/30 lg:bg-transparent" onClick={p.onClose} aria-hidden="true" />
+      {/* Mobile: bottom sheet. Desktop parity: a floating panel near the
+          top-left Filters control (not a full-width sheet). */}
       <div
-        className="absolute bottom-0 left-0 right-0 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl"
+        className="absolute bottom-0 left-0 right-0 max-h-[80dvh] overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl lg:bottom-auto lg:left-4 lg:right-auto lg:top-16 lg:w-[360px] lg:max-h-[75vh] lg:rounded-2xl lg:border"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
       >
         <div className="mb-3 flex items-center justify-between">

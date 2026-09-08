@@ -815,18 +815,18 @@ SP-046 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — a
 
 # SP-045 Mobile Map UX & Unified Search
 
-Status: DONE (deployed 2026-09-09)
+Status: DONE (mobile deployed 2026-09-09; desktop parity extension on `feature/sp-045-desktop-map-parity`, pending owner QA)
 
 Implemented:
 
-* Mobile-dominant map — the permanent ~40vh bottom sheet and the two permanent top filter bars are gone on phones; the map fills the screen with four compact safe-area-aware floating controls (search / filters / menu / geolocation). Desktop sidebar + filter bars unchanged.
-* Unified on-demand search (`MobileSearchPanel`) — one field discovers saunas (client-side over the loaded set) and publicly-visible sauna masters, grouped by type; master search is debounced (280ms), stale-guarded, min 2 chars.
+* Map-dominant on ALL breakpoints — the permanent ~40vh bottom sheet, the top map-mode / category filter bars, and the legacy permanent ~320px desktop sauna/search sidebar are all retired. The map fills the surface everywhere; one shared set of four compact safe-area-aware floating controls (search / filters / menu / geolocation) drives the same interaction model on phone and desktop.
+* Unified on-demand search (`MapSearchPanel`) — one field discovers saunas (client-side over the loaded set) and publicly-visible sauna masters, grouped by type; master search is debounced (280ms), stale-guarded, min 2 chars. Full-screen on mobile; a floating ~440px side panel on desktop (presentation only — same component, no stretched mobile sheet). Empty-query state surfaces the TOP SaunaPlanet list (the former sidebar's only unique content, now preserved here).
 * Map-native master discovery — selecting a master shows a compact profile card (avatar, effective public name/pseudonym, city, bio, specialties, full-profile link) with upcoming public events (title/date/time + facility); tapping an event's sauna jumps the map to that facility.
 * Shared `focusSauna` path — centers the camera without redefining `userLocation` (real geolocation preserved); resolves off-radius targets; deep-link `/?sauna=<uuid>` preserved.
-* Compact sauna popup + pictogram action row on mobile (Info / Globe / Camera / Flame / Pencil, 44px, aria-labelled, same authorization); desktop keeps text buttons. Collapsible `MobileFiltersPanel` (mode / category / photos / events / radius + active-filter dot + Wyczyść).
-* Privacy: master search uses two read-only SECURITY DEFINER RPCs (`search_public_masters`, `get_public_master_upcoming_events`) that apply `is_master_publicly_visible()` for every caller and expose an allow-listed public projection — they never read `master_private_identity` (SP-044 boundary). Migration `2026-09-08_sp045_public_master_search.sql` applied + behaviorally verified on Production.
+* Compact sauna popup + pictogram action row on EVERY breakpoint (Info / Globe / Camera / Flame / Pencil, 44px, aria-labelled, same authorization). The old desktop text-button block and expanded desktop media are gone. Collapsible `MapFiltersPanel` (mode / category / photos / events / radius + active-filter dot + Wyczyść) — mobile bottom sheet, desktop ~360px floating panel.
+* Privacy: master search uses two read-only SECURITY DEFINER RPCs (`search_public_masters`, `get_public_master_upcoming_events`) that apply `is_master_publicly_visible()` for every caller and expose an allow-listed public projection — they never read `master_private_identity` (SP-044 boundary). Desktop parity added ZERO database changes. Migration `2026-09-08_sp045_public_master_search.sql` applied + behaviorally verified on Production.
 
-Components: `components/map/MobileMapControls.tsx`, `MobileSearchPanel.tsx`, `MobileFiltersPanel.tsx`; helper `lib/map/masterSearch.ts`.
+Components: `components/map/MapControls.tsx`, `MapSearchPanel.tsx`, `MapFiltersPanel.tsx` (renamed from the `Mobile*` variants — one responsive implementation per concern); helper `lib/map/masterSearch.ts`. Contracts: `lib/map/__tests__/desktopParity.test.ts`.
 
 ---
 

@@ -39,10 +39,15 @@ type MasterEvent = {
   longitude: number
 }
 
+type TopSauna = { sauna_id: string; sauna_name: string; avg_rating: number; review_count: number }
+
 type Props = {
   open: boolean
   onClose: () => void
   saunas: SearchSauna[]
+  /** TOP SaunaPlanet ranking — shown as the empty-query "Polecane" section
+   *  (preserves the retired desktop sidebar's ranking). */
+  topSaunas?: TopSauna[]
   categoryEmoji: (category: string) => string
   onSelectSauna: (sauna: SearchSauna) => void
   onFocusEventSauna: (payload: { id: string; latitude: number; longitude: number }) => void
@@ -51,10 +56,11 @@ type Props = {
 const MASTER_MIN = 2
 const DEBOUNCE_MS = 280
 
-export default function MobileSearchPanel({
+export default function MapSearchPanel({
   open,
   onClose,
   saunas,
+  topSaunas = [],
   categoryEmoji,
   onSelectSauna,
   onFocusEventSauna,
@@ -130,7 +136,9 @@ export default function MobileSearchPanel({
 
   return (
     <div
-      className="fixed inset-0 z-[11000] flex flex-col bg-white lg:hidden"
+      // Mobile: full-screen. Desktop parity: a floating ~440px left panel that
+      // leaves the map visible (same component/state/logic on both).
+      className="fixed inset-0 z-[11000] flex flex-col bg-white lg:inset-y-4 lg:left-4 lg:right-auto lg:w-[440px] lg:overflow-hidden lg:rounded-2xl lg:border lg:shadow-2xl"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
@@ -188,9 +196,35 @@ export default function MobileSearchPanel({
         {master ? (
           <MasterCard master={master} events={events} onFocusEventSauna={onFocusEventSauna} onClose={onClose} />
         ) : query.trim().length === 0 ? (
-          <p className="mt-8 text-center text-sm text-gray-400">
-            Wpisz nazwę sauny, miasta lub saunamistrza.
-          </p>
+          <div>
+            <p className="mb-4 text-sm text-gray-500">
+              Szukaj saun, miast i saunamistrzów.
+            </p>
+            {topSaunas.length > 0 && (
+              <section>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  🏆 Polecane — TOP SaunaPlanet
+                </h3>
+                <ul className="space-y-2">
+                  {topSaunas.slice(0, 5).map((t, i) => (
+                    <li key={t.sauna_id}>
+                      <Link
+                        href={`/sauna/${t.sauna_id}`}
+                        onClick={onClose}
+                        className="flex items-center gap-3 rounded-xl border p-2 text-sm hover:bg-yellow-50"
+                      >
+                        <span className="w-5 text-center font-bold text-yellow-600">{i + 1}</span>
+                        <span className="min-w-0 flex-1 truncate font-semibold">{t.sauna_name}</span>
+                        <span className="shrink-0 text-xs text-yellow-700">
+                          ⭐ {Number(t.avg_rating).toFixed(1)} ({t.review_count})
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
         ) : (
           <div className="space-y-5">
             <section>
