@@ -809,7 +809,24 @@ Implemented:
 
 Migrations (authored, not applied): `2026-09-08_sp044_a1_admin_master_delete.sql`, `2026-09-08_sp044_b1_claim_auto_publish.sql`, `2026-09-08_sp044_c1_master_privacy.sql` (+ rollbacks).
 
-SP-045 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — architecture only, not built here.
+SP-046 (Master Inbox & Client Communication) recorded in `docs/BACKLOG.md` — architecture only, not built here. (Renumbered 2026-09-08 from SP-045; SP-045 is now Mobile Map UX & Unified Search.)
+
+---
+
+# SP-045 Mobile Map UX & Unified Search
+
+Status: DONE (deployed 2026-09-08)
+
+Implemented:
+
+* Mobile-dominant map — the permanent ~40vh bottom sheet and the two permanent top filter bars are gone on phones; the map fills the screen with four compact safe-area-aware floating controls (search / filters / menu / geolocation). Desktop sidebar + filter bars unchanged.
+* Unified on-demand search (`MobileSearchPanel`) — one field discovers saunas (client-side over the loaded set) and publicly-visible sauna masters, grouped by type; master search is debounced (280ms), stale-guarded, min 2 chars.
+* Map-native master discovery — selecting a master shows a compact profile card (avatar, effective public name/pseudonym, city, bio, specialties, full-profile link) with upcoming public events (title/date/time + facility); tapping an event's sauna jumps the map to that facility.
+* Shared `focusSauna` path — centers the camera without redefining `userLocation` (real geolocation preserved); resolves off-radius targets; deep-link `/?sauna=<uuid>` preserved.
+* Compact sauna popup + pictogram action row on mobile (Info / Globe / Camera / Flame / Pencil, 44px, aria-labelled, same authorization); desktop keeps text buttons. Collapsible `MobileFiltersPanel` (mode / category / photos / events / radius + active-filter dot + Wyczyść).
+* Privacy: master search uses two read-only SECURITY DEFINER RPCs (`search_public_masters`, `get_public_master_upcoming_events`) that apply `is_master_publicly_visible()` for every caller and expose an allow-listed public projection — they never read `master_private_identity` (SP-044 boundary). Migration `2026-09-08_sp045_public_master_search.sql` applied + behaviorally verified on Production.
+
+Components: `components/map/MobileMapControls.tsx`, `MobileSearchPanel.tsx`, `MobileFiltersPanel.tsx`; helper `lib/map/masterSearch.ts`.
 
 ---
 

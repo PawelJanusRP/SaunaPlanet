@@ -22,6 +22,17 @@ export type ChangelogEntry = {
 export const changelog: ChangelogEntry[] = [
   {
     date: '8 września 2026',
+    title: 'Mobilna mapa i wyszukiwanie saunamistrzów',
+    items: [
+      'Mobilna mapa zajmuje teraz niemal cały ekran, a wyszukiwanie i filtry otwierają się dopiero na żądanie.',
+      'Wyszukiwarka mapy znajduje teraz zarówno sauny, jak i publiczne profile saunamistrzów.',
+      'Profil saunamistrza pokazuje najbliższe wydarzenia wraz z obiektem, w którym się odbędą.',
+      'Dotknięcie sauny przy wydarzeniu przenosi bezpośrednio do właściwego miejsca na mapie.',
+      'Okno sauny na smartfonie jest bardziej kompaktowe, a duże przyciski zastąpiono wygodnymi ikonami.',
+    ],
+  },
+  {
+    date: '8 września 2026',
     title: 'Zarządzanie saunamistrzami i prywatność',
     items: [
       'Administrator może teraz usuwać profile saunamistrzów bezpośrednio z listy saunamistrzów.',
