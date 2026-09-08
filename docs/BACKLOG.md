@@ -807,7 +807,7 @@ benefit. Every recommendation classified:
 
 # SP-045 Mobile Map UX & Unified Search
 
-Status: IN PROGRESS (feature branch; not deployed)
+Status: CLOSED / DEPLOYED (2026-09-08)
 
 ## Goal
 
