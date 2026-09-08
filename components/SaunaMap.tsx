@@ -26,6 +26,7 @@ import AddEventModal from '@/components/AddEventModal'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Info, Menu, X } from 'lucide-react'
+import MobileMapControls from '@/components/map/MobileMapControls'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
 const LogoutIcon = LOGOUT_ICON
@@ -642,13 +643,20 @@ export default function SaunaMap() {
   const [selectedLocation, setSelectedLocation] = useState<[number, number]>(fallbackCenter)
   const [showAddForm, setShowAddForm] = useState(false)
   const [contextMenuLocation, setContextMenuLocation] = useState<[number, number] | null>(null)
-  const [sheetState, setSheetState] = useState<'collapsed' | 'half' | 'full'>('half')
+  // SP-045: mobile map is dominant by default — the search/list surface opens
+  // on demand (was a permanent ~40vh 3-state sheet). Desktop uses the sidebar.
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [showAccountPanel, setShowAccountPanel] = useState(false)
   const [radiusKm, setRadiusKm] = useState(1000)
   const [onlyWithEvents, setOnlyWithEvents] = useState(false)
   const [mapMode, setMapMode] = useState<'saunas' | 'events' | 'all'>('all')
   const [clusterRefreshKey, setClusterRefreshKey] = useState(0)
   const [showCategoryInfo, setShowCategoryInfo] = useState(false)
+
+  // SP-045: any filter differing from its default lights the mobile Filters dot.
+  const filtersActive =
+    onlyWithPhotos || onlyWithEvents || categoryFilter !== 'all' ||
+    mapMode !== 'all' || radiusKm !== 1000
 
   const markerRefs = useRef<Record<string, L.Marker | null>>({})
   const loadSeqRef = useRef(0)
@@ -1098,22 +1106,33 @@ export default function SaunaMap() {
       </div>
 
       <div className="relative flex-1">
+        {/* Desktop-only menu + geolocation (mobile uses MobileMapControls). */}
         <button
           onClick={() => setShowAccountPanel(true)}
           aria-label="Menu"
-          className="absolute right-4 top-4 z-[10000] flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5"
+          className="absolute right-4 top-4 z-[10000] hidden h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg lg:right-5 lg:top-5 lg:flex"
         >
           <Menu className="h-[22px] w-[22px] text-gray-800" aria-hidden="true" />
         </button>
 
         <button
           onClick={centerOnUserLocation}
-          className="absolute bottom-24 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-xl transition hover:scale-105 active:scale-95"
+          aria-label="Moja lokalizacja"
+          className="absolute bottom-24 right-4 z-[9999] hidden h-14 w-14 items-center justify-center rounded-full bg-white text-2xl shadow-xl transition hover:scale-105 active:scale-95 lg:flex"
         >
           📍
         </button>
 
-        <div className="absolute left-3 top-16 z-[9999] flex max-w-[calc(100vw-24px)] items-center gap-1 rounded-xl bg-white/90 p-2 shadow">
+        {/* SP-045: compact mobile controls (search / filters / menu / geo). */}
+        <MobileMapControls
+          onSearch={() => setMobileSheetOpen(true)}
+          onFilters={() => setMobileSheetOpen(true)}
+          onMenu={() => setShowAccountPanel(true)}
+          onGeolocate={centerOnUserLocation}
+          filtersActive={filtersActive}
+        />
+
+        <div className="absolute left-3 top-16 z-[9999] hidden max-w-[calc(100vw-24px)] items-center gap-1 rounded-xl bg-white/90 p-2 shadow lg:flex">
           <div className="flex gap-2 overflow-x-auto">
             {[
               { value: 'all', label: 'Wszystko' },
@@ -1185,7 +1204,7 @@ export default function SaunaMap() {
             </p>
           </div>
         )}
-		<div className="absolute left-3 top-3 z-[9999] flex gap-2 rounded-xl bg-white/90 p-2 shadow">
+		<div className="absolute left-3 top-3 z-[9999] hidden gap-2 rounded-xl bg-white/90 p-2 shadow lg:flex">
 		{[
 			{ value: 'all', label: '🧖+🔥' },
 			{ value: 'saunas', label: '🧖 Sauny' },
@@ -1307,32 +1326,36 @@ export default function SaunaMap() {
 
         <div
           className={`
-            absolute bottom-0 left-0 right-0 z-[9999]
-            rounded-t-3xl bg-white shadow-2xl lg:hidden
-            transition-all duration-300
-            ${
-              sheetState === 'collapsed'
-                ? 'h-[80px]'
-                : sheetState === 'half'
-                ? 'h-[40vh]'
-                : 'h-[85vh]'
-            }
+            absolute bottom-0 left-0 right-0 z-[10001]
+            h-[85vh] rounded-t-3xl bg-white shadow-2xl lg:hidden
+            transition-transform duration-300
+            ${mobileSheetOpen ? 'translate-y-0' : 'translate-y-full'}
           `}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Szukaj i filtruj"
         >
-          <button
-            className="flex w-full justify-center py-3"
-            onClick={() => {
-              setSheetState((current) => {
-                if (current === 'collapsed') return 'half'
-                if (current === 'half') return 'full'
-                return 'collapsed'
-              })
-            }}
-          >
-            <div className="h-1.5 w-12 rounded-full bg-gray-300" />
-          </button>
+          <div className="flex items-center justify-between px-3 pt-2">
+            <button
+              type="button"
+              className="flex flex-1 justify-center py-2"
+              onClick={() => setMobileSheetOpen(false)}
+              aria-label="Zamknij"
+            >
+              <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileSheetOpen(false)}
+              aria-label="Zamknij"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
 
-          <div className="max-h-[40vh] overflow-y-auto p-3">
+          <div className="max-h-[calc(85vh-3rem)] overflow-y-auto p-3">
             <div className="mb-3 text-sm font-bold">
               <input
                 className="mb-3 w-full rounded-xl border p-2 text-sm"
@@ -1395,7 +1418,7 @@ export default function SaunaMap() {
                       setSelectedSauna(item)
                       setSelectedLocation([item.latitude, item.longitude])
                       setShowAddForm(false)
-                      setSheetState('collapsed')
+                      setMobileSheetOpen(false)
                     }}
                   >
                     {img ? (
