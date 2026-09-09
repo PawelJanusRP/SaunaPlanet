@@ -219,5 +219,39 @@
     "confirm": "Withdraw the proposal “{title}”? The event will be deleted.",
     "withdrawnToast": "Proposal withdrawn",
     "button": "Withdraw proposal"
+  },
+  "actions": {
+    "notLoggedIn": "You must be signed in",
+    "noMasterProfile": "No sauna master profile is linked to this account",
+    "noEditPermission": "You don't have permission to edit this profile",
+    "profileSaveFailed": "Couldn't save the profile — please try again",
+    "slugTaken": "The address “{slug}” is already taken — try e.g. “{suggestion}”",
+    "duplicateAffiliation": "This relationship already exists (an active or pending affiliation with this facility)",
+    "affiliationsRequireApproval": "Affiliations become available once your sauna master profile is approved",
+    "requestCreateFailed": "Couldn't create the request",
+    "noFacilityManagePermission": "You don't have permission to manage this facility",
+    "onlyApprovedMastersInvitable": "Only approved sauna masters can be invited",
+    "invitationCreateFailed": "Couldn't create the invitation",
+    "affiliationNotFound": "Affiliation not found",
+    "affiliationAlreadyResolved": "This affiliation has already been resolved",
+    "affiliationResolvedByOtherSide": "This affiliation is resolved by the other side of the relationship",
+    "noResolvePermission": "You don't have permission to resolve this affiliation",
+    "affiliationAlreadyEnded": "This affiliation has already ended",
+    "onlyInitiatorCanWithdraw": "Only the side that sent the request can withdraw it",
+    "noEndPermission": "You don't have permission to end this affiliation",
+    "onlyActiveCanBePrimary": "Only an active affiliation can be primary",
+    "primaryChosenByMaster": "The primary affiliation is chosen by the sauna master",
+    "setPrimaryFailed": "Couldn't set the primary affiliation",
+    "identityErrors": {
+      "not_authenticated": "You must be signed in",
+      "not_authorized": "You don't have permission to edit this profile",
+      "not_found": "Sauna master profile not found",
+      "invalid_input": "Invalid data",
+      "name_required": "Full name cannot be empty",
+      "name_too_long": "Full name is too long (max. 120 characters)",
+      "nickname_required": "Enabling pseudonym mode requires a pseudonym",
+      "nickname_too_long": "Pseudonym is too long (max. 60 characters)",
+      "unexpected_error": "Couldn't save the data — please try again"
+    }
   }
 }

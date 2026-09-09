@@ -1,4 +1,20 @@
 {
+  "actions": {
+    "notAuthorized": "Keine Berechtigung",
+    "notAuthenticated": "Du musst angemeldet sein",
+    "cannotChangeOwnRole": "Du kannst deine eigene Rolle nicht ändern",
+    "submissionNotFound": "Einreichung nicht gefunden",
+    "masterNotFound": "Saunameister-Profil nicht gefunden",
+    "saunaNameRequired": "Name ist erforderlich",
+    "nameAndCategoryRequired": "Gib einen Namen und eine Kategorie an",
+    "nameRequired": "Vor- und Nachname ist erforderlich",
+    "profilePrepared": "Profil vorbereitet.",
+    "profileSaved": "Profil gespeichert.",
+    "invitationGenerated": "Einladung generiert — kopiere den Link jetzt.",
+    "invitationRegenerated": "Neue Einladung generiert — der vorherige Link funktioniert nicht mehr.",
+    "invalidDeliveryChannel": "Wähle einen gültigen Zustellkanal.",
+    "slugConflict": "Die Adresse „{requested}“ ist bereits vergeben — versuche z. B. „{suggestion}“"
+  },
   "page": {
     "backToMap": "← Zurück zur Karte",
     "title": "Administrationsbereich",

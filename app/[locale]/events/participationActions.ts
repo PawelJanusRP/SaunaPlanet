@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { assertCanManageSaunaEvents } from '@/app/[locale]/events/actions'
 
@@ -15,26 +16,28 @@ import { assertCanManageSaunaEvents } from '@/app/[locale]/events/actions'
 export type ParticipationRole = 'lead' | 'assistant' | 'guest'
 const ROLES: ParticipationRole[] = ['lead', 'assistant', 'guest']
 
-function translateDbError(raw: string): string {
+async function translateDbError(raw: string): Promise<string> {
+  const t = await getTranslations('events')
   // our own trigger/RPC messages are user-oriented Polish — pass through
   if (/rozstrzyg|wymaga|nie można|Niedozwolona|Tylko zatwierdzony|musi mieć|Obiekt nie istnieje|można tworzyć|Limit miejsc|dołączony|Decyzja musi|propozycja/i.test(raw)) {
     return raw
   }
   if (raw.includes('duplicate key')) {
-    return 'Zgłoszenie dla tego wydarzenia już istnieje'
+    return t('actions.participation.duplicateRequest')
   }
   if (raw.includes('row-level security') || raw.includes('permission denied')) {
-    return 'Brak uprawnień do wykonania tej operacji'
+    return t('actions.participation.permissionDenied')
   }
   console.error('participation db error:', raw)
-  return 'Operacja nie powiodła się — spróbuj ponownie'
+  return t('actions.participation.genericError')
 }
 
 async function getOwnApprovedMasterId(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<{ masterId?: string; error?: string }> {
+  const t = await getTranslations('events')
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Musisz być zalogowany' }
+  if (!user) return { error: t('actions.mustBeLoggedIn') }
 
   const { data: master } = await supabase
     .from('sauna_masters')
@@ -42,9 +45,9 @@ async function getOwnApprovedMasterId(
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (!master) return { error: 'Tylko saunamistrzowie mogą zgłaszać udział' }
+  if (!master) return { error: t('actions.participation.masterOnly') }
   if (master.status !== 'approved') {
-    return { error: 'Twój profil saunamistrza czeka na zatwierdzenie' }
+    return { error: t('actions.participation.masterPending') }
   }
   return { masterId: master.id }
 }
@@ -69,7 +72,7 @@ export async function requestEventParticipation(
       initiated_by: 'master',
     })
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
 
   revalidatePath(`/events/${eventId}`)
   revalidatePath('/studio/events')
@@ -96,9 +99,10 @@ export async function withdrawEventParticipation(
     .eq('status', 'pending')
     .select('event_id')
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
   if (!data || data.length === 0) {
-    return { error: 'Zgłoszenie nie istnieje albo zostało już rozstrzygnięte' }
+    const t = await getTranslations('events')
+    return { error: t('actions.participation.requestNotFoundOrResolved') }
   }
 
   revalidatePath(`/events/${data[0].event_id}`)
@@ -120,9 +124,10 @@ export async function inviteMasterToEvent(
   role: ParticipationRole
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const t = await getTranslations('events')
 
   if (!ROLES.includes(role)) {
-    return { error: 'Rola zaproszenia musi być jedną z: lead, assistant, guest' }
+    return { error: t('actions.participation.invalidInviteRole') }
   }
 
   const { data: ev } = await supabase
@@ -130,11 +135,11 @@ export async function inviteMasterToEvent(
     .select('sauna_id')
     .eq('id', eventId)
     .maybeSingle()
-  if (!ev?.sauna_id) return { error: 'Nie znaleziono wydarzenia' }
+  if (!ev?.sauna_id) return { error: t('actions.participation.eventNotFound') }
   try {
     await assertCanManageSaunaEvents(supabase, ev.sauna_id)
   } catch {
-    return { error: 'Brak uprawnień do zapraszania na wydarzenia tego obiektu' }
+    return { error: t('actions.participation.inviteForbidden') }
   }
 
   const { error } = await supabase
@@ -148,9 +153,9 @@ export async function inviteMasterToEvent(
     })
   if (error) {
     if (error.message.includes('duplicate key')) {
-      return { error: 'Ten saunamistrz ma już zaproszenie lub udział w tym wydarzeniu' }
+      return { error: t('actions.participation.duplicateInvite') }
     }
-    return { error: translateDbError(error.message) }
+    return { error: await translateDbError(error.message) }
   }
 
   revalidatePath('/workspace/events')
@@ -181,9 +186,10 @@ export async function respondToEventInvitation(
     .eq('initiated_by', 'facility')
     .select('event_id')
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
   if (!data || data.length === 0) {
-    return { error: 'Zaproszenie nie istnieje albo zostało już rozstrzygnięte' }
+    const t = await getTranslations('events')
+    return { error: t('actions.participation.invitationNotFoundOrResolved') }
   }
 
   revalidatePath(`/events/${data[0].event_id}`)
@@ -201,6 +207,7 @@ export async function withdrawEventInvitation(
   invitationId: string
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const t = await getTranslations('events')
 
   const { data: inv } = await supabase
     .from('sauna_event_masters')
@@ -209,11 +216,11 @@ export async function withdrawEventInvitation(
     .maybeSingle()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saunaId = (inv as any)?.sauna_events?.sauna_id
-  if (!inv || !saunaId) return { error: 'Nie znaleziono zaproszenia' }
+  if (!inv || !saunaId) return { error: t('actions.participation.invitationNotFound') }
   try {
     await assertCanManageSaunaEvents(supabase, saunaId)
   } catch {
-    return { error: 'Brak uprawnień do wycofania tego zaproszenia' }
+    return { error: t('actions.participation.withdrawInviteForbidden') }
   }
 
   const { data, error } = await supabase
@@ -224,9 +231,9 @@ export async function withdrawEventInvitation(
     .eq('initiated_by', 'facility')
     .select('id')
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
   if (!data || data.length === 0) {
-    return { error: 'Zaproszenie nie istnieje albo zostało już rozstrzygnięte' }
+    return { error: t('actions.participation.invitationNotFoundOrResolved') }
   }
 
   revalidatePath('/workspace/events')
@@ -269,7 +276,7 @@ export async function createMasterEvent(
     p_max_participants: input.maxParticipants,
   })
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
 
   const result = data as {
     event_id: string
@@ -310,9 +317,10 @@ export async function withdrawMasterEventProposal(
     .eq('status', 'pending')
     .select('id')
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
   if (!data || data.length === 0) {
-    return { error: 'Propozycja nie istnieje albo została już rozstrzygnięta' }
+    const t = await getTranslations('events')
+    return { error: t('actions.participation.proposalNotFoundOrResolved') }
   }
 
   revalidatePath('/studio/events')
@@ -336,7 +344,8 @@ export async function resolveMasterEventProposal(
   const supabase = await createClient()
 
   if (decision === 'approved' && (!role || !ROLES.includes(role))) {
-    return { error: 'Zatwierdzenie wymaga wyboru roli organizatora (lead, assistant lub guest)' }
+    const t = await getTranslations('events')
+    return { error: t('actions.participation.roleRequiredOrganizer') }
   }
 
   const { error } = await supabase.rpc('resolve_master_event', {
@@ -345,7 +354,7 @@ export async function resolveMasterEventProposal(
     p_organizer_role: decision === 'approved' ? role : null,
   })
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
 
   revalidatePath('/events')
   revalidatePath(`/events/${eventId}`)
@@ -360,6 +369,7 @@ export async function resolveEventParticipation(
   role?: ParticipationRole
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const t = await getTranslations('events')
 
   // Locate the request (RLS: visible to event staff / moderation / owner).
   const { data: assignment } = await supabase
@@ -371,21 +381,21 @@ export async function resolveEventParticipation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saunaId = (assignment as any)?.sauna_events?.sauna_id
   if (!assignment || !saunaId) {
-    return { error: 'Nie znaleziono zgłoszenia' }
+    return { error: t('actions.participation.requestNotFound') }
   }
   if (assignment.status !== 'pending') {
-    return { error: 'Zgłoszenie zostało już rozstrzygnięte' }
+    return { error: t('actions.participation.requestAlreadyResolved') }
   }
 
   // Reuse the SP-034 authorization: admin OR approved staff of the sauna.
   try {
     await assertCanManageSaunaEvents(supabase, saunaId)
   } catch {
-    return { error: 'Brak uprawnień do rozstrzygania zgłoszeń tego obiektu' }
+    return { error: t('actions.participation.resolveForbidden') }
   }
 
   if (decision === 'approved' && (!role || !ROLES.includes(role))) {
-    return { error: 'Zatwierdzenie wymaga wyboru roli (lead, assistant lub guest)' }
+    return { error: t('actions.participation.roleRequired') }
   }
 
   // The guard trigger owns approved_at and re-validates the transition,
@@ -401,9 +411,9 @@ export async function resolveEventParticipation(
     .eq('status', 'pending')
     .select('id')
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: await translateDbError(error.message) }
   if (!updated || updated.length === 0) {
-    return { error: 'Zgłoszenie nie istnieje albo zostało już rozstrzygnięte' }
+    return { error: t('actions.participation.requestNotFoundOrResolved') }
   }
 
   revalidatePath(`/events/${assignment.event_id}`)

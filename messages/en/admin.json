@@ -1,4 +1,20 @@
 {
+  "actions": {
+    "notAuthorized": "You do not have permission",
+    "notAuthenticated": "You must be signed in",
+    "cannotChangeOwnRole": "You cannot change your own role",
+    "submissionNotFound": "Submission not found",
+    "masterNotFound": "Sauna master profile not found",
+    "saunaNameRequired": "Name is required",
+    "nameAndCategoryRequired": "Provide a name and a category",
+    "nameRequired": "Full name is required",
+    "profilePrepared": "Profile prepared.",
+    "profileSaved": "Profile saved.",
+    "invitationGenerated": "Invitation generated — copy the link now.",
+    "invitationRegenerated": "New invitation generated — the previous link no longer works.",
+    "invalidDeliveryChannel": "Select a valid delivery channel.",
+    "slugConflict": "The address “{requested}” is already taken — try e.g. “{suggestion}”"
+  },
   "page": {
     "backToMap": "← Back to map",
     "title": "Admin panel",

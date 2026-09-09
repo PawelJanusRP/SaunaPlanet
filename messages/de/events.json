@@ -170,5 +170,39 @@
     "expired": "Reservierung abgelaufen",
     "reservedFor": "Noch reserviert für {timeLeft}",
     "available": "Verfügbar"
+  },
+  "actions": {
+    "mustBeLoggedIn": "Du musst angemeldet sein",
+    "noPermission": "Keine Berechtigung",
+    "manageEventsForbidden": "Keine Berechtigung — Events für diese Anlage können nur genehmigtes Personal (Betreiber/Manager) oder ein Administrator hinzufügen",
+    "eventNotFound": "Event nicht gefunden",
+    "titleAndDateRequired": "Titel und Datum sind erforderlich",
+    "maxParticipantsMin": "Das Platzlimit muss größer als null sein",
+    "createEventFailed": "Event konnte nicht hinzugefügt werden",
+    "editEventForbidden": "Keine Berechtigung, dieses Event zu bearbeiten",
+    "deleteEventForbidden": "Keine Berechtigung, dieses Event zu löschen",
+    "registrationNotFound": "Reservierung nicht gefunden",
+    "commentEmpty": "Der Kommentar darf nicht leer sein",
+    "participation": {
+      "masterOnly": "Nur Saunameister können eine Teilnahme anfragen",
+      "masterPending": "Dein Saunameister-Profil wartet auf die Freigabe",
+      "duplicateRequest": "Für dieses Event existiert bereits eine Anfrage",
+      "permissionDenied": "Keine Berechtigung, diesen Vorgang auszuführen",
+      "genericError": "Der Vorgang ist fehlgeschlagen — bitte versuche es erneut",
+      "requestNotFoundOrResolved": "Die Anfrage existiert nicht oder wurde bereits entschieden",
+      "invalidInviteRole": "Die Einladungsrolle muss eine der folgenden sein: lead, assistant, guest",
+      "eventNotFound": "Event nicht gefunden",
+      "inviteForbidden": "Keine Berechtigung, Meister zu Events dieser Anlage einzuladen",
+      "duplicateInvite": "Dieser Saunameister hat bereits eine Einladung oder Teilnahme an diesem Event",
+      "invitationNotFoundOrResolved": "Die Einladung existiert nicht oder wurde bereits entschieden",
+      "invitationNotFound": "Einladung nicht gefunden",
+      "withdrawInviteForbidden": "Keine Berechtigung, diese Einladung zurückzuziehen",
+      "proposalNotFoundOrResolved": "Der Vorschlag existiert nicht oder wurde bereits entschieden",
+      "roleRequiredOrganizer": "Für die Freigabe muss eine Organisator-Rolle gewählt werden (lead, assistant oder guest)",
+      "requestNotFound": "Anfrage nicht gefunden",
+      "requestAlreadyResolved": "Die Anfrage wurde bereits entschieden",
+      "resolveForbidden": "Keine Berechtigung, Anfragen für diese Anlage zu entscheiden",
+      "roleRequired": "Für die Freigabe muss eine Rolle gewählt werden (lead, assistant oder guest)"
+    }
   }
 }

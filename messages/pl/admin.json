@@ -1,4 +1,20 @@
 {
+  "actions": {
+    "notAuthorized": "Brak uprawnień",
+    "notAuthenticated": "Musisz być zalogowany",
+    "cannotChangeOwnRole": "Nie możesz zmienić własnej roli",
+    "submissionNotFound": "Nie znaleziono zgłoszenia",
+    "masterNotFound": "Nie znaleziono profilu saunamistrza",
+    "saunaNameRequired": "Nazwa jest wymagana",
+    "nameAndCategoryRequired": "Podaj nazwę i kategorię",
+    "nameRequired": "Imię i nazwisko jest wymagane",
+    "profilePrepared": "Profil przygotowany.",
+    "profileSaved": "Profil zapisany.",
+    "invitationGenerated": "Zaproszenie wygenerowane — skopiuj link teraz.",
+    "invitationRegenerated": "Nowe zaproszenie wygenerowane — poprzedni link przestał działać.",
+    "invalidDeliveryChannel": "Wybierz prawidłowy kanał dostarczenia.",
+    "slugConflict": "Adres „{requested}” jest już zajęty — spróbuj np. „{suggestion}”"
+  },
   "page": {
     "backToMap": "← Powrót do mapy",
     "title": "Panel administracyjny",

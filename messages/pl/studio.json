@@ -219,5 +219,39 @@
     "confirm": "Wycofać propozycję „{title}”? Wydarzenie zostanie usunięte.",
     "withdrawnToast": "Propozycja wycofana",
     "button": "Wycofaj propozycję"
+  },
+  "actions": {
+    "notLoggedIn": "Musisz być zalogowany",
+    "noMasterProfile": "Brak profilu saunamistrza powiązanego z tym kontem",
+    "noEditPermission": "Brak uprawnień do edycji tego profilu",
+    "profileSaveFailed": "Nie udało się zapisać profilu — spróbuj ponownie",
+    "slugTaken": "Adres „{slug}” jest już zajęty — spróbuj np. „{suggestion}”",
+    "duplicateAffiliation": "Ta relacja już istnieje (aktywna lub oczekująca afiliacja z tym obiektem)",
+    "affiliationsRequireApproval": "Afiliacje są dostępne po zatwierdzeniu profilu saunamistrza",
+    "requestCreateFailed": "Nie udało się utworzyć zgłoszenia",
+    "noFacilityManagePermission": "Brak uprawnień do zarządzania tym obiektem",
+    "onlyApprovedMastersInvitable": "Można zapraszać tylko zatwierdzonych saunamistrzów",
+    "invitationCreateFailed": "Nie udało się utworzyć zaproszenia",
+    "affiliationNotFound": "Nie znaleziono afiliacji",
+    "affiliationAlreadyResolved": "Ta afiliacja została już rozstrzygnięta",
+    "affiliationResolvedByOtherSide": "Tę afiliację rozstrzyga druga strona relacji",
+    "noResolvePermission": "Brak uprawnień do rozstrzygnięcia tej afiliacji",
+    "affiliationAlreadyEnded": "Ta afiliacja jest już zakończona",
+    "onlyInitiatorCanWithdraw": "Wycofać może tylko strona, która wysłała zgłoszenie",
+    "noEndPermission": "Brak uprawnień do zakończenia tej afiliacji",
+    "onlyActiveCanBePrimary": "Główną może być tylko aktywna afiliacja",
+    "primaryChosenByMaster": "Afiliację główną wybiera saunamistrz",
+    "setPrimaryFailed": "Nie udało się ustawić afiliacji głównej",
+    "identityErrors": {
+      "not_authenticated": "Musisz być zalogowany",
+      "not_authorized": "Brak uprawnień do edycji tego profilu",
+      "not_found": "Nie znaleziono profilu saunamistrza",
+      "invalid_input": "Nieprawidłowe dane",
+      "name_required": "Imię i nazwisko nie może być puste",
+      "name_too_long": "Imię i nazwisko jest za długie (maks. 120 znaków)",
+      "nickname_required": "Włączenie trybu pseudonimu wymaga podania pseudonimu",
+      "nickname_too_long": "Pseudonim jest za długi (maks. 60 znaków)",
+      "unexpected_error": "Nie udało się zapisać danych — spróbuj ponownie"
+    }
   }
 }

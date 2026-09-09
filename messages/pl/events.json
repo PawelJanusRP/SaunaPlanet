@@ -170,5 +170,39 @@
     "expired": "Rezerwacja wygasła",
     "reservedFor": "Zarezerwowane jeszcze {timeLeft}",
     "available": "Dostępne"
+  },
+  "actions": {
+    "mustBeLoggedIn": "Musisz być zalogowany",
+    "noPermission": "Brak uprawnień",
+    "manageEventsForbidden": "Brak uprawnień — eventy tego obiektu może dodawać tylko zatwierdzona obsada (właściciel/manager) lub administrator",
+    "eventNotFound": "Nie znaleziono eventu",
+    "titleAndDateRequired": "Tytuł i data są wymagane",
+    "maxParticipantsMin": "Limit miejsc musi być większy od zera",
+    "createEventFailed": "Nie udało się dodać eventu",
+    "editEventForbidden": "Brak uprawnień do edycji tego wydarzenia",
+    "deleteEventForbidden": "Brak uprawnień do usunięcia tego wydarzenia",
+    "registrationNotFound": "Nie znaleziono rezerwacji",
+    "commentEmpty": "Komentarz nie może być pusty",
+    "participation": {
+      "masterOnly": "Tylko saunamistrzowie mogą zgłaszać udział",
+      "masterPending": "Twój profil saunamistrza czeka na zatwierdzenie",
+      "duplicateRequest": "Zgłoszenie dla tego wydarzenia już istnieje",
+      "permissionDenied": "Brak uprawnień do wykonania tej operacji",
+      "genericError": "Operacja nie powiodła się — spróbuj ponownie",
+      "requestNotFoundOrResolved": "Zgłoszenie nie istnieje albo zostało już rozstrzygnięte",
+      "invalidInviteRole": "Rola zaproszenia musi być jedną z: lead, assistant, guest",
+      "eventNotFound": "Nie znaleziono wydarzenia",
+      "inviteForbidden": "Brak uprawnień do zapraszania na wydarzenia tego obiektu",
+      "duplicateInvite": "Ten saunamistrz ma już zaproszenie lub udział w tym wydarzeniu",
+      "invitationNotFoundOrResolved": "Zaproszenie nie istnieje albo zostało już rozstrzygnięte",
+      "invitationNotFound": "Nie znaleziono zaproszenia",
+      "withdrawInviteForbidden": "Brak uprawnień do wycofania tego zaproszenia",
+      "proposalNotFoundOrResolved": "Propozycja nie istnieje albo została już rozstrzygnięta",
+      "roleRequiredOrganizer": "Zatwierdzenie wymaga wyboru roli organizatora (lead, assistant lub guest)",
+      "requestNotFound": "Nie znaleziono zgłoszenia",
+      "requestAlreadyResolved": "Zgłoszenie zostało już rozstrzygnięte",
+      "resolveForbidden": "Brak uprawnień do rozstrzygania zgłoszeń tego obiektu",
+      "roleRequired": "Zatwierdzenie wymaga wyboru roli (lead, assistant lub guest)"
+    }
   }
 }

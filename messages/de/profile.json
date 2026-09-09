@@ -47,11 +47,26 @@
     "comingSoonSection": "Demnächst in deinem Profil",
     "comingSoonBadge": "Demnächst",
     "fields": {
-      "avatar": { "label": "Avatar", "hint": "Profilbild, das bei Bewertungen angezeigt wird" },
-      "bio": { "label": "Bio", "hint": "Eine kurze Beschreibung über dich" },
-      "location": { "label": "Standort", "hint": "Deine Stadt" },
-      "languages": { "label": "Sprachen", "hint": "Sprachen, die du sprichst" },
-      "publicProfile": { "label": "Öffentliches Profil", "hint": "Sichtbarkeit des Profils für andere Nutzer" }
+      "avatar": {
+        "label": "Avatar",
+        "hint": "Profilbild, das bei Bewertungen angezeigt wird"
+      },
+      "bio": {
+        "label": "Bio",
+        "hint": "Eine kurze Beschreibung über dich"
+      },
+      "location": {
+        "label": "Standort",
+        "hint": "Deine Stadt"
+      },
+      "languages": {
+        "label": "Sprachen",
+        "hint": "Sprachen, die du sprichst"
+      },
+      "publicProfile": {
+        "label": "Öffentliches Profil",
+        "hint": "Sichtbarkeit des Profils für andere Nutzer"
+      }
     }
   },
   "events": {
@@ -154,5 +169,9 @@
       "denied": "Du darfst das Bild dieses Profils nicht ändern"
     },
     "uploading": "Wird hochgeladen..."
+  },
+  "actions": {
+    "mustBeLoggedIn": "Du musst angemeldet sein",
+    "managerRequestDuplicate": "Du hast diese Sauna bereits angefragt"
   }
 }

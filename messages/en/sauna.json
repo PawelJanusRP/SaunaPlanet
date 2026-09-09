@@ -315,5 +315,21 @@
     "cancel": "Cancel",
     "saving": "Saving...",
     "save": "Save"
+  },
+  "actions": {
+    "unauthorized": "You don't have permission",
+    "dbNoPermission": "You don't have permission to perform this operation",
+    "dbGeneric": "The operation failed — please try again",
+    "coordsBothOrNone": "Enter both coordinates or neither",
+    "coordsNotNumbers": "Coordinates must be numbers",
+    "coordsOutOfRange": "Coordinates are out of the allowed range",
+    "loginRequired": "You must be signed in to submit a sauna",
+    "noName": "Enter the sauna or venue name",
+    "submissionCap": "You already have {limit} submissions awaiting moderation — please wait for them to be reviewed",
+    "submitFailed": "Failed to submit the sauna — please try again",
+    "import": {
+      "fetchFailed": "Failed to fetch the data — please try again",
+      "imageFetchFailed": "Failed to fetch the photo from the source website"
+    }
   }
 }

@@ -219,5 +219,39 @@
     "confirm": "Vorschlag „{title}“ zurückziehen? Das Event wird gelöscht.",
     "withdrawnToast": "Vorschlag zurückgezogen",
     "button": "Vorschlag zurückziehen"
+  },
+  "actions": {
+    "notLoggedIn": "Du musst angemeldet sein",
+    "noMasterProfile": "Diesem Konto ist kein Saunameister-Profil zugeordnet",
+    "noEditPermission": "Du hast keine Berechtigung, dieses Profil zu bearbeiten",
+    "profileSaveFailed": "Das Profil konnte nicht gespeichert werden — bitte versuche es erneut",
+    "slugTaken": "Die Adresse „{slug}“ ist bereits vergeben — versuche z. B. „{suggestion}“",
+    "duplicateAffiliation": "Diese Beziehung besteht bereits (eine aktive oder ausstehende Zugehörigkeit zu dieser Anlage)",
+    "affiliationsRequireApproval": "Zugehörigkeiten sind verfügbar, sobald dein Saunameister-Profil genehmigt ist",
+    "requestCreateFailed": "Die Anfrage konnte nicht erstellt werden",
+    "noFacilityManagePermission": "Du hast keine Berechtigung, diese Anlage zu verwalten",
+    "onlyApprovedMastersInvitable": "Es können nur genehmigte Saunameister eingeladen werden",
+    "invitationCreateFailed": "Die Einladung konnte nicht erstellt werden",
+    "affiliationNotFound": "Zugehörigkeit nicht gefunden",
+    "affiliationAlreadyResolved": "Diese Zugehörigkeit wurde bereits entschieden",
+    "affiliationResolvedByOtherSide": "Über diese Zugehörigkeit entscheidet die andere Seite der Beziehung",
+    "noResolvePermission": "Du hast keine Berechtigung, über diese Zugehörigkeit zu entscheiden",
+    "affiliationAlreadyEnded": "Diese Zugehörigkeit ist bereits beendet",
+    "onlyInitiatorCanWithdraw": "Zurückziehen kann nur die Seite, die die Anfrage gesendet hat",
+    "noEndPermission": "Du hast keine Berechtigung, diese Zugehörigkeit zu beenden",
+    "onlyActiveCanBePrimary": "Nur eine aktive Zugehörigkeit kann die Hauptzugehörigkeit sein",
+    "primaryChosenByMaster": "Die Hauptzugehörigkeit wählt der Saunameister",
+    "setPrimaryFailed": "Die Hauptzugehörigkeit konnte nicht festgelegt werden",
+    "identityErrors": {
+      "not_authenticated": "Du musst angemeldet sein",
+      "not_authorized": "Du hast keine Berechtigung, dieses Profil zu bearbeiten",
+      "not_found": "Saunameister-Profil nicht gefunden",
+      "invalid_input": "Ungültige Daten",
+      "name_required": "Der vollständige Name darf nicht leer sein",
+      "name_too_long": "Der vollständige Name ist zu lang (max. 120 Zeichen)",
+      "nickname_required": "Für den Pseudonym-Modus ist ein Pseudonym erforderlich",
+      "nickname_too_long": "Das Pseudonym ist zu lang (max. 60 Zeichen)",
+      "unexpected_error": "Die Daten konnten nicht gespeichert werden — bitte versuche es erneut"
+    }
   }
 }

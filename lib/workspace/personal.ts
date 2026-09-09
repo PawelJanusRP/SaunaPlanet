@@ -11,12 +11,12 @@ export const PERSONAL_WORKSPACE_LABEL = 'Mój profil'
 export const PERSONAL_WORKSPACE_HOME = '/profile'
 
 export const PERSONAL_NAV: WorkspaceNavItem[] = [
-  { key: 'dashboard', label: 'Pulpit', href: '/profile' },
-  { key: 'details', label: 'Profil', href: '/profile/details' },
-  { key: 'favorites', label: 'Ulubione', href: '/profile/favorites' },
-  { key: 'reviews', label: 'Recenzje', href: '/profile/reviews' },
-  { key: 'events', label: 'Wydarzenia', href: '/profile/events' },
-  { key: 'settings', label: 'Ustawienia', href: '/profile/settings' },
+  { key: 'dashboard', labelKey: 'nav.personal.dashboard', href: '/profile' },
+  { key: 'details', labelKey: 'nav.personal.details', href: '/profile/details' },
+  { key: 'favorites', labelKey: 'nav.personal.favorites', href: '/profile/favorites' },
+  { key: 'reviews', labelKey: 'nav.personal.reviews', href: '/profile/reviews' },
+  { key: 'events', labelKey: 'nav.personal.events', href: '/profile/events' },
+  { key: 'settings', labelKey: 'nav.personal.settings', href: '/profile/settings' },
 ]
 
 /** Breadcrumb trail: platform root → workspace home → optional current page. */

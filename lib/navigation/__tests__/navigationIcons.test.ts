@@ -47,24 +47,25 @@ describe('icon mapping completeness', () => {
 describe('routes and labels stay unchanged (icons are presentation only)', () => {
   it('avatar-menu destinations keep their exact hrefs and labels', () => {
     expect(
-      WORKSPACE_DESTINATIONS.map(({ key, label, href }) => ({ key, label, href }))
+      WORKSPACE_DESTINATIONS.map(({ key, labelKey, href }) => ({ key, labelKey, href }))
     ).toEqual([
-      { key: 'profile', label: 'Mój profil', href: '/profile' },
-      { key: 'owner-workspace', label: 'Panel obiektu', href: '/workspace' },
-      { key: 'master-studio', label: 'Studio', href: '/studio' },
-      { key: 'admin', label: 'Panel admina', href: '/admin' },
+      // SP-047: config stores stable translation keys, resolved at render.
+      { key: 'profile', labelKey: 'nav.destinations.profile', href: '/profile' },
+      { key: 'owner-workspace', labelKey: 'nav.destinations.owner-workspace', href: '/workspace' },
+      { key: 'master-studio', labelKey: 'nav.destinations.master-studio', href: '/studio' },
+      { key: 'admin', labelKey: 'nav.destinations.admin', href: '/admin' },
     ])
   })
-  it('master studio nav keeps its exact routes and labels', () => {
+  it('master studio nav keeps its exact routes and label keys', () => {
     // SP-039P0 appended the public Help destination; all pre-existing
-    // entries stay byte-identical.
+    // entries keep their route. SP-047: labels are translation keys.
     expect(MASTER_NAV).toEqual([
-      { key: 'dashboard', label: 'Pulpit', href: '/studio' },
-      { key: 'profile', label: 'Profil', href: '/studio/profile' },
-      { key: 'events', label: 'Moje wydarzenia', href: '/studio/events' },
-      { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
-      { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
-      { key: 'help', label: 'Pomoc', href: '/help/saunamaster' },
+      { key: 'dashboard', labelKey: 'nav.master.dashboard', href: '/studio' },
+      { key: 'profile', labelKey: 'nav.master.profile', href: '/studio/profile' },
+      { key: 'events', labelKey: 'nav.master.events', href: '/studio/events' },
+      { key: 'affiliations', labelKey: 'nav.master.affiliations', href: '/studio/affiliations' },
+      { key: 'settings', labelKey: 'nav.master.settings', href: '/studio/settings' },
+      { key: 'help', labelKey: 'nav.master.help', href: '/help/saunamaster' },
     ])
   })
   it('personal nav keeps its exact routes and labels', () => {

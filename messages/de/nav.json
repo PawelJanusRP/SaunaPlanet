@@ -14,5 +14,33 @@
   "about": "Über die App",
   "myProfile": "Mein Profil",
   "adminPanel": "Admin-Bereich",
-  "adminBadge": "Admin"
+  "adminBadge": "Admin",
+  "destinations": {
+    "profile": "Mein Profil",
+    "owner-workspace": "Anlagen-Bereich",
+    "master-studio": "Studio",
+    "admin": "Admin-Bereich"
+  },
+  "master": {
+    "dashboard": "Übersicht",
+    "profile": "Profil",
+    "events": "Meine Events",
+    "affiliations": "Zugehörigkeiten",
+    "settings": "Einstellungen",
+    "help": "Hilfe"
+  },
+  "personal": {
+    "dashboard": "Übersicht",
+    "details": "Profil",
+    "favorites": "Favoriten",
+    "reviews": "Bewertungen",
+    "events": "Events",
+    "settings": "Einstellungen"
+  },
+  "owner": {
+    "dashboard": "Übersicht",
+    "reservations": "Reservierungen",
+    "events": "Events",
+    "team": "Team"
+  }
 }

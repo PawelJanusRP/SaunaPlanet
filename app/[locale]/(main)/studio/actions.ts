@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { slugWithSuffix } from '@/lib/master/slug'
 import {
@@ -22,7 +23,10 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
 
 async function requireUser(supabase: SupabaseServerClient) {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) {
+    const t = await getTranslations('studio')
+    throw new Error(t('actions.notLoggedIn'))
+  }
   return user
 }
 
@@ -59,13 +63,12 @@ function revalidateAffiliationSurfaces() {
   revalidatePath('/workspace/team')
 }
 
-const DUPLICATE_AFFILIATION_MESSAGE =
-  'Ta relacja już istnieje (aktywna lub oczekująca afiliacja z tym obiektem)'
-
-function friendlyInsertError(message: string) {
-  return message.includes('master_affiliations_open_unique') || message.includes('duplicate key')
-    ? DUPLICATE_AFFILIATION_MESSAGE
-    : message
+async function friendlyInsertError(message: string) {
+  if (message.includes('master_affiliations_open_unique') || message.includes('duplicate key')) {
+    const t = await getTranslations('studio')
+    return t('actions.duplicateAffiliation')
+  }
+  return message
 }
 
 // ============================================================
@@ -94,13 +97,14 @@ function friendlyInsertError(message: string) {
 export async function updateOwnMasterProfile(
   data: OwnMasterProfileUpdate
 ): Promise<{ error?: string }> {
+  const t = await getTranslations('studio')
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Musisz być zalogowany' }
+    if (!user) return { error: t('actions.notLoggedIn') }
 
     const own = await getOwnMaster(supabase, user.id)
-    if (!own) return { error: 'Brak profilu saunamistrza powiązanego z tym kontem' }
+    if (!own) return { error: t('actions.noMasterProfile') }
 
     const built = buildOwnMasterProfilePatch(data)
     if (!built.ok) return { error: built.error }
@@ -118,16 +122,19 @@ export async function updateOwnMasterProfile(
         (error.code === '23505' || error.message.includes('sauna_masters_slug_unique'))
       ) {
         return {
-          error: `Adres „${built.requestedSlug}" jest już zajęty — spróbuj np. „${slugWithSuffix(built.requestedSlug, 2)}"`,
+          error: t('actions.slugTaken', {
+            slug: built.requestedSlug,
+            suggestion: slugWithSuffix(built.requestedSlug, 2),
+          }),
         }
       }
       // our own guard messages are user-oriented Polish — pass them through
       if (error.message.includes('Pola uprzywilejowane')) return { error: error.message }
       console.error('updateOwnMasterProfile db error:', error.message)
-      return { error: 'Nie udało się zapisać profilu — spróbuj ponownie' }
+      return { error: t('actions.profileSaveFailed') }
     }
     if (!updated || updated.length === 0) {
-      return { error: 'Brak uprawnień do edycji tego profilu' }
+      return { error: t('actions.noEditPermission') }
     }
 
     revalidatePath('/studio')
@@ -138,21 +145,24 @@ export async function updateOwnMasterProfile(
     return {}
   } catch (e) {
     console.error('updateOwnMasterProfile failed:', e)
-    return { error: 'Nie udało się zapisać profilu — spróbuj ponownie' }
+    return { error: t('actions.profileSaveFailed') }
   }
 }
 
-const IDENTITY_ERRORS: Record<string, string> = {
-  not_authenticated: 'Musisz być zalogowany',
-  not_authorized: 'Brak uprawnień do edycji tego profilu',
-  not_found: 'Nie znaleziono profilu saunamistrza',
-  invalid_input: 'Nieprawidłowe dane',
-  name_required: 'Imię i nazwisko nie może być puste',
-  name_too_long: 'Imię i nazwisko jest za długie (maks. 120 znaków)',
-  nickname_required: 'Włączenie trybu pseudonimu wymaga podania pseudonimu',
-  nickname_too_long: 'Pseudonim jest za długi (maks. 60 znaków)',
-  unexpected_error: 'Nie udało się zapisać danych — spróbuj ponownie',
-}
+/** Canonical identity result codes (from set_master_identity RPC). Kept stable
+ *  here; the user-facing label is resolved via t('actions.identityErrors.<code>')
+ *  at the call site. */
+const IDENTITY_ERROR_CODES = [
+  'not_authenticated',
+  'not_authorized',
+  'not_found',
+  'invalid_input',
+  'name_required',
+  'name_too_long',
+  'nickname_required',
+  'nickname_too_long',
+  'unexpected_error',
+] as const
 
 /**
  * SP-044: the SOLE app path for identity/privacy. Delegates to the trusted
@@ -166,13 +176,19 @@ export async function updateOwnMasterIdentity(
   nickname: string | null,
   showNicknameOnly: boolean
 ): Promise<{ error?: string }> {
+  const t = await getTranslations('studio')
+  // Resolve a canonical identity code to a localized label (fail-closed).
+  const identityError = (code: string) =>
+    (IDENTITY_ERROR_CODES as readonly string[]).includes(code)
+      ? t(`actions.identityErrors.${code}` as 'actions.identityErrors.unexpected_error')
+      : t('actions.identityErrors.unexpected_error')
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Musisz być zalogowany' }
+    if (!user) return { error: t('actions.notLoggedIn') }
 
     const own = await getOwnMaster(supabase, user.id)
-    if (!own) return { error: 'Brak profilu saunamistrza powiązanego z tym kontem' }
+    if (!own) return { error: t('actions.noMasterProfile') }
 
     const { data, error } = await supabase.rpc('set_master_identity', {
       p_master_id: own.id,
@@ -180,17 +196,17 @@ export async function updateOwnMasterIdentity(
       p_nickname: nickname,
       p_show_nickname_only: showNicknameOnly,
     })
-    if (error) return { error: IDENTITY_ERRORS.unexpected_error }
+    if (error) return { error: identityError('unexpected_error') }
 
     const res = (data ?? {}) as { ok?: boolean; code?: string }
-    if (!res.ok) return { error: IDENTITY_ERRORS[res.code ?? ''] ?? IDENTITY_ERRORS.unexpected_error }
+    if (!res.ok) return { error: identityError(res.code ?? '') }
 
     revalidatePath('/studio')
     revalidatePath('/studio/profile')
     revalidatePath(`/masters/${own.id}`)
     return {}
   } catch {
-    return { error: IDENTITY_ERRORS.unexpected_error }
+    return { error: identityError('unexpected_error') }
   }
 }
 
@@ -201,11 +217,12 @@ export async function updateOwnMasterIdentity(
 export async function requestAffiliation(saunaId: string) {
   const supabase = await createClient()
   const user = await requireUser(supabase)
+  const t = await getTranslations('studio')
 
   const own = await getOwnMaster(supabase, user.id)
-  if (!own) throw new Error('Brak profilu saunamistrza powiązanego z tym kontem')
+  if (!own) throw new Error(t('actions.noMasterProfile'))
   if (own.status !== 'approved') {
-    throw new Error('Afiliacje są dostępne po zatwierdzeniu profilu saunamistrza')
+    throw new Error(t('actions.affiliationsRequireApproval'))
   }
 
   const { data: created, error } = await supabase
@@ -219,8 +236,8 @@ export async function requestAffiliation(saunaId: string) {
     })
     .select('id')
 
-  if (error) throw new Error(friendlyInsertError(error.message))
-  if (!created || created.length === 0) throw new Error('Nie udało się utworzyć zgłoszenia')
+  if (error) throw new Error(await friendlyInsertError(error.message))
+  if (!created || created.length === 0) throw new Error(t('actions.requestCreateFailed'))
 
   revalidateAffiliationSurfaces()
 }
@@ -228,9 +245,10 @@ export async function requestAffiliation(saunaId: string) {
 export async function inviteMaster(saunaId: string, masterId: string) {
   const supabase = await createClient()
   const user = await requireUser(supabase)
+  const t = await getTranslations('studio')
 
   if (!(await isModeration()) && !(await isStaffOfSauna(supabase, user.id, saunaId))) {
-    throw new Error('Brak uprawnień do zarządzania tym obiektem')
+    throw new Error(t('actions.noFacilityManagePermission'))
   }
 
   const { data: master } = await supabase
@@ -239,7 +257,7 @@ export async function inviteMaster(saunaId: string, masterId: string) {
     .eq('id', masterId)
     .maybeSingle()
   if (!master || master.status !== 'approved') {
-    throw new Error('Można zapraszać tylko zatwierdzonych saunamistrzów')
+    throw new Error(t('actions.onlyApprovedMastersInvitable'))
   }
 
   const { data: created, error } = await supabase
@@ -253,8 +271,8 @@ export async function inviteMaster(saunaId: string, masterId: string) {
     })
     .select('id')
 
-  if (error) throw new Error(friendlyInsertError(error.message))
-  if (!created || created.length === 0) throw new Error('Nie udało się utworzyć zaproszenia')
+  if (error) throw new Error(await friendlyInsertError(error.message))
+  if (!created || created.length === 0) throw new Error(t('actions.invitationCreateFailed'))
 
   revalidateAffiliationSurfaces()
 }
@@ -276,7 +294,10 @@ async function getAffiliation(supabase: SupabaseServerClient, id: string): Promi
     .maybeSingle()
   // RLS hides pending/rejected rows from third parties — "not found" both
   // for missing ids and for rows the caller may not see.
-  if (!data) throw new Error('Nie znaleziono afiliacji')
+  if (!data) {
+    const t = await getTranslations('studio')
+    throw new Error(t('actions.affiliationNotFound'))
+  }
   return data as AffiliationRow
 }
 
@@ -297,15 +318,16 @@ async function callerSides(supabase: SupabaseServerClient, userId: string, row: 
 export async function respondToAffiliation(id: string, decision: 'approved' | 'rejected') {
   const supabase = await createClient()
   const user = await requireUser(supabase)
+  const t = await getTranslations('studio')
 
   const row = await getAffiliation(supabase, id)
-  if (row.status !== 'pending') throw new Error('Ta afiliacja została już rozstrzygnięta')
+  if (row.status !== 'pending') throw new Error(t('actions.affiliationAlreadyResolved'))
 
   const sides = await callerSides(supabase, user.id, row)
   const isReceiver =
     row.initiated_by === 'master' ? sides.isFacilitySide : sides.isMasterSide
   if (!isReceiver && !sides.isModeration) {
-    throw new Error('Tę afiliację rozstrzyga druga strona relacji')
+    throw new Error(t('actions.affiliationResolvedByOtherSide'))
   }
 
   const { data: updated, error } = await supabase
@@ -316,7 +338,7 @@ export async function respondToAffiliation(id: string, decision: 'approved' | 'r
     .select('id')
 
   if (error) throw new Error(error.message)
-  if (!updated || updated.length === 0) throw new Error('Brak uprawnień do rozstrzygnięcia tej afiliacji')
+  if (!updated || updated.length === 0) throw new Error(t('actions.noResolvePermission'))
 
   revalidateAffiliationSurfaces()
 }
@@ -329,10 +351,11 @@ export async function respondToAffiliation(id: string, decision: 'approved' | 'r
 export async function endAffiliation(id: string) {
   const supabase = await createClient()
   const user = await requireUser(supabase)
+  const t = await getTranslations('studio')
 
   const row = await getAffiliation(supabase, id)
   if (row.status !== 'pending' && row.status !== 'approved') {
-    throw new Error('Ta afiliacja jest już zakończona')
+    throw new Error(t('actions.affiliationAlreadyEnded'))
   }
 
   const sides = await callerSides(supabase, user.id, row)
@@ -340,9 +363,9 @@ export async function endAffiliation(id: string) {
     if (row.status === 'pending') {
       const isInitiator =
         row.initiated_by === 'master' ? sides.isMasterSide : sides.isFacilitySide
-      if (!isInitiator) throw new Error('Wycofać może tylko strona, która wysłała zgłoszenie')
+      if (!isInitiator) throw new Error(t('actions.onlyInitiatorCanWithdraw'))
     } else if (!sides.isMasterSide && !sides.isFacilitySide) {
-      throw new Error('Brak uprawnień do zakończenia tej afiliacji')
+      throw new Error(t('actions.noEndPermission'))
     }
   }
 
@@ -354,7 +377,7 @@ export async function endAffiliation(id: string) {
     .select('id')
 
   if (error) throw new Error(error.message)
-  if (!updated || updated.length === 0) throw new Error('Brak uprawnień do zakończenia tej afiliacji')
+  if (!updated || updated.length === 0) throw new Error(t('actions.noEndPermission'))
 
   revalidateAffiliationSurfaces()
 }
@@ -363,13 +386,14 @@ export async function endAffiliation(id: string) {
 export async function setPrimaryAffiliation(id: string) {
   const supabase = await createClient()
   const user = await requireUser(supabase)
+  const t = await getTranslations('studio')
 
   const row = await getAffiliation(supabase, id)
-  if (row.status !== 'approved') throw new Error('Główną może być tylko aktywna afiliacja')
+  if (row.status !== 'approved') throw new Error(t('actions.onlyActiveCanBePrimary'))
 
   const sides = await callerSides(supabase, user.id, row)
   if (!sides.isMasterSide && !sides.isModeration) {
-    throw new Error('Afiliację główną wybiera saunamistrz')
+    throw new Error(t('actions.primaryChosenByMaster'))
   }
 
   // clear the current primary first (unique index allows at most one)
@@ -388,7 +412,7 @@ export async function setPrimaryAffiliation(id: string) {
     .select('id')
 
   if (error) throw new Error(error.message)
-  if (!updated || updated.length === 0) throw new Error('Nie udało się ustawić afiliacji głównej')
+  if (!updated || updated.length === 0) throw new Error(t('actions.setPrimaryFailed'))
 
   revalidateAffiliationSurfaces()
 }

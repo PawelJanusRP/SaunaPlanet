@@ -47,11 +47,26 @@
     "comingSoonSection": "Wkrótce w Twoim profilu",
     "comingSoonBadge": "Wkrótce",
     "fields": {
-      "avatar": { "label": "Awatar", "hint": "Zdjęcie profilowe widoczne przy recenzjach" },
-      "bio": { "label": "Bio", "hint": "Krótki opis o Tobie" },
-      "location": { "label": "Lokalizacja", "hint": "Twoje miasto" },
-      "languages": { "label": "Języki", "hint": "Języki, którymi się posługujesz" },
-      "publicProfile": { "label": "Profil publiczny", "hint": "Widoczność profilu dla innych użytkowników" }
+      "avatar": {
+        "label": "Awatar",
+        "hint": "Zdjęcie profilowe widoczne przy recenzjach"
+      },
+      "bio": {
+        "label": "Bio",
+        "hint": "Krótki opis o Tobie"
+      },
+      "location": {
+        "label": "Lokalizacja",
+        "hint": "Twoje miasto"
+      },
+      "languages": {
+        "label": "Języki",
+        "hint": "Języki, którymi się posługujesz"
+      },
+      "publicProfile": {
+        "label": "Profil publiczny",
+        "hint": "Widoczność profilu dla innych użytkowników"
+      }
     }
   },
   "events": {
@@ -154,5 +169,9 @@
       "denied": "Brak uprawnień do zmiany zdjęcia tego profilu"
     },
     "uploading": "Wysyłanie..."
+  },
+  "actions": {
+    "mustBeLoggedIn": "Musisz być zalogowany",
+    "managerRequestDuplicate": "Już złożyłeś wniosek dla tej sauny"
   }
 }

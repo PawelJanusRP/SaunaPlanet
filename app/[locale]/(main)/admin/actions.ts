@@ -1,13 +1,15 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { sanitizeSocialLinks } from '@/lib/import/social'
 
 async function assertAdmin() {
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') {
-    throw new Error('Brak uprawnień')
+    const t = await getTranslations('admin')
+    throw new Error(t('actions.notAuthorized'))
   }
 }
 
@@ -21,7 +23,10 @@ export async function approveSubmission(submissionId: string) {
     .eq('id', submissionId)
     .single()
 
-  if (fetchError || !submission) throw new Error('Nie znaleziono zgłoszenia')
+  if (fetchError || !submission) {
+    const t = await getTranslations('admin')
+    throw new Error(t('actions.submissionNotFound'))
+  }
 
   const { error: insertError } = await supabase
     .from('saunas')
@@ -94,7 +99,10 @@ export async function rejectMaster(masterId: string, note?: string) {
     .select('id')
 
   if (error) throw new Error(error.message)
-  if (!data || data.length === 0) throw new Error('Nie znaleziono profilu saunamistrza')
+  if (!data || data.length === 0) {
+    const t = await getTranslations('admin')
+    throw new Error(t('actions.masterNotFound'))
+  }
   revalidatePath('/admin')
 }
 
@@ -126,7 +134,10 @@ export async function rejectCertificate(certId: string) {
 
 export async function addCertificateType(name: string, category: string) {
   await assertAdmin()
-  if (!name.trim() || !category.trim()) throw new Error('Podaj nazwę i kategorię')
+  if (!name.trim() || !category.trim()) {
+    const t = await getTranslations('admin')
+    throw new Error(t('actions.nameAndCategoryRequired'))
+  }
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -164,7 +175,10 @@ export async function updateSaunaAdmin(
   }
 ) {
   await assertAdmin()
-  if (!data.name.trim()) throw new Error('Nazwa jest wymagana')
+  if (!data.name.trim()) {
+    const t = await getTranslations('admin')
+    throw new Error(t('actions.saunaNameRequired'))
+  }
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -257,8 +271,9 @@ export async function rejectManagerRequest(managerId: string) {
 export async function updateUserRole(userId: string, newRole: 'user' | 'moderator' | 'admin') {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
-  if (user.id === userId) throw new Error('Nie możesz zmienić własnej roli')
+  const t = await getTranslations('admin')
+  if (!user) throw new Error(t('actions.notAuthenticated'))
+  if (user.id === userId) throw new Error(t('actions.cannotChangeOwnRole'))
 
   const { error } = await supabase.rpc('admin_update_user_role', {
     target_user_id: userId,

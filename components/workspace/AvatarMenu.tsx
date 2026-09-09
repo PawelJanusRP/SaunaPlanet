@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { getVisibleWorkspaceDestinations } from '@/lib/workspace/destinations'
@@ -13,6 +14,7 @@ import { WORKSPACE_DESTINATION_ICONS } from '@/lib/navigation/icons'
  */
 export default function AvatarMenu({ onNavigate }: { onNavigate?: () => void }) {
   const { user, access, loading } = useAuth()
+  const t = useTranslations()
 
   if (loading || !user) return null
 
@@ -32,7 +34,7 @@ export default function AvatarMenu({ onNavigate }: { onNavigate?: () => void }) 
           >
             <span className="flex items-center gap-2.5">
               <Icon className="h-4 w-4 text-gray-500" aria-hidden="true" />
-              {destination.label}
+              {t(destination.labelKey)}
             </span>
             {destination.badge && (
               <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">

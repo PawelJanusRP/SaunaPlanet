@@ -315,5 +315,21 @@
     "cancel": "Anuluj",
     "saving": "Zapisuję...",
     "save": "Zapisz"
+  },
+  "actions": {
+    "unauthorized": "Brak uprawnień",
+    "dbNoPermission": "Brak uprawnień do wykonania tej operacji",
+    "dbGeneric": "Operacja nie powiodła się — spróbuj ponownie",
+    "coordsBothOrNone": "Podaj obie współrzędne albo żadną",
+    "coordsNotNumbers": "Współrzędne muszą być liczbami",
+    "coordsOutOfRange": "Współrzędne są poza dopuszczalnym zakresem",
+    "loginRequired": "Musisz być zalogowany, aby zgłosić saunę",
+    "noName": "Podaj nazwę sauny lub obiektu",
+    "submissionCap": "Masz już {limit} zgłoszeń oczekujących na moderację — poczekaj na ich rozpatrzenie",
+    "submitFailed": "Nie udało się zgłosić sauny — spróbuj ponownie",
+    "import": {
+      "fetchFailed": "Nie udało się pobrać danych — spróbuj ponownie",
+      "imageFetchFailed": "Nie udało się pobrać zdjęcia ze strony źródłowej"
+    }
   }
 }

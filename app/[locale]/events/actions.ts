@@ -1,12 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 
 async function assertAdmin() {
+  const t = await getTranslations('events')
   const role = await getCurrentUserRole()
   if (role !== 'admin') {
-    throw new Error('Brak uprawnień')
+    throw new Error(t('actions.noPermission'))
   }
 }
 
@@ -22,8 +24,9 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
  * (supabase/2026-07-11_sp034_owner_events_rls.sql: is_admin() OR is_sauna_staff()).
  */
 export async function assertCanManageSaunaEvents(supabase: SupabaseServerClient, saunaId: string) {
+  const t = await getTranslations('events')
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const role = await getCurrentUserRole()
   if (role === 'admin') return
@@ -36,19 +39,18 @@ export async function assertCanManageSaunaEvents(supabase: SupabaseServerClient,
     .eq('status', 'approved')
     .maybeSingle()
   if (!mgr) {
-    throw new Error(
-      'Brak uprawnień — eventy tego obiektu może dodawać tylko zatwierdzona obsada (właściciel/manager) lub administrator'
-    )
+    throw new Error(t('actions.manageEventsForbidden'))
   }
 }
 
 async function getEventSaunaId(supabase: SupabaseServerClient, eventId: string): Promise<string> {
+  const t = await getTranslations('events')
   const { data: ev } = await supabase
     .from('sauna_events')
     .select('sauna_id')
     .eq('id', eventId)
     .single()
-  if (!ev?.sauna_id) throw new Error('Nie znaleziono eventu')
+  if (!ev?.sauna_id) throw new Error(t('actions.eventNotFound'))
   return ev.sauna_id
 }
 
@@ -61,14 +63,15 @@ export type EventFormData = {
   max_participants?: number | null
 }
 
-function eventRowFromForm(data: EventFormData) {
-  if (!data.title.trim() || !data.event_date) throw new Error('Tytuł i data są wymagane')
+async function eventRowFromForm(data: EventFormData) {
+  const t = await getTranslations('events')
+  if (!data.title.trim() || !data.event_date) throw new Error(t('actions.titleAndDateRequired'))
   const maxParticipants =
     data.max_participants !== undefined && data.max_participants !== null
       ? Math.floor(data.max_participants)
       : null
   if (maxParticipants !== null && maxParticipants < 1) {
-    throw new Error('Limit miejsc musi być większy od zera')
+    throw new Error(t('actions.maxParticipantsMin'))
   }
   return {
     title: data.title.trim(),
@@ -120,7 +123,7 @@ export async function createEvent(
         .maybeSingle()
       if (!ownMaster) throw staffError
 
-      const row = eventRowFromForm(data)
+      const row = await eventRowFromForm(data)
       const { data: rpcResult, error: rpcError } = await supabase.rpc(
         'create_master_event',
         {
@@ -147,7 +150,7 @@ export async function createEvent(
 
     const { data: created, error } = await supabase
       .from('sauna_events')
-      .insert({ sauna_id: saunaId, status: 'active', ...eventRowFromForm(data) })
+      .insert({ sauna_id: saunaId, status: 'active', ...(await eventRowFromForm(data)) })
       .select('id')
       .single()
 
@@ -155,11 +158,13 @@ export async function createEvent(
     revalidateEventSurfaces(created.id, saunaId)
     return { status: 'active' }
   } catch (e) {
-    return { error: e instanceof Error ? e.message : 'Nie udało się dodać eventu' }
+    const t = await getTranslations('events')
+    return { error: e instanceof Error ? e.message : t('actions.createEventFailed') }
   }
 }
 
 export async function updateEvent(id: string, data: EventFormData) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const saunaId = await getEventSaunaId(supabase, id)
   try {
@@ -191,16 +196,17 @@ export async function updateEvent(id: string, data: EventFormData) {
   // silent no-op — matters until the SP-034 policies are applied to the DB.
   const { data: updated, error } = await supabase
     .from('sauna_events')
-    .update(eventRowFromForm(data))
+    .update(await eventRowFromForm(data))
     .eq('id', id)
     .select('id')
 
   if (error) throw new Error(error.message)
-  if (!updated || updated.length === 0) throw new Error('Brak uprawnień do edycji tego wydarzenia')
+  if (!updated || updated.length === 0) throw new Error(t('actions.editEventForbidden'))
   revalidateEventSurfaces(id, saunaId)
 }
 
 export async function deleteEvent(id: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const saunaId = await getEventSaunaId(supabase, id)
   await assertCanManageSaunaEvents(supabase, saunaId)
@@ -212,7 +218,7 @@ export async function deleteEvent(id: string) {
     .select('id')
 
   if (error) throw new Error(error.message)
-  if (!deleted || deleted.length === 0) throw new Error('Brak uprawnień do usunięcia tego wydarzenia')
+  if (!deleted || deleted.length === 0) throw new Error(t('actions.deleteEventForbidden'))
   revalidateEventSurfaces(id, saunaId)
 }
 
@@ -234,9 +240,10 @@ export async function removeEventMaster(eventId: string, masterId: string) {
 }
 
 export async function registerForEvent(eventId: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const { error } = await supabase
     .from('event_registrations')
@@ -247,9 +254,10 @@ export async function registerForEvent(eventId: string) {
 }
 
 export async function cancelRegistration(eventId: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const { error } = await supabase
     .from('event_registrations')
@@ -262,9 +270,10 @@ export async function cancelRegistration(eventId: string) {
 }
 
 export async function updateRegistrationStatus(registrationId: string, status: 'confirmed' | 'cancelled') {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') {
@@ -273,14 +282,14 @@ export async function updateRegistrationStatus(registrationId: string, status: '
       .select('event_id')
       .eq('id', registrationId)
       .single()
-    if (!reg) throw new Error('Nie znaleziono rezerwacji')
+    if (!reg) throw new Error(t('actions.registrationNotFound'))
 
     const { data: ev } = await supabase
       .from('sauna_events')
       .select('sauna_id')
       .eq('id', reg.event_id)
       .single()
-    if (!ev) throw new Error('Nie znaleziono eventu')
+    if (!ev) throw new Error(t('actions.eventNotFound'))
 
     const { data: mgr } = await supabase
       .from('sauna_managers')
@@ -290,7 +299,7 @@ export async function updateRegistrationStatus(registrationId: string, status: '
       .eq('sauna_id', (ev as any).sauna_id)
       .eq('status', 'approved')
       .maybeSingle()
-    if (!mgr) throw new Error('Brak uprawnień')
+    if (!mgr) throw new Error(t('actions.noPermission'))
   }
 
   const { error } = await supabase
@@ -306,9 +315,10 @@ export async function updateRegistrationStatus(registrationId: string, status: '
 }
 
 export async function addEventReview(eventId: string, rating: number, comment: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const { error } = await supabase
     .from('event_reviews')
@@ -319,9 +329,10 @@ export async function addEventReview(eventId: string, rating: number, comment: s
 }
 
 export async function deleteEventReview(reviewId: string, eventId: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const { error } = await supabase
     .from('event_reviews')
@@ -333,10 +344,11 @@ export async function deleteEventReview(reviewId: string, eventId: string) {
 }
 
 export async function addEventComment(eventId: string, comment: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
-  if (!comment.trim()) throw new Error('Komentarz nie może być pusty')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
+  if (!comment.trim()) throw new Error(t('actions.commentEmpty'))
 
   const { error } = await supabase
     .from('event_comments')
@@ -347,9 +359,10 @@ export async function addEventComment(eventId: string, comment: string) {
 }
 
 export async function deleteEventComment(commentId: string, eventId: string) {
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const { error } = await supabase
     .from('event_comments')

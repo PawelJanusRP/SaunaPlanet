@@ -24,6 +24,7 @@ export default function WorkspaceNav({
   ariaLabel?: string
 }) {
   const t = useTranslations('workspace')
+  const tRoot = useTranslations()
   const pathname = usePathname()
   const navAriaLabel = ariaLabel ?? t('aria.nav')
 
@@ -50,7 +51,7 @@ export default function WorkspaceNav({
                 }`}
               >
                 {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />}
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{tRoot(item.labelKey)}</span>
                 {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${

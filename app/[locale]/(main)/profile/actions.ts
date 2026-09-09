@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function toggleFavoriteSauna(saunaId: string) {
@@ -27,15 +28,17 @@ export async function toggleFavoriteSauna(saunaId: string) {
 
 export async function requestManagerRole(saunaId: string) {
   const supabase = await createClient()
+  const t = await getTranslations('profile')
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Musisz być zalogowany')
+  if (!user) throw new Error(t('actions.mustBeLoggedIn'))
 
   const { error } = await supabase
     .from('sauna_managers')
     .insert({ user_id: user.id, sauna_id: saunaId, status: 'pending' })
 
   if (error) {
-    if (error.code === '23505') throw new Error('Już złożyłeś wniosek dla tej sauny')
+    // error.code is the canonical Postgres unique-violation code — not localized.
+    if (error.code === '23505') throw new Error(t('actions.managerRequestDuplicate'))
     throw new Error(error.message)
   }
   revalidatePath(`/sauna/${saunaId}`)

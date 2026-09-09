@@ -315,5 +315,21 @@
     "cancel": "Abbrechen",
     "saving": "Wird gespeichert...",
     "save": "Speichern"
+  },
+  "actions": {
+    "unauthorized": "Keine Berechtigung",
+    "dbNoPermission": "Keine Berechtigung für diesen Vorgang",
+    "dbGeneric": "Der Vorgang ist fehlgeschlagen — bitte versuchen Sie es erneut",
+    "coordsBothOrNone": "Geben Sie beide Koordinaten oder keine an",
+    "coordsNotNumbers": "Koordinaten müssen Zahlen sein",
+    "coordsOutOfRange": "Koordinaten liegen außerhalb des zulässigen Bereichs",
+    "loginRequired": "Sie müssen angemeldet sein, um eine Sauna zu melden",
+    "noName": "Geben Sie den Namen der Sauna oder Anlage ein",
+    "submissionCap": "Sie haben bereits {limit} Einreichungen, die auf Moderation warten — bitte warten Sie, bis sie geprüft wurden",
+    "submitFailed": "Die Sauna konnte nicht gemeldet werden — bitte versuchen Sie es erneut",
+    "import": {
+      "fetchFailed": "Die Daten konnten nicht abgerufen werden — bitte versuchen Sie es erneut",
+      "imageFetchFailed": "Das Foto konnte nicht von der Quellwebsite abgerufen werden"
+    }
   }
 }

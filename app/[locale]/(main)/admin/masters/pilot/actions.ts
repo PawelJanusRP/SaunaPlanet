@@ -13,6 +13,7 @@
 // pure libs (lib/claim/pilot, lib/master/profileUpdate).
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import {
   createClaimInvitation,
@@ -61,8 +62,12 @@ async function requireModerator(): Promise<PilotActionResult | null> {
   return null
 }
 
-function slugConflictMessage(requestedSlug: string): string {
-  return `Adres „${requestedSlug}" jest już zajęty — spróbuj np. „${slugWithSuffix(requestedSlug, 2)}"`
+async function slugConflictMessage(requestedSlug: string): Promise<string> {
+  const t = await getTranslations('admin')
+  return t('actions.slugConflict', {
+    requested: requestedSlug,
+    suggestion: slugWithSuffix(requestedSlug, 2),
+  })
 }
 
 /**
@@ -78,7 +83,8 @@ export async function createPreparedMasterProfile(
     if (denied) return denied
 
     if (typeof data.name !== 'string' || data.name.trim().length === 0) {
-      return pilotResult('invalid_input', { message: 'Imię i nazwisko jest wymagane' })
+      const t = await getTranslations('admin')
+      return pilotResult('invalid_input', { message: t('actions.nameRequired') })
     }
     const built = buildOwnMasterProfilePatch(data)
     if (!built.ok) return pilotResult('invalid_input', { message: built.error })
@@ -100,7 +106,7 @@ export async function createPreparedMasterProfile(
         (error.code === '23505' || error.message.includes('sauna_masters_slug_unique'))
       ) {
         return pilotResult('invalid_input', {
-          message: slugConflictMessage(built.requestedSlug),
+          message: await slugConflictMessage(built.requestedSlug),
         })
       }
       return pilotResult('unexpected_error')
@@ -109,7 +115,8 @@ export async function createPreparedMasterProfile(
 
     const masterId = (created[0] as { id: string }).id
     revalidatePath('/admin/masters/pilot')
-    return pilotResult('ok', { message: 'Profil przygotowany.', masterId })
+    const t = await getTranslations('admin')
+    return pilotResult('ok', { message: t('actions.profilePrepared'), masterId })
   } catch {
     return pilotResult('unexpected_error')
   }
@@ -169,7 +176,7 @@ export async function updatePreparedMasterProfile(
         (error.code === '23505' || error.message.includes('sauna_masters_slug_unique'))
       ) {
         return pilotResult('invalid_input', {
-          message: slugConflictMessage(built.requestedSlug),
+          message: await slugConflictMessage(built.requestedSlug),
         })
       }
       return pilotResult('unexpected_error')
@@ -178,7 +185,8 @@ export async function updatePreparedMasterProfile(
 
     revalidatePath('/admin/masters/pilot')
     revalidatePath(`/admin/masters/pilot/${masterId}`)
-    return pilotResult('ok', { message: 'Profil zapisany.' })
+    const t = await getTranslations('admin')
+    return pilotResult('ok', { message: t('actions.profileSaved') })
   } catch {
     return pilotResult('unexpected_error')
   }
@@ -312,10 +320,11 @@ export async function generateMasterInvitation(
     if (!claimUrl) return controlFailure('payload_malformed')
 
     revalidatePilotSurfaces()
+    const t = await getTranslations('admin')
     return {
       ok: true,
       code: 'ok',
-      message: 'Zaproszenie wygenerowane — skopiuj link teraz.',
+      message: t('actions.invitationGenerated'),
       invitationId: grant.invitationId,
       tokenPrefix: grant.tokenPrefix,
       expiresAt: grant.expiresAt,
@@ -374,10 +383,11 @@ export async function regenerateMasterInvitation(
     if (!claimUrl) return controlFailure('payload_malformed')
 
     revalidatePilotSurfaces()
+    const t = await getTranslations('admin')
     return {
       ok: true,
       code: 'ok',
-      message: 'Nowe zaproszenie wygenerowane — poprzedni link przestał działać.',
+      message: t('actions.invitationRegenerated'),
       invitationId: grant.invitationId,
       tokenPrefix: grant.tokenPrefix,
       expiresAt: grant.expiresAt,
@@ -404,7 +414,8 @@ export async function markMasterInvitationSent(
       return controlFailure('invalid_input')
     }
     if (!isDeliveryChannel(deliveryChannel)) {
-      return controlFailure('invalid_input', 'Wybierz prawidłowy kanał dostarczenia.')
+      const t = await getTranslations('admin')
+      return controlFailure('invalid_input', t('actions.invalidDeliveryChannel'))
     }
     const hintCheck = validateDeliveryHint(deliveryTargetHint)
     if (!hintCheck.ok) return controlFailure('invalid_input', hintCheck.message)
