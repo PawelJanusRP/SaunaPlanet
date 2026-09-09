@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { listClaimInvitations } from '@/app/[locale]/(main)/admin/claimActions'
@@ -23,10 +24,10 @@ import {
 // queue and are never mixed in here. Invitation state comes exclusively from
 // the approved M4 list RPC projection (token secrets never leave the database).
 
-const MASTER_STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Oczekuje', className: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: 'Zatwierdzony', className: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Odrzucony', className: 'bg-red-100 text-red-700' },
+const MASTER_STATUS_CLASSNAMES: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
 }
 
 function formatDatePl(iso: string | null): string | null {
@@ -62,6 +63,8 @@ export default async function PilotListPage({
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') redirect('/')
 
+  const t = await getTranslations('admin.pilotList')
+  const td = await getTranslations('admin.pilotDetail')
   const { filter: rawFilter } = await searchParams
   const filter = toPilotFilter(rawFilter)
 
@@ -119,27 +122,25 @@ export default async function PilotListPage({
   return (
     <main className="mx-auto max-w-5xl p-4">
       <Link href="/admin" className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-        ← Panel administracyjny
+        {t('back')}
       </Link>
 
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">🧖 Pilot saunamistrzów</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <Link
           href="/admin/masters/pilot/new"
           className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white"
         >
-          ➕ Przygotuj profil
+          {t('prepareProfile')}
         </Link>
       </div>
       <p className="mb-4 text-sm text-gray-500">
-        Profile przygotowane przez administrację dla pilotażu. Generowanie i wysyłka
-        zaproszeń pojawią się w kolejnym etapie — tutaj przygotowujesz profile i widzisz
-        ich gotowość.
+        {t('intro')}
       </p>
 
       {invitationsUnavailable && (
         <div className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
-          Nie udało się pobrać stanu zaproszeń — lista pokazuje wyłącznie dane profili.
+          {t('invitationsUnavailable')}
         </div>
       )}
 
@@ -154,7 +155,7 @@ export default async function PilotListPage({
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
-            {PILOT_FILTER_LABELS_PL[f]} ({countFor(f)})
+            {t('filterCount', { label: PILOT_FILTER_LABELS_PL[f], count: countFor(f) })}
           </Link>
         ))}
       </div>
@@ -162,16 +163,15 @@ export default async function PilotListPage({
       {visible.length === 0 ? (
         <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">
           {rows.length === 0
-            ? 'Brak przygotowanych profili — przygotuj pierwszego pilotażowego saunamistrza.'
-            : 'Brak profili w tym filtrze.'}
+            ? t('emptyNoProfiles')
+            : t('emptyInFilter')}
         </div>
       ) : (
         <section className="space-y-3">
           {visible.map((r) => {
-            const st = MASTER_STATUS_BADGE[r.status] ?? {
-              label: r.status,
-              className: 'bg-gray-100 text-gray-500',
-            }
+            const st = MASTER_STATUS_CLASSNAMES[r.status]
+              ? { label: td(`masterStatus.${r.status}`), className: MASTER_STATUS_CLASSNAMES[r.status] }
+              : { label: r.status, className: 'bg-gray-100 text-gray-500' }
             const readinessMeta = PILOT_READINESS_META[r.readiness.readiness]
             const expiry = formatDatePl(r.latest?.expiresAt ?? null)
             return (
@@ -198,7 +198,7 @@ export default async function PilotListPage({
                         {r.name}
                       </Link>
                       <div className="mt-0.5 text-sm text-gray-500">
-                        {r.city ?? 'Brak miasta'} · profil przygotowany
+                        {r.city ?? t('noCity')} · {t('profilePrepared')}
                       </div>
                     </div>
                   </div>
@@ -215,19 +215,19 @@ export default async function PilotListPage({
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t pt-3 text-xs text-gray-500">
-                  <span>{r.claimed ? '🔗 Przejęty przez właściciela' : '◯ Nieprzejęty'}</span>
+                  <span>{r.claimed ? t('claimed') : t('notClaimed')}</span>
                   <span>
-                    Zaproszenie:{' '}
+                    {t('invitationLabel')}{' '}
                     {r.latest
                       ? INVITATION_STATUS_LABELS_PL[r.latest.status]
-                      : 'brak'}
-                    {r.readiness.invitationExpired && ' (po terminie)'}
+                      : t('invitationNone')}
+                    {r.readiness.invitationExpired && t('invitationExpired')}
                   </span>
-                  {expiry && <span>Ważne do: {expiry}</span>}
+                  {expiry && <span>{t('validUntil', { date: expiry })}</span>}
                   {r.readiness.readiness === 'incomplete' &&
                     r.readiness.missingRequired.length > 0 && (
                       <span className="text-yellow-700">
-                        Brakuje:{' '}
+                        {t('missing')}{' '}
                         {r.readiness.missingRequired
                           .map((k) => PILOT_REQUIRED_FIELD_LABELS_PL[k])
                           .join(', ')}

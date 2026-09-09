@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
 import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState'
 import { MASTER_STUDIO_LABEL, masterBreadcrumbs } from '@/lib/workspace/master'
@@ -8,42 +9,43 @@ import { MASTER_STUDIO_LABEL, masterBreadcrumbs } from '@/lib/workspace/master'
  * accounts without a profile see the entry point). Shared by every /studio
  * page so the gate renders identically everywhere.
  */
-export default function StudioAccessNotice({
+export default async function StudioAccessNotice({
   kind,
   masterId,
 }: {
   kind: 'none' | 'pending' | 'rejected'
   masterId?: string
 }) {
+  const t = await getTranslations('studio')
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Twoja przestrzeń zawodowa saunamistrza"
+      subtitle={t('accessNotice.subtitle')}
       breadcrumbs={masterBreadcrumbs()}
     >
       {kind === 'none' && (
         <WorkspaceEmptyState
           icon="🧖"
-          title="To konto nie ma profilu saunamistrza"
-          description="Zgłoś swój profil na stronie saunamistrzów — po zatwierdzeniu przez moderację Studio otworzy się tutaj."
+          title={t('accessNotice.noneTitle')}
+          description={t('accessNotice.noneDescription')}
           actionHref="/masters"
-          actionLabel="Zgłoś się jako saunamistrz"
+          actionLabel={t('accessNotice.noneAction')}
         />
       )}
       {kind === 'pending' && (
         <WorkspaceEmptyState
           icon="⏳"
-          title="Twój profil czeka na moderację"
-          description="Po zatwierdzeniu profilu zyskasz dostęp do afiliacji i pełnego Studia."
+          title={t('accessNotice.pendingTitle')}
+          description={t('accessNotice.pendingDescription')}
           actionHref={masterId ? `/masters/${masterId}` : undefined}
-          actionLabel={masterId ? 'Zobacz swój profil' : undefined}
+          actionLabel={masterId ? t('accessNotice.pendingAction') : undefined}
         />
       )}
       {kind === 'rejected' && (
         <WorkspaceEmptyState
           icon="✗"
-          title="Zgłoszenie profilu zostało odrzucone"
-          description="Skontaktuj się z moderacją, jeśli uważasz, że to pomyłka."
+          title={t('accessNotice.rejectedTitle')}
+          description={t('accessNotice.rejectedDescription')}
         />
       )}
     </WorkspaceShell>

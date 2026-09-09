@@ -13,6 +13,7 @@
 // server state re-renders — no optimistic transitions.
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
@@ -50,6 +51,7 @@ export default function InvitationControls({
   availability: InvitationActionAvailability
   latestInvitationId: string | null
 }) {
+  const t = useTranslations('admin.invitationControls')
   const [panel, setPanel] = useState<OpenPanel>('none')
   const [secret, setSecret] = useState<OneTimeSecret | null>(null)
 
@@ -121,7 +123,7 @@ export default function InvitationControls({
   function handleRevoke() {
     if (!latestInvitationId) return
     if (!revokeReason.trim()) {
-      toast.error('Podaj powód — jest wymagany i trafia do historii.')
+      toast.error(t('reasonRequired'))
       return
     }
     startTransition(async () => {
@@ -138,7 +140,7 @@ export default function InvitationControls({
 
   function handleRegenerate() {
     if (!regenerateReason.trim()) {
-      toast.error('Podaj powód — jest wymagany i trafia do historii.')
+      toast.error(t('reasonRequired'))
       return
     }
     startTransition(async () => {
@@ -168,9 +170,9 @@ export default function InvitationControls({
     if (!secret) return
     try {
       await navigator.clipboard.writeText(secret.claimUrl)
-      toast.success('Link skopiowany do schowka.')
+      toast.success(t('linkCopied'))
     } catch {
-      toast.error('Nie udało się skopiować — zaznacz link i skopiuj ręcznie.')
+      toast.error(t('copyFailed'))
     }
   }
 
@@ -188,7 +190,7 @@ export default function InvitationControls({
   const validDaysInput = (
     <div>
       <label className="mb-1 block text-xs font-semibold text-gray-500">
-        Ważność linku (dni, {VALID_DAYS_MIN}–{VALID_DAYS_MAX})
+        {t('validDaysLabel', { min: VALID_DAYS_MIN, max: VALID_DAYS_MAX })}
       </label>
       <input
         type="number"
@@ -206,15 +208,13 @@ export default function InvitationControls({
       {/* Jednorazowy link */}
       {secret && (
         <section className="mb-4 rounded-3xl border-2 border-orange-300 bg-orange-50 p-5 shadow-sm">
-          <h2 className="mb-2 text-sm font-bold text-orange-800">🔑 Jednorazowy link</h2>
+          <h2 className="mb-2 text-sm font-bold text-orange-800">{t('oneTimeLinkHeading')}</h2>
           <p className="mb-3 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-orange-700">
-            ⚠️ Skopiuj link teraz — nie pokażemy go ponownie. Po zamknięciu tego okna lub
-            odświeżeniu strony jedyną opcją będzie ponowne wygenerowanie (które unieważni
-            ten link).
+            {t('oneTimeLinkWarning')}
           </p>
           {secret.regenerated && (
             <p className="mb-3 text-xs text-orange-700">
-              Poprzedni link został unieważniony i przestał działać.
+              {t('regeneratedNotice')}
             </p>
           )}
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -224,34 +224,35 @@ export default function InvitationControls({
               value={secret.claimUrl}
               onFocus={(e) => e.target.select()}
               className="w-full rounded-xl border bg-white px-3 py-2 font-mono text-xs"
-              aria-label="Jednorazowy link zaproszenia"
+              aria-label={t('linkAria')}
             />
             <button
               type="button"
               onClick={handleCopy}
               className="shrink-0 rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white"
             >
-              📋 Kopiuj
+              {t('copy')}
             </button>
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-orange-700">
             <span>
-              Ważny do:{' '}
-              {new Date(secret.expiresAt).toLocaleString('pl-PL', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}{' '}
-              · prefiks: <code>{secret.tokenPrefix}</code>
+              {t('validUntil', {
+                date: new Date(secret.expiresAt).toLocaleString('pl-PL', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+              })}
+              <code>{secret.tokenPrefix}</code>
             </span>
             <button
               type="button"
               onClick={() => setSecret(null)}
               className="rounded-xl border border-orange-300 px-3 py-1.5 font-semibold"
             >
-              Zamknij (link zniknie)
+              {t('close')}
             </button>
           </div>
         </section>
@@ -259,24 +260,24 @@ export default function InvitationControls({
 
       {/* Zarządzanie zaproszeniem */}
       <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-bold">Zarządzanie zaproszeniem</h2>
+        <h2 className="mb-3 text-sm font-bold">{t('manageHeading')}</h2>
 
         {!anyAction ? (
           <p className="text-sm text-gray-500">
             {availability.state === 'claimed'
-              ? 'Profil został przejęty — zarządzanie zaproszeniami jest zakończone.'
-              : 'Brak dostępnych akcji — uzupełnij profil, aby móc wygenerować zaproszenie.'}
+              ? t('claimedNoActions')
+              : t('noActions')}
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {availability.canGenerate &&
-              panelButton('generate', '🔑 Wygeneruj zaproszenie', 'border-blue-300 text-blue-700 hover:bg-blue-50')}
+              panelButton('generate', t('generateButton'), 'border-blue-300 text-blue-700 hover:bg-blue-50')}
             {availability.canMarkSent &&
-              panelButton('sent', '📨 Oznacz jako wysłane', 'border-indigo-300 text-indigo-700 hover:bg-indigo-50')}
+              panelButton('sent', t('markSentButton'), 'border-indigo-300 text-indigo-700 hover:bg-indigo-50')}
             {availability.canRevoke &&
-              panelButton('revoke', '⛔ Unieważnij', 'border-gray-300 text-gray-700 hover:bg-gray-50')}
+              panelButton('revoke', t('revokeButton'), 'border-gray-300 text-gray-700 hover:bg-gray-50')}
             {availability.canRegenerate &&
-              panelButton('regenerate', '♻️ Wygeneruj ponownie', 'border-red-300 text-red-700 hover:bg-red-50')}
+              panelButton('regenerate', t('regenerateButton'), 'border-red-300 text-red-700 hover:bg-red-50')}
           </div>
         )}
 
@@ -285,7 +286,7 @@ export default function InvitationControls({
             {validDaysInput}
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Notatka wewnętrzna (opcjonalna, widoczna tylko dla moderacji)
+                {t('internalNoteLabel')}
               </label>
               <textarea
                 value={adminNote}
@@ -295,8 +296,7 @@ export default function InvitationControls({
               />
             </div>
             <p className="text-xs text-gray-500">
-              Link pokażemy dokładnie raz — przygotuj się na jego skopiowanie i ręczną
-              wysyłkę.
+              {t('generateHint')}
             </p>
             <button
               type="button"
@@ -304,7 +304,7 @@ export default function InvitationControls({
               onClick={handleGenerate}
               className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {isPending ? 'Generowanie...' : 'Wygeneruj zaproszenie'}
+              {isPending ? t('generating') : t('generate')}
             </button>
           </div>
         )}
@@ -313,7 +313,7 @@ export default function InvitationControls({
           <div className="mt-4 space-y-3 rounded-xl border bg-gray-50 p-4">
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Kanał dostarczenia
+                {t('channelLabel')}
               </label>
               <select
                 value={channel}
@@ -329,7 +329,7 @@ export default function InvitationControls({
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Wskazówka odbiorcy (opcjonalna, ZREDAGOWANA)
+                {t('hintLabel')}
               </label>
               <input
                 type="text"
@@ -339,8 +339,7 @@ export default function InvitationControls({
                 className="w-full rounded-xl border px-3 py-2 text-sm"
               />
               <p className="mt-1 text-xs text-gray-400">
-                Zapisujemy wyłącznie zredagowaną wskazówkę — nigdy pełny adres ani numer.
-                Przykłady: {DELIVERY_HINT_EXAMPLES.join(' · ')}
+                {t('hintNote', { examples: DELIVERY_HINT_EXAMPLES.join(' · ') })}
               </p>
             </div>
             <button
@@ -349,7 +348,7 @@ export default function InvitationControls({
               onClick={handleMarkSent}
               className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {isPending ? 'Zapisywanie...' : 'Oznacz jako wysłane'}
+              {isPending ? t('saving') : t('markSent')}
             </button>
           </div>
         )}
@@ -357,11 +356,11 @@ export default function InvitationControls({
         {panel === 'revoke' && availability.canRevoke && (
           <div className="mt-4 space-y-3 rounded-xl border border-gray-300 bg-gray-50 p-4">
             <p className="rounded-xl bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
-              ⚠️ Unieważnienie sprawi, że obecny link natychmiast przestanie działać.
+              {t('revokeWarning')}
             </p>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Powód (wymagany, trafia do historii)
+                {t('reasonLabel')}
               </label>
               <textarea
                 value={revokeReason}
@@ -377,7 +376,7 @@ export default function InvitationControls({
                 onClick={handleRevoke}
                 className="rounded-xl bg-gray-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {isPending ? 'Unieważnianie...' : 'Potwierdź unieważnienie'}
+                {isPending ? t('revoking') : t('confirmRevoke')}
               </button>
               <button
                 type="button"
@@ -385,7 +384,7 @@ export default function InvitationControls({
                 onClick={() => setPanel('none')}
                 className="rounded-xl border px-4 py-2 text-sm font-semibold"
               >
-                Anuluj
+                {t('cancel')}
               </button>
             </div>
           </div>
@@ -394,12 +393,11 @@ export default function InvitationControls({
         {panel === 'regenerate' && availability.canRegenerate && (
           <div className="mt-4 space-y-3 rounded-xl border-2 border-red-300 bg-red-50 p-4">
             <p className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-red-700">
-              ⚠️ To unieważni obecny aktywny link (jeśli istnieje) i wygeneruje nowy.
-              Poprzedniego linku nie da się odzyskać — nigdy go nie zapisujemy.
+              {t('regenerateWarning')}
             </p>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Powód (wymagany, trafia do historii)
+                {t('reasonLabel')}
               </label>
               <textarea
                 value={regenerateReason}
@@ -416,7 +414,7 @@ export default function InvitationControls({
                 onClick={handleRegenerate}
                 className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {isPending ? 'Generowanie...' : 'Potwierdź i wygeneruj nowy link'}
+                {isPending ? t('generating') : t('confirmRegenerate')}
               </button>
               <button
                 type="button"
@@ -424,7 +422,7 @@ export default function InvitationControls({
                 onClick={() => setPanel('none')}
                 className="rounded-xl border px-4 py-2 text-sm font-semibold"
               >
-                Anuluj
+                {t('cancel')}
               </button>
             </div>
           </div>

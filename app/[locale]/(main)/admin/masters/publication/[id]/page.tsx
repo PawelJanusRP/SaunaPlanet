@@ -1,6 +1,7 @@
 import { Link } from '@/lib/i18n/navigation'
 import { notFound } from 'next/navigation'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import PublicationModerationControls from '@/components/admin/PublicationModerationControls'
 import {
@@ -20,18 +21,18 @@ import {
 // transition controls mirror the M10 matrix exactly (the RPCs stay the
 // authority). No claim/invitation data and no owner identifiers appear.
 
-const AUDIT_LABELS_PL: Record<string, string> = {
-  legacy_publication_granted: 'Nadano publikację legacy (backfill M9)',
-  profile_submitted: 'Zgłoszono do publikacji',
-  changes_requested: 'Poproszono o zmiany',
-  publication_approved: 'Zatwierdzono publikację',
-  profile_unpublished: 'Wycofano z publikacji',
-  profile_suspended: 'Zawieszono publikację',
-  owner_publication_withdrawn: 'Publikacja wycofana po usunięciu konta właściciela',
-  submission_withdrawn: 'Właściciel wycofał zgłoszenie',
-  publication_restored: 'Przywrócono do wersji roboczej',
-  publication_demoted: 'Cofnięto po edycji pól publicznych',
-}
+const AUDIT_KEYS = new Set([
+  'legacy_publication_granted',
+  'profile_submitted',
+  'changes_requested',
+  'publication_approved',
+  'profile_unpublished',
+  'profile_suspended',
+  'owner_publication_withdrawn',
+  'submission_withdrawn',
+  'publication_restored',
+  'publication_demoted',
+])
 
 export default async function PublicationReviewPage({
   params,
@@ -45,6 +46,7 @@ export default async function PublicationReviewPage({
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') redirect('/')
 
+  const t = await getTranslations('admin.publicationReview')
   const { id } = await params
   const { data: master } = await supabase
     .from('sauna_masters')
@@ -76,7 +78,7 @@ export default async function PublicationReviewPage({
         href="/admin/masters/publication"
         className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm"
       >
-        ← Kolejka publikacji
+        {t('back')}
       </Link>
 
       <section className="rounded-2xl border bg-white p-5">
@@ -95,13 +97,13 @@ export default async function PublicationReviewPage({
           )}
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold">{master.name}</h1>
-            <p className="text-sm text-gray-500">{master.city ?? 'brak miasta'}</p>
+            <p className="text-sm text-gray-500">{master.city ?? t('noCity')}</p>
           </div>
           <Link
             href={`/masters/${master.slug ?? master.id}`}
             className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
           >
-            👁️ Podgląd profilu
+            {t('previewProfile')}
           </Link>
         </div>
 
@@ -110,23 +112,23 @@ export default async function PublicationReviewPage({
             {PUBLICATION_STATUS_LABELS_PL[publicationStatus]}
           </span>
           <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600">
-            profil: {master.status}
+            {t('profile', { status: master.status })}
           </span>
           <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600">
-            {master.user_id !== null ? 'ma właściciela' : 'bez właściciela'}
+            {master.user_id !== null ? t('hasOwner') : t('noOwner')}
           </span>
           <span
             className={`rounded-full px-3 py-1 font-semibold ${
               publiclyVisible ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
             }`}
           >
-            {publiclyVisible ? '🌍 widoczny publicznie' : '🔒 niewidoczny'}
+            {publiclyVisible ? t('visible') : t('hidden')}
           </span>
         </div>
       </section>
 
       <section className="mt-4 rounded-2xl border bg-white p-5">
-        <h2 className="mb-2 font-semibold">Kompletność (wymogi twarde)</h2>
+        <h2 className="mb-2 font-semibold">{t('completenessHeading')}</h2>
         <ul className="space-y-1 text-sm">
           {checklist.map((item) => (
             <li key={item.code} className={item.ok ? 'text-green-700' : 'text-red-600'}>
@@ -139,7 +141,7 @@ export default async function PublicationReviewPage({
       {publication?.reviewNote && (
         <section className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-5">
           <h2 className="mb-1 text-sm font-semibold text-orange-900">
-            Aktualna notatka recenzji (widoczna dla właściciela)
+            {t('reviewNoteHeading')}
           </h2>
           <p className="whitespace-pre-wrap text-sm text-orange-800">
             {publication.reviewNote}
@@ -148,24 +150,24 @@ export default async function PublicationReviewPage({
       )}
 
       <section className="mt-4 rounded-2xl border bg-white p-5">
-        <h2 className="mb-3 font-semibold">Akcje moderacyjne</h2>
+        <h2 className="mb-3 font-semibold">{t('actionsHeading')}</h2>
         <PublicationModerationControls masterId={master.id} actions={actions} />
       </section>
 
       <section className="mt-4 rounded-2xl border bg-white p-5">
-        <h2 className="mb-3 font-semibold">Historia publikacji</h2>
+        <h2 className="mb-3 font-semibold">{t('historyHeading')}</h2>
         {audit.length === 0 ? (
-          <p className="text-sm text-gray-400">Brak zdarzeń.</p>
+          <p className="text-sm text-gray-400">{t('historyEmpty')}</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {audit.map((entry) => (
               <li key={entry.id} className="rounded-xl bg-gray-50 px-3 py-2">
                 <p className="font-medium text-gray-800">
-                  {AUDIT_LABELS_PL[entry.eventType] ?? entry.eventType}
+                  {AUDIT_KEYS.has(entry.eventType) ? t(`audit.${entry.eventType}`) : entry.eventType}
                   <span className="ml-2 font-normal text-gray-400">
                     {new Date(entry.createdAt).toLocaleString('pl-PL')}
                     {' · '}
-                    {entry.actorPresent ? 'z kontem sprawcy' : 'sprawca systemowy/usunięty'}
+                    {entry.actorPresent ? t('actorPresent') : t('actorAbsent')}
                   </span>
                 </p>
                 {entry.reason && (

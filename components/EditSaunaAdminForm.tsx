@@ -1,23 +1,20 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { updateSaunaAdmin, deleteSaunaAdmin } from '@/app/[locale]/(main)/admin/actions'
 
-const CATEGORIES = [
-  { value: 'public_sauna', label: 'Sauna publiczna' },
-  { value: 'hotel_sauna', label: 'Sauna hotelowa' },
-  { value: 'private_sauna', label: 'Sauna prywatna' },
-  { value: 'sports_sauna', label: 'Sauna sportowa' },
-  { value: 'wellness_sauna', label: 'Wellness / SPA' },
-  { value: 'other', label: 'Inne' },
-]
+const CATEGORY_VALUES = [
+  'public_sauna',
+  'hotel_sauna',
+  'private_sauna',
+  'sports_sauna',
+  'wellness_sauna',
+  'other',
+] as const
 
-const STATUSES = [
-  { value: 'active', label: 'Aktywna' },
-  { value: 'pending', label: 'Oczekuje' },
-  { value: 'inactive', label: 'Nieaktywna' },
-]
+const STATUS_VALUES = ['active', 'pending', 'inactive'] as const
 
 const SOCIAL_FIELDS = [
   { key: 'facebook', label: 'Facebook' },
@@ -40,6 +37,7 @@ type Props = {
 }
 
 export default function EditSaunaAdminForm({ sauna }: Props) {
+  const t = useTranslations('admin.editSauna')
   const [open, setOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -74,10 +72,10 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
           status: form.status,
           socialLinks: social,
         })
-        toast.success('Sauna zaktualizowana')
+        toast.success(t('saved'))
         setOpen(false)
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+        toast.error(e instanceof Error ? e.message : t('saveError'))
       }
     })
   }
@@ -86,9 +84,9 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
     startTransition(async () => {
       try {
         await deleteSaunaAdmin(sauna.id)
-        toast.success('Sauna usunięta')
+        toast.success(t('deleted'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd usuwania')
+        toast.error(e instanceof Error ? e.message : t('deleteError'))
       }
     })
   }
@@ -99,7 +97,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
         onClick={() => setOpen(true)}
         className="rounded-lg border px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
       >
-        Edytuj
+        {t('edit')}
       </button>
     )
   }
@@ -108,7 +106,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
     <div className="mt-3 rounded-2xl border bg-gray-50 p-4 space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Nazwa *</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('nameLabel')}</label>
           <input
             type="text"
             value={form.name}
@@ -117,7 +115,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Miasto</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('cityLabel')}</label>
           <input
             type="text"
             value={form.city}
@@ -128,7 +126,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Opis</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('descriptionLabel')}</label>
         <textarea
           value={form.description}
           onChange={(e) => set('description', e.target.value)}
@@ -139,7 +137,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Strona WWW</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('websiteLabel')}</label>
           <input
             type="text"
             value={form.website}
@@ -148,26 +146,26 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Kategoria</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('categoryLabel')}</label>
           <select
             value={form.category}
             onChange={(e) => set('category', e.target.value)}
             className="w-full rounded-xl border px-3 py-2 text-sm"
           >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+            {CATEGORY_VALUES.map((c) => (
+              <option key={c} value={c}>{t(`category.${c}`)}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Status</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('statusLabel')}</label>
           <select
             value={form.status}
             onChange={(e) => set('status', e.target.value)}
             className="w-full rounded-xl border px-3 py-2 text-sm"
           >
-            {STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+            {STATUS_VALUES.map((s) => (
+              <option key={s} value={s}>{t(`status.${s}`)}</option>
             ))}
           </select>
         </div>
@@ -175,7 +173,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Profile społecznościowe (https, tylko pasująca platforma)
+          {t('socialLabel')}
         </label>
         <div className="grid gap-2 sm:grid-cols-2">
           {SOCIAL_FIELDS.map(({ key, label }) => (
@@ -185,7 +183,7 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
               value={social[key]}
               onChange={(e) => setSocial((prev) => ({ ...prev, [key]: e.target.value }))}
               placeholder={label}
-              aria-label={`Adres profilu ${label}`}
+              aria-label={t('socialAria', { platform: label })}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             />
           ))}
@@ -199,14 +197,14 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
             disabled={isPending}
             className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
-            {isPending ? 'Zapisywanie...' : 'Zapisz'}
+            {isPending ? t('saving') : t('save')}
           </button>
           <button
             onClick={() => { setOpen(false); setConfirmDelete(false) }}
             disabled={isPending}
             className="rounded-xl border px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
           >
-            Anuluj
+            {t('cancel')}
           </button>
         </div>
 
@@ -216,24 +214,24 @@ export default function EditSaunaAdminForm({ sauna }: Props) {
             disabled={isPending}
             className="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
           >
-            Usuń saunę
+            {t('deleteSauna')}
           </button>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-600">Na pewno?</span>
+            <span className="text-xs text-red-600">{t('confirm')}</span>
             <button
               onClick={handleDelete}
               disabled={isPending}
               className="rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
             >
-              Tak, usuń
+              {t('confirmDelete')}
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
               disabled={isPending}
               className="rounded-xl border px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
             >
-              Nie
+              {t('no')}
             </button>
           </div>
         )}

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import OwnerPublicationActions from '@/components/studio/OwnerPublicationActions'
 import type { PublicationStatus } from '@/lib/master/publicationTransitions'
@@ -14,7 +15,7 @@ import {
  * by the page from the RLS-visible publication row + the M9 visibility
  * helper; nothing here re-derives visibility or transition rules.
  */
-export default function PublicationStatusCard({
+export default async function PublicationStatusCard({
   publicationStatus,
   publiclyVisible,
   masterPendingModeration,
@@ -33,6 +34,7 @@ export default function PublicationStatusCard({
   reviewNote: string | null
   previewHref: string
 }) {
+  const t = await getTranslations('studio')
   const actions = resolveOwnerPublicationActions(publicationStatus)
   const missingCount = checklist.filter((i) => !i.ok).length
   const showReviewNote =
@@ -53,7 +55,7 @@ export default function PublicationStatusCard({
               : 'bg-amber-100 text-amber-800'
           }`}
         >
-          {publiclyVisible ? '🌍 Widoczny publicznie' : '🔒 Niewidoczny publicznie'}
+          {publiclyVisible ? t('publicationCard.visible') : t('publicationCard.notVisible')}
         </span>
       </div>
 
@@ -63,30 +65,28 @@ export default function PublicationStatusCard({
 
       {masterPendingModeration && (
         <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-          Profil czeka też na zatwierdzenie przez moderację platformy — publikacja
-          stanie się widoczna dopiero po obu zatwierdzeniach.
+          {t('publicationCard.pendingModeration')}
         </div>
       )}
 
       {showReviewNote && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
-          <p className="font-semibold">Wiadomość od moderacji:</p>
+          <p className="font-semibold">{t('publicationCard.moderationMessageTitle')}</p>
           <p className="mt-1 whitespace-pre-wrap">{reviewNote}</p>
         </div>
       )}
 
       {needsMaterialEditWarning(publicationStatus) && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          ⚠️ Zapisanie zmian w publicznych polach profilu tymczasowo ukryje go z
-          katalogu do czasu ponownego zatwierdzenia przez moderację.
+          {t('publicationCard.materialEditWarning')}
         </div>
       )}
 
       <div>
         <p className="mb-2 text-sm font-semibold text-gray-700">
-          Wymagane do publikacji{' '}
+          {t('publicationCard.requiredForPublication')}{' '}
           <span className="font-normal text-gray-400">
-            (kompletność profilu: {completenessScore}%)
+            {t('publicationCard.completeness', { score: completenessScore })}
           </span>
         </p>
         <ul className="space-y-1 text-sm">
@@ -101,13 +101,13 @@ export default function PublicationStatusCard({
             href="/studio/profile"
             className="mt-2 inline-block text-sm font-semibold text-orange-700 hover:underline"
           >
-            Uzupełnij brakujące pola →
+            {t('publicationCard.fillMissingFields')}
           </Link>
         )}
         {recommended.length > 0 && (
           <div className="mt-3">
             <p className="mb-1 text-sm font-semibold text-gray-700">
-              Zalecane <span className="font-normal text-gray-400">(nie blokują publikacji)</span>
+              {t('publicationCard.recommended')} <span className="font-normal text-gray-400">{t('publicationCard.recommendedHint')}</span>
             </p>
             <ul className="space-y-1 text-sm">
               {recommended.map((item) => (
@@ -126,7 +126,7 @@ export default function PublicationStatusCard({
           href={previewHref}
           className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
         >
-          👁️ Podgląd profilu
+          {t('publicationCard.previewProfile')}
         </Link>
       </div>
     </div>

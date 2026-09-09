@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { withdrawMasterEventProposal } from '@/app/[locale]/events/participationActions'
 
@@ -16,16 +17,17 @@ export default function WithdrawProposalButton({
   eventId: string
   eventTitle: string
 }) {
+  const t = useTranslations('studio')
   const [isPending, startTransition] = useTransition()
 
   function handleWithdraw() {
-    if (!confirm(`Wycofać propozycję „${eventTitle}”? Wydarzenie zostanie usunięte.`)) {
+    if (!confirm(t('withdrawProposal.confirm', { title: eventTitle }))) {
       return
     }
     startTransition(async () => {
       const result = await withdrawMasterEventProposal(eventId)
       if (result.error) toast.error(result.error)
-      else toast.success('Propozycja wycofana')
+      else toast.success(t('withdrawProposal.withdrawnToast'))
     })
   }
 
@@ -35,7 +37,7 @@ export default function WithdrawProposalButton({
       disabled={isPending}
       className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
     >
-      Wycofaj propozycję
+      {t('withdrawProposal.button')}
     </button>
   )
 }

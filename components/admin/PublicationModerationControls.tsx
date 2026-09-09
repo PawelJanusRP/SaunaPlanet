@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
@@ -18,14 +19,6 @@ import {
   type ModeratorPublicationAction,
 } from '@/lib/master/publicationView'
 
-const ACTION_LABELS: Record<ModeratorPublicationAction, string> = {
-  approve: '✅ Zatwierdź publikację',
-  request_changes: '✏️ Poproś o zmiany',
-  unpublish: '🚫 Wycofaj z publikacji',
-  suspend: '⛔ Zawieś publikację',
-  restore: '♻️ Przywróć do wersji roboczej',
-}
-
 /**
  * Moderator transition controls. Rendered actions come from the live state
  * via the shared M10 matrix; the RPCs stay authoritative (a stale button
@@ -40,6 +33,7 @@ export default function PublicationModerationControls({
   masterId: string
   actions: ModeratorPublicationAction[]
 }) {
+  const t = useTranslations('admin.publicationControls')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [reason, setReason] = useState('')
@@ -52,7 +46,7 @@ export default function PublicationModerationControls({
   function run(action: ModeratorPublicationAction) {
     const trimmed = reason.trim()
     if (MODERATOR_ACTIONS_REQUIRING_REASON.includes(action) && trimmed === '') {
-      toast.error('Podaj uzasadnienie tej operacji.')
+      toast.error(t('reasonRequired'))
       return
     }
     startTransition(async () => {
@@ -88,7 +82,7 @@ export default function PublicationModerationControls({
   if (actions.length === 0) {
     return (
       <p className="text-sm text-gray-400">
-        Brak dostępnych akcji moderacyjnych w obecnym stanie publikacji.
+        {t('noActions')}
       </p>
     )
   }
@@ -105,22 +99,22 @@ export default function PublicationModerationControls({
             {MASTER_NOT_APPROVED_GUIDANCE_PL.actionLabel} →
           </Link>
           <p className="mt-1 text-xs text-amber-700">
-            Po zatwierdzeniu profilu wróć tutaj i osobno zatwierdź publikację.
+            {t('masterNotApprovedHint')}
           </p>
         </div>
       )}
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Uzasadnienie / notatka dla właściciela
+          {t('reasonLabel')}
           {actions.some((a) => MODERATOR_ACTIONS_REQUIRING_REASON.includes(a)) &&
-            ' (wymagane dla próśb o zmiany, zawieszenia i przywrócenia)'}
+            t('reasonLabelRequired')}
         </label>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}
           maxLength={2000}
-          placeholder="Widoczne dla właściciela profilu — nigdy publicznie."
+          placeholder={t('reasonPlaceholder')}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
       </div>
@@ -139,7 +133,7 @@ export default function PublicationModerationControls({
                   : 'border hover:bg-gray-100'
             }`}
           >
-            {isPending ? '…' : ACTION_LABELS[action]}
+            {isPending ? '…' : t(`actions.${action}`)}
           </button>
         ))}
       </div>

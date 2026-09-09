@@ -7,6 +7,7 @@
 // here: generation/sending belongs to Slice 3B3.
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
@@ -56,6 +57,7 @@ export default function PilotProfileForm({
   masterId?: string
   initial?: PilotProfileFormInitial
 }) {
+  const t = useTranslations('admin.pilotForm')
   const init = initial ?? EMPTY_INITIAL
   const [name, setName] = useState(init.name)
   const [bio, setBio] = useState(init.bio ?? '')
@@ -85,7 +87,7 @@ export default function PilotProfileForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) {
-      toast.error('Imię i nazwisko jest wymagane')
+      toast.error(t('nameRequired'))
       return
     }
     startTransition(async () => {
@@ -123,7 +125,7 @@ export default function PilotProfileForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Imię i nazwisko *</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('nameLabel')}</label>
         <input
           type="text"
           value={name}
@@ -133,57 +135,56 @@ export default function PilotProfileForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">O sobie</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('bioLabel')}</label>
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           rows={4}
-          placeholder="Krótki opis doświadczenia, specjalizacji..."
+          placeholder={t('bioPlaceholder')}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
         <p className="mt-1 text-xs text-gray-400">
-          Wymagany, aby profil był gotowy do zaproszenia — zapraszany saunamistrz musi
-          rozpoznać swój profil.
+          {t('bioNote')}
         </p>
       </div>
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Adres profilu (publiczny link)
+          {t('slugLabel')}
         </label>
         <input
           type="text"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           onBlur={() => setSlug((s) => (s.trim() ? slugify(s) : ''))}
-          placeholder="np. jan-kowalski"
+          placeholder={t('slugPlaceholder')}
           className="w-full rounded-xl border px-3 py-2 font-mono text-sm"
         />
         <p className="mt-1 text-xs text-gray-400">
-          Opcjonalny. Małe litery, cyfry i myślniki (3–40 znaków).
+          {t('slugNote')}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Miasto</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('cityLabel')}</label>
           <input
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="np. Poznań"
+            placeholder={t('cityPlaceholder')}
             className="w-full rounded-xl border px-3 py-2 text-sm"
           />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-gray-500">
-            Saunuje od roku
+            {t('yearLabel')}
           </label>
           <input
             type="number"
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            placeholder="np. 2018"
+            placeholder={t('yearPlaceholder')}
             min={1980}
             max={new Date().getFullYear()}
             className="w-full rounded-xl border px-3 py-2 text-sm"
@@ -192,7 +193,7 @@ export default function PilotProfileForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Specjalizacje</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('specialtiesLabel')}</label>
         <div className="flex flex-wrap gap-2">
           {SPECIALTY_OPTIONS.map((option) => {
             const active = specialties.includes(option.id)
@@ -216,7 +217,7 @@ export default function PilotProfileForm({
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Języki prowadzenia ceremonii
+          {t('languagesLabel')}
         </label>
         <div className="flex flex-wrap gap-2">
           {LANGUAGE_OPTIONS.map((option) => {
@@ -241,7 +242,7 @@ export default function PilotProfileForm({
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Profile społecznościowe
+          {t('socialLabel')}
         </label>
         <div className="grid gap-2 sm:grid-cols-2">
           {SOCIAL_PLATFORMS.map((p) => (
@@ -250,24 +251,24 @@ export default function PilotProfileForm({
               type="url"
               value={social[p]}
               onChange={(e) => setSocial((prev) => ({ ...prev, [p]: e.target.value }))}
-              placeholder={`${SOCIAL_LABELS[p]} (https://...)`}
-              aria-label={`Adres profilu ${SOCIAL_LABELS[p]}`}
+              placeholder={t('socialPlaceholder', { platform: SOCIAL_LABELS[p] })}
+              aria-label={t('socialAria', { platform: SOCIAL_LABELS[p] })}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             />
           ))}
         </div>
         <p className="mt-1 text-xs text-gray-400">
-          Tylko adresy https na właściwej platformie zostaną zapisane.
+          {t('socialNote')}
         </p>
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Strona WWW</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('websiteLabel')}</label>
         <input
           type="url"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
-          placeholder="https://..."
+          placeholder={t('websitePlaceholder')}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
       </div>
@@ -278,10 +279,10 @@ export default function PilotProfileForm({
         className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
         {isPending
-          ? 'Zapisywanie...'
+          ? t('saving')
           : isEdit
-            ? 'Zapisz zmiany'
-            : 'Utwórz przygotowany profil'}
+            ? t('saveChanges')
+            : t('createProfile')}
       </button>
     </form>
   )

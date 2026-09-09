@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
@@ -25,6 +26,7 @@ export default function OwnerPublicationActions({
 }: {
   actions: OwnerPublicationAction[]
 }) {
+  const t = useTranslations('studio')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [missing, setMissing] = useState<string[]>([])
@@ -61,7 +63,7 @@ export default function OwnerPublicationActions({
             onClick={() => run(() => submitOwnMasterForPublication())}
             className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-700 disabled:opacity-50"
           >
-            {isPending ? 'Wysyłanie…' : '📤 Zgłoś do publikacji'}
+            {isPending ? t('ownerPublication.submitting') : t('ownerPublication.submit')}
           </button>
         )}
         {actions.includes('withdraw') && (
@@ -71,7 +73,7 @@ export default function OwnerPublicationActions({
             onClick={() => run(() => withdrawOwnMasterSubmission())}
             className="rounded-xl border px-4 py-2 text-sm font-semibold transition-colors hover:bg-gray-100 disabled:opacity-50"
           >
-            {isPending ? 'Wycofywanie…' : '↩️ Wycofaj zgłoszenie'}
+            {isPending ? t('ownerPublication.withdrawing') : t('ownerPublication.withdraw')}
           </button>
         )}
         {actions.includes('unpublish') && (
@@ -81,13 +83,13 @@ export default function OwnerPublicationActions({
             onClick={() => run(() => unpublishOwnMasterProfile())}
             className="rounded-xl border border-amber-300 px-4 py-2 text-sm font-semibold text-amber-800 transition-colors hover:bg-amber-50 disabled:opacity-50"
           >
-            {isPending ? 'Wycofywanie…' : '🚫 Wycofaj z publikacji'}
+            {isPending ? t('ownerPublication.unpublishing') : t('ownerPublication.unpublish')}
           </button>
         )}
       </div>
       {missing.length > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          <p className="font-semibold">Uzupełnij przed zgłoszeniem:</p>
+          <p className="font-semibold">{t('ownerPublication.completeBeforeSubmit')}</p>
           <ul className="mt-1 list-inside list-disc">
             {missing.map((label) => (
               <li key={label}>{label}</li>

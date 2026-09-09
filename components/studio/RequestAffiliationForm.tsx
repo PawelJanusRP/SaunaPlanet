@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { requestAffiliation } from '@/app/[locale]/(main)/studio/actions'
 import FacilityCombobox, { type FacilityOption } from '@/components/FacilityCombobox'
@@ -9,22 +10,23 @@ type SaunaOption = FacilityOption
 
 /** Master-side start of the affiliation handshake (W-16). */
 export default function RequestAffiliationForm({ saunas }: { saunas: SaunaOption[] }) {
+  const t = useTranslations('studio')
   const [saunaId, setSaunaId] = useState('')
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!saunaId) {
-      toast.error('Wybierz obiekt')
+      toast.error(t('requestAffiliation.errorSelectFacility'))
       return
     }
     startTransition(async () => {
       try {
         await requestAffiliation(saunaId)
-        toast.success('Zgłoszenie wysłane — obiekt musi je zatwierdzić')
+        toast.success(t('requestAffiliation.sentToast'))
         setSaunaId('')
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd wysyłania zgłoszenia')
+        toast.error(e instanceof Error ? e.message : t('requestAffiliation.sendError'))
       }
     })
   }
@@ -36,7 +38,7 @@ export default function RequestAffiliationForm({ saunas }: { saunas: SaunaOption
           saunas={saunas}
           value={saunaId || null}
           onChange={(id) => setSaunaId(id ?? '')}
-          ariaLabel="Obiekt do afiliacji"
+          ariaLabel={t('requestAffiliation.facilityAriaLabel')}
         />
       </div>
       <button
@@ -44,7 +46,7 @@ export default function RequestAffiliationForm({ saunas }: { saunas: SaunaOption
         disabled={isPending}
         className="rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-orange-700 disabled:opacity-60"
       >
-        {isPending ? 'Wysyłanie...' : 'Poproś o afiliację'}
+        {isPending ? t('requestAffiliation.submitting') : t('requestAffiliation.submit')}
       </button>
     </form>
   )

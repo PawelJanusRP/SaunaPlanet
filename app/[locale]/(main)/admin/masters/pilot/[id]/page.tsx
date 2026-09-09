@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { getClaimInvitation, listClaimInvitations } from '@/app/[locale]/(main)/admin/claimActions'
@@ -26,20 +27,20 @@ import {
 // revoke / regenerate) wired to the M4 RPC wrappers; the action-availability
 // matrix is computed server-side and the database stays authoritative.
 
-const MASTER_STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Oczekuje', className: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: 'Zatwierdzony', className: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Odrzucony', className: 'bg-red-100 text-red-700' },
+const MASTER_STATUS_CLASSNAMES: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
 }
 
-const EVENT_TYPE_LABELS_PL: Record<string, string> = {
-  profile_prepared: 'Profil przygotowany',
-  invitation_created: 'Zaproszenie wygenerowane',
-  invitation_sent: 'Zaproszenie wysłane',
-  invitation_revoked: 'Zaproszenie unieważnione',
-  invitation_regenerated: 'Zaproszenie wygenerowane ponownie',
-  invitation_expired: 'Zaproszenie wygasło',
-}
+const EVENT_TYPE_KEYS = new Set([
+  'profile_prepared',
+  'invitation_created',
+  'invitation_sent',
+  'invitation_revoked',
+  'invitation_regenerated',
+  'invitation_expired',
+])
 
 function formatDateTimePl(iso: string | null): string | null {
   if (!iso) return null
@@ -88,6 +89,8 @@ export default async function PilotProfileDetailPage({
 
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') redirect('/')
+
+  const t = await getTranslations('admin.pilotDetail')
 
   const { id } = await params
   if (!isUuid(id)) notFound()
@@ -142,10 +145,9 @@ export default async function PilotProfileDetailPage({
     status: master.status,
   })
 
-  const st = MASTER_STATUS_BADGE[master.status] ?? {
-    label: master.status,
-    className: 'bg-gray-100 text-gray-500',
-  }
+  const st = MASTER_STATUS_CLASSNAMES[master.status]
+    ? { label: t(`masterStatus.${master.status}`), className: MASTER_STATUS_CLASSNAMES[master.status] }
+    : { label: master.status, className: 'bg-gray-100 text-gray-500' }
 
   return (
     <main className="mx-auto max-w-3xl p-4">
@@ -153,11 +155,11 @@ export default async function PilotProfileDetailPage({
         href="/admin/masters/pilot"
         className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm"
       >
-        ← Pilot saunamistrzów
+        {t('back')}
       </Link>
 
       <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-bold">Stan profilu</h2>
+        <h2 className="mb-3 text-sm font-bold">{t('stateHeading')}</h2>
         <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {master.avatar_url ? (
@@ -175,8 +177,8 @@ export default async function PilotProfileDetailPage({
           <div>
             <h1 className="text-2xl font-bold">{master.name}</h1>
             <p className="text-sm text-gray-500">
-              {master.city ?? 'Brak miasta'} ·{' '}
-              {claimed ? '🔗 Przejęty przez właściciela' : '◯ Nieprzejęty'}
+              {master.city ?? t('noCity')} ·{' '}
+              {claimed ? t('claimed') : t('notClaimed')}
             </p>
           </div>
         </div>
@@ -188,85 +190,79 @@ export default async function PilotProfileDetailPage({
             {st.label}
           </span>
           <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-            Przygotowany przez administrację
+            {t('adminPrepared')}
           </span>
         </div>
         </div>
       </section>
 
       <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2.5 text-sm text-orange-700">
-        <p className="font-semibold">Jak przebiega przejęcie profilu:</p>
+        <p className="font-semibold">{t('claimFlowTitle')}</p>
         <ol className="mt-1 list-decimal space-y-0.5 pl-5">
-          <li>Link z zaproszenia otwiera publiczną stronę przejęcia profilu.</li>
-          <li>Zaproszona osoba loguje się lub zakłada konto.</li>
-          <li>Następnie samodzielnie przejmuje profil przyciskiem na tej stronie.</li>
-          <li>
-            Przejęcie nie publikuje profilu — właściciel uzupełnia wizytówkę w
-            Master Studio i zgłasza ją do moderacji.
-          </li>
-          <li>Profil staje się publiczny dopiero po zatwierdzeniu.</li>
+          <li>{t('claimFlow1')}</li>
+          <li>{t('claimFlow2')}</li>
+          <li>{t('claimFlow3')}</li>
+          <li>{t('claimFlow4')}</li>
+          <li>{t('claimFlow5')}</li>
         </ol>
         <p className="mt-1.5 text-xs text-orange-600">
-          Pochodzenie profilu (przygotowany przez administrację) jest niezmienne.
+          {t('originImmutable')}
         </p>
       </div>
 
       {/* Readiness checklist */}
       <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-bold">Gotowość do zaproszenia</h2>
+        <h2 className="mb-3 text-sm font-bold">{t('readinessHeading')}</h2>
         <ul className="space-y-1 text-sm">
           {PILOT_REQUIRED_FIELDS.map((key) => {
             const missing = readiness.missingRequired.includes(key)
             return (
               <li key={key} className={missing ? 'text-yellow-700' : 'text-green-700'}>
                 {missing ? '○' : '✓'} {PILOT_REQUIRED_FIELD_LABELS_PL[key]}
-                {missing && ' — do uzupełnienia'}
+                {missing && t('readinessMissingSuffix')}
               </li>
             )
           })}
         </ul>
         <p className="mt-2 text-xs text-gray-400">
-          Zdjęcie profilowe, specjalizacje i linki są zalecane, ale nie blokują
-          zaproszenia. Baza danych wymaga twardo jedynie imienia i nazwiska — pozostałe
-          wymogi to reguła pilotażu.
+          {t('readinessNote')}
         </p>
       </section>
 
       {/* Invitation state — read-only summary */}
       <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-bold">Aktualne zaproszenie</h2>
+        <h2 className="mb-3 text-sm font-bold">{t('invitationHeading')}</h2>
         {!latest ? (
           <p className="text-sm text-gray-500">
-            Brak zaproszeń dla tego profilu.
-            {invitationsResult.ok ? '' : ' (Nie udało się pobrać stanu zaproszeń.)'}
+            {t('invitationNone')}
+            {invitationsResult.ok ? '' : t('invitationFetchFailed')}
           </p>
         ) : (
           <div className="space-y-2 text-sm text-gray-600">
             <p>
-              Status:{' '}
+              {t('invitationStatus')}{' '}
               <span className="font-semibold">
                 {INVITATION_STATUS_LABELS_PL[latest.status]}
-                {readiness.invitationExpired && ' (po terminie ważności)'}
+                {readiness.invitationExpired && t('invitationExpiredSuffix')}
               </span>
             </p>
-            {latest.expiresAt && <p>Ważne do: {formatDateTimePl(latest.expiresAt)}</p>}
+            {latest.expiresAt && <p>{t('invitationValidUntil', { date: formatDateTimePl(latest.expiresAt) ?? '' })}</p>}
             {latest.sentAt && (
               <p>
-                Wysłane: {formatDateTimePl(latest.sentAt)}
-                {latest.deliveryChannel && ` (kanał: ${latest.deliveryChannel})`}
-                {latest.deliveryTargetHint && ` · odbiorca: ${latest.deliveryTargetHint}`}
+                {t('invitationSent', { date: formatDateTimePl(latest.sentAt) ?? '' })}
+                {latest.deliveryChannel && t('invitationChannel', { channel: latest.deliveryChannel })}
+                {latest.deliveryTargetHint && t('invitationRecipient', { hint: latest.deliveryTargetHint })}
               </p>
             )}
-            {latest.revokedAt && <p>Unieważnione: {formatDateTimePl(latest.revokedAt)}</p>}
+            {latest.revokedAt && <p>{t('invitationRevoked', { date: formatDateTimePl(latest.revokedAt) ?? '' })}</p>}
             {latest.tokenPrefix && (
               <p className="text-xs text-gray-400">
-                Prefiks diagnostyczny: <code>{latest.tokenPrefix}</code> (do korelacji
-                zgłoszeń — nie jest linkiem ani hasłem)
+                {t('diagnosticPrefixLabel')} <code>{latest.tokenPrefix}</code>{t('diagnosticPrefixSuffix')}
               </p>
             )}
             {invitations.length > 1 && (
               <p className="text-xs text-gray-400">
-                Wcześniejsze zaproszenia: {invitations.length - 1}
+                {t('earlierInvitations', { count: invitations.length - 1 })}
               </p>
             )}
           </div>
@@ -283,12 +279,12 @@ export default async function PilotProfileDetailPage({
 
       {history.length > 0 && (
         <section className="mb-4 rounded-3xl border bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-bold">Historia</h2>
+          <h2 className="mb-3 text-sm font-bold">{t('historyHeading')}</h2>
           <ul className="space-y-1 text-xs text-gray-500">
             {history.map((e, i) => (
               <li key={i}>
                 {formatDateTimePl(e.created_at ?? null) ?? '—'} ·{' '}
-                {EVENT_TYPE_LABELS_PL[e.event_type ?? ''] ?? e.event_type}
+                {e.event_type && EVENT_TYPE_KEYS.has(e.event_type) ? t(`eventType.${e.event_type}`) : e.event_type}
                 {e.delivery_channel && ` (${e.delivery_channel})`}
                 {e.reason && ` — ${e.reason}`}
               </li>
@@ -299,7 +295,7 @@ export default async function PilotProfileDetailPage({
 
       {/* Profile editor / read-only view */}
       <section className="rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-sm font-bold">Dane profilu</h2>
+        <h2 className="mb-3 text-sm font-bold">{t('profileDataHeading')}</h2>
         {editable.ok ? (
           <>
             <div className="mb-4 flex items-center gap-4">
@@ -324,26 +320,26 @@ export default async function PilotProfileDetailPage({
           <div className="space-y-2 text-sm text-gray-600">
             <p className="rounded-xl bg-gray-50 px-3 py-2 text-gray-500">
               {claimed
-                ? 'Profil został przejęty przez właściciela — edycja pilotażowa jest zablokowana; zmiany wprowadza właściciel w swoim Studiu.'
-                : 'Profil nie jest już w stanie umożliwiającym edycję pilotażową.'}
+                ? t('editBlockedClaimed')
+                : t('editBlockedOther')}
             </p>
             {master.bio && <p>{master.bio}</p>}
             {master.specialties && master.specialties.length > 0 && (
-              <p>Specjalizacje: {master.specialties.map(specialtyLabel).join(', ')}</p>
+              <p>{t('specialties', { value: master.specialties.map(specialtyLabel).join(', ') })}</p>
             )}
             {master.languages && master.languages.length > 0 && (
-              <p>Języki: {master.languages.map(languageLabel).join(', ')}</p>
+              <p>{t('languages', { value: master.languages.map(languageLabel).join(', ') })}</p>
             )}
-            {master.website && <p>WWW: {master.website}</p>}
+            {master.website && <p>{t('website', { value: master.website })}</p>}
           </div>
         )}
       </section>
 
       <p className="mt-4 text-xs text-gray-400">
-        Utworzony: {formatDateTimePl(master.created_at)}
+        {t('created', { date: formatDateTimePl(master.created_at) ?? '' })}
         {master.slug && (
           <>
-            {' '}· adres profilu: <code>/masters/{master.slug}</code>
+            {t('profileAddress')}<code>/masters/{master.slug}</code>
           </>
         )}
       </p>

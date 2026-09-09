@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import SubmissionActions from '@/components/SubmissionActions'
@@ -15,12 +16,12 @@ import ImportProvenancePanel, {
   type ImportLogProvenanceRow,
 } from '@/components/ImportProvenancePanel'
 
-const statusLabel: Record<string, { label: string; className: string }> = {
-  pending:   { label: 'Oczekuje',     className: 'bg-yellow-100 text-yellow-700' },
-  active:    { label: 'Aktywna',      className: 'bg-green-100 text-green-700' },
-  approved:  { label: 'Zatwierdzona', className: 'bg-green-100 text-green-700' },
-  rejected:  { label: 'Odrzucona',    className: 'bg-red-100 text-red-700' },
-  inactive:  { label: 'Nieaktywna',   className: 'bg-gray-100 text-gray-500' },
+const STATUS_CLASSNAMES: Record<string, string> = {
+  pending:   'bg-yellow-100 text-yellow-700',
+  active:    'bg-green-100 text-green-700',
+  approved:  'bg-green-100 text-green-700',
+  rejected:  'bg-red-100 text-red-700',
+  inactive:  'bg-gray-100 text-gray-500',
 }
 
 export default async function AdminPage({
@@ -28,6 +29,14 @@ export default async function AdminPage({
 }: {
   searchParams: Promise<{ tab?: string }>
 }) {
+  const t = await getTranslations('admin.page')
+  const statusLabel = (status: string): { label: string; className: string } => {
+    const key = STATUS_CLASSNAMES[status] ? status : 'pending'
+    return {
+      label: t(`status.${key}`),
+      className: STATUS_CLASSNAMES[key],
+    }
+  }
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -176,36 +185,44 @@ export default async function AdminPage({
   const managerNameById: Record<string, string> = {}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const p of (managerProfilesRaw ?? []) as any[]) {
-    managerNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || 'Użytkownik'
+    managerNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || t('managers.unknownUser')
   }
 
   // SP-039 Slice 3B2: the pilot workspace lives on its own moderator-gated
   // route (list + editor need sub-routes the ?tab= shell cannot host).
   const tabs = [
-    { id: 'submissions', label: `Zgłoszenia (${submissions?.length ?? 0})` },
-    { id: 'sauny',       label: `Sauny (${saunas?.length ?? 0})${pendingSaunaCount > 0 ? ` · ${pendingSaunaCount} oczekuje` : ''}` },
-    { id: 'eventy',      label: `Eventy (${events?.length ?? 0})` },
-    { id: 'recenzje',    label: `Recenzje (${reviews?.length ?? 0})` },
-    { id: 'masters',     label: `Saunamistrzowie${pendingMasterCount > 0 ? ` (${pendingMasterCount})` : ''}` },
-    { id: 'pilot',       label: '🧖 Pilot saunamistrzów', href: '/admin/masters/pilot' },
-    { id: 'publikacje',  label: '📣 Publikacje', href: '/admin/masters/publication' },
-    { id: 'certyfikaty', label: `Certyfikaty${pendingCertCount > 0 ? ` (${pendingCertCount})` : ''}` },
-    { id: 'slownik',     label: 'Słownik certyfikatów' },
-    { id: 'managerowie', label: `Managerowie${pendingManagerCount > 0 ? ` (${pendingManagerCount})` : ''}` },
-    { id: 'users',       label: `Użytkownicy (${profiles?.length ?? 0})` },
+    { id: 'submissions', label: t('tabs.submissions', { count: submissions?.length ?? 0 }) },
+    { id: 'sauny',       label: pendingSaunaCount > 0
+                                  ? t('tabs.saunasPending', { count: saunas?.length ?? 0, pending: pendingSaunaCount })
+                                  : t('tabs.saunas', { count: saunas?.length ?? 0 }) },
+    { id: 'eventy',      label: t('tabs.events', { count: events?.length ?? 0 }) },
+    { id: 'recenzje',    label: t('tabs.reviews', { count: reviews?.length ?? 0 }) },
+    { id: 'masters',     label: pendingMasterCount > 0
+                                  ? t('tabs.mastersPending', { count: pendingMasterCount })
+                                  : t('tabs.masters') },
+    { id: 'pilot',       label: t('tabs.pilot'), href: '/admin/masters/pilot' },
+    { id: 'publikacje',  label: t('tabs.publications'), href: '/admin/masters/publication' },
+    { id: 'certyfikaty', label: pendingCertCount > 0
+                                  ? t('tabs.certificatesPending', { count: pendingCertCount })
+                                  : t('tabs.certificates') },
+    { id: 'slownik',     label: t('tabs.dictionary') },
+    { id: 'managerowie', label: pendingManagerCount > 0
+                                  ? t('tabs.managersPending', { count: pendingManagerCount })
+                                  : t('tabs.managers') },
+    { id: 'users',       label: t('tabs.users', { count: profiles?.length ?? 0 }) },
   ] as { id: string; label: string; href?: string }[]
 
   return (
     <main className="mx-auto max-w-5xl p-4">
       <Link href="/" className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-        ← Powrót do mapy
+        {t('backToMap')}
       </Link>
 
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Panel administracyjny</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         {totalPending > 0 && (
           <span className="rounded-full bg-yellow-500 px-2.5 py-0.5 text-sm font-bold text-white">
-            {totalPending} oczekuje
+            {t('pendingBadge', { count: totalPending })}
           </span>
         )}
       </div>
@@ -230,10 +247,10 @@ export default async function AdminPage({
       {activeTab === 'submissions' && (
         <section className="space-y-4">
           {!submissions || submissions.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak zgłoszeń.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('submissions.empty')}</div>
           ) : (
             submissions.map((s) => {
-              const st = statusLabel[s.status] ?? statusLabel.pending
+              const st = statusLabel(s.status)
               return (
                 <div key={s.id} className="rounded-3xl border bg-white p-5 shadow-sm">
                   <div className="mb-3 flex items-start justify-between gap-4">
@@ -252,7 +269,7 @@ export default async function AdminPage({
                     <p className="mb-3 text-xs text-gray-400">📍 {Number(s.latitude).toFixed(5)}, {Number(s.longitude).toFixed(5)}</p>
                   )}
                   {s.admin_note && (
-                    <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">Notatka: {s.admin_note}</p>
+                    <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{t('submissions.note', { note: s.admin_note })}</p>
                   )}
                   <div className="flex items-center justify-between text-xs text-gray-400">
                     <span>{new Date(s.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
@@ -269,10 +286,10 @@ export default async function AdminPage({
       {activeTab === 'sauny' && (
         <section className="space-y-3">
           {sortedSaunas.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak saun.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('saunas.empty')}</div>
           ) : (
             sortedSaunas.map((s) => {
-              const st = statusLabel[s.status] ?? statusLabel.pending
+              const st = statusLabel(s.status)
               const isPendingSubmission = s.status === 'pending'
               const duplicates = duplicatesBySaunaId[s.id] ?? []
               const bundledEvents = bundledBySaunaId[s.id] ?? []
@@ -307,9 +324,9 @@ export default async function AdminPage({
                   {isPendingSubmission && (
                     <div className="mt-3 space-y-2 border-t pt-3">
                       <div className="text-xs text-gray-500">
-                        Zgłosił(a):{' '}
+                        {t('saunas.submittedBy')}{' '}
                         <span className="font-medium text-gray-700">
-                          {(s.created_by && managerNameById[s.created_by]) || 'Użytkownik'}
+                          {(s.created_by && managerNameById[s.created_by]) || t('saunas.unknownUser')}
                         </span>
                         {s.created_at && (
                           <span>
@@ -327,29 +344,27 @@ export default async function AdminPage({
 
                       {bundledEvents.length > 0 && (
                         <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700">
-                          🔥 Zgłoszenie zawiera {bundledEvents.length === 1 ? 'dołączony event saunamistrza' : `dołączone eventy saunamistrza: ${bundledEvents.length}`}
+                          🔥 {bundledEvents.length === 1 ? t('saunas.bundledEventsOne') : t('saunas.bundledEventsMany', { count: bundledEvents.length })}
                           {' '}—{' '}
                           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {bundledEvents.map((e: any) =>
                             `${e.title} (${String(e.event_date).substring(0, 10)}${e.event_time ? ` ${String(e.event_time).substring(0, 5)}` : ''})` +
-                            (e.organizer?.name ? ` · organizuje ${e.organizer.name}` : '')
+                            (e.organizer?.name ? ` · ${t('saunas.bundledOrganizer', { name: e.organizer.name })}` : '')
                           ).join(', ')}
-                          . Zatwierdzenie publikuje obiekt i kwalifikujący się event razem
-                          (organizator dołącza do lineupu z rolą lead); odrzucenie odrzuca
-                          cały pakiet — jedna niepodzielna operacja.
+                          . {t('saunas.bundledExplanation')}
                         </div>
                       )}
 
                       {duplicates.length > 0 && (
                         <div className="rounded-xl bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                          ⚠️ Możliwe duplikaty:{' '}
+                          {t('saunas.duplicatesLabel')}{' '}
                           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {duplicates.map((d: any) => (
                             <span key={d.id} className="mr-2">
                               {d.status === 'active' ? (
                                 <Link href={`/sauna/${d.id}`} className="underline">{d.name}</Link>
                               ) : (
-                                <span>{d.name} (oczekuje)</span>
+                                <span>{t('saunas.duplicatePending', { name: d.name })}</span>
                               )}
                               {d.city && ` · ${d.city}`}
                               {d.match_reasons?.length > 0 && ` [${d.match_reasons.join(', ')}]`}
@@ -374,11 +389,11 @@ export default async function AdminPage({
       {activeTab === 'eventy' && (
         <section className="space-y-3">
           {!events || events.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak eventów.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('events.empty')}</div>
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (events as any[]).map((e) => {
-              const st = statusLabel[e.status] ?? statusLabel.pending
+              const st = statusLabel(e.status)
               return (
                 <div key={e.id} className="rounded-3xl border bg-white p-5 shadow-sm">
                   <div className="mb-3 flex items-start justify-between gap-4">
@@ -408,7 +423,7 @@ export default async function AdminPage({
       {activeTab === 'recenzje' && (
         <section className="space-y-3">
           {!reviews || reviews.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak recenzji.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('reviews.empty')}</div>
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (reviews as any[]).map((r) => (
@@ -440,16 +455,16 @@ export default async function AdminPage({
       {activeTab === 'masters' && (
         <section className="space-y-4">
           {!pendingMasters || pendingMasters.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak oczekujących zgłoszeń saunamistrzów.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('masters.empty')}</div>
           ) : (
             pendingMasters.map((m) => (
               <div key={m.id} className="rounded-3xl border bg-white p-5 shadow-sm">
                 <div className="mb-3 flex items-start justify-between gap-4">
                   <div>
                     <div className="text-lg font-bold">{m.name}</div>
-                    {m.level && <div className="mt-0.5 text-sm text-gray-500">Poziom: {m.level}</div>}
+                    {m.level && <div className="mt-0.5 text-sm text-gray-500">{t('masters.level', { level: m.level })}</div>}
                   </div>
-                  <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">Oczekuje</span>
+                  <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">{t('masters.statusPending')}</span>
                 </div>
                 {m.bio && <p className="mb-3 text-sm text-gray-600">{m.bio}</p>}
                 <div className="flex items-center justify-between text-xs text-gray-400">
@@ -466,7 +481,7 @@ export default async function AdminPage({
       {activeTab === 'certyfikaty' && (
         <section className="space-y-4">
           {!pendingCertificates || pendingCertificates.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak oczekujących certyfikatów.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('certificates.empty')}</div>
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (pendingCertificates as any[]).map((c) => {
@@ -483,7 +498,7 @@ export default async function AdminPage({
                         {c.year && <span> · {c.year}</span>}
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">Oczekuje</span>
+                    <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">{t('certificates.statusPending')}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-400">
                     <span>{new Date(c.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
@@ -508,16 +523,16 @@ export default async function AdminPage({
       {activeTab === 'managerowie' && (
         <section className="space-y-3">
           {!pendingManagers || pendingManagers.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak oczekujących wniosków o rolę managera.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('managers.empty')}</div>
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (pendingManagers as any[]).map((m) => (
               <div key={m.id} className="rounded-3xl border bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-bold">{managerNameById[m.user_id] ?? 'Użytkownik'}</p>
+                    <p className="font-bold">{managerNameById[m.user_id] ?? t('managers.unknownUser')}</p>
                     <p className="mt-0.5 text-sm text-gray-500">
-                      Sauna:{' '}
+                      {t('managers.sauna')}{' '}
                       <Link href={`/sauna/${m.saunas?.id}`} className="hover:underline">
                         {m.saunas?.name}
                       </Link>
@@ -539,7 +554,7 @@ export default async function AdminPage({
       {activeTab === 'users' && (
         <section className="space-y-3">
           {!profiles || profiles.length === 0 ? (
-            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">Brak użytkowników.</div>
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{t('users.empty')}</div>
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (profiles as any[]).map((p) => {
@@ -547,14 +562,16 @@ export default async function AdminPage({
               const isCurrentUser = p.id === user.id
               const masterStatus = masterStatusByUserId[p.id]
               const masterBadge = masterStatus
-                ? statusLabel[masterStatus] ?? { label: masterStatus, className: 'bg-gray-100 text-gray-500' }
+                ? (STATUS_CLASSNAMES[masterStatus]
+                    ? statusLabel(masterStatus)
+                    : { label: masterStatus, className: 'bg-gray-100 text-gray-500' })
                 : null
               return (
                 <div key={p.id} className="flex items-center justify-between gap-4 rounded-2xl border bg-white px-5 py-4 shadow-sm">
                   <div className="min-w-0">
                     <p className="font-semibold leading-tight">
-                      {displayName || <span className="text-gray-400 italic">Brak nazwy</span>}
-                      {isCurrentUser && <span className="ml-2 text-xs text-gray-400">(Ty)</span>}
+                      {displayName || <span className="text-gray-400 italic">{t('users.unknownName')}</span>}
+                      {isCurrentUser && <span className="ml-2 text-xs text-gray-400">{t('users.you')}</span>}
                     </p>
                     {p.email && (
                       <p className="mt-0.5 truncate text-sm text-gray-500">{p.email}</p>
@@ -565,7 +582,7 @@ export default async function AdminPage({
                     {masterBadge && (
                       <p className="mt-1">
                         <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${masterBadge.className}`}>
-                          🧖 Saunamistrz: {masterBadge.label}
+                          {t('users.masterBadge', { status: masterBadge.label })}
                         </span>
                       </p>
                     )}

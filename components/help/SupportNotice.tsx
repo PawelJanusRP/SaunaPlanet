@@ -1,4 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import {
   SUPPORT_CHANNEL_PL,
   SUPPORT_HEADING_PL,
@@ -13,6 +14,7 @@ import {
  * exactly one place.
  */
 export default function SupportNotice({ compact = false }: { compact?: boolean }) {
+  const t = useTranslations('help.support')
   return (
     <div
       className={`rounded-2xl border border-orange-200 bg-orange-50 ${
@@ -23,7 +25,7 @@ export default function SupportNotice({ compact = false }: { compact?: boolean }
       <p className="mt-1 text-orange-800">{SUPPORT_CHANNEL_PL}</p>
       {!compact && (
         <>
-          <p className="mt-2 text-orange-800">W zgłoszeniu podaj:</p>
+          <p className="mt-2 text-orange-800">{t('requestChecklistIntro')}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5 text-orange-800">
             {SUPPORT_REQUEST_CHECKLIST_PL.map((item) => (
               <li key={item}>{item}</li>
