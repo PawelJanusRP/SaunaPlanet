@@ -17,11 +17,12 @@ import { execSync } from 'node:child_process'
 
 const LIST = process.argv.includes('--list')
 
-const files = execSync('git ls-files "app/**/*.tsx" "app/**/*.ts" "components/**/*.tsx"', {
-  encoding: 'utf8',
-})
+// NOTE: git pathspec `dir/**/*.tsx` does NOT reliably match files directly in
+// `dir/` — list everything and filter, so top-level components are included.
+const files = execSync('git ls-files "*.tsx" "*.ts"', { encoding: 'utf8' })
   .split('\n')
   .filter(Boolean)
+  .filter((f) => (f.startsWith('app/') || f.startsWith('components/')) && !f.includes('__tests__'))
 
 // Polish-specific letters — a strong signal of untranslated UI copy.
 const POLISH = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/
@@ -35,6 +36,8 @@ function stripComments(src) {
 
 // Match single/double/backtick string literals.
 const STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/g
+// Match JSX text nodes: text between a `>` and a `<` on the same line.
+const JSX_TEXT_RE = />([^<>{}][^<>{}]*)</g
 
 const results = []
 for (const file of files) {
@@ -49,6 +52,14 @@ for (const file of files) {
     while ((m = STRING_RE.exec(line))) {
       const value = m[2]
       if (POLISH.test(value)) {
+        results.push({ file, line: i + 1, value: value.slice(0, 80) })
+      }
+    }
+    // JSX text content (missed by the string-literal pass).
+    JSX_TEXT_RE.lastIndex = 0
+    while ((m = JSX_TEXT_RE.exec(line))) {
+      const value = m[1].trim()
+      if (value && POLISH.test(value)) {
         results.push({ file, line: i + 1, value: value.slice(0, 80) })
       }
     }

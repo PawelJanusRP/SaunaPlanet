@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { useAuth } from './AuthProvider'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { useTranslations } from 'next-intl'
 
 export default function AddReviewForm({
