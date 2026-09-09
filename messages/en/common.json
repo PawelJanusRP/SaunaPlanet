@@ -26,5 +26,29 @@
   "language": {
     "label": "Language",
     "choose": "Choose language"
+  },
+  "specialties": {
+    "classic-aufguss": "Classic Aufguss",
+    "show-aufguss": "Show Aufguss",
+    "relaxation-ceremony": "Relaxation ceremony",
+    "herbal-ceremony": "Herbal ceremony",
+    "meditation-ceremony": "Meditation ceremony",
+    "peeling-ritual": "Peeling ritual",
+    "cosmetic-ritual": "Cosmetic ritual",
+    "sound-ceremony": "Sound ceremony",
+    "themed-ceremony": "Themed ceremony",
+    "competition-ceremony": "Competition ceremony",
+    "large-event-hosting": "Hosting large events",
+    "training-workshops": "Training & workshops"
+  },
+  "languages": {
+    "pl": "Polish",
+    "en": "English",
+    "de": "German",
+    "uk": "Ukrainian",
+    "cs": "Czech",
+    "sk": "Slovak",
+    "fr": "French",
+    "es": "Spanish"
   }
 }

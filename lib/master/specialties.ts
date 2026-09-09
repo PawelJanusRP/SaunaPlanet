@@ -1,22 +1,24 @@
 // SP-039 — controlled specialties vocabulary (decision R3).
 //
-// The DATABASE stores only the stable identifiers below; Polish labels are
-// UI-only. The list is application-controlled and may evolve without a
-// migration (the DB pins just array cardinality 1–12).
+// The DATABASE stores only the stable identifiers below. SP-047: display labels
+// are localized at render via next-intl (common.specialties.<id> /
+// common.languages.<code>) — the config carries only the canonical codes. The
+// list is application-controlled and may evolve without a migration (the DB
+// pins just array cardinality 1–12).
 
 export const SPECIALTY_OPTIONS = [
-  { id: 'classic-aufguss', label: 'Aufguss klasyczny' },
-  { id: 'show-aufguss', label: 'Aufguss show' },
-  { id: 'relaxation-ceremony', label: 'Ceremonia relaksacyjna' },
-  { id: 'herbal-ceremony', label: 'Ceremonia ziołowa' },
-  { id: 'meditation-ceremony', label: 'Ceremonia medytacyjna' },
-  { id: 'peeling-ritual', label: 'Rytuał peelingowy' },
-  { id: 'cosmetic-ritual', label: 'Rytuał kosmetyczny' },
-  { id: 'sound-ceremony', label: 'Ceremonia dźwiękowa' },
-  { id: 'themed-ceremony', label: 'Ceremonia tematyczna' },
-  { id: 'competition-ceremony', label: 'Ceremonia konkursowa' },
-  { id: 'large-event-hosting', label: 'Prowadzenie dużych wydarzeń' },
-  { id: 'training-workshops', label: 'Szkolenia i warsztaty' },
+  { id: 'classic-aufguss' },
+  { id: 'show-aufguss' },
+  { id: 'relaxation-ceremony' },
+  { id: 'herbal-ceremony' },
+  { id: 'meditation-ceremony' },
+  { id: 'peeling-ritual' },
+  { id: 'cosmetic-ritual' },
+  { id: 'sound-ceremony' },
+  { id: 'themed-ceremony' },
+  { id: 'competition-ceremony' },
+  { id: 'large-event-hosting' },
+  { id: 'training-workshops' },
 ] as const
 
 export type SpecialtyId = (typeof SPECIALTY_OPTIONS)[number]['id']
@@ -25,22 +27,14 @@ export const SPECIALTY_IDS: ReadonlySet<string> = new Set(
   SPECIALTY_OPTIONS.map((o) => o.id)
 )
 
-export function specialtyLabel(id: string): string {
-  return SPECIALTY_OPTIONS.find((o) => o.id === id)?.label ?? id
-}
-
 /** Language chips offered by the Studio editor (codes are what's stored). */
 export const LANGUAGE_OPTIONS = [
-  { code: 'pl', label: 'polski' },
-  { code: 'en', label: 'angielski' },
-  { code: 'de', label: 'niemiecki' },
-  { code: 'uk', label: 'ukraiński' },
-  { code: 'cs', label: 'czeski' },
-  { code: 'sk', label: 'słowacki' },
-  { code: 'fr', label: 'francuski' },
-  { code: 'es', label: 'hiszpański' },
+  { code: 'pl' },
+  { code: 'en' },
+  { code: 'de' },
+  { code: 'uk' },
+  { code: 'cs' },
+  { code: 'sk' },
+  { code: 'fr' },
+  { code: 'es' },
 ] as const
-
-export function languageLabel(code: string): string {
-  return LANGUAGE_OPTIONS.find((o) => o.code === code)?.label ?? code
-}

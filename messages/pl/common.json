@@ -26,5 +26,29 @@
   "language": {
     "label": "Język",
     "choose": "Wybierz język"
+  },
+  "specialties": {
+    "classic-aufguss": "Aufguss klasyczny",
+    "show-aufguss": "Aufguss show",
+    "relaxation-ceremony": "Ceremonia relaksacyjna",
+    "herbal-ceremony": "Ceremonia ziołowa",
+    "meditation-ceremony": "Ceremonia medytacyjna",
+    "peeling-ritual": "Rytuał peelingowy",
+    "cosmetic-ritual": "Rytuał kosmetyczny",
+    "sound-ceremony": "Ceremonia dźwiękowa",
+    "themed-ceremony": "Ceremonia tematyczna",
+    "competition-ceremony": "Ceremonia konkursowa",
+    "large-event-hosting": "Prowadzenie dużych wydarzeń",
+    "training-workshops": "Szkolenia i warsztaty"
+  },
+  "languages": {
+    "pl": "polski",
+    "en": "angielski",
+    "de": "niemiecki",
+    "uk": "ukraiński",
+    "cs": "czeski",
+    "sk": "słowacki",
+    "fr": "francuski",
+    "es": "hiszpański"
   }
 }

@@ -58,6 +58,7 @@ export default function PilotProfileForm({
   initial?: PilotProfileFormInitial
 }) {
   const t = useTranslations('admin.pilotForm')
+  const tc = useTranslations('common')
   const init = initial ?? EMPTY_INITIAL
   const [name, setName] = useState(init.name)
   const [bio, setBio] = useState(init.bio ?? '')
@@ -208,7 +209,7 @@ export default function PilotProfileForm({
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {option.label}
+                {tc(`specialties.${option.id}`)}
               </button>
             )
           })}
@@ -233,7 +234,7 @@ export default function PilotProfileForm({
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {option.label}
+                {tc(`languages.${option.code}`)}
               </button>
             )
           })}

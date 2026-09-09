@@ -7,7 +7,6 @@ import Navbar from '@/components/Navbar'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { loadPublicVisibility } from '@/lib/master/publicationServer'
 import { isUuid } from '@/lib/master/slug'
-import { languageLabel, specialtyLabel } from '@/lib/master/specialties'
 import type { EventMasterRow } from '@/lib/types'
 
 // Canonical category codes with a localized label (SP-047). Codes stay
@@ -36,6 +35,7 @@ export default async function MasterPage({
 }) {
   const { idOrSlug } = await params
   const t = await getTranslations('masters')
+  const tc = await getTranslations('common')
   const supabase = await createClient()
   const role = await getCurrentUserRole()
   const isAdmin = role === 'admin' || role === 'moderator'
@@ -254,7 +254,7 @@ export default async function MasterPage({
                   <div className="flex flex-wrap gap-1.5">
                     {(master.specialties as string[]).map((s) => (
                       <span key={s} className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                        {specialtyLabel(s)}
+                        {tc.has(`specialties.${s}`) ? tc(`specialties.${s}`) : s}
                       </span>
                     ))}
                   </div>
@@ -263,7 +263,7 @@ export default async function MasterPage({
                   <div className="flex flex-wrap gap-1.5">
                     {(master.languages as string[]).map((l) => (
                       <span key={l} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-                        🗣 {languageLabel(l)}
+                        🗣 {tc.has(`languages.${l}`) ? tc(`languages.${l}`) : l}
                       </span>
                     ))}
                   </div>

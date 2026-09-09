@@ -9,7 +9,6 @@ import PilotProfileForm from '@/components/admin/PilotProfileForm'
 import UploadAvatarButton from '@/components/UploadAvatarButton'
 import { evaluateInvitationActions } from '@/lib/claim/invitationControls'
 import { isUuid } from '@/lib/master/slug'
-import { languageLabel, specialtyLabel } from '@/lib/master/specialties'
 import {
   evaluatePilotReadiness,
   evaluatePreparedProfileEditability,
@@ -91,6 +90,7 @@ export default async function PilotProfileDetailPage({
   if (role !== 'admin' && role !== 'moderator') redirect('/')
 
   const t = await getTranslations('admin.pilotDetail')
+  const tc = await getTranslations('common')
 
   const { id } = await params
   if (!isUuid(id)) notFound()
@@ -325,10 +325,10 @@ export default async function PilotProfileDetailPage({
             </p>
             {master.bio && <p>{master.bio}</p>}
             {master.specialties && master.specialties.length > 0 && (
-              <p>{t('specialties', { value: master.specialties.map(specialtyLabel).join(', ') })}</p>
+              <p>{t('specialties', { value: master.specialties.map((s: string) => tc.has(`specialties.${s}`) ? tc(`specialties.${s}`) : s).join(', ') })}</p>
             )}
             {master.languages && master.languages.length > 0 && (
-              <p>{t('languages', { value: master.languages.map(languageLabel).join(', ') })}</p>
+              <p>{t('languages', { value: master.languages.map((l: string) => tc.has(`languages.${l}`) ? tc(`languages.${l}`) : l).join(', ') })}</p>
             )}
             {master.website && <p>{t('website', { value: master.website })}</p>}
           </div>

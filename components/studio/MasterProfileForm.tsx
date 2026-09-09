@@ -48,6 +48,7 @@ export default function MasterProfileForm({
   demotionWarning?: boolean
 }) {
   const t = useTranslations('studio')
+  const tc = useTranslations('common')
   const [fullName, setFullName] = useState(initial.fullName)
   const [nickname, setNickname] = useState(initial.nickname ?? '')
   const [showNicknameOnly, setShowNicknameOnly] = useState(initial.showNicknameOnly)
@@ -241,7 +242,7 @@ export default function MasterProfileForm({
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {option.label}
+                {tc(`specialties.${option.id}`)}
               </button>
             )
           })}
@@ -266,7 +267,7 @@ export default function MasterProfileForm({
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {option.label}
+                {tc(`languages.${option.code}`)}
               </button>
             )
           })}
