@@ -14,6 +14,25 @@ Many systems were implemented incrementally and have already been debugged.
 
 ---
 
+# SP-047 i18n — remaining hardcoded Polish (RC follow-ups)
+
+The SP-047 Release Candidate localizes the whole UI (pages, forms, modals) in
+PL/EN/DE. `scripts/i18n-audit.mjs` still reports Polish in a bounded set; these
+are deferred follow-ups (details in `docs/SP047_I18N_ARCHITECTURE.md §17`):
+
+* **Server-action toast messages** (~92 strings in `*/actions.ts`) — need
+  `getTranslations()` inside Server Actions; deferred (auth/RLS/claim-sensitive,
+  runtime-verify locale resolution first). Rendered in Polish until then.
+* **`lib/*` label maps** (workspace nav labels; status/hint maps in
+  `lib/master/*`, `lib/claim/*`) — pinned by contract tests; migrate to catalog
+  keys in a coordinated change.
+* **`zł` currency suffix**, a few **`toLocaleDateString('pl-PL')`** calls, and
+  **per-entity `hreflang`** on detail pages — formatting/SEO enhancements.
+
+Run `node scripts/i18n-audit.mjs --list` for the live list.
+
+---
+
 # SECURITY BACKLOG (high priority)
 
 ## Guard trigger functions retain default EXECUTE grants

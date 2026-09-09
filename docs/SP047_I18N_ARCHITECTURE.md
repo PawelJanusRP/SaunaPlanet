@@ -238,3 +238,34 @@ or adding `if (locale === 'sv')` branches. Steps:
 
 Everything else (routing, negotiation, legacy redirects, `<html lang>`, metadata)
 derives from the registry — no code changes.
+
+---
+
+## 17. Known remaining work (post-RC follow-ups)
+
+The RC localizes the entire UI surface (all pages, forms and modals) in PL/EN/DE.
+The following bounded items are intentionally deferred (tracked by
+`scripts/i18n-audit.mjs`):
+
+1. **Server-action-returned toast messages** (~92 strings in `*/actions.ts`:
+   studio/events/participation/saunas/admin/profile/import). Localizing these
+   means calling `getTranslations()` inside Server Actions — supported by
+   next-intl, but it touches auth/RLS/claim-sensitive files and needs runtime
+   verification of locale resolution in the action context, so it is deferred to
+   its own reviewed change. Until then these toasts render in Polish.
+2. **`lib/*` label maps** rendered directly from Polish constants
+   (`lib/workspace/*` nav labels used by WorkspaceNav/AvatarMenu; status/hint
+   label maps in `lib/master/*`, `lib/claim/*`). These are pinned by contract
+   tests; migrating them to catalog keys is a coordinated follow-up (update data
+   → keys, consumers → `t()`, and the contract-test assertions together).
+3. **`zł` (PLN) currency suffix** on user-entered prices — left as the literal
+   currency; a locale-aware currency formatter is a separate enhancement.
+4. **Locale-aware date formatting** — a few pages still call
+   `toLocaleDateString('pl-PL', …)` / date-fns `pl`. Formatting only; switch to
+   `useFormatter()` / `getFormatter()` in a follow-up.
+5. **Per-entity `hreflang`** — detail pages (`/masters/[idOrSlug]`,
+   `/sauna/[id]`, `/events/[id]`) currently inherit the layout's home-path
+   alternates; add per-page `generateMetadata` with `localizedAlternates(locale,
+   '/masters/<slug>')` using the untranslated slug.
+6. **Manual QA matrix** (SP-047 §29/§33) across PL/EN/DE × the required
+   viewports — to be done on the Vercel Preview by the owner.
