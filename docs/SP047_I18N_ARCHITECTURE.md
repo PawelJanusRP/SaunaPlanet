@@ -244,27 +244,40 @@ derives from the registry — no code changes.
 ## 17. Known remaining work (post-RC follow-ups)
 
 The RC localizes the entire UI surface (all pages, forms and modals) in PL/EN/DE.
-The following bounded items are intentionally deferred (tracked by
-`scripts/i18n-audit.mjs`):
 
-1. **Server-action-returned toast messages** (~92 strings in `*/actions.ts`:
-   studio/events/participation/saunas/admin/profile/import). Localizing these
-   means calling `getTranslations()` inside Server Actions — supported by
-   next-intl, but it touches auth/RLS/claim-sensitive files and needs runtime
-   verification of locale resolution in the action context, so it is deferred to
-   its own reviewed change. Until then these toasts render in Polish.
-2. **`lib/*` label maps** rendered directly from Polish constants
-   (`lib/workspace/*` nav labels used by WorkspaceNav/AvatarMenu; status/hint
-   label maps in `lib/master/*`, `lib/claim/*`). These are pinned by contract
-   tests; migrating them to catalog keys is a coordinated follow-up (update data
-   → keys, consumers → `t()`, and the contract-test assertions together).
-3. **`zł` (PLN) currency suffix** on user-entered prices — left as the literal
-   currency; a locale-aware currency formatter is a separate enhancement.
+**Completed since the first RC** (no longer Polish-only):
+
+- Server-side i18n now works in Server Actions — `lib/i18n/request.ts` resolves
+  the locale from the `NEXT_LOCALE` cookie when there is no `[locale]` segment.
+- All **direct** server-action user-visible messages localized (studio, events +
+  participation, admin + pilot, saunas + import, profile).
+- Workspace/Master/Personal/Owner **side-navigation** labels → `labelKey` +
+  `t()` (nav catalog).
+- **Presentation status labels** (master / affiliation / participation) → studio
+  catalog; **specialty & language** labels → common catalog.
+
+**Still deferred** (tracked by `scripts/i18n-audit.mjs`; ~136 strings in
+`lib/*`):
+
+1. **Pure-lib code→message maps returned by actions** — `lib/claim/*`
+   (`claimMessagePl`, `invitationControlMessagePl`, `publicClaim`, `pilot`),
+   `lib/master/publicationTransitions.ts`, `lib/import/*`. These are consumed by
+   both Server Actions and components and are pinned by the claim/publication
+   security & behaviour contract tests. Migrating them means passing a translator
+   into (or resolving keys around) pure functions AND updating the assertions in
+   those contract tests — a coordinated change kept separate to avoid weakening
+   security contracts. Until then these toasts render in Polish.
+2. **Validation / onboarding / help / publication-view labels** —
+   `lib/master/{profileUpdate,completeness,onboarding,publicationView}.ts`,
+   `lib/help/support.ts`, and the workspace **breadcrumb** labels in
+   `lib/workspace/{master,personal,owner}.ts`. Same coordinated-migration shape
+   (each is multi-test-pinned).
+3. **`zł` (PLN) currency suffix** on user-entered prices — locale-aware currency
+   formatter is a separate enhancement.
 4. **Locale-aware date formatting** — a few pages still call
-   `toLocaleDateString('pl-PL', …)` / date-fns `pl`. Formatting only; switch to
-   `useFormatter()` / `getFormatter()` in a follow-up.
-5. **Per-entity `hreflang`** — detail pages (`/masters/[idOrSlug]`,
-   `/sauna/[id]`, `/events/[id]`) currently inherit the layout's home-path
+   `toLocaleDateString('pl-PL', …)` / date-fns `pl`. Switch to
+   `useFormatter()` / `getFormatter()`.
+5. **Per-entity `hreflang`** — detail pages inherit the layout's home-path
    alternates; add per-page `generateMetadata` with `localizedAlternates(locale,
    '/masters/<slug>')` using the untranslated slug.
 6. **Manual QA matrix** (SP-047 §29/§33) across PL/EN/DE × the required

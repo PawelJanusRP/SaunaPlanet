@@ -17,15 +17,20 @@ Many systems were implemented incrementally and have already been debugged.
 # SP-047 i18n — remaining hardcoded Polish (RC follow-ups)
 
 The SP-047 Release Candidate localizes the whole UI (pages, forms, modals) in
-PL/EN/DE. `scripts/i18n-audit.mjs` still reports Polish in a bounded set; these
-are deferred follow-ups (details in `docs/SP047_I18N_ARCHITECTURE.md §17`):
+PL/EN/DE, plus server-action direct messages, side-navigation labels, and
+status/specialty/language labels. `scripts/i18n-audit.mjs` reports the remainder
+(~136 strings in `lib/*`); these are deferred follow-ups (details in
+`docs/SP047_I18N_ARCHITECTURE.md §17`):
 
-* **Server-action toast messages** (~92 strings in `*/actions.ts`) — need
-  `getTranslations()` inside Server Actions; deferred (auth/RLS/claim-sensitive,
-  runtime-verify locale resolution first). Rendered in Polish until then.
-* **`lib/*` label maps** (workspace nav labels; status/hint maps in
-  `lib/master/*`, `lib/claim/*`) — pinned by contract tests; migrate to catalog
-  keys in a coordinated change.
+* **Pure-lib code→message maps returned by actions** — `lib/claim/*`,
+  `lib/master/publicationTransitions.ts`, `lib/import/*`. Consumed by actions +
+  components and pinned by claim/publication security & behaviour contract tests;
+  migrating requires updating those test assertions too — a coordinated change
+  kept separate to avoid weakening security contracts. Rendered in Polish until
+  then.
+* **Validation / onboarding / help / publication-view / breadcrumb labels** in
+  `lib/master/*`, `lib/help/support.ts`, `lib/workspace/*` breadcrumbs — same
+  multi-test-pinned coordinated migration.
 * **`zł` currency suffix**, a few **`toLocaleDateString('pl-PL')`** calls, and
   **per-entity `hreflang`** on detail pages — formatting/SEO enhancements.
 
