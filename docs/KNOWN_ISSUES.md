@@ -18,20 +18,16 @@ Many systems were implemented incrementally and have already been debugged.
 
 The SP-047 Release Candidate localizes the whole UI (pages, forms, modals) in
 PL/EN/DE, plus server-action direct messages, side-navigation labels,
-status/specialty/language labels, and — since **SP-047E1** — the
-security/behaviour-sensitive pure-lib **messages** (claim, public claim,
-publication transitions, import) resolved from their stable codes at the
-presentation boundary (pure libs unchanged). Remaining (deferred to **SP-047E2**;
-details in `docs/SP047_I18N_ARCHITECTURE.md §17`):
+status/specialty/language labels, the security-sensitive pure-lib **messages**
+(SP-047E1), and — since **SP-047E2** — the remaining validation / onboarding /
+completeness / publication-view / pilot / help / breadcrumb presentation labels
+(resolved from stable codes; pure libs keep PL reference maps) plus a global
+**Help** hub at `/{locale}/help` and a Help drawer entry.
 
-* **Validation messages** (`lib/master/profileUpdate.ts`,
-  `validateDeliveryHint`/`validateInvitationReason` in
-  `lib/claim/invitationControls.ts`).
-* **Onboarding / help / publication-view / pilot presentation / breadcrumb
-  labels** in `lib/master/*`, `lib/claim/pilot.ts`, `lib/help/support.ts`,
-  `lib/workspace/*` breadcrumbs.
+Remaining (deferred to **SP-047E3** — formatting/SEO, not accidental Polish UI):
+
 * **`zł` currency suffix**, a few **`toLocaleDateString('pl-PL')`** calls, and
-  **per-entity `hreflang`** on detail pages — formatting/SEO enhancements.
+  **per-entity `hreflang`** on detail pages.
 
 Run `node scripts/i18n-audit.mjs --list` for the live list.
 

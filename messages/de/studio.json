@@ -125,7 +125,22 @@
     "recommendedHeading": "Empfohlen nach der Veröffentlichung",
     "guideLink": "Leitfaden: Schnellstart für Saunameister",
     "goTo": "Los →",
-    "viewPreview": "Vorschau ansehen →"
+    "viewPreview": "Vorschau ansehen →",
+    "steps": {
+      "claimed": "Profil übernommen",
+      "details": "Erforderliche Profildaten ausgefüllt",
+      "avatar": "Profilfoto hinzugefügt",
+      "specialty": "Mindestens eine Spezialisierung hinzugefügt",
+      "preview": "Profilvorschau verfügbar",
+      "submitted": "Profil zur Moderation eingereicht",
+      "published": "Profil veröffentlicht",
+      "first-event": "Erstes Event hinzugefügt"
+    },
+    "hints": {
+      "published": "Über die Veröffentlichung entscheidet die Moderation nach deiner Einreichung.",
+      "first-event": "Events können hinzugefügt werden, sobald die Moderation dein Saunameister-Profil genehmigt."
+    },
+    "progress": "{done} von {total} Schritten"
   },
   "invitationResponse": {
     "acceptedToast": "Einladung angenommen — du trittst in der Rolle {role} auf",
@@ -271,5 +286,11 @@
       "approved": "✓ Du trittst auf",
       "rejected": "✗ Abgelehnt"
     }
+  },
+  "completeness": {
+    "slug": "Lege deine eigene Profiladresse fest",
+    "links": "Füge ein Social-Profil oder eine Website hinzu",
+    "affiliation": "Gehe eine Zugehörigkeit mit einer Anlage ein",
+    "upcoming-event": "Füge einen kommenden Saunagang hinzu"
   }
 }

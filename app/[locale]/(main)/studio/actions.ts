@@ -98,6 +98,7 @@ export async function updateOwnMasterProfile(
   data: OwnMasterProfileUpdate
 ): Promise<{ error?: string }> {
   const t = await getTranslations('studio')
+  const tv = await getTranslations('common')
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -107,7 +108,8 @@ export async function updateOwnMasterProfile(
     if (!own) return { error: t('actions.noMasterProfile') }
 
     const built = buildOwnMasterProfilePatch(data)
-    if (!built.ok) return { error: built.error }
+    // SP-047E2: localize the validation message from its stable code.
+    if (!built.ok) return { error: tv(`validation.${built.code}`) }
     if (Object.keys(built.patch).length === 0) return {}
 
     const { data: updated, error } = await supabase

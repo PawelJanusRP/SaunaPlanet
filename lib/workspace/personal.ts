@@ -23,7 +23,7 @@ export const PERSONAL_NAV: WorkspaceNavItem[] = [
 export function personalBreadcrumbs(pageLabel?: string): WorkspaceBreadcrumb[] {
   const trail: WorkspaceBreadcrumb[] = [
     { label: 'SaunaPlanet', href: '/' },
-    { label: PERSONAL_WORKSPACE_LABEL, href: PERSONAL_WORKSPACE_HOME },
+    { label: PERSONAL_WORKSPACE_LABEL, labelKey: 'nav.destinations.profile', href: PERSONAL_WORKSPACE_HOME },
   ]
   if (pageLabel) trail.push({ label: pageLabel })
   return trail

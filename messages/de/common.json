@@ -50,5 +50,19 @@
     "sk": "Slowakisch",
     "fr": "Französisch",
     "es": "Spanisch"
+  },
+  "validation": {
+    "name-empty": "Der Name darf nicht leer sein",
+    "website-invalid-url": "Gib eine gültige Website-Adresse ein (https://...)",
+    "website-not-https": "Die Website muss https:// verwenden",
+    "website-credentials": "Die Website-Adresse darf keine Zugangsdaten enthalten",
+    "website-port": "Die Website-Adresse darf keinen nicht standardmäßigen Port verwenden",
+    "slug-too-short": "Die Profiladresse muss mindestens 3 Zeichen lang sein",
+    "slug-too-long": "Die Profiladresse darf höchstens 40 Zeichen lang sein",
+    "slug-invalid-shape": "Die Profiladresse darf nur Kleinbuchstaben, Ziffern und einzelne Bindestriche enthalten",
+    "slug-reserved": "Diese Profiladresse ist reserviert — wähle eine andere",
+    "slug-uuid-like": "Diese Profiladresse sieht aus wie eine technische Kennung — wähle eine andere",
+    "year-future": "Das Startjahr darf nicht in der Zukunft liegen",
+    "year-invalid": "Gib ein gültiges Startjahr ein (ab 1980)"
   }
 }

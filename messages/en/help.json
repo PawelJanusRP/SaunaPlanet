@@ -117,6 +117,19 @@
     }
   },
   "support": {
-    "requestChecklistIntro": "In your request please include:"
+    "requestChecklistIntro": "In your request please include:",
+    "heading": "Need help?",
+    "channel": "Contact the person who prepared your profile and sent you the SaunaPlanet invitation. This is a temporary support path during the pilot.",
+    "checklist": [
+      "a short description of the problem,",
+      "the page where the problem occurred,",
+      "a screenshot — with passwords and profile-claim links hidden."
+    ],
+    "securityWarning": "Do not send your password or an active profile-claim link."
+  },
+  "hub": {
+    "title": "Help",
+    "mastersTitle": "For sauna masters",
+    "mastersDescription": "Getting started, profile, Studio, events and publishing."
   }
 }

@@ -94,12 +94,19 @@ export default function PublicationModerationControls({
     <div className="space-y-3">
       {showMasterNotApprovedHint && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          <p>{MASTER_NOT_APPROVED_GUIDANCE_PL.message}</p>
+          <p>
+            {tp.has('notApprovedGuidance.message')
+              ? tp('notApprovedGuidance.message')
+              : MASTER_NOT_APPROVED_GUIDANCE_PL.message}
+          </p>
           <Link
             href={MASTER_NOT_APPROVED_GUIDANCE_PL.actionHref}
             className="mt-1.5 inline-block font-semibold text-amber-900 underline"
           >
-            {MASTER_NOT_APPROVED_GUIDANCE_PL.actionLabel} →
+            {tp.has('notApprovedGuidance.actionLabel')
+              ? tp('notApprovedGuidance.actionLabel')
+              : MASTER_NOT_APPROVED_GUIDANCE_PL.actionLabel}{' '}
+            →
           </Link>
           <p className="mt-1 text-xs text-amber-700">
             {t('masterNotApprovedHint')}

@@ -6,13 +6,10 @@ import { listClaimInvitations } from '@/app/[locale]/(main)/admin/claimActions'
 import {
   evaluatePilotReadiness,
   groupInvitationsByMaster,
-  INVITATION_STATUS_LABELS_PL,
   matchesPilotFilter,
   pickLatestInvitation,
-  PILOT_FILTER_LABELS_PL,
   PILOT_FILTERS,
   PILOT_READINESS_META,
-  PILOT_REQUIRED_FIELD_LABELS_PL,
   toPilotFilter,
   toPilotInvitationSummaries,
   type PilotInvitationSummary,
@@ -65,6 +62,7 @@ export default async function PilotListPage({
 
   const t = await getTranslations('admin.pilotList')
   const td = await getTranslations('admin.pilotDetail')
+  const tp = await getTranslations('admin')
   const { filter: rawFilter } = await searchParams
   const filter = toPilotFilter(rawFilter)
 
@@ -155,7 +153,10 @@ export default async function PilotListPage({
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
-            {t('filterCount', { label: PILOT_FILTER_LABELS_PL[f], count: countFor(f) })}
+            {t('filterCount', {
+              label: tp.has(`pilot.filter.${f}`) ? tp(`pilot.filter.${f}`) : f,
+              count: countFor(f),
+            })}
           </Link>
         ))}
       </div>
@@ -173,6 +174,10 @@ export default async function PilotListPage({
               ? { label: td(`masterStatus.${r.status}`), className: MASTER_STATUS_CLASSNAMES[r.status] }
               : { label: r.status, className: 'bg-gray-100 text-gray-500' }
             const readinessMeta = PILOT_READINESS_META[r.readiness.readiness]
+            const readinessCode = r.readiness.readiness
+            const readinessLabel = tp.has(`pilot.readiness.${readinessCode}`)
+              ? tp(`pilot.readiness.${readinessCode}`)
+              : readinessCode
             const expiry = formatDatePl(r.latest?.expiresAt ?? null)
             return (
               <div key={r.id} className="rounded-3xl border bg-white p-5 shadow-sm">
@@ -206,7 +211,7 @@ export default async function PilotListPage({
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${readinessMeta.className}`}
                     >
-                      {readinessMeta.label}
+                      {readinessLabel}
                     </span>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>
                       {st.label}
@@ -219,7 +224,9 @@ export default async function PilotListPage({
                   <span>
                     {t('invitationLabel')}{' '}
                     {r.latest
-                      ? INVITATION_STATUS_LABELS_PL[r.latest.status]
+                      ? tp.has(`pilot.invitationStatus.${r.latest.status}`)
+                        ? tp(`pilot.invitationStatus.${r.latest.status}`)
+                        : r.latest.status
                       : t('invitationNone')}
                     {r.readiness.invitationExpired && t('invitationExpired')}
                   </span>
@@ -229,7 +236,7 @@ export default async function PilotListPage({
                       <span className="text-yellow-700">
                         {t('missing')}{' '}
                         {r.readiness.missingRequired
-                          .map((k) => PILOT_REQUIRED_FIELD_LABELS_PL[k])
+                          .map((k) => (tp.has(`pilot.requiredFields.${k}`) ? tp(`pilot.requiredFields.${k}`) : k))
                           .join(', ')}
                       </span>
                     )}

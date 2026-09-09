@@ -271,17 +271,27 @@ claim/publication security & behaviour contracts stay green (the direct-action
 behavioural test stubs next-intl's `getTranslations` and asserts the CODE, not
 the wording).
 
-**Still deferred to SP-047E2** (tracked by `scripts/i18n-audit.mjs`):
+**Done in SP-047E2** — the remaining user-visible presentation labels are now
+localized at the boundary (pure libs keep their PL reference maps unchanged);
+plus a global Help hub:
 
-1. **Validation messages** — `lib/master/profileUpdate.ts`,
-   `lib/claim/invitationControls.ts` (`validateDeliveryHint` /
-   `validateInvitationReason`).
-2. **Onboarding / help / publication-view & pilot presentation labels** —
-   `lib/master/{completeness,onboarding,publicationView}.ts`, `lib/claim/pilot.ts`
-   (readiness/filter/required-field labels), `lib/help/support.ts`, and the
-   workspace **breadcrumb** labels in `lib/workspace/{master,personal,owner}.ts`.
-3. **`zł` (PLN) currency suffix** on user-entered prices — locale-aware currency
-   formatter is a separate enhancement.
+- validation/profile (`common.validation.*`, resolved from a stable
+  `ProfileValidationCode` / `HintValidationCode`),
+- onboarding & completeness (`studio.firstSteps.steps|hints|progress`,
+  `studio.completeness.*`),
+- publication-view status labels/hints & not-approved guidance
+  (`publication.statusLabels|statusHints|notApprovedGuidance`),
+- pilot readiness/filter/required-field/invitation-status labels
+  (`admin.pilot.*`),
+- help support copy (`help.support.*`) and workspace breadcrumb roots
+  (`nav.destinations.*` via `WorkspaceBreadcrumb.labelKey`).
+- **Global Help hub** at `/{locale}/help` linking to the sauna-master help, with
+  a **Help** entry in the shared drawer (`nav.help`, `CircleHelp` icon).
+
+**Still deferred to SP-047E3** (formatting/SEO — not accidental Polish UI):
+
+1. **`zł` (PLN) currency suffix** on user-entered prices — locale-aware currency
+   formatter.
 4. **Locale-aware date formatting** — a few pages still call
    `toLocaleDateString('pl-PL', …)` / date-fns `pl`. Switch to
    `useFormatter()` / `getFormatter()`.

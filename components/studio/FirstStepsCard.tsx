@@ -17,7 +17,10 @@ export default async function FirstStepsCard({ firstSteps }: { firstSteps: First
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-bold">{t('firstSteps.title')}</h2>
         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-          {firstSteps.progressLabel}
+          {t('firstSteps.progress', {
+            done: firstSteps.doneCount,
+            total: firstSteps.totalCount,
+          })}
         </span>
       </div>
 
@@ -33,6 +36,8 @@ export default async function FirstStepsCard({ firstSteps }: { firstSteps: First
           <StepRow
             key={step.key}
             step={step}
+            label={t(`firstSteps.steps.${step.key}`)}
+            hint={step.hint ? t(`firstSteps.hints.${step.key}`) : undefined}
             goToLabel={t('firstSteps.goTo')}
             viewPreviewLabel={t('firstSteps.viewPreview')}
           />
@@ -47,6 +52,8 @@ export default async function FirstStepsCard({ firstSteps }: { firstSteps: First
           <StepRow
             key={step.key}
             step={step}
+            label={t(`firstSteps.steps.${step.key}`)}
+            hint={step.hint ? t(`firstSteps.hints.${step.key}`) : undefined}
             goToLabel={t('firstSteps.goTo')}
             viewPreviewLabel={t('firstSteps.viewPreview')}
           />
@@ -71,10 +78,14 @@ export default async function FirstStepsCard({ firstSteps }: { firstSteps: First
 
 function StepRow({
   step,
+  label,
+  hint,
   goToLabel,
   viewPreviewLabel,
 }: {
   step: FirstStep
+  label: string
+  hint?: string
   goToLabel: string
   viewPreviewLabel: string
 }) {
@@ -87,7 +98,7 @@ function StepRow({
       )}
       <span className="min-w-0">
         <span className={step.done ? 'text-gray-700' : 'text-gray-600'}>
-          {step.label}
+          {label}
         </span>
         {!step.done && step.href && (
           <Link
@@ -105,8 +116,8 @@ function StepRow({
             {viewPreviewLabel}
           </Link>
         )}
-        {step.hint && !step.done && (
-          <span className="mt-0.5 block text-xs text-gray-400">{step.hint}</span>
+        {hint && !step.done && (
+          <span className="mt-0.5 block text-xs text-gray-400">{hint}</span>
         )}
       </span>
     </li>

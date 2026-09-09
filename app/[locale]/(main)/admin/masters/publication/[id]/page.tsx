@@ -10,7 +10,6 @@ import {
   loadPublicationState,
 } from '@/lib/master/publicationServer'
 import {
-  PUBLICATION_STATUS_LABELS_PL,
   effectivePublicationStatus,
   resolveHardChecklist,
   resolveModeratorPublicationActions,
@@ -47,6 +46,8 @@ export default async function PublicationReviewPage({
   if (role !== 'admin' && role !== 'moderator') redirect('/')
 
   const t = await getTranslations('admin.publicationReview')
+  // SP-047E2: status label resolved from the stable code via next-intl.
+  const tp = await getTranslations('publication')
   const { id } = await params
   const { data: master } = await supabase
     .from('sauna_masters')
@@ -109,7 +110,9 @@ export default async function PublicationReviewPage({
 
         <div className="mt-4 flex flex-wrap gap-2 text-sm">
           <span className="rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700">
-            {PUBLICATION_STATUS_LABELS_PL[publicationStatus]}
+            {tp.has(`statusLabels.${publicationStatus}`)
+              ? tp(`statusLabels.${publicationStatus}`)
+              : publicationStatus}
           </span>
           <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600">
             {t('profile', { status: master.status })}

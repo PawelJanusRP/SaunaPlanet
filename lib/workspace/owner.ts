@@ -34,7 +34,7 @@ export function ownerBreadcrumbs(
 ): WorkspaceBreadcrumb[] {
   const trail: WorkspaceBreadcrumb[] = [
     { label: 'SaunaPlanet', href: '/' },
-    { label: OWNER_WORKSPACE_LABEL, href: withWorkspaceContext(OWNER_WORKSPACE_HOME, context) },
+    { label: OWNER_WORKSPACE_LABEL, labelKey: 'nav.destinations.owner-workspace', href: withWorkspaceContext(OWNER_WORKSPACE_HOME, context) },
   ]
   if (pageLabel) trail.push({ label: pageLabel })
   return trail

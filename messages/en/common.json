@@ -50,5 +50,19 @@
     "sk": "Slovak",
     "fr": "French",
     "es": "Spanish"
+  },
+  "validation": {
+    "name-empty": "Full name cannot be empty",
+    "website-invalid-url": "Enter a valid website address (https://...)",
+    "website-not-https": "The website must use https://",
+    "website-credentials": "The website address cannot contain credentials",
+    "website-port": "The website address cannot use a non-standard port",
+    "slug-too-short": "The profile address must be at least 3 characters",
+    "slug-too-long": "The profile address can be at most 40 characters",
+    "slug-invalid-shape": "The profile address may contain only lowercase letters, digits and single hyphens",
+    "slug-reserved": "This profile address is reserved — choose another",
+    "slug-uuid-like": "This profile address looks like a technical identifier — choose another",
+    "year-future": "The start year cannot be in the future",
+    "year-invalid": "Enter a valid start year (from 1980)"
   }
 }

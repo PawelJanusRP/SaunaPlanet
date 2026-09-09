@@ -6,6 +6,11 @@ export default async function WorkspaceBreadcrumbs({ items }: { items: Workspace
   if (items.length === 0) return null
 
   const t = await getTranslations('workspace')
+  const tRoot = await getTranslations()
+  // SP-047E2: fixed workspace-root items carry a labelKey (resolved here); the
+  // brand root and page-provided labels stay literal (already localized).
+  const labelOf = (item: WorkspaceBreadcrumb) =>
+    item.labelKey ? tRoot(item.labelKey) : item.label
 
   return (
     <nav aria-label={t('aria.breadcrumbs')} className="mb-3 text-xs text-gray-400">
@@ -16,14 +21,14 @@ export default async function WorkspaceBreadcrumbs({ items }: { items: Workspace
             <li key={`${item.label}-${index}`} className="flex items-center gap-1">
               {item.href && !isLast ? (
                 <Link href={item.href} className="rounded hover:text-gray-600 hover:underline">
-                  {item.label}
+                  {labelOf(item)}
                 </Link>
               ) : (
                 <span
                   aria-current={isLast ? 'page' : undefined}
                   className={isLast ? 'font-medium text-gray-600' : undefined}
                 >
-                  {item.label}
+                  {labelOf(item)}
                 </span>
               )}
               {!isLast && <span aria-hidden="true">/</span>}

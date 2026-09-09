@@ -25,6 +25,7 @@ import {
 import {
   DELIVERY_CHANNEL_LABELS_PL,
   DELIVERY_HINT_EXAMPLES,
+  DELIVERY_HINT_MAX,
   VALID_DAYS_DEFAULT,
   VALID_DAYS_MAX,
   VALID_DAYS_MIN,
@@ -112,7 +113,8 @@ export default function InvitationControls({
   function handleMarkSent() {
     const hintCheck = validateDeliveryHint(hint)
     if (!hintCheck.ok) {
-      toast.error(hintCheck.message)
+      // SP-047E2: localize from the stable validation code.
+      toast.error(t(`hintValidation.${hintCheck.code}`, { max: DELIVERY_HINT_MAX }))
       return
     }
     if (!latestInvitationId) return

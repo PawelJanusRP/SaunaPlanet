@@ -12,10 +12,8 @@ import { isUuid } from '@/lib/master/slug'
 import {
   evaluatePilotReadiness,
   evaluatePreparedProfileEditability,
-  INVITATION_STATUS_LABELS_PL,
   pickLatestInvitation,
   PILOT_READINESS_META,
-  PILOT_REQUIRED_FIELD_LABELS_PL,
   PILOT_REQUIRED_FIELDS,
   toPilotInvitationSummaries,
   type PilotInvitationSummary,
@@ -91,6 +89,7 @@ export default async function PilotProfileDetailPage({
 
   const t = await getTranslations('admin.pilotDetail')
   const tc = await getTranslations('common')
+  const tp = await getTranslations('admin')
 
   const { id } = await params
   if (!isUuid(id)) notFound()
@@ -136,6 +135,9 @@ export default async function PilotProfileDetailPage({
   const readiness = evaluatePilotReadiness(profileState, latest)
   const availability = evaluateInvitationActions(profileState, latest)
   const readinessMeta = PILOT_READINESS_META[readiness.readiness]
+  const readinessLabel = tp.has(`pilot.readiness.${readiness.readiness}`)
+    ? tp(`pilot.readiness.${readiness.readiness}`)
+    : readiness.readiness
   const claimed = master.user_id !== null
 
   const editable = evaluatePreparedProfileEditability({
@@ -184,7 +186,7 @@ export default async function PilotProfileDetailPage({
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${readinessMeta.className}`}>
-            {readinessMeta.label}
+            {readinessLabel}
           </span>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>
             {st.label}
@@ -218,7 +220,7 @@ export default async function PilotProfileDetailPage({
             const missing = readiness.missingRequired.includes(key)
             return (
               <li key={key} className={missing ? 'text-yellow-700' : 'text-green-700'}>
-                {missing ? '○' : '✓'} {PILOT_REQUIRED_FIELD_LABELS_PL[key]}
+                {missing ? '○' : '✓'} {tp.has(`pilot.requiredFields.${key}`) ? tp(`pilot.requiredFields.${key}`) : key}
                 {missing && t('readinessMissingSuffix')}
               </li>
             )
@@ -242,7 +244,9 @@ export default async function PilotProfileDetailPage({
             <p>
               {t('invitationStatus')}{' '}
               <span className="font-semibold">
-                {INVITATION_STATUS_LABELS_PL[latest.status]}
+                {tp.has(`pilot.invitationStatus.${latest.status}`)
+                  ? tp(`pilot.invitationStatus.${latest.status}`)
+                  : latest.status}
                 {readiness.invitationExpired && t('invitationExpiredSuffix')}
               </span>
             </p>

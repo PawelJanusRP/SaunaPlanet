@@ -2,11 +2,7 @@ import { Link } from '@/lib/i18n/navigation'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
-import type { PublicationStatus } from '@/lib/master/publicationTransitions'
-import {
-  PUBLICATION_STATUS_LABELS_PL,
-  resolveMissingHardFields,
-} from '@/lib/master/publicationView'
+import { resolveMissingHardFields } from '@/lib/master/publicationView'
 
 // SP-039 Slice 4C2-App — moderator publication queue. Read-only list over
 // the RLS-visible master_publication rows (moderator arm). Rows show only
@@ -59,6 +55,8 @@ export default async function PublicationQueuePage({
   if (role !== 'admin' && role !== 'moderator') redirect('/')
 
   const t = await getTranslations('admin.publicationQueue')
+  // SP-047E2: status labels resolved from the stable code via next-intl.
+  const tp = await getTranslations('publication')
   const { filter: rawFilter } = await searchParams
   const filter = toFilter(rawFilter)
 
@@ -118,10 +116,11 @@ export default async function PublicationQueuePage({
               avatarUrl: m.avatar_url,
               specialties: m.specialties,
             })
-            const statusLabel =
-              PUBLICATION_STATUS_LABELS_PL[
-                row.publication_status as PublicationStatus
-              ] ?? row.publication_status
+            const statusLabel = tp.has(
+              `statusLabels.${row.publication_status}`
+            )
+              ? tp(`statusLabels.${row.publication_status}`)
+              : row.publication_status
             return (
               <div
                 key={row.master_id}

@@ -36,6 +36,9 @@ const supportNotice = readFileSync('components/help/SupportNotice.tsx', 'utf8')
 // via t(...) keys. Structure/security assertions still target the source.
 const helpCatalogPl = readFileSync('messages/pl/help.json', 'utf8')
 const adminCatalogPl = readFileSync('messages/pl/admin.json', 'utf8')
+// SP-047E2: publication status labels/hints resolved from the stable code via
+// the shared `publication` next-intl catalog (statusLabels.* / statusHints.*).
+const publicationCatalogPl = readFileSync('messages/pl/publication.json', 'utf8')
 
 describe('B — pilot invitation copy is current', () => {
   it('the obsolete "later stage" wording is absent', () => {
@@ -145,7 +148,13 @@ describe('E — public Quick Start page', () => {
     }
   })
   it('reuses the shared status vocabulary instead of inventing labels', () => {
-    expect(helpPage).toContain('PUBLICATION_STATUS_LABELS_PL')
+    // SP-047E2: the page resolves labels/hints from the shared `publication`
+    // catalog via next-intl (statusLabels.* keyed by the stable code), so it
+    // invents no parallel labels; the pure lib PL map stays the canonical
+    // fallback with the same reference wording.
+    expect(helpPage).toContain("getTranslations('publication')")
+    expect(helpPage).toContain('statusLabels.${status}')
+    expect(publicationCatalogPl).toContain('Zgłoszony do moderacji')
     expect(PUBLICATION_STATUS_LABELS_PL.submitted).toBe('Zgłoszony do moderacji')
   })
   it('tells the truth about the pilot: claim ≠ publish, no reservations, support-mediated event changes', () => {
@@ -174,7 +183,10 @@ describe('H — one central support path', () => {
     )
   })
   it('Quick Start and Studio render the SAME central copy', () => {
-    expect(supportNotice).toContain("from '@/lib/help/support'")
+    // SP-047E2: the single central source is now the help catalog namespace
+    // (help.support.*), read by SupportNotice; both surfaces still render the
+    // one shared component, so the copy changes in exactly one place.
+    expect(supportNotice).toContain("useTranslations('help.support')")
     expect(helpPage).toContain('SupportNotice')
     expect(firstStepsCard).toContain('SupportNotice')
     // No surface duplicates the wording inline.

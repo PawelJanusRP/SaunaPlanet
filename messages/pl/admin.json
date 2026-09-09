@@ -1,4 +1,34 @@
 {
+  "pilot": {
+    "readiness": {
+      "ready_for_invitation": "Gotowy do zaproszenia",
+      "incomplete": "Profil niekompletny",
+      "active_invitation": "Zaproszenie aktywne",
+      "claimed": "Profil przejęty",
+      "terminal_attention": "Wymaga uwagi"
+    },
+    "invitationStatus": {
+      "ready": "Wygenerowane (niewysłane)",
+      "sent": "Wysłane",
+      "opened": "Otwarte",
+      "claimed": "Przejęte",
+      "expired": "Wygasłe",
+      "revoked": "Unieważnione"
+    },
+    "filter": {
+      "all": "Wszystkie przygotowane",
+      "ready": "Gotowe do zaproszenia",
+      "incomplete": "Niekompletne",
+      "active": "Zaproszenie aktywne",
+      "claimed": "Przejęte",
+      "attention": "Wymagają uwagi"
+    },
+    "requiredFields": {
+      "name": "Imię i nazwisko",
+      "city": "Miasto działania",
+      "bio": "Opis profilu (o sobie)"
+    }
+  },
   "actions": {
     "notAuthorized": "Brak uprawnień",
     "notAuthenticated": "Musisz być zalogowany",
@@ -198,7 +228,12 @@
     "confirmRevoke": "Potwierdź unieważnienie",
     "cancel": "Anuluj",
     "regenerateWarning": "⚠️ To unieważni obecny aktywny link (jeśli istnieje) i wygeneruje nowy. Poprzedniego linku nie da się odzyskać — nigdy go nie zapisujemy.",
-    "confirmRegenerate": "Potwierdź i wygeneruj nowy link"
+    "confirmRegenerate": "Potwierdź i wygeneruj nowy link",
+    "hintValidation": {
+      "too-long": "Wskazówka może mieć najwyżej {max} znaków.",
+      "email-shape": "Wygląda na pełny adres e-mail — zapisz tylko zredagowaną wskazówkę, np. p***@example.com.",
+      "phone-shape": "Wygląda na pełny numer telefonu — zapisz tylko zredagowaną wskazówkę, np. ***123."
+    }
   },
   "pilotForm": {
     "nameRequired": "Imię i nazwisko jest wymagane",

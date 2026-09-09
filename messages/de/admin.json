@@ -1,4 +1,34 @@
 {
+  "pilot": {
+    "readiness": {
+      "ready_for_invitation": "Bereit zur Einladung",
+      "incomplete": "Profil unvollständig",
+      "active_invitation": "Einladung aktiv",
+      "claimed": "Profil übernommen",
+      "terminal_attention": "Erfordert Aufmerksamkeit"
+    },
+    "invitationStatus": {
+      "ready": "Erstellt (nicht gesendet)",
+      "sent": "Gesendet",
+      "opened": "Geöffnet",
+      "claimed": "Übernommen",
+      "expired": "Abgelaufen",
+      "revoked": "Widerrufen"
+    },
+    "filter": {
+      "all": "Alle vorbereiteten",
+      "ready": "Bereit zur Einladung",
+      "incomplete": "Unvollständig",
+      "active": "Einladung aktiv",
+      "claimed": "Übernommen",
+      "attention": "Erfordern Aufmerksamkeit"
+    },
+    "requiredFields": {
+      "name": "Vor- und Nachname",
+      "city": "Ort der Tätigkeit",
+      "bio": "Profilbeschreibung (über sich)"
+    }
+  },
   "actions": {
     "notAuthorized": "Keine Berechtigung",
     "notAuthenticated": "Du musst angemeldet sein",
@@ -198,7 +228,12 @@
     "confirmRevoke": "Widerruf bestätigen",
     "cancel": "Abbrechen",
     "regenerateWarning": "⚠️ Dies widerruft den aktuellen aktiven Link (falls vorhanden) und generiert einen neuen. Der vorherige Link kann nicht wiederhergestellt werden — wir speichern ihn nie.",
-    "confirmRegenerate": "Bestätigen und neuen Link generieren"
+    "confirmRegenerate": "Bestätigen und neuen Link generieren",
+    "hintValidation": {
+      "too-long": "Der Hinweis darf höchstens {max} Zeichen lang sein.",
+      "email-shape": "Das sieht wie eine vollständige E-Mail-Adresse aus — speichere nur einen redigierten Hinweis, z. B. p***@example.com.",
+      "phone-shape": "Das sieht wie eine vollständige Telefonnummer aus — speichere nur einen redigierten Hinweis, z. B. ***123."
+    }
   },
   "pilotForm": {
     "nameRequired": "Vor- und Nachname ist erforderlich",

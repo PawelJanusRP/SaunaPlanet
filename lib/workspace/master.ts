@@ -26,7 +26,7 @@ export const MASTER_NAV: WorkspaceNavItem[] = [
 export function masterBreadcrumbs(pageLabel?: string): WorkspaceBreadcrumb[] {
   const trail: WorkspaceBreadcrumb[] = [
     { label: 'SaunaPlanet', href: '/' },
-    { label: MASTER_STUDIO_LABEL, href: MASTER_STUDIO_HOME },
+    { label: MASTER_STUDIO_LABEL, labelKey: 'nav.destinations.master-studio', href: MASTER_STUDIO_HOME },
   ]
   if (pageLabel) trail.push({ label: pageLabel })
   return trail

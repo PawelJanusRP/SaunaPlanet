@@ -106,7 +106,8 @@ export default async function StudioDashboardPage() {
 
   const recommended = completeness.items
     .filter((item) => ['slug', 'links', 'affiliation', 'upcoming-event'].includes(item.key))
-    .map((item) => ({ key: item.key, label: item.label, done: item.done }))
+    // SP-047E2: localize the recommendation label from its stable key.
+    .map((item) => ({ key: item.key, label: t(`completeness.${item.key}`), done: item.done }))
 
   // SP-039P0 first-steps checklist — every fact is derived from data loaded
   // above (hard checklist, publication status, event rows); nothing stored.

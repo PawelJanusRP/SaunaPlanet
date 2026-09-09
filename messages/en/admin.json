@@ -1,4 +1,34 @@
 {
+  "pilot": {
+    "readiness": {
+      "ready_for_invitation": "Ready to invite",
+      "incomplete": "Incomplete profile",
+      "active_invitation": "Invitation active",
+      "claimed": "Profile claimed",
+      "terminal_attention": "Needs attention"
+    },
+    "invitationStatus": {
+      "ready": "Generated (not sent)",
+      "sent": "Sent",
+      "opened": "Opened",
+      "claimed": "Claimed",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "filter": {
+      "all": "All prepared",
+      "ready": "Ready to invite",
+      "incomplete": "Incomplete",
+      "active": "Invitation active",
+      "claimed": "Claimed",
+      "attention": "Needs attention"
+    },
+    "requiredFields": {
+      "name": "Full name",
+      "city": "City of operation",
+      "bio": "Profile bio (about)"
+    }
+  },
   "actions": {
     "notAuthorized": "You do not have permission",
     "notAuthenticated": "You must be signed in",
@@ -198,7 +228,12 @@
     "confirmRevoke": "Confirm revocation",
     "cancel": "Cancel",
     "regenerateWarning": "⚠️ This will revoke the current active link (if any) and generate a new one. The previous link cannot be recovered — we never store it.",
-    "confirmRegenerate": "Confirm and generate a new link"
+    "confirmRegenerate": "Confirm and generate a new link",
+    "hintValidation": {
+      "too-long": "The hint can be at most {max} characters.",
+      "email-shape": "This looks like a full e-mail address — store only a redacted hint, e.g. p***@example.com.",
+      "phone-shape": "This looks like a full phone number — store only a redacted hint, e.g. ***123."
+    }
   },
   "pilotForm": {
     "nameRequired": "Full name is required",

@@ -29,5 +29,25 @@
     "bio": "opis (min. 80 znaków)",
     "avatar": "zdjęcie profilowe",
     "specialties": "co najmniej jedna specjalizacja"
+  },
+  "statusLabels": {
+    "draft": "Wersja robocza",
+    "submitted": "Zgłoszony do moderacji",
+    "changes_requested": "Moderacja prosi o zmiany",
+    "published": "Opublikowany",
+    "legacy_published": "Opublikowany (profil zweryfikowany historycznie)",
+    "suspended": "Publikacja zawieszona"
+  },
+  "statusHints": {
+    "draft": "Profil nie jest widoczny publicznie. Uzupełnij wymagane pola i zgłoś go do publikacji.",
+    "submitted": "Profil czeka na przegląd moderacji. Do czasu zatwierdzenia nie jest widoczny publicznie.",
+    "changes_requested": "Moderacja poprosiła o poprawki. Po ich wprowadzeniu zgłoś profil ponownie.",
+    "published": "Profil jest widoczny publicznie w katalogu saunamistrzów.",
+    "legacy_published": "Profil jest widoczny publicznie na dotychczasowych zasadach.",
+    "suspended": "Publikacja została zawieszona przez moderację. Skontaktuj się z administracją."
+  },
+  "notApprovedGuidance": {
+    "message": "Najpierw zatwierdź profil saunamistrza. Publikacja wizytówki jest możliwa dopiero po zatwierdzeniu profilu podstawowego.",
+    "actionLabel": "Przejdź do moderacji saunamistrzów"
   }
 }

@@ -3,8 +3,6 @@ import { Link } from '@/lib/i18n/navigation'
 import OwnerPublicationActions from '@/components/studio/OwnerPublicationActions'
 import type { PublicationStatus } from '@/lib/master/publicationTransitions'
 import {
-  PUBLICATION_STATUS_HINTS_PL,
-  PUBLICATION_STATUS_LABELS_PL,
   needsMaterialEditWarning,
   resolveOwnerPublicationActions,
   type HardChecklistItem,
@@ -35,6 +33,15 @@ export default async function PublicationStatusCard({
   previewHref: string
 }) {
   const t = await getTranslations('studio')
+  // SP-047E2: publication status label/hint resolved from the stable code via
+  // next-intl (pure lib PL maps stay the canonical fallback).
+  const tp = await getTranslations('publication')
+  const statusLabel = tp.has(`statusLabels.${publicationStatus}`)
+    ? tp(`statusLabels.${publicationStatus}`)
+    : publicationStatus
+  const statusHint = tp.has(`statusHints.${publicationStatus}`)
+    ? tp(`statusHints.${publicationStatus}`)
+    : publicationStatus
   const actions = resolveOwnerPublicationActions(publicationStatus)
   const missingCount = checklist.filter((i) => !i.ok).length
   const showReviewNote =
@@ -46,7 +53,7 @@ export default async function PublicationStatusCard({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
-          {PUBLICATION_STATUS_LABELS_PL[publicationStatus]}
+          {statusLabel}
         </span>
         <span
           className={`rounded-full px-3 py-1 text-sm font-semibold ${
@@ -60,7 +67,7 @@ export default async function PublicationStatusCard({
       </div>
 
       <p className="text-sm text-gray-600">
-        {PUBLICATION_STATUS_HINTS_PL[publicationStatus]}
+        {statusHint}
       </p>
 
       {masterPendingModeration && (

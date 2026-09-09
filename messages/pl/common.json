@@ -50,5 +50,19 @@
     "sk": "słowacki",
     "fr": "francuski",
     "es": "hiszpański"
+  },
+  "validation": {
+    "name-empty": "Imię i nazwisko nie może być puste",
+    "website-invalid-url": "Podaj poprawny adres strony (https://...)",
+    "website-not-https": "Strona WWW musi używać https://",
+    "website-credentials": "Adres strony nie może zawierać danych logowania",
+    "website-port": "Adres strony nie może używać niestandardowego portu",
+    "slug-too-short": "Adres profilu musi mieć co najmniej 3 znaki",
+    "slug-too-long": "Adres profilu może mieć najwyżej 40 znaków",
+    "slug-invalid-shape": "Adres profilu może zawierać tylko małe litery, cyfry i pojedyncze myślniki",
+    "slug-reserved": "Ten adres profilu jest zarezerwowany — wybierz inny",
+    "slug-uuid-like": "Ten adres profilu wygląda jak identyfikator techniczny — wybierz inny",
+    "year-future": "Rok rozpoczęcia nie może być w przyszłości",
+    "year-invalid": "Podaj poprawny rok rozpoczęcia (od 1980)"
   }
 }

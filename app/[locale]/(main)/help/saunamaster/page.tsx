@@ -2,17 +2,14 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import SupportNotice from '@/components/help/SupportNotice'
-import {
-  PUBLICATION_STATUS_HINTS_PL,
-  PUBLICATION_STATUS_LABELS_PL,
-} from '@/lib/master/publicationView'
 
 // SP-039P0 / SP-039H Layer 3 — the public saunamaster Quick Start page.
 // Public by design: it contains nothing non-public, is safe to send BEFORE
 // login, and never shows account-specific data. Content terminology reuses
-// the shared publication vocabulary (PUBLICATION_STATUS_LABELS_PL) —
-// no parallel status labels. Authoritative content source:
-// docs/SP039H_SAUNAMASTER_ONBOARDING_HELP.md.
+// the shared publication vocabulary — SP-047E2 resolves the status labels and
+// hints from the stable code via the `publication` next-intl catalog
+// (statusLabels.* / statusHints.*), so there are no parallel status labels.
+// Authoritative content source: docs/SP039H_SAUNAMASTER_ONBOARDING_HELP.md.
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('help.saunamaster')
@@ -54,6 +51,8 @@ const TOC_IDS = [
 
 export default async function SaunamasterQuickStartPage() {
   const t = await getTranslations('help.saunamaster')
+  // SP-047E2: status labels/hints resolved from the stable code via next-intl.
+  const tp = await getTranslations('publication')
   return (
     <main className="mx-auto max-w-2xl px-4 py-6 sm:py-8 print:max-w-none">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
@@ -175,10 +174,14 @@ export default async function SaunamasterQuickStartPage() {
             ).map((status) => (
               <li key={status} className="rounded-xl bg-gray-50 px-3 py-2">
                 <p className="font-semibold text-gray-800">
-                  {PUBLICATION_STATUS_LABELS_PL[status]}
+                  {tp.has(`statusLabels.${status}`)
+                    ? tp(`statusLabels.${status}`)
+                    : status}
                 </p>
                 <p className="mt-0.5 text-gray-600">
-                  {PUBLICATION_STATUS_HINTS_PL[status]}
+                  {tp.has(`statusHints.${status}`)
+                    ? tp(`statusHints.${status}`)
+                    : status}
                 </p>
               </li>
             ))}

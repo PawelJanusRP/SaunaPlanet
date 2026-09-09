@@ -125,7 +125,22 @@
     "recommendedHeading": "Zalecane po publikacji",
     "guideLink": "Przewodnik: szybki start saunamistrza",
     "goTo": "Przejdź →",
-    "viewPreview": "Zobacz podgląd →"
+    "viewPreview": "Zobacz podgląd →",
+    "steps": {
+      "claimed": "Profil został przejęty",
+      "details": "Uzupełniono wymagane dane wizytówki",
+      "avatar": "Dodano zdjęcie profilowe",
+      "specialty": "Dodano co najmniej jedną specjalizację",
+      "preview": "Dostępny jest podgląd wizytówki",
+      "submitted": "Profil został wysłany do moderacji",
+      "published": "Profil został opublikowany",
+      "first-event": "Dodano pierwsze wydarzenie"
+    },
+    "hints": {
+      "published": "O publikacji decyduje moderacja po Twoim zgłoszeniu.",
+      "first-event": "Dodawanie wydarzeń będzie dostępne po zatwierdzeniu profilu saunamistrza przez moderację."
+    },
+    "progress": "{done} z {total} kroków"
   },
   "invitationResponse": {
     "acceptedToast": "Zaproszenie przyjęte — występujesz w roli {role}",
@@ -271,5 +286,11 @@
       "approved": "✓ Występujesz",
       "rejected": "✗ Odrzucone"
     }
+  },
+  "completeness": {
+    "slug": "Ustaw własny adres profilu",
+    "links": "Dodaj profil społecznościowy lub stronę WWW",
+    "affiliation": "Nawiąż afiliację z obiektem",
+    "upcoming-event": "Dodaj nadchodzący seans"
   }
 }

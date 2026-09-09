@@ -87,7 +87,11 @@ export async function createPreparedMasterProfile(
       return pilotResult('invalid_input', { message: t('actions.nameRequired') })
     }
     const built = buildOwnMasterProfilePatch(data)
-    if (!built.ok) return pilotResult('invalid_input', { message: built.error })
+    // SP-047E2: localize the validation message from its stable code.
+    if (!built.ok)
+      return pilotResult('invalid_input', {
+        message: (await getTranslations('common'))(`validation.${built.code}`),
+      })
 
     const supabase = await createClient()
     const { data: created, error } = await supabase
@@ -158,7 +162,11 @@ export async function updatePreparedMasterProfile(
     if (!editable.ok) return pilotResult(editable.code)
 
     const built = buildOwnMasterProfilePatch(data)
-    if (!built.ok) return pilotResult('invalid_input', { message: built.error })
+    // SP-047E2: localize the validation message from its stable code.
+    if (!built.ok)
+      return pilotResult('invalid_input', {
+        message: (await getTranslations('common'))(`validation.${built.code}`),
+      })
     if (Object.keys(built.patch).length === 0) return pilotResult('ok')
 
     const { data: updated, error } = await supabase

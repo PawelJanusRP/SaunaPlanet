@@ -46,15 +46,34 @@ const SLUG_ERRORS: Record<string, string> = {
   'uuid-like': 'Ten adres profilu wygląda jak identyfikator techniczny — wybierz inny',
 }
 
+// SP-047E2: every failure carries a STABLE validation code (language-
+// independent) alongside the Polish reference `error`. Presentation boundaries
+// localize the code via `common.validation.<code>`; the `error` string stays for
+// backward compatibility and as a deterministic fallback.
+export type ProfileValidationCode =
+  | 'name-empty'
+  | 'website-invalid-url'
+  | 'website-not-https'
+  | 'website-credentials'
+  | 'website-port'
+  | 'slug-too-short'
+  | 'slug-too-long'
+  | 'slug-invalid-shape'
+  | 'slug-reserved'
+  | 'slug-uuid-like'
+  | 'year-future'
+  | 'year-invalid'
+
 export type ProfilePatchResult =
   | { ok: true; patch: Record<string, unknown>; requestedSlug: string | null }
-  | { ok: false; error: string }
+  | { ok: false; error: string; code: ProfileValidationCode }
 
 export function buildOwnMasterProfilePatch(data: OwnMasterProfileUpdate): ProfilePatchResult {
   const patch: Record<string, unknown> = {}
 
   if (data.name !== undefined) {
-    if (!data.name.trim()) return { ok: false, error: 'Imię i nazwisko nie może być puste' }
+    if (!data.name.trim())
+      return { ok: false, error: 'Imię i nazwisko nie może być puste', code: 'name-empty' }
     patch.name = data.name.trim()
   }
   if (data.bio !== undefined) patch.bio = data.bio?.trim() || null
@@ -65,7 +84,12 @@ export function buildOwnMasterProfilePatch(data: OwnMasterProfileUpdate): Profil
 
   if (data.website !== undefined) {
     const website = sanitizeWebsiteUrl(data.website)
-    if (!website.ok) return { ok: false, error: WEBSITE_ERRORS[website.reason] }
+    if (!website.ok)
+      return {
+        ok: false,
+        error: WEBSITE_ERRORS[website.reason],
+        code: `website-${website.reason}` as ProfileValidationCode,
+      }
     patch.website = website.value
   }
 
@@ -78,6 +102,7 @@ export function buildOwnMasterProfilePatch(data: OwnMasterProfileUpdate): Profil
           year.reason === 'future'
             ? 'Rok rozpoczęcia nie może być w przyszłości'
             : 'Podaj poprawny rok rozpoczęcia (od 1980)',
+        code: year.reason === 'future' ? 'year-future' : 'year-invalid',
       }
     }
     patch.experience_since_year = year.value
@@ -89,7 +114,12 @@ export function buildOwnMasterProfilePatch(data: OwnMasterProfileUpdate): Profil
       patch.slug = null
     } else {
       const validated = validateSlug(data.slug)
-      if (!validated.ok) return { ok: false, error: SLUG_ERRORS[validated.reason] }
+      if (!validated.ok)
+        return {
+          ok: false,
+          error: SLUG_ERRORS[validated.reason],
+          code: `slug-${validated.reason}` as ProfileValidationCode,
+        }
       requestedSlug = validated.slug
       patch.slug = validated.slug
     }

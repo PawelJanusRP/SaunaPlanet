@@ -67,4 +67,11 @@ export type WorkspaceNavItem = {
 export type WorkspaceBreadcrumb = {
   label: string
   href?: string
+  /**
+   * SP-047E2: optional semantic key for fixed breadcrumb items (workspace
+   * roots), resolved with next-intl at render. When absent, `label` is used
+   * as-is (page-provided labels are already localized; the brand root stays
+   * literal).
+   */
+  labelKey?: string
 }

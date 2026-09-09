@@ -117,6 +117,19 @@
     }
   },
   "support": {
-    "requestChecklistIntro": "Bitte gib in deiner Anfrage an:"
+    "requestChecklistIntro": "Bitte gib in deiner Anfrage an:",
+    "heading": "Brauchst du Hilfe?",
+    "channel": "Kontaktiere die Person, die dein Profil vorbereitet und dir die SaunaPlanet-Einladung geschickt hat. Das ist ein vorübergehender Support-Weg während des Pilotbetriebs.",
+    "checklist": [
+      "eine kurze Beschreibung des Problems,",
+      "die Seite, auf der das Problem aufgetreten ist,",
+      "einen Screenshot — mit ausgeblendeten Passwörtern und Profil-Übernahme-Links."
+    ],
+    "securityWarning": "Sende niemals dein Passwort oder einen aktiven Profil-Übernahme-Link."
+  },
+  "hub": {
+    "title": "Hilfe",
+    "mastersTitle": "Für Saunameister",
+    "mastersDescription": "Erste Schritte, Profil, Studio, Veranstaltungen und Veröffentlichung."
   }
 }

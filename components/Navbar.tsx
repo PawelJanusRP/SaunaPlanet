@@ -126,6 +126,9 @@ export default function Navbar() {
             <NavItem href="/about" onClick={close}>
               {t('about')}
             </NavItem>
+            <NavItem href="/help" onClick={close}>
+              {t('help')}
+            </NavItem>
           </div>
 
           {/* Language */}

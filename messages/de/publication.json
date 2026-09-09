@@ -29,5 +29,25 @@
     "bio": "Beschreibung (mind. 80 Zeichen)",
     "avatar": "Profilfoto",
     "specialties": "mindestens eine Spezialisierung"
+  },
+  "statusLabels": {
+    "draft": "Entwurf",
+    "submitted": "Zur Moderation eingereicht",
+    "changes_requested": "Moderation bittet um Änderungen",
+    "published": "Veröffentlicht",
+    "legacy_published": "Veröffentlicht (historisch verifiziertes Profil)",
+    "suspended": "Veröffentlichung ausgesetzt"
+  },
+  "statusHints": {
+    "draft": "Das Profil ist nicht öffentlich sichtbar. Fülle die erforderlichen Felder aus und reiche es zur Veröffentlichung ein.",
+    "submitted": "Das Profil wartet auf die Moderationsprüfung. Bis zur Genehmigung bleibt es nicht öffentlich sichtbar.",
+    "changes_requested": "Die Moderation hat um Änderungen gebeten. Reiche das Profil nach den Anpassungen erneut ein.",
+    "published": "Das Profil ist im Saunameister-Verzeichnis öffentlich sichtbar.",
+    "legacy_published": "Das Profil ist nach den bisherigen Regeln öffentlich sichtbar.",
+    "suspended": "Die Veröffentlichung wurde von der Moderation ausgesetzt. Bitte kontaktiere die Administration."
+  },
+  "notApprovedGuidance": {
+    "message": "Genehmige zuerst das Saunameister-Profil. Die Veröffentlichung der Visitenkarte ist erst nach Genehmigung des Basisprofils möglich.",
+    "actionLabel": "Zur Saunameister-Moderation"
   }
 }

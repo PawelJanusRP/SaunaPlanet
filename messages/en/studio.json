@@ -125,7 +125,22 @@
     "recommendedHeading": "Recommended after publication",
     "guideLink": "Guide: sauna master quick start",
     "goTo": "Go →",
-    "viewPreview": "View preview →"
+    "viewPreview": "View preview →",
+    "steps": {
+      "claimed": "Profile claimed",
+      "details": "Required profile details completed",
+      "avatar": "Profile photo added",
+      "specialty": "At least one specialty added",
+      "preview": "Profile preview is available",
+      "submitted": "Profile submitted for moderation",
+      "published": "Profile published",
+      "first-event": "First event added"
+    },
+    "hints": {
+      "published": "Publication is decided by moderation after your submission.",
+      "first-event": "Adding events will be available once moderation approves your sauna master profile."
+    },
+    "progress": "{done} of {total} steps"
   },
   "invitationResponse": {
     "acceptedToast": "Invitation accepted — you perform in the role of {role}",
@@ -271,5 +286,11 @@
       "approved": "✓ You’re performing",
       "rejected": "✗ Rejected"
     }
+  },
+  "completeness": {
+    "slug": "Set your own profile address",
+    "links": "Add a social profile or website",
+    "affiliation": "Establish an affiliation with a venue",
+    "upcoming-event": "Add an upcoming session"
   }
 }
