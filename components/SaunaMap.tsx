@@ -30,6 +30,7 @@ import { Info, X, Camera, Globe, Pencil, Flame } from 'lucide-react'
 import MapControls from '@/components/map/MapControls'
 import MapSearchPanel from '@/components/map/MapSearchPanel'
 import MapFiltersPanel from '@/components/map/MapFiltersPanel'
+import LanguageSelector from '@/components/LanguageSelector'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 import { formatEventPrice } from '@/lib/i18n/formatPrice'
 
@@ -1193,6 +1194,13 @@ export default function SaunaMap() {
                 <PanelNavItem href="/masters" onClick={() => setShowAccountPanel(false)}>{tNav('masters')}</PanelNavItem>
                 <PanelNavItem href="/sauny" onClick={() => setShowAccountPanel(false)}>{tNav('saunas')}</PanelNavItem>
                 <PanelNavItem href="/about" onClick={() => setShowAccountPanel(false)}>{tNav('about')}</PanelNavItem>
+                <PanelNavItem href="/help" onClick={() => setShowAccountPanel(false)}>{tNav('help')}</PanelNavItem>
+              </div>
+
+              {/* Language — the map is the landing page, so the selector must be
+                  reachable here too (not only in the Navbar drawer). */}
+              <div className="border-b px-4 py-3">
+                <LanguageSelector variant="menu" />
               </div>
 
               {user && (
