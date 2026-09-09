@@ -9,7 +9,8 @@
 // as page metadata and as an HTTP header (next.config).
 
 import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import type { useFormatter } from 'next-intl'
 import { createClient } from '@/lib/supabase/server'
 import { inspectMasterClaimInvitation } from '@/app/(bare)/claim/actions'
 import { resolveClaimPageView } from '@/lib/claim/claimPage'
@@ -33,12 +34,14 @@ function ProfilePreviewCard({
   avatarUrl,
   bio,
   expiresAt,
+  format,
 }: {
   name: string
   city: string | null
   avatarUrl: string | null
   bio: string | null
   expiresAt: string | null
+  format: ReturnType<typeof useFormatter>
 }) {
   return (
     <div className="rounded-2xl border bg-white p-6">
@@ -63,7 +66,7 @@ function ProfilePreviewCard({
       {expiresAt && (
         <p className="mt-4 text-xs text-gray-400">
           Zaproszenie ważne do:{' '}
-          {new Date(expiresAt).toLocaleDateString('pl-PL')}
+          {format.dateTime(new Date(expiresAt), { dateStyle: 'short' })}
         </p>
       )}
     </div>
@@ -103,6 +106,7 @@ export default async function ClaimMasterPage({
 }) {
   const { token } = await params
   const tClaim = await getTranslations('claim')
+  const format = await getFormatter()
 
   // Fail closed BEFORE any boundary call on a malformed shape.
   const inspection = isValidClaimTokenShape(token)
@@ -161,6 +165,7 @@ export default async function ClaimMasterPage({
             avatarUrl={view.preview.avatarUrl}
             bio={view.preview.bio}
             expiresAt={view.preview.expiresAt}
+            format={format}
           />
           <p className="text-center text-sm text-gray-600">
             Aby przejąć ten profil, zaloguj się lub załóż konto.
@@ -177,6 +182,7 @@ export default async function ClaimMasterPage({
             avatarUrl={view.preview.avatarUrl}
             bio={view.preview.bio}
             expiresAt={view.preview.expiresAt}
+            format={format}
           />
           <ClaimActionPanel token={token} masterName={view.preview.masterName} />
         </>

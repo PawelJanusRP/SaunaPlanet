@@ -25,12 +25,13 @@ import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
 import { Link } from '@/lib/i18n/navigation'
 import { useSearchParams } from 'next/navigation'
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations, useLocale, useFormatter } from 'next-intl'
 import { Info, X, Camera, Globe, Pencil, Flame } from 'lucide-react'
 import MapControls from '@/components/map/MapControls'
 import MapSearchPanel from '@/components/map/MapSearchPanel'
 import MapFiltersPanel from '@/components/map/MapFiltersPanel'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
 
 const LogoutIcon = LOGOUT_ICON
 
@@ -367,6 +368,7 @@ function SaunaPopup({
   onAddEvent: (sauna: Sauna) => void
 }) {
   const t = useTranslations('map')
+  const format = useFormatter()
   const [imageIndex, setImageIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
   const [events, setEvents] = useState<SaunaEvent[]>([])
@@ -540,7 +542,7 @@ function SaunaPopup({
 
 				{event.price && (
 					<div className="font-semibold text-orange-700">
-						{event.price.includes('zł') ? event.price : `${event.price} zł`}
+						{formatEventPrice(format, event.price)}
 					</div>
 				)}
 				</Link>

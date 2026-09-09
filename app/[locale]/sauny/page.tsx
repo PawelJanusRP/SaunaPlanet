@@ -1,8 +1,21 @@
+import type { Metadata } from 'next'
 import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import SaunyClient from '@/components/SaunyClient'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'nav' })
+  return { title: t('saunas'), alternates: localizedAlternates(locale as Locale, '/sauny') }
+}
 
 export default async function SaunyPage() {
   const supabase = await createClient()

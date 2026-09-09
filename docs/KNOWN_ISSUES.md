@@ -24,10 +24,16 @@ completeness / publication-view / pilot / help / breadcrumb presentation labels
 (resolved from stable codes; pure libs keep PL reference maps) plus a global
 **Help** hub at `/{locale}/help` and a Help drawer entry.
 
-Remaining (deferred to **SP-047E3** — formatting/SEO, not accidental Polish UI):
+**SP-047E3** completed the locale formatting (dates/numbers via next-intl
+formatter; event prices via `formatEventPrice` → Intl PLN) and international SEO
+(per-locale canonical + pl/en/de hreflang on public/detail pages, x-default =
+negotiating root, multilingual sitemap, robots private-area exclusions).
 
-* **`zł` currency suffix**, a few **`toLocaleDateString('pl-PL')`** calls, and
-  **per-entity `hreflang`** on detail pages.
+No known accidental Polish-only user-visible UI remains. The only residual
+Polish literals are a persisted `author_name` fallback (stored data) and a
+developer `console.warn` — both intentional. A safe dynamic-entity sitemap
+enumeration (published masters / active saunas / public events) is a possible
+future enhancement; detail pages already expose their own canonical + hreflang.
 
 Run `node scripts/i18n-audit.mjs --list` for the live list.
 

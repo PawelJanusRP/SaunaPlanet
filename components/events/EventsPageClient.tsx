@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useFormatter } from 'next-intl'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
 import { Link } from '@/lib/i18n/navigation'
 import CalendarView from '@/components/events/CalendarView'
 
@@ -22,6 +23,7 @@ export default function EventsPageClient({
   events: UpcomingEvent[]
 }) {
   const t = useTranslations('events')
+  const format = useFormatter()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const currentDate = new Date()
@@ -77,9 +79,7 @@ export default function EventsPageClient({
 
                   {event.price && (
                     <div className="mt-1 text-sm font-semibold text-orange-700">
-                      {event.price.includes('zł')
-                        ? event.price
-                        : `${event.price} zł`}
+                      {formatEventPrice(format, event.price)}
                     </div>
                   )}
                 </Link>

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -19,6 +20,7 @@ const registrationStatusClass: Record<string, string> = {
 
 export default async function PersonalEventsPage() {
   const t = await getTranslations('profile')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -70,7 +72,7 @@ export default async function PersonalEventsPage() {
             )}
             {event?.price && (
               <p className="mt-1 text-sm font-semibold text-orange-700">
-                {String(event.price).includes('zł') ? event.price : `${event.price} zł`}
+                {formatEventPrice(format, event.price)}
               </p>
             )}
           </div>

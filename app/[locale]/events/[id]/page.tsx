@@ -1,5 +1,9 @@
+import type { Metadata } from 'next'
 import { Link } from '@/lib/i18n/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
 import Navbar from '@/components/Navbar'
 import EditEventForm from '@/components/EditEventForm'
 import AddEventMasterForm from '@/components/AddEventMasterForm'
@@ -12,6 +16,31 @@ import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { toggleEventInterest } from '@/app/[locale]/(main)/profile/actions'
 import { deleteEventReview, deleteEventComment, registerForEvent, cancelRegistration } from '@/app/[locale]/events/actions'
 
+// SP-047E3 — international SEO: per-locale canonical + pl/en/de alternates for
+// the same event (id never translated). Only active (public) events are
+// indexable; the event title is entity content, shown as authored.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>
+}): Promise<Metadata> {
+  const { locale, id } = await params
+  const alternates = localizedAlternates(locale as Locale, `/events/${id}`)
+  const supabase = await createClient()
+  const { data: event } = await supabase
+    .from('sauna_events')
+    .select('title, status')
+    .eq('id', id)
+    .maybeSingle()
+  if (!event) return { alternates, robots: { index: false, follow: false } }
+  return {
+    title: event.title,
+    alternates,
+    robots: event.status === 'active' ? undefined : { index: false, follow: false },
+    openGraph: { title: event.title, type: 'website', locale },
+  }
+}
+
 export default async function EventPage({
   params,
 }: {
@@ -19,6 +48,7 @@ export default async function EventPage({
 }) {
   const { id } = await params
   const t = await getTranslations('events')
+  const format = await getFormatter()
   const supabase = await createClient()
   const role = await getCurrentUserRole()
   // isEditor gates content moderation (comment/review removal, event photos):
@@ -200,7 +230,7 @@ export default async function EventPage({
     : false
 
   const dateFormatted = ev.event_date
-    ? new Date(ev.event_date).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    ? format.dateTime(new Date(ev.event_date), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : null
 
   const toggleInterestAction = toggleEventInterest.bind(null, id)
@@ -258,7 +288,7 @@ export default async function EventPage({
             )}
             {ev.price && (
               <p>💳 <span className="font-semibold text-orange-700">
-                {String(ev.price).includes('zł') ? ev.price : `${ev.price} zł`}
+                {formatEventPrice(format, ev.price)}
               </span></p>
             )}
             {avgReview !== null && (
@@ -471,7 +501,7 @@ export default async function EventPage({
                           <p className="text-xs font-semibold text-gray-500">
                             {nameById[c.user_id] ?? t('common.userFallback')}
                             <span className="ml-2 font-normal text-gray-400">
-                              {new Date(c.created_at).toLocaleDateString('pl-PL')}
+                              {format.dateTime(new Date(c.created_at), { dateStyle: 'short' })}
                             </span>
                           </p>
                           <p className="mt-1 text-sm text-gray-700">{c.comment}</p>
@@ -520,7 +550,7 @@ export default async function EventPage({
                           <p className="text-xs font-semibold text-gray-500">
                             {nameById[r.user_id] ?? t('common.userFallback')}
                             <span className="ml-2 font-normal text-gray-400">
-                              {new Date(r.created_at).toLocaleDateString('pl-PL')}
+                              {format.dateTime(new Date(r.created_at), { dateStyle: 'short' })}
                             </span>
                           </p>
                           <p className="mt-0.5 text-sm font-semibold text-yellow-600">

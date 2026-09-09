@@ -21,6 +21,20 @@ export type ChangelogEntry = {
 /** Newest release first. */
 export const changelog: ChangelogEntry[] = [
   {
+    // SP-047 release candidate — production availability set at deploy.
+    date: 'W przygotowaniu',
+    title: 'SaunaPlanet po polsku, angielsku i niemiecku',
+    items: [
+      'Aplikacja jest teraz dostępna w trzech językach: polskim, angielskim i niemieckim.',
+      'Język można zmienić w każdej chwili z menu (ikona globusa) — wybór nie zmienia otwartej strony ani widoku mapy.',
+      'Adresy stron zawierają język, np. /pl/, /en/, /de/ — a stare linki nadal działają.',
+      'Wejście na stronę główną dobiera język automatycznie (na podstawie ustawień przeglądarki), z polskim jako domyślnym.',
+      'Daty, liczby i ceny wyświetlają się zgodnie z konwencją wybranego języka.',
+      'Dodano globalną sekcję Pomoc dostępną z menu.',
+      'Nazwy saun, wydarzeń i saunamistrzów oraz treści wpisane przez użytkowników pozostają w oryginalnym języku.',
+    ],
+  },
+  {
     date: '9 września 2026',
     title: 'Nowa mapa i wyszukiwanie saunamistrzów',
     items: [

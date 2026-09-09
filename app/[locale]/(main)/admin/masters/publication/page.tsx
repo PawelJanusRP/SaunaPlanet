@@ -1,6 +1,6 @@
 import { Link } from '@/lib/i18n/navigation'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { resolveMissingHardFields } from '@/lib/master/publicationView'
 
@@ -57,6 +57,7 @@ export default async function PublicationQueuePage({
   const t = await getTranslations('admin.publicationQueue')
   // SP-047E2: status labels resolved from the stable code via next-intl.
   const tp = await getTranslations('publication')
+  const format = await getFormatter()
   const { filter: rawFilter } = await searchParams
   const filter = toFilter(rawFilter)
 
@@ -156,12 +157,12 @@ export default async function PublicationQueuePage({
                     </span>
                     {row.submitted_at && (
                       <span>
-                        {t('submittedAt', { date: new Date(row.submitted_at).toLocaleDateString('pl-PL') })}
+                        {t('submittedAt', { date: format.dateTime(new Date(row.submitted_at), { dateStyle: 'short' }) })}
                       </span>
                     )}
                     {row.publication_reviewed_at && (
                       <span>
-                        {t('reviewedAt', { date: new Date(row.publication_reviewed_at).toLocaleDateString('pl-PL') })}
+                        {t('reviewedAt', { date: format.dateTime(new Date(row.publication_reviewed_at), { dateStyle: 'short' }) })}
                       </span>
                     )}
                   </p>

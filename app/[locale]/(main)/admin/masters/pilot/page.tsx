@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import type { useFormatter } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { listClaimInvitations } from '@/app/[locale]/(main)/admin/claimActions'
@@ -27,9 +28,12 @@ const MASTER_STATUS_CLASSNAMES: Record<string, string> = {
   rejected: 'bg-red-100 text-red-700',
 }
 
-function formatDatePl(iso: string | null): string | null {
+function formatDatePl(
+  format: ReturnType<typeof useFormatter>,
+  iso: string | null,
+): string | null {
   if (!iso) return null
-  return new Date(iso).toLocaleDateString('pl-PL', {
+  return format.dateTime(new Date(iso), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -63,6 +67,7 @@ export default async function PilotListPage({
   const t = await getTranslations('admin.pilotList')
   const td = await getTranslations('admin.pilotDetail')
   const tp = await getTranslations('admin')
+  const format = await getFormatter()
   const { filter: rawFilter } = await searchParams
   const filter = toPilotFilter(rawFilter)
 
@@ -178,7 +183,7 @@ export default async function PilotListPage({
             const readinessLabel = tp.has(`pilot.readiness.${readinessCode}`)
               ? tp(`pilot.readiness.${readinessCode}`)
               : readinessCode
-            const expiry = formatDatePl(r.latest?.expiresAt ?? null)
+            const expiry = formatDatePl(format, r.latest?.expiresAt ?? null)
             return (
               <div key={r.id} className="rounded-3xl border bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-4">

@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { CircleHelp, ChevronRight } from 'lucide-react'
 import { Link } from '@/lib/i18n/navigation'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
 
 export async function generateMetadata({
   params,
@@ -10,7 +12,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'help.hub' })
-  return { title: t('title') }
+  return {
+    title: t('title'),
+    alternates: localizedAlternates(locale as Locale, '/help'),
+  }
 }
 
 /**

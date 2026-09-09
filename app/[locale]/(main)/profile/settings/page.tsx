@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import ChangePasswordForm from '@/components/ChangePasswordForm'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -15,6 +15,7 @@ const KNOWN_ROLES = ['user', 'moderator', 'admin'] as const
 
 export default async function PersonalSettingsPage() {
   const t = await getTranslations('profile')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -55,7 +56,7 @@ export default async function PersonalSettingsPage() {
             </div>
             <div>
               <span className="font-medium text-gray-500">{t('settings.createdAt')}</span>{' '}
-              <span>{new Date(user.created_at).toLocaleDateString('pl-PL')}</span>
+              <span>{format.dateTime(new Date(user.created_at), { dateStyle: 'short' })}</span>
             </div>
             <div>
               <span className="font-medium text-gray-500">{t('settings.id')}</span>{' '}

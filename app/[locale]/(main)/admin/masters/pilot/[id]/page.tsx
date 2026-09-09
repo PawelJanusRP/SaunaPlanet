@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import type { useFormatter } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { getClaimInvitation, listClaimInvitations } from '@/app/[locale]/(main)/admin/claimActions'
@@ -39,9 +40,12 @@ const EVENT_TYPE_KEYS = new Set([
   'invitation_expired',
 ])
 
-function formatDateTimePl(iso: string | null): string | null {
+function formatDateTimePl(
+  format: ReturnType<typeof useFormatter>,
+  iso: string | null,
+): string | null {
   if (!iso) return null
-  return new Date(iso).toLocaleString('pl-PL', {
+  return format.dateTime(new Date(iso), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -90,6 +94,7 @@ export default async function PilotProfileDetailPage({
   const t = await getTranslations('admin.pilotDetail')
   const tc = await getTranslations('common')
   const tp = await getTranslations('admin')
+  const format = await getFormatter()
 
   const { id } = await params
   if (!isUuid(id)) notFound()
@@ -250,15 +255,15 @@ export default async function PilotProfileDetailPage({
                 {readiness.invitationExpired && t('invitationExpiredSuffix')}
               </span>
             </p>
-            {latest.expiresAt && <p>{t('invitationValidUntil', { date: formatDateTimePl(latest.expiresAt) ?? '' })}</p>}
+            {latest.expiresAt && <p>{t('invitationValidUntil', { date: formatDateTimePl(format, latest.expiresAt) ?? '' })}</p>}
             {latest.sentAt && (
               <p>
-                {t('invitationSent', { date: formatDateTimePl(latest.sentAt) ?? '' })}
+                {t('invitationSent', { date: formatDateTimePl(format, latest.sentAt) ?? '' })}
                 {latest.deliveryChannel && t('invitationChannel', { channel: latest.deliveryChannel })}
                 {latest.deliveryTargetHint && t('invitationRecipient', { hint: latest.deliveryTargetHint })}
               </p>
             )}
-            {latest.revokedAt && <p>{t('invitationRevoked', { date: formatDateTimePl(latest.revokedAt) ?? '' })}</p>}
+            {latest.revokedAt && <p>{t('invitationRevoked', { date: formatDateTimePl(format, latest.revokedAt) ?? '' })}</p>}
             {latest.tokenPrefix && (
               <p className="text-xs text-gray-400">
                 {t('diagnosticPrefixLabel')} <code>{latest.tokenPrefix}</code>{t('diagnosticPrefixSuffix')}
@@ -287,7 +292,7 @@ export default async function PilotProfileDetailPage({
           <ul className="space-y-1 text-xs text-gray-500">
             {history.map((e, i) => (
               <li key={i}>
-                {formatDateTimePl(e.created_at ?? null) ?? '—'} ·{' '}
+                {formatDateTimePl(format, e.created_at ?? null) ?? '—'} ·{' '}
                 {e.event_type && EVENT_TYPE_KEYS.has(e.event_type) ? t(`eventType.${e.event_type}`) : e.event_type}
                 {e.delivery_channel && ` (${e.delivery_channel})`}
                 {e.reason && ` — ${e.reason}`}
@@ -340,7 +345,7 @@ export default async function PilotProfileDetailPage({
       </section>
 
       <p className="mt-4 text-xs text-gray-400">
-        {t('created', { date: formatDateTimePl(master.created_at) ?? '' })}
+        {t('created', { date: formatDateTimePl(format, master.created_at) ?? '' })}
         {master.slug && (
           <>
             {t('profileAddress')}<code>/masters/{master.slug}</code>

@@ -4,7 +4,7 @@
 // declares the supported alternates + an x-default (Polish, the reference).
 
 import type { Metadata } from 'next'
-import { LOCALES, DEFAULT_LOCALE, type Locale } from './locales'
+import { LOCALES, type Locale } from './locales'
 
 export const SITE_ORIGIN = 'https://sauna-planet.pl'
 export const metadataBase = new URL(SITE_ORIGIN)
@@ -27,7 +27,9 @@ export function localizedAlternates(
 ): NonNullable<Metadata['alternates']> {
   const languages: Record<string, string> = {}
   for (const l of LOCALES) languages[l] = localePath(l, path)
-  languages['x-default'] = localePath(DEFAULT_LOCALE, path)
+  // x-default points at the negotiating root (cookie -> Accept-Language -> PL),
+  // NOT at /pl — the root is the intended smart locale entry point (SP-047 §8).
+  languages['x-default'] = '/'
   return {
     canonical: localePath(locale, path),
     languages,

@@ -1,7 +1,7 @@
 import { Link } from '@/lib/i18n/navigation'
 import { notFound } from 'next/navigation'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import PublicationModerationControls from '@/components/admin/PublicationModerationControls'
 import {
@@ -48,6 +48,7 @@ export default async function PublicationReviewPage({
   const t = await getTranslations('admin.publicationReview')
   // SP-047E2: status label resolved from the stable code via next-intl.
   const tp = await getTranslations('publication')
+  const format = await getFormatter()
   const { id } = await params
   const { data: master } = await supabase
     .from('sauna_masters')
@@ -168,7 +169,7 @@ export default async function PublicationReviewPage({
                 <p className="font-medium text-gray-800">
                   {AUDIT_KEYS.has(entry.eventType) ? t(`audit.${entry.eventType}`) : entry.eventType}
                   <span className="ml-2 font-normal text-gray-400">
-                    {new Date(entry.createdAt).toLocaleString('pl-PL')}
+                    {format.dateTime(new Date(entry.createdAt), { dateStyle: 'short', timeStyle: 'short' })}
                     {' · '}
                     {entry.actorPresent ? t('actorPresent') : t('actorAbsent')}
                   </span>

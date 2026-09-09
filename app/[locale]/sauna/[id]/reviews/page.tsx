@@ -1,7 +1,7 @@
 import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/server'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 
 export default async function SaunaReviewsPage({
   params,
@@ -11,6 +11,7 @@ export default async function SaunaReviewsPage({
   const { id } = await params
   const supabase = await createClient()
   const t = await getTranslations('sauna')
+  const format = await getFormatter()
   const today = new Date().toISOString().split('T')[0]
 
   const { data: sauna } = await supabase
@@ -106,7 +107,7 @@ export default async function SaunaReviewsPage({
             {sorted.map((r) => {
               const event = eventById[r.event_id]
               const dateStr = event?.event_date
-                ? new Date(event.event_date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })
+                ? format.dateTime(new Date(event.event_date), { day: 'numeric', month: 'long', year: 'numeric' })
                 : null
               return (
                 <div key={r.id} className="rounded-3xl border bg-white p-5 shadow-sm">
@@ -132,7 +133,7 @@ export default async function SaunaReviewsPage({
                   )}
 
                   <p className="mt-2 text-xs text-gray-400">
-                    {nameById[r.user_id] ?? t('reviews.authorFallback')} · {new Date(r.created_at).toLocaleDateString('pl-PL')}
+                    {nameById[r.user_id] ?? t('reviews.authorFallback')} · {format.dateTime(new Date(r.created_at), { dateStyle: 'short' })}
                   </p>
                 </div>
               )

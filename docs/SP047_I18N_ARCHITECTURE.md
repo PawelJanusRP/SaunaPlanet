@@ -288,10 +288,34 @@ plus a global Help hub:
 - **Global Help hub** at `/{locale}/help` linking to the sauna-master help, with
   a **Help** entry in the shared drawer (`nav.help`, `CircleHelp` icon).
 
-**Still deferred to SP-047E3** (formatting/SEO — not accidental Polish UI):
+**Done in SP-047E3** (locale formatting + international SEO):
 
-1. **`zł` (PLN) currency suffix** on user-entered prices — locale-aware currency
-   formatter.
+- **Date/number formatting** — all user-visible `toLocaleDateString('pl-PL')` /
+  `toLocaleString('pl-PL')` replaced with the next-intl formatter
+  (`getFormatter()` / `useFormatter()`), so dates render per the active locale.
+- **Currency** — event prices localized via `lib/i18n/formatPrice.ts`
+  (`formatEventPrice`): clean-numeric prices → `Intl` PLN in the active locale
+  (`50,00 zł` / `PLN 50.00` / `50,00 PLN`); free-text prices pass through
+  unchanged (no conversion, no guessing). Source currency stays PLN.
+- **International SEO** — per-locale self-canonical + pl/en/de `hreflang`
+  alternates via `generateMetadata` on public pages (home layout, `/masters`,
+  `/masters/[idOrSlug]`, `/events`, `/events/[id]`, `/sauna/[id]`, `/sauny`,
+  `/about`, `/help`, `/help/saunamaster`). Entity slugs/ids are never translated;
+  language variants map to the SAME entity. Non-public/unpublished entities are
+  `noindex` (SP-044 preserved). Localized OpenGraph on detail pages.
+- **x-default** = the negotiating root `https://sauna-planet.pl/` (never `/pl`),
+  in both `localizedAlternates` and the sitemap (SP-047 §8).
+- **Sitemap** — `app/sitemap.ts` lists platform-controlled public routes × locale
+  with hreflang (incl. `/help`, `/help/saunamaster`); sensitive areas excluded.
+  Dynamic entity enumeration is intentionally NOT included (safe per-entity
+  public-only projection deferred to avoid exposing unpublished/private records;
+  detail pages still carry their own canonical + hreflang).
+- **robots.ts** — disallows `/claim`, `/auth`, and the private per-locale areas
+  (`admin`, `profile`, `workspace`, `studio`).
+
+There is **no known accidental Polish-only user-visible UI** remaining. The only
+Polish literals left in `app/`/`components/` are a persisted `author_name`
+fallback (stored data) and a developer `console.warn` (not UI).
 4. **Locale-aware date formatting** — a few pages still call
    `toLocaleDateString('pl-PL', …)` / date-fns `pl`. Switch to
    `useFormatter()` / `getFormatter()`.

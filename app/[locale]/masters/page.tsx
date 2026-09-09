@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
@@ -5,6 +6,18 @@ import AddMasterModal from '@/components/AddMasterModal'
 import BecomeMasterForm from '@/components/BecomeMasterForm'
 import DeleteMasterButton from '@/components/DeleteMasterButton'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'nav' })
+  return { title: t('masters'), alternates: localizedAlternates(locale as Locale, '/masters') }
+}
 
 type Sauna = { id: string; name: string }
 

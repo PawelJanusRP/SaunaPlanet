@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import TodayQueue from '@/components/workspace/TodayQueue'
@@ -18,6 +18,7 @@ const ACTIVITY_PREVIEW_LIMIT = 4
 
 export default async function PersonalDashboardPage() {
   const t = await getTranslations('profile')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -297,7 +298,7 @@ export default async function PersonalDashboardPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{item.label}</p>
                     <p className="text-xs text-gray-400">
-                      {item.kind} · {new Date(item.created_at).toLocaleDateString('pl-PL')}
+                      {item.kind} · {format.dateTime(new Date(item.created_at), { dateStyle: 'short' })}
                     </p>
                   </div>
                   <span className="shrink-0 text-sm font-semibold text-yellow-600">{item.rating} ★</span>

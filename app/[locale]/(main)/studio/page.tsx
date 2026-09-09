@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -30,6 +30,7 @@ import { deriveFirstSteps } from '@/lib/master/onboarding'
 
 export default async function StudioDashboardPage() {
   const t = await getTranslations('studio')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -140,7 +141,7 @@ export default async function StudioDashboardPage() {
                         {a.saunaCity && <span className="ml-1 font-normal text-gray-400">· {a.saunaCity}</span>}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-400">
-                        {t('dashboard.invitationSentAt', { date: new Date(a.createdAt).toLocaleDateString('pl-PL') })}
+                        {t('dashboard.invitationSentAt', { date: format.dateTime(new Date(a.createdAt), { dateStyle: 'short' }) })}
                       </p>
                     </div>
                     <AffiliationDecisionActions affiliationId={a.id} />

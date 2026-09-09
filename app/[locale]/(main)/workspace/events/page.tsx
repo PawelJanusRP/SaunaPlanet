@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import EditEventForm from '@/components/EditEventForm'
@@ -30,6 +31,7 @@ export default async function OwnerEventsPage({
   searchParams: Promise<{ context?: string }>
 }) {
   const t = await getTranslations('workspace')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -156,7 +158,7 @@ export default async function OwnerEventsPage({
         )}
         {event.price && (
           <p className="mt-1 text-sm font-semibold text-orange-700">
-            {String(event.price).includes('zł') ? event.price : `${event.price} zł`}
+            {formatEventPrice(format, event.price)}
           </p>
         )}
       </Link>
@@ -294,7 +296,7 @@ export default async function OwnerEventsPage({
                           {' · '}{inv.sauna_events?.event_date?.substring(0, 10)}
                           {context.scope === 'all' && inv.sauna_events?.saunas?.name && <> · {inv.sauna_events.saunas.name}</>}
                           {t('events.offeredRole')}<span className="font-medium">{inv.role}</span>
-                          {t('events.sentOn', { date: new Date(inv.created_at).toLocaleDateString('pl-PL') })}
+                          {t('events.sentOn', { date: format.dateTime(new Date(inv.created_at), { dateStyle: 'short' }) })}
                           {t('events.waitingForMaster')}
                         </p>
                       </div>

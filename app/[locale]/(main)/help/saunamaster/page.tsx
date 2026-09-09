@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import SupportNotice from '@/components/help/SupportNotice'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
 
 // SP-039P0 / SP-039H Layer 3 — the public saunamaster Quick Start page.
 // Public by design: it contains nothing non-public, is safe to send BEFORE
@@ -11,11 +13,17 @@ import SupportNotice from '@/components/help/SupportNotice'
 // (statusLabels.* / statusHints.*), so there are no parallel status labels.
 // Authoritative content source: docs/SP039H_SAUNAMASTER_ONBOARDING_HELP.md.
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('help.saunamaster')
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'help.saunamaster' })
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
+    alternates: localizedAlternates(locale as Locale, '/help/saunamaster'),
   }
 }
 

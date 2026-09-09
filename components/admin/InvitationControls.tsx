@@ -13,7 +13,7 @@
 // server state re-renders — no optimistic transitions.
 
 import { useState, useTransition } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useFormatter } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
@@ -57,6 +57,7 @@ export default function InvitationControls({
   // code (claim results catalog, with the invitation-only extras as a fallback).
   // Success messages are already localized by their Server Actions.
   const tClaim = useTranslations('claim')
+  const format = useFormatter()
   const resultMessage = (code: string) =>
     tClaim.has(`invitationExtra.${code}`)
       ? tClaim(`invitationExtra.${code}`)
@@ -247,7 +248,7 @@ export default function InvitationControls({
           <div className="mt-3 flex items-center justify-between text-xs text-orange-700">
             <span>
               {t('validUntil', {
-                date: new Date(secret.expiresAt).toLocaleString('pl-PL', {
+                date: format.dateTime(new Date(secret.expiresAt), {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',

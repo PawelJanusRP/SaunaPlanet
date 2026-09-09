@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import type { useFormatter } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -24,11 +25,13 @@ function SaunaLine({
   primaryTag,
   ownRequestLabel,
   facilityInvitationLabel,
+  format,
 }: {
   a: MasterAffiliation
   primaryTag: string
   ownRequestLabel: string
   facilityInvitationLabel: string
+  format: ReturnType<typeof useFormatter>
 }) {
   return (
     <div className="min-w-0">
@@ -39,7 +42,7 @@ function SaunaLine({
       </p>
       <p className="mt-0.5 text-xs text-gray-400">
         {a.initiatedBy === 'master' ? ownRequestLabel : facilityInvitationLabel}
-        {' · '}{new Date(a.createdAt).toLocaleDateString('pl-PL')}
+        {' · '}{format.dateTime(new Date(a.createdAt), { dateStyle: 'short' })}
       </p>
     </div>
   )
@@ -47,6 +50,7 @@ function SaunaLine({
 
 export default async function StudioAffiliationsPage() {
   const t = await getTranslations('studio')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -108,6 +112,7 @@ export default async function StudioAffiliationsPage() {
                       primaryTag={t('affiliations.primaryTag')}
                       ownRequestLabel={t('affiliations.ownRequestLabel')}
                       facilityInvitationLabel={t('affiliations.facilityInvitationLabel')}
+                      format={format}
                     />
                     <AffiliationDecisionActions affiliationId={a.id} />
                   </div>
@@ -130,6 +135,7 @@ export default async function StudioAffiliationsPage() {
                       primaryTag={t('affiliations.primaryTag')}
                       ownRequestLabel={t('affiliations.ownRequestLabel')}
                       facilityInvitationLabel={t('affiliations.facilityInvitationLabel')}
+                      format={format}
                     />
                     <EndAffiliationButton
                       affiliationId={a.id}
@@ -160,6 +166,7 @@ export default async function StudioAffiliationsPage() {
                       primaryTag={t('affiliations.primaryTag')}
                       ownRequestLabel={t('affiliations.ownRequestLabel')}
                       facilityInvitationLabel={t('affiliations.facilityInvitationLabel')}
+                      format={format}
                     />
                     <div className="flex flex-wrap items-center gap-2">
                       {!a.isPrimary && <SetPrimaryAffiliationButton affiliationId={a.id} />}

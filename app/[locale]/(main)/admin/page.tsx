@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import SubmissionActions from '@/components/SubmissionActions'
@@ -45,6 +45,7 @@ export default async function AdminPage({
   const role = await getCurrentUserRole()
   if (role !== 'admin' && role !== 'moderator') redirect('/')
 
+  const format = await getFormatter()
   const { tab } = await searchParams
   const activeTab = tab ?? 'submissions'
 
@@ -272,7 +273,7 @@ export default async function AdminPage({
                     <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{t('submissions.note', { note: s.admin_note })}</p>
                   )}
                   <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>{new Date(s.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span>{format.dateTime(new Date(s.created_at), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     {s.status === 'pending' && <SubmissionActions submissionId={s.id} />}
                   </div>
                 </div>
@@ -330,7 +331,7 @@ export default async function AdminPage({
                         </span>
                         {s.created_at && (
                           <span>
-                            {' '}· {new Date(s.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            {' '}· {format.dateTime(new Date(s.created_at), { day: 'numeric', month: 'long', year: 'numeric' })}
                           </span>
                         )}
                         {s.latitude != null && s.longitude != null && (
@@ -409,7 +410,7 @@ export default async function AdminPage({
                     <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>{new Date(e.event_date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span>{format.dateTime(new Date(e.event_date), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     <EventModerationActions eventId={e.id} status={e.status} />
                   </div>
                 </div>
@@ -443,7 +444,7 @@ export default async function AdminPage({
                 </div>
                 {r.review_text && <p className="text-sm text-gray-600">{r.review_text}</p>}
                 <div className="mt-2 text-xs text-gray-400">
-                  {new Date(r.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {format.dateTime(new Date(r.created_at), { day: 'numeric', month: 'long', year: 'numeric' })}
                 </div>
               </div>
             ))
@@ -468,7 +469,7 @@ export default async function AdminPage({
                 </div>
                 {m.bio && <p className="mb-3 text-sm text-gray-600">{m.bio}</p>}
                 <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>{new Date(m.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  <span>{format.dateTime(new Date(m.created_at), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                   <MasterModerationActions masterId={m.id} />
                 </div>
               </div>
@@ -501,7 +502,7 @@ export default async function AdminPage({
                     <span className="shrink-0 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">{t('certificates.statusPending')}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>{new Date(c.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span>{format.dateTime(new Date(c.created_at), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     <CertificateModerationActions certId={c.id} />
                   </div>
                 </div>
@@ -539,7 +540,7 @@ export default async function AdminPage({
                       {m.saunas?.city && <span className="ml-1 text-gray-400">· {m.saunas.city}</span>}
                     </p>
                     <p className="mt-0.5 text-xs text-gray-400">
-                      {new Date(m.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {format.dateTime(new Date(m.created_at), { day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
                   <ManagerApprovalActions managerId={m.id} />
@@ -577,7 +578,7 @@ export default async function AdminPage({
                       <p className="mt-0.5 truncate text-sm text-gray-500">{p.email}</p>
                     )}
                     <p className="mt-0.5 text-xs text-gray-400">
-                      {new Date(p.created_at).toLocaleDateString('pl-PL')}
+                      {format.dateTime(new Date(p.created_at), { dateStyle: 'short' })}
                     </p>
                     {masterBadge && (
                       <p className="mt-1">

@@ -563,13 +563,17 @@ Long-term priority:
 > that gate.
 
 **SP-047 — Internationalization & Localization (PL/EN/DE)** — the next
-implementation release. Target multilingual architecture on next-intl (App
-Router), canonical `/{locale}/…` URLs (pl/en/de), root locale negotiation,
-permanent legacy→`/pl` redirects, file-based message catalogs, localized
-metadata + hreflang + multilingual sitemap, and a shared language selector.
-Designed so adding a 4th/5th language (e.g. Swedish) is a catalog task, not a
-routing refactor. Zero production DB migrations. Full architecture:
-`docs/SP047_I18N_ARCHITECTURE.md`; terminology: `docs/SP047_TERMINOLOGY.md`.
+implementation release. **Status: release candidate complete on
+`feature/sp-047-i18n-pl-en-de`, READY FOR OWNER QA (not merged/deployed).**
+Multilingual architecture on next-intl (App Router): canonical `/{locale}/…`
+URLs (pl/en/de), root locale negotiation, permanent legacy→`/pl` redirects,
+file-based message catalogs, shared language selector, fully localized UI +
+server-action/pure-lib messages, locale-aware date/number/currency formatting,
+international SEO (per-locale canonical + hreflang, x-default = negotiating root,
+multilingual sitemap), and a global Help hub. Designed so adding a 4th/5th
+language (e.g. Swedish) is a catalog task, not a routing refactor. Zero
+production DB migrations. Full architecture: `docs/SP047_I18N_ARCHITECTURE.md`;
+terminology: `docs/SP047_TERMINOLOGY.md`.
 
 **SP-040 — Platform Operations and Free-Tier Guardrails** (full scope:
 docs/BACKLOG.md) — an internal `/admin/system` dashboard showing whether

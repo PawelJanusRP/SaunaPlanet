@@ -3,6 +3,8 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import { changelog } from '@/lib/changelog'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
 
 export async function generateMetadata({
   params,
@@ -11,7 +13,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'metadata.about' })
-  return { title: t('title'), description: t('description') }
+  return {
+    title: t('title'),
+    description: t('description'),
+    alternates: localizedAlternates(locale as Locale, '/about'),
+  }
 }
 
 export default async function AboutPage() {

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -35,6 +35,7 @@ export default async function OwnerTeamPage({
   searchParams: Promise<{ context?: string }>
 }) {
   const t = await getTranslations('workspace')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -104,7 +105,7 @@ export default async function OwnerTeamPage({
           </p>
           <p className="mt-0.5 text-xs text-gray-400">
             {context.scope === 'all' && a.saunas?.name && <span>{a.saunas.name} · </span>}
-            {new Date(a.created_at).toLocaleDateString('pl-PL')}
+            {format.dateTime(new Date(a.created_at), { dateStyle: 'short' })}
           </p>
         </div>
       </div>

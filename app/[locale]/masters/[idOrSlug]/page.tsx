@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import UploadAvatarButton, { UploadMasterImageButton } from '@/components/UploadAvatarButton'
@@ -7,7 +8,34 @@ import Navbar from '@/components/Navbar'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { loadPublicVisibility } from '@/lib/master/publicationServer'
 import { isUuid } from '@/lib/master/slug'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
 import type { EventMasterRow } from '@/lib/types'
+
+// SP-047E3 — international SEO. Every locale variant is canonical to ITSELF and
+// declares the pl/en/de alternates for the SAME entity (slug/id is never
+// translated). Only publicly-visible profiles are indexable; the public name is
+// the only identity ever exposed (SP-044). No entity content is translated.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; idOrSlug: string }>
+}): Promise<Metadata> {
+  const { locale, idOrSlug } = await params
+  const alternates = localizedAlternates(locale as Locale, `/masters/${idOrSlug}`)
+  const supabase = await createClient()
+  const { data: master } = isUuid(idOrSlug)
+    ? await supabase.from('sauna_masters').select('id, name').eq('id', idOrSlug).maybeSingle()
+    : await supabase.from('sauna_masters').select('id, name').eq('slug', idOrSlug.toLowerCase()).maybeSingle()
+  if (!master) return { alternates, robots: { index: false, follow: false } }
+  const visible = await loadPublicVisibility(supabase, master.id)
+  return {
+    title: master.name,
+    alternates,
+    robots: visible ? undefined : { index: false, follow: false },
+    openGraph: { title: master.name, type: 'profile', locale },
+  }
+}
 
 // Canonical category codes with a localized label (SP-047). Codes stay
 // canonical; unknown codes fall back to the raw code at render time.

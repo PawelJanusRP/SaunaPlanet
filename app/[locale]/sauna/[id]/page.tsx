@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import AddEventMasterForm from '@/components/AddEventMasterForm'
 import AddMasterToSaunaModal from '@/components/AddMasterToSaunaModal'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
@@ -5,7 +6,35 @@ import { Link } from '@/lib/i18n/navigation'
 import AddReviewForm from '@/components/AddReviewForm'
 import Navbar from '@/components/Navbar'
 import { toggleFavoriteSauna, requestManagerRole } from '@/app/[locale]/(main)/profile/actions'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
+
+// SP-047E3 — international SEO: per-locale canonical + pl/en/de alternates for
+// the same facility (id never translated). Only active (public) facilities are
+// indexable; entity content (name/description) is never translated.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>
+}): Promise<Metadata> {
+  const { locale, id } = await params
+  const alternates = localizedAlternates(locale as Locale, `/sauna/${id}`)
+  const supabase = await createClient()
+  const { data: sauna } = await supabase
+    .from('saunas')
+    .select('name, status')
+    .eq('id', id)
+    .maybeSingle()
+  if (!sauna) return { alternates, robots: { index: false, follow: false } }
+  return {
+    title: sauna.name,
+    alternates,
+    robots: sauna.status === 'active' ? undefined : { index: false, follow: false },
+    openGraph: { title: sauna.name, type: 'website', locale },
+  }
+}
 
 export default async function SaunaPage({
   params,
@@ -15,6 +44,7 @@ export default async function SaunaPage({
   const { id } = await params
   const supabase = await createClient()
   const t = await getTranslations('sauna')
+  const format = await getFormatter()
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -265,7 +295,7 @@ export default async function SaunaPage({
                     </div>
                     {event.price && (
                       <div className="mt-1 text-sm font-semibold text-orange-700">
-                        {event.price.includes('zł') ? event.price : `${event.price} zł`}
+                        {formatEventPrice(format, event.price)}
                       </div>
                     )}
                     {event.description && (

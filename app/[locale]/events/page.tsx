@@ -1,7 +1,11 @@
+import type { Metadata } from 'next'
 import EventsPageClient from '@/components/events/EventsPageClient'
 import { createClient } from '@supabase/supabase-js'
 import { Link } from '@/lib/i18n/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
+import { localizedAlternates } from '@/lib/i18n/seo'
+import type { Locale } from '@/lib/i18n/locales'
 import Navbar from '@/components/Navbar'
 import type { UpcomingEventRow } from '@/lib/types'
 
@@ -10,8 +14,19 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'nav' })
+  return { title: t('events'), alternates: localizedAlternates(locale as Locale, '/events') }
+}
+
 export default async function EventsPage() {
   const t = await getTranslations('events')
+  const format = await getFormatter()
   const { data: events } = await supabase.rpc('get_upcoming_events')
 
   return (
@@ -60,9 +75,7 @@ export default async function EventsPage() {
 
               {event.price && (
                 <div className="mt-2 text-sm font-semibold text-orange-700">
-                  {event.price.includes('zł')
-                    ? event.price
-                    : `${event.price} zł`}
+                  {formatEventPrice(format, event.price)}
                 </div>
               )}
             </Link>

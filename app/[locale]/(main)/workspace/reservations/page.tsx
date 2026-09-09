@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import RegistrationModerationActions from '@/components/RegistrationModerationActions'
@@ -24,6 +24,7 @@ export default async function OwnerReservationsPage({
   searchParams: Promise<{ context?: string }>
 }) {
   const t = await getTranslations('workspace')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -96,7 +97,7 @@ export default async function OwnerReservationsPage({
           {context.scope === 'all' && ev?.saunas?.name && <span className="ml-1">· {ev.saunas.name}</span>}
         </p>
         <p className="mt-0.5 text-xs text-gray-400">
-          {t('common.submittedOn', { date: new Date(reg.created_at).toLocaleDateString('pl-PL') })}
+          {t('common.submittedOn', { date: format.dateTime(new Date(reg.created_at), { dateStyle: 'short' }) })}
         </p>
       </div>
     )

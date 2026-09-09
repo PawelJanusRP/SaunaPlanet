@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getFormatter } from 'next-intl/server'
+import type { useFormatter } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -17,12 +18,14 @@ function ReviewCard({
   rating,
   text,
   createdAt,
+  format,
 }: {
   href: string
   title: string
   rating: number
   text?: string | null
   createdAt: string
+  format: ReturnType<typeof useFormatter>
 }) {
   return (
     <Link href={href} className="block rounded-2xl border p-4 transition-colors hover:bg-orange-50">
@@ -31,13 +34,14 @@ function ReviewCard({
         <span className="shrink-0 text-sm font-semibold text-yellow-600">{rating} ★</span>
       </div>
       {text && <p className="mt-1 text-sm text-gray-600">{text}</p>}
-      <p className="mt-1 text-xs text-gray-400">{new Date(createdAt).toLocaleDateString('pl-PL')}</p>
+      <p className="mt-1 text-xs text-gray-400">{format.dateTime(new Date(createdAt), { dateStyle: 'short' })}</p>
     </Link>
   )
 }
 
 export default async function PersonalReviewsPage() {
   const t = await getTranslations('profile')
+  const format = await getFormatter()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -90,6 +94,7 @@ export default async function PersonalReviewsPage() {
                   rating={review.rating}
                   text={review.review_text}
                   createdAt={review.created_at}
+                  format={format}
                 />
               ))}
             </div>
@@ -115,6 +120,7 @@ export default async function PersonalReviewsPage() {
                   rating={review.rating}
                   text={review.comment}
                   createdAt={review.created_at}
+                  format={format}
                 />
               ))}
             </div>
