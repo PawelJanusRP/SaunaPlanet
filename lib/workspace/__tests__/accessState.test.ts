@@ -170,7 +170,7 @@ describe('account switch', () => {
 })
 
 describe('server-side /studio gate stays independent', () => {
-  const studioPage = readFileSync('app/(main)/studio/page.tsx', 'utf8')
+  const studioPage = readFileSync('app/[locale]/(main)/studio/page.tsx', 'utf8')
   const provider = readFileSync('components/AuthProvider.tsx', 'utf8')
 
   it('the studio page authorizes via the server client and gate, not the client snapshot', () => {

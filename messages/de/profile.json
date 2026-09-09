@@ -1,0 +1,177 @@
+{
+  "greeting": "Hallo, {name}!",
+  "todayQueue": {
+    "empty": "Keine Events heute."
+  },
+  "ownerWorkspace": {
+    "title": "🏢 Betreiber-Bereich",
+    "description": "Die Verwaltung von Anlagen, Reservierungen und Events ist in den Betreiber-Bereich umgezogen.",
+    "cta": "Öffnen →"
+  },
+  "dashboard": {
+    "upcomingEvents": {
+      "title": "🔥 Kommende Events",
+      "seeAll": "Alle →",
+      "emptyTitle": "Keine kommenden Events",
+      "emptyDescription": "Melde dich für ein Event an oder markiere es mit „Ich komme“ und es erscheint hier.",
+      "emptyAction": "Events durchsuchen"
+    },
+    "favorites": {
+      "title": "♥ Favorisierte Saunen",
+      "seeAll": "Alle ({count}) →"
+    },
+    "activity": {
+      "title": "⭐ Letzte Aktivität",
+      "seeAll": "Meine Bewertungen →",
+      "emptyTitle": "Keine Aktivität",
+      "emptyDescription": "Deine Bewertungen von Saunen und Events erscheinen hier.",
+      "eventReviewKind": "Event-Bewertung",
+      "saunaReviewKind": "Sauna-Bewertung",
+      "eventFallback": "Event",
+      "saunaFallback": "Sauna"
+    }
+  },
+  "favorites": {
+    "subtitle": "Saunen, die du als Favoriten markiert hast",
+    "breadcrumb": "Favoriten",
+    "title": "♥ Favorisierte Saunen ({count})",
+    "emptyTitle": "Keine favorisierten Saunen",
+    "emptyDescription": "Füge Saunen auf ihren Seiten zu den Favoriten hinzu, um sie griffbereit zu haben.",
+    "emptyAction": "Saunen durchsuchen"
+  },
+  "details": {
+    "subtitle": "Deine öffentliche Identität auf SaunaPlanet",
+    "breadcrumb": "Profil",
+    "nameSection": "Vor- und Nachname",
+    "nameHint": "Wird bei deinen Bewertungen und Kommentaren angezeigt.",
+    "comingSoonSection": "Demnächst in deinem Profil",
+    "comingSoonBadge": "Demnächst",
+    "fields": {
+      "avatar": {
+        "label": "Avatar",
+        "hint": "Profilbild, das bei Bewertungen angezeigt wird"
+      },
+      "bio": {
+        "label": "Bio",
+        "hint": "Eine kurze Beschreibung über dich"
+      },
+      "location": {
+        "label": "Standort",
+        "hint": "Deine Stadt"
+      },
+      "languages": {
+        "label": "Sprachen",
+        "hint": "Sprachen, die du sprichst"
+      },
+      "publicProfile": {
+        "label": "Öffentliches Profil",
+        "hint": "Sichtbarkeit des Profils für andere Nutzer"
+      }
+    }
+  },
+  "events": {
+    "subtitle": "Deine Reservierungen und verfolgten Events",
+    "breadcrumb": "Events",
+    "status": {
+      "pending": "⏳ Ausstehend",
+      "confirmed": "✓ Bestätigt",
+      "cancelled": "✗ Abgesagt"
+    },
+    "reservations": {
+      "title": "🎟️ Meine Reservierungen",
+      "emptyTitle": "Keine Reservierungen",
+      "emptyDescription": "Klicke auf einer Event-Seite auf „Anmelden“, um einen Platz zu reservieren.",
+      "emptyAction": "Events durchsuchen"
+    },
+    "interested": {
+      "title": "🔥 Verfolgt („Ich komme“)",
+      "emptyTitle": "Keine verfolgten Events",
+      "emptyDescription": "Markiere ein kommendes Event mit „Ich komme“ und es erscheint hier.",
+      "emptyAction": "Events durchsuchen"
+    }
+  },
+  "reviews": {
+    "subtitle": "Bewertungen, die du geschrieben hast",
+    "breadcrumb": "Bewertungen",
+    "saunaFallback": "Sauna",
+    "eventFallback": "Event",
+    "saunaSection": {
+      "title": "🧖 Sauna-Bewertungen",
+      "emptyTitle": "Keine Sauna-Bewertungen",
+      "emptyDescription": "Bewerte eine besuchte Sauna auf ihrer Seite und die Bewertung erscheint hier.",
+      "emptyAction": "Saunen durchsuchen"
+    },
+    "eventSection": {
+      "title": "🔥 Event-Bewertungen",
+      "emptyTitle": "Keine Event-Bewertungen",
+      "emptyDescription": "Nach einem beendeten Event kannst du es auf seiner Seite bewerten.",
+      "emptyAction": "Events durchsuchen"
+    }
+  },
+  "settings": {
+    "subtitle": "Kontoeinstellungen",
+    "breadcrumb": "Einstellungen",
+    "accountSection": "Kontodaten",
+    "email": "E-Mail:",
+    "role": "Rolle:",
+    "createdAt": "Konto erstellt:",
+    "id": "ID:",
+    "roles": {
+      "user": "Nutzer",
+      "moderator": "Moderator",
+      "admin": "Administrator"
+    },
+    "passwordSection": "Passwort",
+    "notificationsSection": "Benachrichtigungen",
+    "notificationsEmptyTitle": "Benachrichtigungseinstellungen sind bald verfügbar",
+    "notificationsEmptyDescription": "Benachrichtigungen zu Reservierungen und Events kommen mit dem Benachrichtigungssystem."
+  },
+  "editName": {
+    "labelInline": "Vor- und Nachname: ",
+    "notProvided": "Nicht angegeben",
+    "edit": "Bearbeiten",
+    "heading": "Vor- und Nachname",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "firstNamePlaceholder": "Max",
+    "lastNamePlaceholder": "Mustermann",
+    "saving": "Wird gespeichert...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "errorSave": "Speichern fehlgeschlagen",
+    "successSave": "Daten aktualisiert"
+  },
+  "changePassword": {
+    "trigger": "Passwort ändern",
+    "heading": "Passwort ändern",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort wiederholen",
+    "saving": "Wird gespeichert...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "errorTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
+    "errorMismatch": "Die Passwörter stimmen nicht überein",
+    "success": "Passwort geändert"
+  },
+  "uploadImage": {
+    "avatar": {
+      "add": "📷 Avatar hinzufügen",
+      "change": "📷 Avatar ändern",
+      "success": "Avatar aktualisiert",
+      "error": "Avatar-Upload fehlgeschlagen",
+      "denied": "Du darfst den Avatar dieses Profils nicht ändern"
+    },
+    "cover": {
+      "add": "🖼️ Hintergrundbild hinzufügen",
+      "change": "🖼️ Hintergrundbild ändern",
+      "success": "Hintergrundbild aktualisiert",
+      "error": "Upload des Hintergrundbilds fehlgeschlagen",
+      "denied": "Du darfst das Bild dieses Profils nicht ändern"
+    },
+    "uploading": "Wird hochgeladen..."
+  },
+  "actions": {
+    "mustBeLoggedIn": "Du musst angemeldet sein",
+    "managerRequestDuplicate": "Du hast diese Sauna bereits angefragt"
+  }
+}

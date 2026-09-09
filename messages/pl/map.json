@@ -1,0 +1,87 @@
+{
+  "controls": {
+    "filters": "Filtry",
+    "menu": "Menu",
+    "search": "Szukaj",
+    "myLocation": "Moja lokalizacja"
+  },
+  "search": {
+    "title": "Szukaj",
+    "placeholder": "Szukaj saun i saunamistrzów…",
+    "clear": "Wyczyść",
+    "close": "Zamknij",
+    "back": "Wróć do wyników",
+    "hint": "Szukaj saun, miast i saunamistrzów.",
+    "recommended": "Polecane — TOP SaunaPlanet",
+    "saunasHeading": "Sauny",
+    "mastersHeading": "Saunamistrzowie",
+    "noSaunas": "Brak saun.",
+    "noMasters": "Brak saunamistrzów.",
+    "searching": "Szukam…",
+    "masterProfileAria": "Profil saunamistrza"
+  },
+  "master": {
+    "openFullProfile": "Otwórz pełny profil saunamistrza",
+    "fullProfile": "Pełny profil",
+    "upcomingEvents": "Nadchodzące wydarzenia",
+    "noUpcomingEvents": "Brak nadchodzących wydarzeń.",
+    "showSaunaOnMap": "Pokaż saunę {name} na mapie"
+  },
+  "filters": {
+    "title": "Filtry",
+    "clear": "Wyczyść",
+    "close": "Zamknij filtry",
+    "mapMode": "Tryb mapy",
+    "category": "Kategoria",
+    "features": "Filtry",
+    "radius": "Promień",
+    "withPhoto": "Ze zdjęciem",
+    "eventWithin7Days": "Event w 7 dni",
+    "modes": {
+      "all": "Wszystko",
+      "saunas": "Sauny",
+      "events": "Eventy"
+    },
+    "categories": {
+      "all": "Wszystko",
+      "public_sauna": "Publiczna",
+      "spa": "SPA",
+      "hotel": "Hotel",
+      "event": "Event",
+      "outdoor": "Plenerowa"
+    }
+  },
+  "popup": {
+    "noPhoto": "Brak zdjęcia",
+    "reviewsCount": "{count, plural, one {# opinia} few {# opinie} many {# opinii} other {# opinii}}",
+    "upcomingEvents": "Najbliższe wydarzenia",
+    "details": "Szczegóły obiektu",
+    "website": "Oficjalna strona",
+    "addPhoto": "Dodaj zdjęcie",
+    "addEvent": "Dodaj event",
+    "editSauna": "Edytuj saunę",
+    "newSaunaHere": "Nowa sauna tutaj"
+  },
+  "context": {
+    "title": "Co chcesz zrobić?",
+    "addSaunaHere": "Dodaj saunę tutaj"
+  },
+  "account": {
+    "discover": "Odkrywaj"
+  },
+  "toast": {
+    "loadSaunasError": "Nie udało się pobrać listy saun",
+    "geolocationUnsupported": "Geolokalizacja nie jest wspierana",
+    "centered": "Wycentrowano mapę",
+    "geolocationError": "Nie udało się pobrać lokalizacji",
+    "saunaNotFound": "Nie znaleziono wskazanej sauny",
+    "photoAdded": "Dodano zdjęcie"
+  },
+  "categoryLabel": {
+    "public_sauna": "Sauna publiczna",
+    "spa": "SPA / wellness",
+    "hotel": "Sauna hotelowa",
+    "event": "Event saunowy",
+    "outdoor": "Sauna plenerowa"
+  }
+}

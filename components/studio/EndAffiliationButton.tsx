@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { endAffiliation } from '@/app/(main)/studio/actions'
+import { endAffiliation } from '@/app/[locale]/(main)/studio/actions'
 
 /**
  * Ends an affiliation with a two-tap confirm: withdrawal of an own pending
@@ -10,23 +11,27 @@ import { endAffiliation } from '@/app/(main)/studio/actions'
  */
 export default function EndAffiliationButton({
   affiliationId,
-  label = 'Zakończ',
-  confirmLabel = 'Na pewno zakończ',
+  label,
+  confirmLabel,
 }: {
   affiliationId: string
   label?: string
   confirmLabel?: string
 }) {
+  const t = useTranslations('studio')
   const [confirming, setConfirming] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const resolvedLabel = label ?? t('endAffiliation.defaultLabel')
+  const resolvedConfirmLabel = confirmLabel ?? t('endAffiliation.defaultConfirmLabel')
 
   function handleEnd() {
     startTransition(async () => {
       try {
         await endAffiliation(affiliationId)
-        toast.success('Afiliacja zakończona')
+        toast.success(t('endAffiliation.endedToast'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+        toast.error(e instanceof Error ? e.message : t('endAffiliation.saveError'))
       } finally {
         setConfirming(false)
       }
@@ -39,7 +44,7 @@ export default function EndAffiliationButton({
         onClick={() => setConfirming(true)}
         className="rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-100"
       >
-        {label}
+        {resolvedLabel}
       </button>
     )
   }
@@ -51,14 +56,14 @@ export default function EndAffiliationButton({
         disabled={isPending}
         className="rounded-xl bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
       >
-        {isPending ? '...' : confirmLabel}
+        {isPending ? t('endAffiliation.pending') : resolvedConfirmLabel}
       </button>
       <button
         onClick={() => setConfirming(false)}
         disabled={isPending}
         className="rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
       >
-        Anuluj
+        {t('endAffiliation.cancel')}
       </button>
     </span>
   )

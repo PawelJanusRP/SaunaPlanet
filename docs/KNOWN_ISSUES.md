@@ -14,6 +14,31 @@ Many systems were implemented incrementally and have already been debugged.
 
 ---
 
+# SP-047 i18n — remaining hardcoded Polish (RC follow-ups)
+
+The SP-047 Release Candidate localizes the whole UI (pages, forms, modals) in
+PL/EN/DE, plus server-action direct messages, side-navigation labels,
+status/specialty/language labels, the security-sensitive pure-lib **messages**
+(SP-047E1), and — since **SP-047E2** — the remaining validation / onboarding /
+completeness / publication-view / pilot / help / breadcrumb presentation labels
+(resolved from stable codes; pure libs keep PL reference maps) plus a global
+**Help** hub at `/{locale}/help` and a Help drawer entry.
+
+**SP-047E3** completed the locale formatting (dates/numbers via next-intl
+formatter; event prices via `formatEventPrice` → Intl PLN) and international SEO
+(per-locale canonical + pl/en/de hreflang on public/detail pages, x-default =
+negotiating root, multilingual sitemap, robots private-area exclusions).
+
+No known accidental Polish-only user-visible UI remains. The only residual
+Polish literals are a persisted `author_name` fallback (stored data) and a
+developer `console.warn` — both intentional. A safe dynamic-entity sitemap
+enumeration (published masters / active saunas / public events) is a possible
+future enhancement; detail pages already expose their own canonical + hreflang.
+
+Run `node scripts/i18n-audit.mjs --list` for the live list.
+
+---
+
 # SECURITY BACKLOG (high priority)
 
 ## Guard trigger functions retain default EXECUTE grants

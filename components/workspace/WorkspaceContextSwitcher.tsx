@@ -1,6 +1,8 @@
 'use client'
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from '@/lib/i18n/navigation'
 import {
   WORKSPACE_CONTEXT_PARAM,
   type WorkspaceContextOption,
@@ -19,8 +21,8 @@ import {
 export default function WorkspaceContextSwitcher({
   options,
   activeId,
-  allLabel = 'Wszystkie obiekty',
-  ariaLabel = 'Aktywny kontekst',
+  allLabel,
+  ariaLabel,
 }: {
   options: WorkspaceContextOption[]
   /** Currently selected option id; null selects the aggregate. */
@@ -28,9 +30,12 @@ export default function WorkspaceContextSwitcher({
   allLabel?: string
   ariaLabel?: string
 }) {
+  const t = useTranslations('workspace')
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const resolvedAllLabel = allLabel ?? t('contextSwitcher.allFacilities')
+  const resolvedAriaLabel = ariaLabel ?? t('contextSwitcher.activeContext')
 
   function handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams(searchParams)
@@ -47,10 +52,10 @@ export default function WorkspaceContextSwitcher({
     <select
       value={activeId ?? ''}
       onChange={handleChange}
-      aria-label={ariaLabel}
+      aria-label={resolvedAriaLabel}
       className="max-w-[14rem] rounded-xl border bg-white px-3 py-2 text-sm font-medium text-gray-700"
     >
-      <option value="">{allLabel}</option>
+      <option value="">{resolvedAllLabel}</option>
       {options.map((option) => (
         <option key={option.id} value={option.id}>
           {option.label}

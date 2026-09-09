@@ -1,5 +1,6 @@
 'use server'
 
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import {
   extractDraftCore,
@@ -93,10 +94,11 @@ export async function extractFacilityDraft(rawUrl: string): Promise<ExtractDraft
     })
   } catch (e) {
     console.error('extractFacilityDraft failed:', e)
+    const t = await getTranslations('sauna')
     return {
       ok: false,
       code: 'fetch-failed',
-      message: 'Nie udało się pobrać danych — spróbuj ponownie',
+      message: t('actions.import.fetchFailed'),
     }
   }
 }
@@ -219,10 +221,11 @@ export async function importSubmissionImage(
     })
   } catch (e) {
     console.error('importSubmissionImage failed:', e)
+    const t = await getTranslations('sauna')
     return {
       ok: false,
       reason: 'fetch-failed',
-      message: 'Nie udało się pobrać zdjęcia ze strony źródłowej',
+      message: t('actions.import.imageFetchFailed'),
     }
   }
 }

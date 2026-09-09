@@ -1,18 +1,15 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
   resolveMasterEventProposal,
   type ParticipationRole,
-} from '@/app/events/participationActions'
+} from '@/app/[locale]/events/participationActions'
 
-const ROLE_OPTIONS: { value: ParticipationRole; label: string }[] = [
-  { value: 'lead', label: 'Lead (prowadzący)' },
-  { value: 'assistant', label: 'Assistant (wsparcie)' },
-  { value: 'guest', label: 'Guest (gościnnie)' },
-]
+const ROLE_VALUES: ParticipationRole[] = ['lead', 'assistant', 'guest']
 
 /**
  * SP-037B slice 3: staff resolution of a master-created event proposal —
@@ -21,6 +18,7 @@ const ROLE_OPTIONS: { value: ParticipationRole; label: string }[] = [
  * boundary; a concurrently resolved proposal surfaces as a clean error.
  */
 export default function EventProposalActions({ eventId }: { eventId: string }) {
+  const t = useTranslations('workspace')
   const router = useRouter()
   const [role, setRole] = useState<ParticipationRole>('lead')
   const [isPending, startTransition] = useTransition()
@@ -38,9 +36,9 @@ export default function EventProposalActions({ eventId }: { eventId: string }) {
         return
       }
       if (decision === 'approved') {
-        toast.success('Wydarzenie opublikowane — organizator dołączył do lineupu')
+        toast.success(t('eventProposalActions.publishedToast'))
       } else {
-        toast.error('Propozycja odrzucona')
+        toast.error(t('eventProposalActions.rejectedToast'))
       }
       router.refresh()
     })
@@ -52,10 +50,10 @@ export default function EventProposalActions({ eventId }: { eventId: string }) {
         value={role}
         onChange={(e) => setRole(e.target.value as ParticipationRole)}
         className="rounded-lg border px-2 py-1.5 text-xs"
-        aria-label="Rola organizatora"
+        aria-label={t('eventProposalActions.ariaRole')}
       >
-        {ROLE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+        {ROLE_VALUES.map((value) => (
+          <option key={value} value={value}>{t(`roles.${value}`)}</option>
         ))}
       </select>
       <button
@@ -63,14 +61,14 @@ export default function EventProposalActions({ eventId }: { eventId: string }) {
         disabled={isPending}
         className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40"
       >
-        Zatwierdź i opublikuj
+        {t('eventProposalActions.approve')}
       </button>
       <button
         onClick={() => handle('rejected')}
         disabled={isPending}
         className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
       >
-        Odrzuć
+        {t('eventProposalActions.reject')}
       </button>
     </div>
   )

@@ -1,14 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { updateUserRole } from '@/app/(main)/admin/actions'
+import { useTranslations } from 'next-intl'
+import { updateUserRole } from '@/app/[locale]/(main)/admin/actions'
 import { toast } from 'sonner'
 
-const ROLES = [
-  { value: 'user',      label: 'Użytkownik' },
-  { value: 'moderator', label: 'Moderator' },
-  { value: 'admin',     label: 'Administrator' },
-]
+const ROLE_VALUES = ['user', 'moderator', 'admin'] as const
 
 const roleStyle: Record<string, string> = {
   admin:     'bg-red-100 text-red-700',
@@ -25,13 +22,14 @@ export default function UserRoleSelector({
   currentRole: string
   isCurrentUser: boolean
 }) {
+  const t = useTranslations('admin.userRole')
   const [role, setRole] = useState(currentRole)
   const [isPending, startTransition] = useTransition()
 
   if (isCurrentUser) {
     return (
       <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${roleStyle[role] ?? roleStyle.user}`}>
-        {ROLES.find((r) => r.value === role)?.label ?? role}
+        {t.has(role) ? t(role) : role}
       </span>
     )
   }
@@ -43,9 +41,9 @@ export default function UserRoleSelector({
     startTransition(async () => {
       try {
         await updateUserRole(userId, newRole)
-        toast.success('Rola zaktualizowana')
+        toast.success(t('updated'))
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : 'Błąd zapisu')
+        toast.error(err instanceof Error ? err.message : t('saveError'))
         setRole(prev)
       }
     })
@@ -58,8 +56,8 @@ export default function UserRoleSelector({
       disabled={isPending}
       className={`rounded-full border-0 px-2 py-0.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 ${roleStyle[role] ?? roleStyle.user}`}
     >
-      {ROLES.map((r) => (
-        <option key={r.value} value={r.value}>{r.label}</option>
+      {ROLE_VALUES.map((value) => (
+        <option key={value} value={value}>{t(value)}</option>
       ))}
     </select>
   )

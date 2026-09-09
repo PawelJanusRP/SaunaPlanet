@@ -1,8 +1,9 @@
 'use client'
 
 import { useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { respondToAffiliation } from '@/app/(main)/studio/actions'
+import { respondToAffiliation } from '@/app/[locale]/(main)/studio/actions'
 
 /**
  * Approve/reject pair for a pending affiliation handshake. Used by BOTH
@@ -11,15 +12,16 @@ import { respondToAffiliation } from '@/app/(main)/studio/actions'
  * component. The server action verifies which side may decide.
  */
 export default function AffiliationDecisionActions({ affiliationId }: { affiliationId: string }) {
+  const t = useTranslations('studio')
   const [isPending, startTransition] = useTransition()
 
   function decide(decision: 'approved' | 'rejected') {
     startTransition(async () => {
       try {
         await respondToAffiliation(affiliationId, decision)
-        toast.success(decision === 'approved' ? 'Afiliacja zatwierdzona' : 'Afiliacja odrzucona')
+        toast.success(decision === 'approved' ? t('affiliationDecision.approvedToast') : t('affiliationDecision.rejectedToast'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+        toast.error(e instanceof Error ? e.message : t('affiliationDecision.saveError'))
       }
     })
   }
@@ -31,14 +33,14 @@ export default function AffiliationDecisionActions({ affiliationId }: { affiliat
         disabled={isPending}
         className="rounded-xl bg-green-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
       >
-        ✓ Zatwierdź
+        {t('affiliationDecision.approve')}
       </button>
       <button
         onClick={() => decide('rejected')}
         disabled={isPending}
         className="rounded-xl border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50"
       >
-        ✗ Odrzuć
+        {t('affiliationDecision.reject')}
       </button>
     </div>
   )

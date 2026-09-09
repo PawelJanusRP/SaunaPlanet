@@ -1,0 +1,153 @@
+{
+  "aria": {
+    "activeFacility": "Aktive Anlage",
+    "breadcrumbs": "Brotkrümel-Navigation",
+    "nav": "Bereichsnavigation"
+  },
+  "status": {
+    "membership": {
+      "pending": "⏳ Ausstehend",
+      "approved": "✓ Aktiv",
+      "rejected": "✗ Abgelehnt"
+    },
+    "registration": {
+      "confirmed": "✓ Bestätigt",
+      "cancelled": "✗ Abgesagt"
+    }
+  },
+  "roles": {
+    "lead": "Lead",
+    "assistant": "Assistant",
+    "guest": "Guest"
+  },
+  "common": {
+    "master": "Saunameister",
+    "masterLowercase": "Saunameister",
+    "userFallback": "Benutzer",
+    "sending": "Wird gesendet...",
+    "submittedOn": "Eingereicht: {date}"
+  },
+  "todayQueue": {
+    "title": "Heute",
+    "empty": "Nichts zu bearbeiten."
+  },
+  "dashboard": {
+    "subtitle": "Verwalte deine Anlagen, Reservierungen und Events",
+    "empty": {
+      "title": "Du verwaltest noch keine Anlage",
+      "description": "Du kannst die Verwaltung einer Sauna auf ihrer Anlagen-Seite beantragen. Nach der Genehmigung erscheint die Anlage hier.",
+      "action": "Saunen durchsuchen"
+    },
+    "myFacilities": "🏢 Meine Anlagen",
+    "upcomingEvents": "🔥 Bevorstehende Events",
+    "seeAll": "Alle →",
+    "noUpcomingTitle": "Keine bevorstehenden Events",
+    "noUpcomingDescription": "Die Events deiner Anlagen erscheinen hier.",
+    "quickActions": "⚡ Schnellaktionen",
+    "reservations": "🎟️ Reservierungen",
+    "facilityPage": "🧖 Anlagen-Seite",
+    "submitFacility": "➕ Neue Anlage melden"
+  },
+  "events": {
+    "breadcrumb": "Events",
+    "subtitle": "Die Events deiner Anlagen",
+    "pickFacilityToAdd": "Um ein Event hinzuzufügen, wähle oben im Umschalter eine konkrete Anlage — ein Event gehört immer zu einer einzigen Anlage.",
+    "proposalsTitle": "📣 Event-Vorschläge ({count})",
+    "limit": "Limit: {count}",
+    "organizedBy": "Organisiert von:",
+    "proposalHint": "Die Genehmigung veröffentlicht das Event und fügt den Organisator mit der gewählten Rolle zum Lineup hinzu — ein einziger, unteilbarer Vorgang.",
+    "sentInvitationsTitle": "📨 Gesendete Einladungen ({count})",
+    "facilityInvitationBadge": "Anlagen-Einladung",
+    "offeredRole": " · angebotene Rolle: ",
+    "sentOn": " · gesendet {date}",
+    "waitingForMaster": " · ⏳ wartet auf den Saunameister",
+    "masterRequestsTitle": "🧖 Anfragen von Saunameistern ({count})",
+    "masterRequestBadge": "Anfrage des Saunameisters",
+    "wantsToPerform": "möchte auftreten:",
+    "upcomingTitle": "🔥 Bevorstehend ({count})",
+    "noUpcomingTitle": "Keine bevorstehenden Events",
+    "noUpcomingWithTarget": "Füge das erste Event für deine Anlage hinzu.",
+    "noUpcomingWithoutTarget": "Die Events deiner Anlagen erscheinen hier.",
+    "pastTitle": "🗓️ Vergangene (letzte)",
+    "noPastTitle": "Keine vergangenen Events"
+  },
+  "reservations": {
+    "breadcrumb": "Reservierungen",
+    "subtitle": "Reservierungen für die Events deiner Anlagen",
+    "pendingTitle": "⏳ Ausstehend ({count})",
+    "noPendingTitle": "Keine ausstehenden Reservierungen",
+    "noPendingDescription": "Neue Anmeldungen für die Events deiner Anlagen erscheinen hier.",
+    "resolvedTitle": "🗂️ Erledigt (letzte)",
+    "noResolvedTitle": "Keine erledigten Reservierungen",
+    "noResolvedDescription": "Bestätigte und abgelehnte Reservierungen erscheinen hier."
+  },
+  "team": {
+    "breadcrumb": "Team",
+    "subtitle": "Saunameister mit Zugehörigkeit zu deinen Anlagen",
+    "requestsTitle": "📨 Anfragen von Saunameistern ({count})",
+    "noRequestsTitle": "Keine ausstehenden Anfragen",
+    "sentInvitationsTitle": "📤 Gesendete Einladungen ({count})",
+    "noSentInvitationsTitle": "Keine ausstehenden Einladungen",
+    "withdraw": "Zurückziehen",
+    "withdrawConfirm": "Wirklich zurückziehen",
+    "activeTitle": "🤝 Zugehörige Meister ({count})",
+    "noActiveTitle": "Keine zugehörigen Saunameister",
+    "noActiveDescription": "Lade unten einen Saunameister ein oder genehmige seine Anfrage — die Beziehung erfordert immer die Zustimmung beider Seiten.",
+    "inviteTitle": "➕ Saunameister einladen ({facility})",
+    "inviteHint": "Der Saunameister muss die Einladung annehmen — eine Zugehörigkeit erfordert immer die Zustimmung beider Seiten.",
+    "pickFacilityToInvite": "Um einen Saunameister einzuladen, wähle oben im Umschalter eine konkrete Anlage — eine Einladung betrifft immer eine einzige Anlage."
+  },
+  "contextSwitcher": {
+    "allFacilities": "Alle Anlagen",
+    "activeContext": "Aktiver Kontext"
+  },
+  "eventProposalActions": {
+    "ariaRole": "Rolle des Organisators",
+    "approve": "Genehmigen und veröffentlichen",
+    "reject": "Ablehnen",
+    "publishedToast": "Event veröffentlicht — der Organisator ist dem Lineup beigetreten",
+    "rejectedToast": "Vorschlag abgelehnt"
+  },
+  "participationActions": {
+    "ariaRole": "Rolle des Saunameisters",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "approvedToast": "Der Saunameister ist dem Event beigetreten",
+    "rejectedToast": "Anfrage abgelehnt"
+  },
+  "inviteMaster": {
+    "errorPickMaster": "Wähle einen Saunameister",
+    "successToast": "Einladung gesendet — der Saunameister muss sie annehmen ({facility})",
+    "errorToast": "Fehler beim Senden der Einladung",
+    "placeholder": "Namen des Saunameisters eingeben",
+    "emptyLabel": "Kein Saunameister gefunden",
+    "ariaMaster": "Einzuladender Saunameister",
+    "invite": "Einladen"
+  },
+  "inviteMasterToEvent": {
+    "openButton": "📨 Saunameister einladen",
+    "title": "Saunameister einladen",
+    "subtitle": "Der Saunameister erscheint erst nach Annahme der Einladung im Lineup — mit genau der angebotenen Rolle.",
+    "close": "✕",
+    "ariaEvent": "Event",
+    "selectEvent": "— Event auswählen —",
+    "placeholder": "Namen des Saunameisters eingeben",
+    "emptyLabel": "Kein Saunameister gefunden",
+    "ariaMaster": "Einzuladender Saunameister",
+    "profile": "Profil",
+    "ariaOfferedRole": "Angebotene Rolle",
+    "offeredRoleOption": "Angebotene Rolle: {role}",
+    "submit": "Einladung senden",
+    "errorPickEvent": "Wähle ein Event",
+    "errorPickMaster": "Wähle einen Saunameister",
+    "successToast": "Einladung gesendet — der Saunameister muss sie annehmen"
+  },
+  "createEvent": {
+    "add": "➕ Event hinzufügen"
+  },
+  "withdrawInvitation": {
+    "confirm": "Einladung für „{name}“ zurückziehen?",
+    "withdraw": "Zurückziehen",
+    "successToast": "Einladung zurückgezogen"
+  }
+}

@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const page = readFileSync(
-  join('app', 'claim', 'master', '[token]', 'page.tsx'),
+  join('app', '(bare)', 'claim', 'master', '[token]', 'page.tsx'),
   'utf8'
 )
 const authPanel = readFileSync(
@@ -18,7 +18,7 @@ const actionPanel = readFileSync(
   'utf8'
 )
 const callback = readFileSync(
-  join('app', '(main)', 'auth', 'callback', 'route.ts'),
+  join('app', 'auth', 'callback', 'route.ts'),
   'utf8'
 )
 const nextConfig = readFileSync('next.config.ts', 'utf8')

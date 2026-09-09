@@ -153,9 +153,13 @@ export const DELIVERY_HINT_EXAMPLES = [
 /** local@domain.tld with no masking chars anywhere — a likely FULL address. */
 const FULL_EMAIL_SHAPE = /(^|[\s(<:])[^\s@*]{2,}@[^\s@*]+\.[A-Za-z]{2,}/
 
+// SP-047E2: failures carry a STABLE code; the PL `message` stays as reference/
+// fallback and the presentation boundary localizes via the code.
+export type HintValidationCode = 'too-long' | 'email-shape' | 'phone-shape'
+
 export type HintValidation =
   | { ok: true; value: string | null }
-  | { ok: false; message: string }
+  | { ok: false; message: string; code: HintValidationCode }
 
 /**
  * Conservative redaction gate for the delivery hint. Only a REDACTED hint may
@@ -169,13 +173,18 @@ export function validateDeliveryHint(raw: string | null | undefined): HintValida
   const hint = (raw ?? '').trim()
   if (!hint) return { ok: true, value: null }
   if (hint.length > DELIVERY_HINT_MAX) {
-    return { ok: false, message: `Wskazówka może mieć najwyżej ${DELIVERY_HINT_MAX} znaków.` }
+    return {
+      ok: false,
+      message: `Wskazówka może mieć najwyżej ${DELIVERY_HINT_MAX} znaków.`,
+      code: 'too-long',
+    }
   }
   if (!hint.includes('*') && FULL_EMAIL_SHAPE.test(hint)) {
     return {
       ok: false,
       message:
         'Wygląda na pełny adres e-mail — zapisz tylko zredagowaną wskazówkę, np. p***@example.com.',
+      code: 'email-shape',
     }
   }
   const digitCount = (hint.match(/\d/g) ?? []).length
@@ -184,6 +193,7 @@ export function validateDeliveryHint(raw: string | null | undefined): HintValida
       ok: false,
       message:
         'Wygląda na pełny numer telefonu — zapisz tylko zredagowaną wskazówkę, np. ***123.',
+      code: 'phone-shape',
     }
   }
   return { ok: true, value: hint }

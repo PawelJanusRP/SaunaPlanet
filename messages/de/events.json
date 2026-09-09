@@ -1,0 +1,208 @@
+{
+  "backToMap": "← Zurück zur Karte",
+  "backToEvents": "← Zurück zu den Events",
+  "back": "Zurück",
+  "list": {
+    "title": "🔥 Kommende Sauna-Events",
+    "empty": "Keine kommenden Events.",
+    "timeMissing": "Uhrzeit nicht angegeben",
+    "emptyForDay": "Keine Events an diesem Tag."
+  },
+  "calendar": {
+    "weekday": {
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "So"
+    }
+  },
+  "detail": {
+    "notFound": "Event nicht gefunden",
+    "at": "um {time}",
+    "previousEventsInSauna": "Frühere Events in dieser Sauna:",
+    "ratingCount": "({count, plural, one {# Bewertung} other {# Bewertungen}})"
+  },
+  "registration": {
+    "heading": "Platz reservieren",
+    "spotsLeft": "{count} Plätze frei",
+    "noSpots": "Keine Plätze",
+    "register": "Anmelden →",
+    "full": "Keine Plätze frei",
+    "pending": "⏳ Anmeldung wartet auf Bestätigung",
+    "cancel": "Abbrechen",
+    "confirmed": "✓ Du bist angemeldet",
+    "cancelRegistration": "Anmeldung stornieren",
+    "confirmedCount": "{count, plural, one {# Person angemeldet} other {# Personen angemeldet}}"
+  },
+  "interest": {
+    "going": "✓ Ich komme",
+    "goNoReservation": "Ich komme (ohne Reservierung)",
+    "goingCount": "{count, plural, one {# Person kommt} other {# Personen kommen}}"
+  },
+  "masters": {
+    "heading": "🧖 Saunameister",
+    "organizerEvent": "Event des Saunameisters",
+    "organizedBy": " — organisiert von ",
+    "organizerFallback": "Saunameister",
+    "empty": "Keine Saunameister zugewiesen.",
+    "organizerBadge": "📣 ORGANISATOR"
+  },
+  "photos": {
+    "heading": "📸 Fotos",
+    "empty": "Keine Fotos für dieses Event."
+  },
+  "comments": {
+    "heading": "💬 Kommentare",
+    "empty": "Noch keine Kommentare. Sei der Erste!",
+    "delete": "Löschen"
+  },
+  "reviews": {
+    "heading": "⭐ Bewertungen",
+    "prompt": "Warst du bei diesem Event? Bewerte es!",
+    "alreadyReviewed": "✓ Du hast dieses Event bereits bewertet.",
+    "empty": "Keine Bewertungen.",
+    "delete": "Löschen"
+  },
+  "common": {
+    "userFallback": "Benutzer"
+  },
+  "addModal": {
+    "title": "Sauna-Event hinzufügen",
+    "close": "Schließen",
+    "titlePlaceholder": "Event-Name, z. B. Sauna-Nacht",
+    "pricePlaceholder": "Preis, z. B. 120 zł",
+    "maxParticipantsPlaceholder": "Platzlimit",
+    "descriptionPlaceholder": "Event-Beschreibung",
+    "submit": "Event hinzufügen",
+    "submitting": "Wird hinzugefügt...",
+    "validationTitle": "Gib einen Event-Namen ein",
+    "validationDate": "Gib ein Event-Datum ein",
+    "genericError": "Event konnte nicht hinzugefügt werden",
+    "successPending": "Vorschlag gesendet — diese Anlage hat einen Manager, daher warten das Event und deine Teilnahme auf dessen Freigabe.",
+    "success": "Event hinzugefügt"
+  },
+  "editForm": {
+    "openButton": "✏️ Event bearbeiten",
+    "heading": "Event bearbeiten",
+    "titleLabel": "Titel *",
+    "dateLabel": "Datum *",
+    "timeLabel": "Uhrzeit",
+    "priceLabel": "Preis",
+    "pricePlaceholder": "z. B. 50 zł",
+    "maxParticipantsLabel": "Platzlimit",
+    "maxParticipantsPlaceholder": "kein Limit",
+    "descriptionLabel": "Beschreibung",
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "cancel": "Abbrechen",
+    "saveSuccess": "Änderungen gespeichert",
+    "saveError": "Speicherfehler"
+  },
+  "bundledFields": {
+    "notice": "🔥 Event mit der Einreichung gebündelt. Alles geht an die Plattform-Moderation — nach der Genehmigung werden Anlage und Event gemeinsam veröffentlicht, und du wirst Event-Organisator (Rolle: lead). Die Einreichung gewährt keine Rechte zur Verwaltung der Anlage.",
+    "titlePlaceholder": "Event-Name, z. B. Sauna-Nacht",
+    "pricePlaceholder": "Preis, z. B. 120 zł",
+    "maxParticipantsPlaceholder": "Platzlimit",
+    "descriptionPlaceholder": "Event-Beschreibung"
+  },
+  "participation": {
+    "request": "🧖 Teilnahme als Saunameister anfragen",
+    "requestSuccess": "Anfrage gesendet — die Anlage entscheidet über deine Teilnahme",
+    "withdrawSuccess": "Anfrage zurückgezogen",
+    "pendingBadge": "⏳ Anfrage wartet auf die Entscheidung der Anlage",
+    "withdraw": "Zurückziehen",
+    "approvedBadge": "✓ Du trittst bei diesem Event auf",
+    "approvedBadgeWithRole": "✓ Du trittst bei diesem Event auf ({role})",
+    "rejectedBadge": "✗ Anfrage von der Anlage abgelehnt"
+  },
+  "comment": {
+    "placeholder": "Schreibe einen Kommentar zu diesem Event…",
+    "submit": "Kommentar hinzufügen",
+    "submitting": "Wird gespeichert…",
+    "validation": "Schreibe einen Kommentar",
+    "success": "Kommentar hinzugefügt",
+    "error": "Speicherfehler"
+  },
+  "review": {
+    "yourRating": "Deine Bewertung",
+    "commentPlaceholder": "Optionaler Kommentar…",
+    "submit": "Bewertung hinzufügen",
+    "submitting": "Wird gespeichert…",
+    "validation": "Wähle eine Bewertung",
+    "success": "Bewertung hinzugefügt",
+    "error": "Speicherfehler"
+  },
+  "deleteEvent": {
+    "delete": "🗑️ Löschen",
+    "confirm": "Wirklich löschen",
+    "deleting": "Wird gelöscht...",
+    "cancel": "Abbrechen",
+    "success": "Event „{title}\" gelöscht",
+    "error": "Fehler beim Löschen"
+  },
+  "eventMaster": {
+    "removeTitle": "Aus Event entfernen",
+    "removeSuccess": "{name} aus dem Event entfernt",
+    "removeError": "Fehler beim Löschen",
+    "loadError": "Saunameister konnten nicht geladen werden",
+    "selectValidation": "Wähle einen Saunameister",
+    "assignError": "Saunameister konnte nicht zugewiesen werden",
+    "assignSuccess": "Saunameister zugewiesen",
+    "heading": "➕ Saunameister zuweisen",
+    "selectPlaceholder": "Saunameister auswählen",
+    "roleLead": "Leitung",
+    "roleAssistant": "Assistent",
+    "roleGuest": "Gast",
+    "assign": "Zuweisen",
+    "assigning": "Wird zugewiesen..."
+  },
+  "photoUpload": {
+    "add": "📷 Foto hinzufügen",
+    "uploading": "Wird hochgeladen...",
+    "success": "Foto hinzugefügt",
+    "error": "Fehler beim Hochladen"
+  },
+  "reservationBadge": {
+    "taken": "Vergeben",
+    "expired": "Reservierung abgelaufen",
+    "reservedFor": "Noch reserviert für {timeLeft}",
+    "available": "Verfügbar"
+  },
+  "actions": {
+    "mustBeLoggedIn": "Du musst angemeldet sein",
+    "noPermission": "Keine Berechtigung",
+    "manageEventsForbidden": "Keine Berechtigung — Events für diese Anlage können nur genehmigtes Personal (Betreiber/Manager) oder ein Administrator hinzufügen",
+    "eventNotFound": "Event nicht gefunden",
+    "titleAndDateRequired": "Titel und Datum sind erforderlich",
+    "maxParticipantsMin": "Das Platzlimit muss größer als null sein",
+    "createEventFailed": "Event konnte nicht hinzugefügt werden",
+    "editEventForbidden": "Keine Berechtigung, dieses Event zu bearbeiten",
+    "deleteEventForbidden": "Keine Berechtigung, dieses Event zu löschen",
+    "registrationNotFound": "Reservierung nicht gefunden",
+    "commentEmpty": "Der Kommentar darf nicht leer sein",
+    "participation": {
+      "masterOnly": "Nur Saunameister können eine Teilnahme anfragen",
+      "masterPending": "Dein Saunameister-Profil wartet auf die Freigabe",
+      "duplicateRequest": "Für dieses Event existiert bereits eine Anfrage",
+      "permissionDenied": "Keine Berechtigung, diesen Vorgang auszuführen",
+      "genericError": "Der Vorgang ist fehlgeschlagen — bitte versuche es erneut",
+      "requestNotFoundOrResolved": "Die Anfrage existiert nicht oder wurde bereits entschieden",
+      "invalidInviteRole": "Die Einladungsrolle muss eine der folgenden sein: lead, assistant, guest",
+      "eventNotFound": "Event nicht gefunden",
+      "inviteForbidden": "Keine Berechtigung, Meister zu Events dieser Anlage einzuladen",
+      "duplicateInvite": "Dieser Saunameister hat bereits eine Einladung oder Teilnahme an diesem Event",
+      "invitationNotFoundOrResolved": "Die Einladung existiert nicht oder wurde bereits entschieden",
+      "invitationNotFound": "Einladung nicht gefunden",
+      "withdrawInviteForbidden": "Keine Berechtigung, diese Einladung zurückzuziehen",
+      "proposalNotFoundOrResolved": "Der Vorschlag existiert nicht oder wurde bereits entschieden",
+      "roleRequiredOrganizer": "Für die Freigabe muss eine Organisator-Rolle gewählt werden (lead, assistant oder guest)",
+      "requestNotFound": "Anfrage nicht gefunden",
+      "requestAlreadyResolved": "Die Anfrage wurde bereits entschieden",
+      "resolveForbidden": "Keine Berechtigung, Anfragen für diese Anlage zu entscheiden",
+      "roleRequired": "Für die Freigabe muss eine Rolle gewählt werden (lead, assistant oder guest)"
+    }
+  }
+}

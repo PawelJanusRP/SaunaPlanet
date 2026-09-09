@@ -830,6 +830,23 @@ Components: `components/map/MapControls.tsx`, `MapSearchPanel.tsx`, `MapFiltersP
 
 ---
 
+# SP-047 Internationalization & Localization (PL / EN / DE)
+
+Status: IN PROGRESS (RC on `feature/sp-047-i18n-pl-en-de`, pending owner QA) — next implementation release.
+
+Implemented:
+
+* Multilingual architecture on **next-intl** (Next.js 16 App Router). Canonical `/{locale}/…` URLs for **Polish (default/reference)**, **English**, **German**; route segments after the locale are stable and never translated (`/de/masters/jan-kowalski`). Adding a future language is a catalog task — see `docs/SP047_I18N_ARCHITECTURE.md` (worked Swedish example) and `docs/SP047_TERMINOLOGY.md`.
+* Root `/` locale negotiation (cookie `NEXT_LOCALE` → `Accept-Language` → Polish, temporary 307); permanent 308 redirects from legacy unprefixed URLs to `/pl/…` preserving path + query (incl. `/?sauna=<uuid>`); `/auth/callback` and `/claim/**` stay bare and unchanged (Supabase callback URL, claim token + no-index headers, invitations already sent).
+* File-based catalogs `messages/<locale>/<namespace>.json` + composing loader; shared language selector (globe + language names, preserves current route/query, updates the cookie, keyboard accessible); correct `<html lang>` on first SSR response.
+* Localized so far: map (all SP-045 surfaces), navigation/account menu, sauna facility + reviews + list, sauna-master directory + profile, events list + detail, `/about` chrome. Domain codes stay canonical (status/category); only presentation labels are localized. ICU pluralization; user/entity content is never auto-translated.
+* International SEO: `metadataBase`, localized title/description/OpenGraph, hreflang alternates + `x-default`, multilingual `app/sitemap.ts`, `app/robots.ts`.
+* Tests: catalog parity (PL/EN/DE identical key structure), routing-policy regression (negotiation, legacy redirect, query/deep-link preservation, callback locale), locale registry; `scripts/i18n-audit.mjs` reports any remaining hardcoded Polish.
+
+Remaining before production (slice C): auth/profile/claim/Master Studio/Owner Workspace/help UI, server-action toast messages, admin UI, per-entity hreflang, and locale-aware date formatting.
+
+---
+
 # SP-023 Sauna and Sauna Master Rankings (BACKLOG)
 
 Status: PLANNED

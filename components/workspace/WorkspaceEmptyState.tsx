@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 
 /**
  * Consistent empty state for workspace modules (SP-032). Modules without

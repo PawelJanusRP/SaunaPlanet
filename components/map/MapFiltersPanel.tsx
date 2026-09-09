@@ -6,6 +6,7 @@
 // feature filters, radius) so nothing is lost. Changes apply immediately.
 
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type Props = {
   open: boolean
@@ -24,18 +25,20 @@ type Props = {
   onReset: () => void
 }
 
-const MODES: { value: 'all' | 'saunas' | 'events'; label: string }[] = [
-  { value: 'all', label: '🧖+🔥 Wszystko' },
-  { value: 'saunas', label: '🧖 Sauny' },
-  { value: 'events', label: '🔥 Eventy' },
+// Canonical map-mode / category codes stay language-independent; only the
+// presentation label is localized. Emojis are presentation and live here.
+const MODES: { value: 'all' | 'saunas' | 'events'; emoji: string }[] = [
+  { value: 'all', emoji: '🧖+🔥' },
+  { value: 'saunas', emoji: '🧖' },
+  { value: 'events', emoji: '🔥' },
 ]
-const CATEGORIES: { value: string; label: string }[] = [
-  { value: 'all', label: 'Wszystko' },
-  { value: 'public_sauna', label: '🧖 Publiczna' },
-  { value: 'spa', label: '♨️ SPA' },
-  { value: 'hotel', label: '🏨 Hotel' },
-  { value: 'event', label: '🔥 Event' },
-  { value: 'outdoor', label: '🌲 Plenerowa' },
+const CATEGORIES: { value: string; emoji: string }[] = [
+  { value: 'all', emoji: '' },
+  { value: 'public_sauna', emoji: '🧖' },
+  { value: 'spa', emoji: '♨️' },
+  { value: 'hotel', emoji: '🏨' },
+  { value: 'event', emoji: '🔥' },
+  { value: 'outdoor', emoji: '🌲' },
 ]
 const RADII = [3, 10, 30, 100]
 
@@ -45,9 +48,10 @@ const chip = (active: boolean) =>
   }`
 
 export default function MapFiltersPanel(p: Props) {
+  const t = useTranslations('map.filters')
   if (!p.open) return null
   return (
-    <div className="fixed inset-0 z-[11000]" role="dialog" aria-modal="true" aria-label="Filtry">
+    <div className="fixed inset-0 z-[11000]" role="dialog" aria-modal="true" aria-label={t('title')}>
       {/* Backdrop for click-outside; dimmed on mobile, transparent on desktop. */}
       <div className="absolute inset-0 bg-black/30 lg:bg-transparent" onClick={p.onClose} aria-hidden="true" />
       {/* Mobile: bottom sheet. Desktop parity: a floating panel near the
@@ -57,7 +61,7 @@ export default function MapFiltersPanel(p: Props) {
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold">Filtry</h2>
+          <h2 className="text-base font-bold">{t('title')}</h2>
           <div className="flex items-center gap-1">
             {p.hasActiveFilters && (
               <button
@@ -65,13 +69,13 @@ export default function MapFiltersPanel(p: Props) {
                 onClick={p.onReset}
                 className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-orange-600 hover:bg-orange-50"
               >
-                Wyczyść
+                {t('clear')}
               </button>
             )}
             <button
               type="button"
               onClick={p.onClose}
-              aria-label="Zamknij filtry"
+              aria-label={t('close')}
               className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
             >
               <X className="h-5 w-5" aria-hidden="true" />
@@ -79,32 +83,32 @@ export default function MapFiltersPanel(p: Props) {
           </div>
         </div>
 
-        <Section title="Tryb mapy">
+        <Section title={t('mapMode')}>
           {MODES.map((m) => (
             <button key={m.value} type="button" onClick={() => p.setMapMode(m.value)} className={chip(p.mapMode === m.value)}>
-              {m.label}
+              {m.emoji} {t(`modes.${m.value}`)}
             </button>
           ))}
         </Section>
 
-        <Section title="Kategoria">
+        <Section title={t('category')}>
           {CATEGORIES.map((c) => (
             <button key={c.value} type="button" onClick={() => p.setCategoryFilter(c.value)} className={chip(p.categoryFilter === c.value)}>
-              {c.label}
+              {c.emoji ? `${c.emoji} ` : ''}{t(`categories.${c.value}`)}
             </button>
           ))}
         </Section>
 
-        <Section title="Filtry">
+        <Section title={t('features')}>
           <button type="button" onClick={() => p.setOnlyWithPhotos(!p.onlyWithPhotos)} className={chip(p.onlyWithPhotos)}>
-            📷 Ze zdjęciem
+            📷 {t('withPhoto')}
           </button>
           <button type="button" onClick={() => p.setOnlyWithEvents(!p.onlyWithEvents)} className={chip(p.onlyWithEvents)}>
-            🔥 Event w 7 dni
+            🔥 {t('eventWithin7Days')}
           </button>
         </Section>
 
-        <Section title="Promień">
+        <Section title={t('radius')}>
           {RADII.map((r) => (
             <button key={r} type="button" onClick={() => p.setRadiusKm(r)} className={chip(p.radiusKm === r)}>
               {r} km

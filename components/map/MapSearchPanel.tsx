@@ -9,7 +9,8 @@
 // never queries master_private_identity or any private field.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/lib/i18n/navigation'
 import { Search, X, MapPin, ExternalLink, ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { searchMastersNormalized, type PublicMasterResult } from '@/lib/map/masterSearch'
@@ -65,6 +66,7 @@ export default function MapSearchPanel({
   onSelectSauna,
   onFocusEventSauna,
 }: Props) {
+  const t = useTranslations('map')
   const [query, setQuery] = useState('')
   const [masters, setMasters] = useState<PublicMasterResult[]>([])
   const [master, setMaster] = useState<PublicMasterResult | null>(null)
@@ -145,7 +147,7 @@ export default function MapSearchPanel({
       }}
       role="dialog"
       aria-modal="true"
-      aria-label={master ? 'Profil saunamistrza' : 'Szukaj'}
+      aria-label={master ? t('search.masterProfileAria') : t('search.title')}
     >
       {/* Header */}
       <div className="flex items-center gap-2 border-b px-3 py-2">
@@ -153,7 +155,7 @@ export default function MapSearchPanel({
           <button
             type="button"
             onClick={() => setMaster(null)}
-            aria-label="Wróć do wyników"
+            aria-label={t('search.back')}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
           >
             <ChevronLeft className="h-6 w-6" aria-hidden="true" />
@@ -165,15 +167,15 @@ export default function MapSearchPanel({
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Szukaj saun i saunamistrzów…"
-              aria-label="Szukaj"
+              placeholder={t('search.placeholder')}
+              aria-label={t('search.title')}
               className="w-full rounded-xl border py-2.5 pl-9 pr-9 text-sm"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                aria-label="Wyczyść"
+                aria-label={t('search.clear')}
                 className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -184,7 +186,7 @@ export default function MapSearchPanel({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Zamknij"
+          aria-label={t('search.close')}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
         >
           <X className="h-6 w-6" aria-hidden="true" />
@@ -198,12 +200,12 @@ export default function MapSearchPanel({
         ) : query.trim().length === 0 ? (
           <div>
             <p className="mb-4 text-sm text-gray-500">
-              Szukaj saun, miast i saunamistrzów.
+              {t('search.hint')}
             </p>
             {topSaunas.length > 0 && (
               <section>
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  🏆 Polecane — TOP SaunaPlanet
+                  🏆 {t('search.recommended')}
                 </h3>
                 <ul className="space-y-2">
                   {topSaunas.slice(0, 5).map((t, i) => (
@@ -228,9 +230,9 @@ export default function MapSearchPanel({
         ) : (
           <div className="space-y-5">
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Sauny</h3>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{t('search.saunasHeading')}</h3>
               {saunaResults.length === 0 ? (
-                <p className="text-sm text-gray-400">Brak saun.</p>
+                <p className="text-sm text-gray-400">{t('search.noSaunas')}</p>
               ) : (
                 <ul className="space-y-2">
                   {saunaResults.map((s) => {
@@ -267,11 +269,11 @@ export default function MapSearchPanel({
             </section>
 
             <section>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Saunamistrzowie</h3>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{t('search.mastersHeading')}</h3>
               {loading ? (
-                <p className="text-sm text-gray-400">Szukam…</p>
+                <p className="text-sm text-gray-400">{t('search.searching')}</p>
               ) : masters.length === 0 ? (
-                <p className="text-sm text-gray-400">Brak saunamistrzów.</p>
+                <p className="text-sm text-gray-400">{t('search.noMasters')}</p>
               ) : (
                 <ul className="space-y-2">
                   {masters.map((m) => (
@@ -319,6 +321,7 @@ function MasterCard({
   onFocusEventSauna: (payload: { id: string; latitude: number; longitude: number }) => void
   onClose: () => void
 }) {
+  const t = useTranslations('map.master')
   return (
     <div>
       <div className="flex items-center gap-3">
@@ -335,8 +338,8 @@ function MasterCard({
         <Link
           href={`/masters/${master.slug ?? master.id}`}
           onClick={onClose}
-          aria-label="Otwórz pełny profil saunamistrza"
-          title="Pełny profil"
+          aria-label={t('openFullProfile')}
+          title={t('fullProfile')}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
         >
           <ExternalLink className="h-5 w-5" aria-hidden="true" />
@@ -353,9 +356,9 @@ function MasterCard({
         </div>
       )}
 
-      <h3 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">Nadchodzące wydarzenia</h3>
+      <h3 className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">{t('upcomingEvents')}</h3>
       {events.length === 0 ? (
-        <p className="text-sm text-gray-400">Brak nadchodzących wydarzeń.</p>
+        <p className="text-sm text-gray-400">{t('noUpcomingEvents')}</p>
       ) : (
         <ul className="space-y-2">
           {events.map((e) => (
@@ -368,7 +371,7 @@ function MasterCard({
               <button
                 type="button"
                 onClick={() => onFocusEventSauna({ id: e.sauna_id, latitude: e.latitude, longitude: e.longitude })}
-                aria-label={`Pokaż saunę ${e.sauna_name} na mapie`}
+                aria-label={t('showSaunaOnMap', { name: e.sauna_name })}
                 className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 active:bg-orange-100"
               >
                 <MapPin className="h-3.5 w-3.5" aria-hidden="true" />

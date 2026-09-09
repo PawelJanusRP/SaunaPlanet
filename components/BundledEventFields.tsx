@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 /**
  * SP-037B slice 4: event fields for a bundled facility submission (rule A)
  * — shared by the map form and /submit. Verified masters only (the caller
@@ -31,21 +33,18 @@ export default function BundledEventFields({
   value: BundledEventDraft
   onChange: (v: BundledEventDraft) => void
 }) {
+  const t = useTranslations('events')
   const set = (patch: Partial<BundledEventDraft>) => onChange({ ...value, ...patch })
 
   return (
     <div className="space-y-2 rounded-xl border border-orange-200 bg-orange-50/40 p-3">
       <p className="text-xs text-orange-800">
-        🔥 <span className="font-semibold">Wydarzenie dołączone do zgłoszenia.</span>{' '}
-        Całość trafia do moderacji platformy — po zatwierdzeniu obiekt i
-        wydarzenie opublikują się <span className="font-semibold">razem</span>,
-        a Ty zostaniesz organizatorem wydarzenia (rola: lead). Zgłoszenie nie
-        daje żadnych praw do zarządzania obiektem.
+        {t('bundledFields.notice')}
       </p>
 
       <input
         className="w-full rounded-xl border bg-white p-2.5 text-sm"
-        placeholder="Nazwa wydarzenia, np. Noc saunowa"
+        placeholder={t('bundledFields.titlePlaceholder')}
         value={value.title}
         onChange={(e) => set({ title: e.target.value })}
       />
@@ -68,7 +67,7 @@ export default function BundledEventFields({
       <div className="grid grid-cols-2 gap-2">
         <input
           className="w-full rounded-xl border bg-white p-2.5 text-sm"
-          placeholder="Cena, np. 120 zł"
+          placeholder={t('bundledFields.pricePlaceholder')}
           value={value.price}
           onChange={(e) => set({ price: e.target.value })}
         />
@@ -76,7 +75,7 @@ export default function BundledEventFields({
           type="number"
           min={1}
           className="w-full rounded-xl border bg-white p-2.5 text-sm"
-          placeholder="Limit miejsc"
+          placeholder={t('bundledFields.maxParticipantsPlaceholder')}
           value={value.maxParticipants}
           onChange={(e) => set({ maxParticipants: e.target.value })}
         />
@@ -84,7 +83,7 @@ export default function BundledEventFields({
 
       <textarea
         className="min-h-20 w-full rounded-xl border bg-white p-2.5 text-sm"
-        placeholder="Opis wydarzenia"
+        placeholder={t('bundledFields.descriptionPlaceholder')}
         value={value.description}
         onChange={(e) => set({ description: e.target.value })}
       />

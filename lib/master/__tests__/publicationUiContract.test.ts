@@ -89,7 +89,7 @@ describe('privilege and secrecy hygiene', () => {
 
 describe('owner actions never accept a master id from the client', () => {
   it('owner publication actions resolve the id from auth only', () => {
-    const actions = readFileSync('app/(main)/studio/publicationActions.ts', 'utf8')
+    const actions = readFileSync('app/[locale]/(main)/studio/publicationActions.ts', 'utf8')
     expect(actions).toContain("eq('user_id', user.id)")
     expect(actions).not.toMatch(/masterId\s*:/)
     expect(actions).not.toMatch(/p_master_id/)

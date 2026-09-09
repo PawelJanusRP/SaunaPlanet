@@ -1,0 +1,53 @@
+{
+  "results": {
+    "submitted": "Your profile has been submitted for publication — awaiting moderation.",
+    "already_submitted": "The profile is already submitted for publication.",
+    "withdrawn": "The submission has been withdrawn.",
+    "already_draft": "The profile is already a draft.",
+    "unpublished": "The profile has been unpublished.",
+    "already_unpublished": "The profile is not published.",
+    "published": "The profile has been published.",
+    "already_published": "The profile is already published.",
+    "changes_requested": "A change request has been sent to the profile owner.",
+    "already_changes_requested": "A change request has already been sent.",
+    "suspended": "The profile publication has been suspended.",
+    "already_suspended": "The profile publication is already suspended.",
+    "restored": "The profile has been restored to a draft.",
+    "invalid_transition": "This operation is not possible in the current profile state.",
+    "profile_incomplete": "The profile is incomplete — fill in the required fields before submitting.",
+    "reason_required": "Please provide a reason for this operation.",
+    "master_not_found": "Sauna master profile not found.",
+    "master_not_approved": "The profile has not been approved by moderation yet.",
+    "not_owner": "Only the profile owner can perform this operation.",
+    "not_authenticated": "Sign in to perform this operation.",
+    "not_authorized": "You do not have permission for this operation.",
+    "unavailable": "Temporary technical problem — please try again."
+  },
+  "missingFields": {
+    "name": "full name",
+    "city": "city or area of operation",
+    "bio": "description (min. 80 characters)",
+    "avatar": "profile photo",
+    "specialties": "at least one specialty"
+  },
+  "statusLabels": {
+    "draft": "Draft",
+    "submitted": "Submitted for moderation",
+    "changes_requested": "Moderation requested changes",
+    "published": "Published",
+    "legacy_published": "Published (historically verified profile)",
+    "suspended": "Publication suspended"
+  },
+  "statusHints": {
+    "draft": "The profile is not publicly visible. Fill in the required fields and submit it for publication.",
+    "submitted": "The profile is awaiting moderation review. It stays private until it is approved.",
+    "changes_requested": "Moderation requested changes. Once you have made them, submit the profile again.",
+    "published": "The profile is publicly visible in the sauna master directory.",
+    "legacy_published": "The profile is publicly visible under the previous rules.",
+    "suspended": "Publication has been suspended by moderation. Please contact the administrators."
+  },
+  "notApprovedGuidance": {
+    "message": "Approve the sauna master profile first. The listing can only be published once the base profile has been approved.",
+    "actionLabel": "Go to sauna master moderation"
+  }
+}

@@ -1,0 +1,208 @@
+{
+  "backToMap": "← Back to map",
+  "backToEvents": "← Back to events",
+  "back": "Back",
+  "list": {
+    "title": "🔥 Upcoming sauna events",
+    "empty": "No upcoming events.",
+    "timeMissing": "Time not specified",
+    "emptyForDay": "No events on this day."
+  },
+  "calendar": {
+    "weekday": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "detail": {
+    "notFound": "Event not found",
+    "at": "at {time}",
+    "previousEventsInSauna": "Previous events at this sauna:",
+    "ratingCount": "({count, plural, one {# rating} other {# ratings}})"
+  },
+  "registration": {
+    "heading": "Reserve a spot",
+    "spotsLeft": "{count} spots left",
+    "noSpots": "No spots",
+    "register": "Register →",
+    "full": "No spots left",
+    "pending": "⏳ Registration awaiting confirmation",
+    "cancel": "Cancel",
+    "confirmed": "✓ You are registered",
+    "cancelRegistration": "Cancel registration",
+    "confirmedCount": "{count, plural, one {# person registered} other {# people registered}}"
+  },
+  "interest": {
+    "going": "✓ Going",
+    "goNoReservation": "Going (no reservation)",
+    "goingCount": "{count, plural, one {# person going} other {# people going}}"
+  },
+  "masters": {
+    "heading": "🧖 Sauna masters",
+    "organizerEvent": "Sauna master's event",
+    "organizedBy": " — organized by ",
+    "organizerFallback": "sauna master",
+    "empty": "No sauna masters assigned.",
+    "organizerBadge": "📣 ORGANIZER"
+  },
+  "photos": {
+    "heading": "📸 Photos",
+    "empty": "No photos for this event."
+  },
+  "comments": {
+    "heading": "💬 Comments",
+    "empty": "No comments yet. Be the first!",
+    "delete": "Delete"
+  },
+  "reviews": {
+    "heading": "⭐ Ratings",
+    "prompt": "Were you at this event? Rate it!",
+    "alreadyReviewed": "✓ You have already rated this event.",
+    "empty": "No ratings.",
+    "delete": "Delete"
+  },
+  "common": {
+    "userFallback": "User"
+  },
+  "addModal": {
+    "title": "Add a sauna event",
+    "close": "Close",
+    "titlePlaceholder": "Event name, e.g. Sauna Night",
+    "pricePlaceholder": "Price, e.g. 120 zł",
+    "maxParticipantsPlaceholder": "Spot limit",
+    "descriptionPlaceholder": "Event description",
+    "submit": "Add event",
+    "submitting": "Adding...",
+    "validationTitle": "Enter an event name",
+    "validationDate": "Enter an event date",
+    "genericError": "Could not add the event",
+    "successPending": "Proposal sent — this venue has a manager, so the event and your participation await their approval.",
+    "success": "Event added"
+  },
+  "editForm": {
+    "openButton": "✏️ Edit event",
+    "heading": "Edit event",
+    "titleLabel": "Title *",
+    "dateLabel": "Date *",
+    "timeLabel": "Time",
+    "priceLabel": "Price",
+    "pricePlaceholder": "e.g. 50 zł",
+    "maxParticipantsLabel": "Spot limit",
+    "maxParticipantsPlaceholder": "no limit",
+    "descriptionLabel": "Description",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "saveSuccess": "Changes saved",
+    "saveError": "Save error"
+  },
+  "bundledFields": {
+    "notice": "🔥 Event bundled with the submission. Everything goes to platform moderation — once approved, the venue and event publish together, and you become the event organizer (role: lead). The submission grants no venue management rights.",
+    "titlePlaceholder": "Event name, e.g. Sauna Night",
+    "pricePlaceholder": "Price, e.g. 120 zł",
+    "maxParticipantsPlaceholder": "Spot limit",
+    "descriptionPlaceholder": "Event description"
+  },
+  "participation": {
+    "request": "🧖 Request to participate as a sauna master",
+    "requestSuccess": "Request sent — the venue will decide on your participation",
+    "withdrawSuccess": "Request withdrawn",
+    "pendingBadge": "⏳ Request awaiting the venue's decision",
+    "withdraw": "Withdraw",
+    "approvedBadge": "✓ You are performing at this event",
+    "approvedBadgeWithRole": "✓ You are performing at this event ({role})",
+    "rejectedBadge": "✗ Request rejected by the venue"
+  },
+  "comment": {
+    "placeholder": "Write a comment about this event…",
+    "submit": "Add comment",
+    "submitting": "Saving…",
+    "validation": "Write a comment",
+    "success": "Comment added",
+    "error": "Save error"
+  },
+  "review": {
+    "yourRating": "Your rating",
+    "commentPlaceholder": "Optional comment…",
+    "submit": "Add rating",
+    "submitting": "Saving…",
+    "validation": "Choose a rating",
+    "success": "Rating added",
+    "error": "Save error"
+  },
+  "deleteEvent": {
+    "delete": "🗑️ Delete",
+    "confirm": "Confirm delete",
+    "deleting": "Deleting...",
+    "cancel": "Cancel",
+    "success": "Deleted event “{title}\"",
+    "error": "Delete error"
+  },
+  "eventMaster": {
+    "removeTitle": "Remove from event",
+    "removeSuccess": "{name} removed from the event",
+    "removeError": "Delete error",
+    "loadError": "Could not load sauna masters",
+    "selectValidation": "Choose a sauna master",
+    "assignError": "Could not assign the sauna master",
+    "assignSuccess": "Sauna master assigned",
+    "heading": "➕ Assign a sauna master",
+    "selectPlaceholder": "Choose a sauna master",
+    "roleLead": "Lead",
+    "roleAssistant": "Assistant",
+    "roleGuest": "Guest",
+    "assign": "Assign",
+    "assigning": "Assigning..."
+  },
+  "photoUpload": {
+    "add": "📷 Add photo",
+    "uploading": "Uploading...",
+    "success": "Photo added",
+    "error": "Upload error"
+  },
+  "reservationBadge": {
+    "taken": "Taken",
+    "expired": "Reservation expired",
+    "reservedFor": "Reserved for another {timeLeft}",
+    "available": "Available"
+  },
+  "actions": {
+    "mustBeLoggedIn": "You must be logged in",
+    "noPermission": "No permission",
+    "manageEventsForbidden": "No permission — only approved staff (owner/manager) or an administrator can add events for this venue",
+    "eventNotFound": "Event not found",
+    "titleAndDateRequired": "Title and date are required",
+    "maxParticipantsMin": "The spot limit must be greater than zero",
+    "createEventFailed": "Could not add the event",
+    "editEventForbidden": "No permission to edit this event",
+    "deleteEventForbidden": "No permission to delete this event",
+    "registrationNotFound": "Reservation not found",
+    "commentEmpty": "The comment cannot be empty",
+    "participation": {
+      "masterOnly": "Only sauna masters can request participation",
+      "masterPending": "Your sauna master profile is awaiting approval",
+      "duplicateRequest": "A request for this event already exists",
+      "permissionDenied": "No permission to perform this operation",
+      "genericError": "The operation failed — please try again",
+      "requestNotFoundOrResolved": "The request does not exist or has already been resolved",
+      "invalidInviteRole": "The invitation role must be one of: lead, assistant, guest",
+      "eventNotFound": "Event not found",
+      "inviteForbidden": "No permission to invite masters to this venue's events",
+      "duplicateInvite": "This sauna master already has an invitation or participation in this event",
+      "invitationNotFoundOrResolved": "The invitation does not exist or has already been resolved",
+      "invitationNotFound": "Invitation not found",
+      "withdrawInviteForbidden": "No permission to withdraw this invitation",
+      "proposalNotFoundOrResolved": "The proposal does not exist or has already been resolved",
+      "roleRequiredOrganizer": "Approval requires choosing an organizer role (lead, assistant or guest)",
+      "requestNotFound": "Request not found",
+      "requestAlreadyResolved": "The request has already been resolved",
+      "resolveForbidden": "No permission to resolve requests for this venue",
+      "roleRequired": "Approval requires choosing a role (lead, assistant or guest)"
+    }
+  }
+}

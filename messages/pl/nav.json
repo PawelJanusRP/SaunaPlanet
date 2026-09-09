@@ -1,0 +1,47 @@
+{
+  "brand": "SaunaPlanet",
+  "menu": "Menu",
+  "closeMenu": "Zamknij menu",
+  "login": "Zaloguj się",
+  "register": "Zarejestruj się",
+  "logout": "Wyloguj się",
+  "logoutShort": "Wyloguj",
+  "submitSauna": "Zgłoś saunę",
+  "discover": "Odkrywaj",
+  "events": "Wydarzenia",
+  "masters": "Saunamistrzowie",
+  "saunas": "Sauny",
+  "about": "O aplikacji",
+  "myProfile": "Mój profil",
+  "adminPanel": "Panel admina",
+  "adminBadge": "Admin",
+  "destinations": {
+    "profile": "Mój profil",
+    "owner-workspace": "Panel obiektu",
+    "master-studio": "Studio",
+    "admin": "Panel admina"
+  },
+  "master": {
+    "dashboard": "Pulpit",
+    "profile": "Profil",
+    "events": "Moje wydarzenia",
+    "affiliations": "Afiliacje",
+    "settings": "Ustawienia",
+    "help": "Pomoc"
+  },
+  "personal": {
+    "dashboard": "Pulpit",
+    "details": "Profil",
+    "favorites": "Ulubione",
+    "reviews": "Recenzje",
+    "events": "Wydarzenia",
+    "settings": "Ustawienia"
+  },
+  "owner": {
+    "dashboard": "Pulpit",
+    "reservations": "Rezerwacje",
+    "events": "Wydarzenia",
+    "team": "Zespół"
+  },
+  "help": "Pomoc"
+}

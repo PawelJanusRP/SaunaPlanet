@@ -13,10 +13,10 @@ export const OWNER_WORKSPACE_HOME = '/workspace'
 export const OWNER_ALL_FACILITIES_LABEL = 'Wszystkie obiekty'
 
 const OWNER_NAV_BASE: WorkspaceNavItem[] = [
-  { key: 'dashboard', label: 'Pulpit', href: '/workspace' },
-  { key: 'reservations', label: 'Rezerwacje', href: '/workspace/reservations' },
-  { key: 'events', label: 'Wydarzenia', href: '/workspace/events' },
-  { key: 'team', label: 'Zespół', href: '/workspace/team' },
+  { key: 'dashboard', labelKey: 'nav.owner.dashboard', href: '/workspace' },
+  { key: 'reservations', labelKey: 'nav.owner.reservations', href: '/workspace/reservations' },
+  { key: 'events', labelKey: 'nav.owner.events', href: '/workspace/events' },
+  { key: 'team', labelKey: 'nav.owner.team', href: '/workspace/team' },
 ]
 
 /** Single nav definition (mobile chips + desktop sidebar) carrying the context. */
@@ -34,7 +34,7 @@ export function ownerBreadcrumbs(
 ): WorkspaceBreadcrumb[] {
   const trail: WorkspaceBreadcrumb[] = [
     { label: 'SaunaPlanet', href: '/' },
-    { label: OWNER_WORKSPACE_LABEL, href: withWorkspaceContext(OWNER_WORKSPACE_HOME, context) },
+    { label: OWNER_WORKSPACE_LABEL, labelKey: 'nav.destinations.owner-workspace', href: withWorkspaceContext(OWNER_WORKSPACE_HOME, context) },
   ]
   if (pageLabel) trail.push({ label: pageLabel })
   return trail

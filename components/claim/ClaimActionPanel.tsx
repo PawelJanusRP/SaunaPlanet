@@ -9,9 +9,10 @@
 // hide the action; retryable ones keep it available.
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { claimMasterProfile } from '@/app/claim/actions'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/lib/i18n/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
+import { claimMasterProfile } from '@/app/(bare)/claim/actions'
 import { useAuth } from '@/components/AuthProvider'
 import {
   TERMINAL_PUBLIC_CLAIM_CODES,
@@ -24,6 +25,7 @@ type Props = {
 }
 
 export default function ClaimActionPanel({ token, masterName }: Props) {
+  const t = useTranslations('claim')
   const router = useRouter()
   const { refreshAccess } = useAuth()
   const [pending, setPending] = useState(false)

@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const ACTIONS = readFileSync('app/(main)/admin/claimActions.ts', 'utf8')
+const ACTIONS = readFileSync('app/[locale]/(main)/admin/claimActions.ts', 'utf8')
 
 /** All .ts/.tsx files under a directory (recursive). */
 function walk(dir: string): string[] {
@@ -69,7 +69,7 @@ describe('privileged token RPC browser boundary', () => {
   const files = [...walk('app'), ...walk('components')]
 
   it('the privileged RPCs are invoked ONLY from the server-action module', () => {
-    const allowed = join('app', '(main)', 'admin', 'claimActions.ts')
+    const allowed = join('app', '[locale]', '(main)', 'admin', 'claimActions.ts')
     for (const file of files) {
       const src = readFileSync(file, 'utf8')
       for (const rpc of PRIVILEGED_RPCS) {

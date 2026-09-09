@@ -1,7 +1,8 @@
 'use client'
 
 import { useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { approveFacility, rejectFacility } from '@/app/saunas/actions'
 
@@ -12,6 +13,7 @@ import { approveFacility, rejectFacility } from '@/app/saunas/actions'
  * events — never a bare status update.
  */
 export default function FacilityModerationActions({ saunaId }: { saunaId: string }) {
+  const t = useTranslations('admin')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -27,16 +29,16 @@ export default function FacilityModerationActions({ saunaId }: { saunaId: string
       }
       if ((result.activatedEvents ?? 0) > 0) {
         toast.success(
-          `Obiekt zatwierdzony · opublikowano eventy: ${result.activatedEvents}` +
+          t('facilityModeration.approvedWithEvents', { count: result.activatedEvents ?? 0 }) +
             ((result.approvedParticipations ?? 0) > 0
-              ? ` · organizator dołączył do lineupu (lead)`
+              ? t('facilityModeration.organizerJoined')
               : '') +
             ((result.skippedEvents ?? 0) > 0
-              ? ` · pominięto niekwalifikujące się: ${result.skippedEvents}`
+              ? t('facilityModeration.skippedEvents', { count: result.skippedEvents ?? 0 })
               : '')
         )
       } else {
-        toast.success('Obiekt zatwierdzony')
+        toast.success(t('facilityModeration.approved'))
       }
       router.refresh()
     })
@@ -52,8 +54,8 @@ export default function FacilityModerationActions({ saunaId }: { saunaId: string
       }
       toast.error(
         (result.rejectedEvents ?? 0) > 0
-          ? `Zgłoszenie odrzucone wraz z dołączonym eventem (${result.rejectedEvents})`
-          : 'Zgłoszenie odrzucone'
+          ? t('facilityModeration.rejectedWithEvent', { count: result.rejectedEvents ?? 0 })
+          : t('facilityModeration.rejected')
       )
       router.refresh()
     })
@@ -66,14 +68,14 @@ export default function FacilityModerationActions({ saunaId }: { saunaId: string
         disabled={isPending}
         className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40"
       >
-        Zatwierdź
+        {t('facilityModeration.approve')}
       </button>
       <button
         onClick={handleReject}
         disabled={isPending}
         className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
       >
-        Odrzuć
+        {t('facilityModeration.reject')}
       </button>
     </div>
   )

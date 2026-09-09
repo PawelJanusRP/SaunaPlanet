@@ -11,6 +11,7 @@ import {
 } from 'date-fns'
 
 import { pl } from 'date-fns/locale'
+import { useTranslations } from 'next-intl'
 
 type EventItem = {
   event_id: string
@@ -28,6 +29,7 @@ export default function CalendarView({
   onDayClick?: (date: string) => void
 })
  {
+  const t = useTranslations('events')
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
 
@@ -43,13 +45,13 @@ export default function CalendarView({
       </div>
 
       <div className="mb-2 grid grid-cols-7 gap-2 text-center text-sm font-bold">
-        <div>Pn</div>
-        <div>Wt</div>
-        <div>Śr</div>
-        <div>Cz</div>
-        <div>Pt</div>
-        <div>So</div>
-        <div>Nd</div>
+        <div>{t('calendar.weekday.mon')}</div>
+        <div>{t('calendar.weekday.tue')}</div>
+        <div>{t('calendar.weekday.wed')}</div>
+        <div>{t('calendar.weekday.thu')}</div>
+        <div>{t('calendar.weekday.fri')}</div>
+        <div>{t('calendar.weekday.sat')}</div>
+        <div>{t('calendar.weekday.sun')}</div>
       </div>
 
       <div className="grid grid-cols-7 gap-2">

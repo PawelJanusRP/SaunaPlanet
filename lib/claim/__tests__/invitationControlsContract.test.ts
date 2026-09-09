@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const ACTIONS_PATH = join('app', '(main)', 'admin', 'masters', 'pilot', 'actions.ts')
+const ACTIONS_PATH = join('app', '[locale]', '(main)', 'admin', 'masters', 'pilot', 'actions.ts')
 const CONTROLS_PATH = join('components', 'admin', 'InvitationControls.tsx')
 const LIB_PATH = join('lib', 'claim', 'invitationControls.ts')
 const LINK_PATH = join('lib', 'claim', 'claimLink.ts')
@@ -102,7 +102,7 @@ describe('mutation boundaries', () => {
     ]) {
       expect(CONTROLS.includes(wrapper), wrapper).toBe(false)
     }
-    expect(CONTROLS).toContain("from '@/app/(main)/admin/masters/pilot/actions'")
+    expect(CONTROLS).toContain("from '@/app/[locale]/(main)/admin/masters/pilot/actions'")
   })
 
   it('every invitation mutation re-validates authorization and revalidates routes', () => {
@@ -125,13 +125,13 @@ describe('mutation boundaries', () => {
 describe('end-user claim route lives EXACTLY at the designed path (4B)', () => {
   it('the only claim route is /claim/master/[token]', () => {
     expect(
-      existsSync(join('app', 'claim', 'master', '[token]', 'page.tsx'))
+      existsSync(join('app', '(bare)', 'claim', 'master', '[token]', 'page.tsx'))
     ).toBe(true)
     // no stray siblings that would widen the public surface
-    expect(existsSync(join('app', 'claim', 'page.tsx'))).toBe(false)
-    expect(existsSync(join('app', 'claim', 'route.ts'))).toBe(false)
-    expect(existsSync(join('app', 'claim', 'master', 'page.tsx'))).toBe(false)
-    expect(existsSync(join('app', '(main)', 'claim'))).toBe(false)
+    expect(existsSync(join('app', '(bare)', 'claim', 'page.tsx'))).toBe(false)
+    expect(existsSync(join('app', '(bare)', 'claim', 'route.ts'))).toBe(false)
+    expect(existsSync(join('app', '(bare)', 'claim', 'master', 'page.tsx'))).toBe(false)
+    expect(existsSync(join('app', '[locale]', '(main)', 'claim'))).toBe(false)
   })
 
   it('the route prefix is only a link-building contract', () => {

@@ -1,0 +1,47 @@
+{
+  "brand": "SaunaPlanet",
+  "menu": "Menu",
+  "closeMenu": "Close menu",
+  "login": "Sign in",
+  "register": "Sign up",
+  "logout": "Sign out",
+  "logoutShort": "Sign out",
+  "submitSauna": "Submit a sauna",
+  "discover": "Discover",
+  "events": "Events",
+  "masters": "Sauna masters",
+  "saunas": "Saunas",
+  "about": "About the app",
+  "myProfile": "My profile",
+  "adminPanel": "Admin panel",
+  "adminBadge": "Admin",
+  "destinations": {
+    "profile": "My profile",
+    "owner-workspace": "Venue workspace",
+    "master-studio": "Studio",
+    "admin": "Admin panel"
+  },
+  "master": {
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "events": "My events",
+    "affiliations": "Affiliations",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "personal": {
+    "dashboard": "Dashboard",
+    "details": "Profile",
+    "favorites": "Favorites",
+    "reviews": "Reviews",
+    "events": "Events",
+    "settings": "Settings"
+  },
+  "owner": {
+    "dashboard": "Dashboard",
+    "reservations": "Reservations",
+    "events": "Events",
+    "team": "Team"
+  },
+  "help": "Help"
+}

@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { useAuth } from './AuthProvider'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
+import { useTranslations } from 'next-intl'
 
 export default function AddReviewForm({
   saunaId,
@@ -15,6 +16,7 @@ export default function AddReviewForm({
   onAdded?: () => void
 }) {
   const { user } = useAuth()
+  const t = useTranslations('sauna')
   const [rating, setRating] = useState(5)
   const [reviewText, setReviewText] = useState('')
   const [saving, setSaving] = useState(false)
@@ -24,9 +26,9 @@ export default function AddReviewForm({
     return (
       <div className="rounded-2xl border border-dashed p-4 text-center text-sm text-gray-500">
         <Link href="/auth/login" className="font-medium text-black hover:underline">
-          Zaloguj się
+          {t('addReview.loginLink')}
         </Link>
-        {' '}aby dodać opinię.
+        {t('addReview.loginSuffix')}
       </div>
     )
   }
@@ -61,11 +63,11 @@ export default function AddReviewForm({
 
     if (error) {
       console.error(error)
-      toast.error('Nie udało się dodać opinii')
+      toast.error(t('addReview.errorToast'))
       return
     }
 
-    toast.success('Opinia dodana')
+    toast.success(t('addReview.successToast'))
     router.refresh()
     setReviewText('')
     setRating(5)
@@ -74,7 +76,7 @@ export default function AddReviewForm({
 
   return (
     <div className="rounded-2xl border p-4">
-      <h2 className="mb-3 text-xl font-bold">Dodaj opinię</h2>
+      <h2 className="mb-3 text-xl font-bold">{t('addReview.heading')}</h2>
 
       <select
         value={rating}
@@ -91,7 +93,7 @@ export default function AddReviewForm({
       <textarea
         value={reviewText}
         onChange={(e) => setReviewText(e.target.value)}
-        placeholder="Napisz opinię..."
+        placeholder={t('addReview.placeholder')}
         rows={4}
         className="mb-3 w-full rounded-xl border p-2"
       />
@@ -101,7 +103,7 @@ export default function AddReviewForm({
         onClick={saveReview}
         className="rounded-xl bg-yellow-500 px-4 py-2 font-semibold text-white disabled:opacity-50"
       >
-        {saving ? 'Zapisywanie...' : 'Dodaj opinię'}
+        {saving ? t('addReview.saving') : t('addReview.submit')}
       </button>
     </div>
   )

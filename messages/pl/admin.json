@@ -1,0 +1,487 @@
+{
+  "pilot": {
+    "readiness": {
+      "ready_for_invitation": "Gotowy do zaproszenia",
+      "incomplete": "Profil niekompletny",
+      "active_invitation": "Zaproszenie aktywne",
+      "claimed": "Profil przejęty",
+      "terminal_attention": "Wymaga uwagi"
+    },
+    "invitationStatus": {
+      "ready": "Wygenerowane (niewysłane)",
+      "sent": "Wysłane",
+      "opened": "Otwarte",
+      "claimed": "Przejęte",
+      "expired": "Wygasłe",
+      "revoked": "Unieważnione"
+    },
+    "filter": {
+      "all": "Wszystkie przygotowane",
+      "ready": "Gotowe do zaproszenia",
+      "incomplete": "Niekompletne",
+      "active": "Zaproszenie aktywne",
+      "claimed": "Przejęte",
+      "attention": "Wymagają uwagi"
+    },
+    "requiredFields": {
+      "name": "Imię i nazwisko",
+      "city": "Miasto działania",
+      "bio": "Opis profilu (o sobie)"
+    }
+  },
+  "actions": {
+    "notAuthorized": "Brak uprawnień",
+    "notAuthenticated": "Musisz być zalogowany",
+    "cannotChangeOwnRole": "Nie możesz zmienić własnej roli",
+    "submissionNotFound": "Nie znaleziono zgłoszenia",
+    "masterNotFound": "Nie znaleziono profilu saunamistrza",
+    "saunaNameRequired": "Nazwa jest wymagana",
+    "nameAndCategoryRequired": "Podaj nazwę i kategorię",
+    "nameRequired": "Imię i nazwisko jest wymagane",
+    "profilePrepared": "Profil przygotowany.",
+    "profileSaved": "Profil zapisany.",
+    "invitationGenerated": "Zaproszenie wygenerowane — skopiuj link teraz.",
+    "invitationRegenerated": "Nowe zaproszenie wygenerowane — poprzedni link przestał działać.",
+    "invalidDeliveryChannel": "Wybierz prawidłowy kanał dostarczenia.",
+    "slugConflict": "Adres „{requested}” jest już zajęty — spróbuj np. „{suggestion}”"
+  },
+  "page": {
+    "backToMap": "← Powrót do mapy",
+    "title": "Panel administracyjny",
+    "pendingBadge": "{count} oczekuje",
+    "tabs": {
+      "submissions": "Zgłoszenia ({count})",
+      "saunas": "Sauny ({count})",
+      "saunasPending": "Sauny ({count}) · {pending} oczekuje",
+      "events": "Eventy ({count})",
+      "reviews": "Recenzje ({count})",
+      "masters": "Saunamistrzowie",
+      "mastersPending": "Saunamistrzowie ({count})",
+      "pilot": "🧖 Pilot saunamistrzów",
+      "publications": "📣 Publikacje",
+      "certificates": "Certyfikaty",
+      "certificatesPending": "Certyfikaty ({count})",
+      "dictionary": "Słownik certyfikatów",
+      "managers": "Managerowie",
+      "managersPending": "Managerowie ({count})",
+      "users": "Użytkownicy ({count})"
+    },
+    "status": {
+      "pending": "Oczekuje",
+      "active": "Aktywna",
+      "approved": "Zatwierdzona",
+      "rejected": "Odrzucona",
+      "inactive": "Nieaktywna"
+    },
+    "submissions": {
+      "empty": "Brak zgłoszeń.",
+      "note": "Notatka: {note}"
+    },
+    "saunas": {
+      "empty": "Brak saun.",
+      "submittedBy": "Zgłosił(a):",
+      "unknownUser": "Użytkownik",
+      "bundledEventsOne": "Zgłoszenie zawiera dołączony event saunamistrza",
+      "bundledEventsMany": "Zgłoszenie zawiera dołączone eventy saunamistrza: {count}",
+      "bundledOrganizer": "organizuje {name}",
+      "bundledExplanation": "Zatwierdzenie publikuje obiekt i kwalifikujący się event razem (organizator dołącza do lineupu z rolą lead); odrzucenie odrzuca cały pakiet — jedna niepodzielna operacja.",
+      "duplicatesLabel": "⚠️ Możliwe duplikaty:",
+      "duplicatePending": "{name} (oczekuje)"
+    },
+    "events": {
+      "empty": "Brak eventów."
+    },
+    "reviews": {
+      "empty": "Brak recenzji."
+    },
+    "masters": {
+      "empty": "Brak oczekujących zgłoszeń saunamistrzów.",
+      "level": "Poziom: {level}",
+      "statusPending": "Oczekuje"
+    },
+    "certificates": {
+      "empty": "Brak oczekujących certyfikatów.",
+      "statusPending": "Oczekuje"
+    },
+    "managers": {
+      "empty": "Brak oczekujących wniosków o rolę managera.",
+      "unknownUser": "Użytkownik",
+      "sauna": "Sauna:"
+    },
+    "users": {
+      "empty": "Brak użytkowników.",
+      "unknownName": "Brak nazwy",
+      "you": "(Ty)",
+      "masterBadge": "🧖 Saunamistrz: {status}"
+    }
+  },
+  "pilotList": {
+    "back": "← Panel administracyjny",
+    "title": "🧖 Pilot saunamistrzów",
+    "prepareProfile": "➕ Przygotuj profil",
+    "intro": "Profile przygotowane przez administrację dla pilotażu. Generowanie i wysyłka zaproszeń pojawią się w kolejnym etapie — tutaj przygotowujesz profile i widzisz ich gotowość.",
+    "invitationsUnavailable": "Nie udało się pobrać stanu zaproszeń — lista pokazuje wyłącznie dane profili.",
+    "filterCount": "{label} ({count})",
+    "emptyNoProfiles": "Brak przygotowanych profili — przygotuj pierwszego pilotażowego saunamistrza.",
+    "emptyInFilter": "Brak profili w tym filtrze.",
+    "noCity": "Brak miasta",
+    "profilePrepared": "profil przygotowany",
+    "claimed": "🔗 Przejęty przez właściciela",
+    "notClaimed": "◯ Nieprzejęty",
+    "invitationLabel": "Zaproszenie:",
+    "invitationNone": "brak",
+    "invitationExpired": " (po terminie)",
+    "validUntil": "Ważne do: {date}",
+    "missing": "Brakuje:"
+  },
+  "pilotNew": {
+    "back": "← Pilot saunamistrzów",
+    "title": "Przygotuj profil saunamistrza",
+    "introPrefix": "Profil powstanie jako ",
+    "introBold": "przygotowany przez administrację",
+    "introSuffix": " (nieprzejęty, status „Oczekuje”). Zdjęcie profilowe dodasz na stronie profilu po utworzeniu. Zaproszenie do przejęcia wygenerujesz w kolejnym etapie pilotażu."
+  },
+  "pilotDetail": {
+    "back": "← Pilot saunamistrzów",
+    "stateHeading": "Stan profilu",
+    "noCity": "Brak miasta",
+    "claimed": "🔗 Przejęty przez właściciela",
+    "notClaimed": "◯ Nieprzejęty",
+    "adminPrepared": "Przygotowany przez administrację",
+    "claimFlowTitle": "Jak przebiega przejęcie profilu:",
+    "claimFlow1": "Link z zaproszenia otwiera publiczną stronę przejęcia profilu.",
+    "claimFlow2": "Zaproszona osoba loguje się lub zakłada konto.",
+    "claimFlow3": "Następnie samodzielnie przejmuje profil przyciskiem na tej stronie.",
+    "claimFlow4": "Przejęcie nie publikuje profilu — właściciel uzupełnia wizytówkę w Master Studio i zgłasza ją do moderacji.",
+    "claimFlow5": "Profil staje się publiczny dopiero po zatwierdzeniu.",
+    "originImmutable": "Pochodzenie profilu (przygotowany przez administrację) jest niezmienne.",
+    "readinessHeading": "Gotowość do zaproszenia",
+    "readinessMissingSuffix": " — do uzupełnienia",
+    "readinessNote": "Zdjęcie profilowe, specjalizacje i linki są zalecane, ale nie blokują zaproszenia. Baza danych wymaga twardo jedynie imienia i nazwiska — pozostałe wymogi to reguła pilotażu.",
+    "invitationHeading": "Aktualne zaproszenie",
+    "invitationNone": "Brak zaproszeń dla tego profilu.",
+    "invitationFetchFailed": " (Nie udało się pobrać stanu zaproszeń.)",
+    "invitationStatus": "Status:",
+    "invitationExpiredSuffix": " (po terminie ważności)",
+    "invitationValidUntil": "Ważne do: {date}",
+    "invitationSent": "Wysłane: {date}",
+    "invitationChannel": " (kanał: {channel})",
+    "invitationRecipient": " · odbiorca: {hint}",
+    "invitationRevoked": "Unieważnione: {date}",
+    "diagnosticPrefixLabel": "Prefiks diagnostyczny:",
+    "diagnosticPrefixSuffix": " (do korelacji zgłoszeń — nie jest linkiem ani hasłem)",
+    "earlierInvitations": "Wcześniejsze zaproszenia: {count}",
+    "historyHeading": "Historia",
+    "eventType": {
+      "profile_prepared": "Profil przygotowany",
+      "invitation_created": "Zaproszenie wygenerowane",
+      "invitation_sent": "Zaproszenie wysłane",
+      "invitation_revoked": "Zaproszenie unieważnione",
+      "invitation_regenerated": "Zaproszenie wygenerowane ponownie",
+      "invitation_expired": "Zaproszenie wygasło"
+    },
+    "profileDataHeading": "Dane profilu",
+    "editBlockedClaimed": "Profil został przejęty przez właściciela — edycja pilotażowa jest zablokowana; zmiany wprowadza właściciel w swoim Studiu.",
+    "editBlockedOther": "Profil nie jest już w stanie umożliwiającym edycję pilotażową.",
+    "specialties": "Specjalizacje: {value}",
+    "languages": "Języki: {value}",
+    "website": "WWW: {value}",
+    "created": "Utworzony: {date}",
+    "profileAddress": " · adres profilu: ",
+    "masterStatus": {
+      "pending": "Oczekuje",
+      "approved": "Zatwierdzony",
+      "rejected": "Odrzucony"
+    }
+  },
+  "invitationControls": {
+    "reasonRequired": "Podaj powód — jest wymagany i trafia do historii.",
+    "linkCopied": "Link skopiowany do schowka.",
+    "copyFailed": "Nie udało się skopiować — zaznacz link i skopiuj ręcznie.",
+    "oneTimeLinkHeading": "🔑 Jednorazowy link",
+    "oneTimeLinkWarning": "⚠️ Skopiuj link teraz — nie pokażemy go ponownie. Po zamknięciu tego okna lub odświeżeniu strony jedyną opcją będzie ponowne wygenerowanie (które unieważni ten link).",
+    "regeneratedNotice": "Poprzedni link został unieważniony i przestał działać.",
+    "linkAria": "Jednorazowy link zaproszenia",
+    "copy": "📋 Kopiuj",
+    "validUntil": "Ważny do: {date} · prefiks: ",
+    "close": "Zamknij (link zniknie)",
+    "manageHeading": "Zarządzanie zaproszeniem",
+    "claimedNoActions": "Profil został przejęty — zarządzanie zaproszeniami jest zakończone.",
+    "noActions": "Brak dostępnych akcji — uzupełnij profil, aby móc wygenerować zaproszenie.",
+    "generateButton": "🔑 Wygeneruj zaproszenie",
+    "markSentButton": "📨 Oznacz jako wysłane",
+    "revokeButton": "⛔ Unieważnij",
+    "regenerateButton": "♻️ Wygeneruj ponownie",
+    "validDaysLabel": "Ważność linku (dni, {min}–{max})",
+    "internalNoteLabel": "Notatka wewnętrzna (opcjonalna, widoczna tylko dla moderacji)",
+    "generateHint": "Link pokażemy dokładnie raz — przygotuj się na jego skopiowanie i ręczną wysyłkę.",
+    "generating": "Generowanie...",
+    "generate": "Wygeneruj zaproszenie",
+    "channelLabel": "Kanał dostarczenia",
+    "hintLabel": "Wskazówka odbiorcy (opcjonalna, ZREDAGOWANA)",
+    "hintNote": "Zapisujemy wyłącznie zredagowaną wskazówkę — nigdy pełny adres ani numer. Przykłady: {examples}",
+    "saving": "Zapisywanie...",
+    "markSent": "Oznacz jako wysłane",
+    "revokeWarning": "⚠️ Unieważnienie sprawi, że obecny link natychmiast przestanie działać.",
+    "reasonLabel": "Powód (wymagany, trafia do historii)",
+    "revoking": "Unieważnianie...",
+    "confirmRevoke": "Potwierdź unieważnienie",
+    "cancel": "Anuluj",
+    "regenerateWarning": "⚠️ To unieważni obecny aktywny link (jeśli istnieje) i wygeneruje nowy. Poprzedniego linku nie da się odzyskać — nigdy go nie zapisujemy.",
+    "confirmRegenerate": "Potwierdź i wygeneruj nowy link",
+    "hintValidation": {
+      "too-long": "Wskazówka może mieć najwyżej {max} znaków.",
+      "email-shape": "Wygląda na pełny adres e-mail — zapisz tylko zredagowaną wskazówkę, np. p***@example.com.",
+      "phone-shape": "Wygląda na pełny numer telefonu — zapisz tylko zredagowaną wskazówkę, np. ***123."
+    }
+  },
+  "pilotForm": {
+    "nameRequired": "Imię i nazwisko jest wymagane",
+    "nameLabel": "Imię i nazwisko *",
+    "bioLabel": "O sobie",
+    "bioPlaceholder": "Krótki opis doświadczenia, specjalizacji...",
+    "bioNote": "Wymagany, aby profil był gotowy do zaproszenia — zapraszany saunamistrz musi rozpoznać swój profil.",
+    "slugLabel": "Adres profilu (publiczny link)",
+    "slugPlaceholder": "np. jan-kowalski",
+    "slugNote": "Opcjonalny. Małe litery, cyfry i myślniki (3–40 znaków).",
+    "cityLabel": "Miasto",
+    "cityPlaceholder": "np. Poznań",
+    "yearLabel": "Saunuje od roku",
+    "yearPlaceholder": "np. 2018",
+    "specialtiesLabel": "Specjalizacje",
+    "languagesLabel": "Języki prowadzenia ceremonii",
+    "socialLabel": "Profile społecznościowe",
+    "socialPlaceholder": "{platform} (https://...)",
+    "socialAria": "Adres profilu {platform}",
+    "socialNote": "Tylko adresy https na właściwej platformie zostaną zapisane.",
+    "websiteLabel": "Strona WWW",
+    "websitePlaceholder": "https://...",
+    "saving": "Zapisywanie...",
+    "saveChanges": "Zapisz zmiany",
+    "createProfile": "Utwórz przygotowany profil"
+  },
+  "publicationQueue": {
+    "back": "← Panel admina",
+    "title": "📣 Publikacje saunamistrzów",
+    "filters": {
+      "submitted": "Zgłoszone",
+      "changes_requested": "Poproszono o zmiany",
+      "published": "Opublikowane",
+      "legacy_published": "Opublikowane (legacy)",
+      "suspended": "Zawieszone",
+      "draft": "Robocze",
+      "all": "Wszystkie"
+    },
+    "empty": "Brak profili w tym stanie publikacji.",
+    "profile": "profil: {status}",
+    "hasOwner": "ma właściciela",
+    "noOwner": "bez właściciela",
+    "complete": "kompletny",
+    "missing": "braki: {count}",
+    "submittedAt": "zgłoszono: {date}",
+    "reviewedAt": "przegląd: {date}",
+    "preview": "👁️ Podgląd",
+    "review": "Recenzja →"
+  },
+  "publicationReview": {
+    "back": "← Kolejka publikacji",
+    "noCity": "brak miasta",
+    "previewProfile": "👁️ Podgląd profilu",
+    "profile": "profil: {status}",
+    "hasOwner": "ma właściciela",
+    "noOwner": "bez właściciela",
+    "visible": "🌍 widoczny publicznie",
+    "hidden": "🔒 niewidoczny",
+    "completenessHeading": "Kompletność (wymogi twarde)",
+    "reviewNoteHeading": "Aktualna notatka recenzji (widoczna dla właściciela)",
+    "actionsHeading": "Akcje moderacyjne",
+    "historyHeading": "Historia publikacji",
+    "historyEmpty": "Brak zdarzeń.",
+    "actorPresent": "z kontem sprawcy",
+    "actorAbsent": "sprawca systemowy/usunięty",
+    "audit": {
+      "legacy_publication_granted": "Nadano publikację legacy (backfill M9)",
+      "profile_submitted": "Zgłoszono do publikacji",
+      "changes_requested": "Poproszono o zmiany",
+      "publication_approved": "Zatwierdzono publikację",
+      "profile_unpublished": "Wycofano z publikacji",
+      "profile_suspended": "Zawieszono publikację",
+      "owner_publication_withdrawn": "Publikacja wycofana po usunięciu konta właściciela",
+      "submission_withdrawn": "Właściciel wycofał zgłoszenie",
+      "publication_restored": "Przywrócono do wersji roboczej",
+      "publication_demoted": "Cofnięto po edycji pól publicznych"
+    }
+  },
+  "publicationControls": {
+    "actions": {
+      "approve": "✅ Zatwierdź publikację",
+      "request_changes": "✏️ Poproś o zmiany",
+      "unpublish": "🚫 Wycofaj z publikacji",
+      "suspend": "⛔ Zawieś publikację",
+      "restore": "♻️ Przywróć do wersji roboczej"
+    },
+    "reasonRequired": "Podaj uzasadnienie tej operacji.",
+    "noActions": "Brak dostępnych akcji moderacyjnych w obecnym stanie publikacji.",
+    "masterNotApprovedHint": "Po zatwierdzeniu profilu wróć tutaj i osobno zatwierdź publikację.",
+    "reasonLabel": "Uzasadnienie / notatka dla właściciela",
+    "reasonLabelRequired": " (wymagane dla próśb o zmiany, zawieszenia i przywrócenia)",
+    "reasonPlaceholder": "Widoczne dla właściciela profilu — nigdy publicznie."
+  },
+  "masterModeration": {
+    "approved": "Profil saunamistrza zatwierdzony",
+    "approveError": "Błąd zatwierdzania",
+    "rejected": "Profil odrzucony",
+    "rejectError": "Błąd odrzucania",
+    "rejectReasonPlaceholder": "Powód odrzucenia (opcjonalnie)",
+    "rejecting": "Odrzucanie...",
+    "confirmReject": "Potwierdź odrzucenie",
+    "cancel": "Anuluj",
+    "approve": "✓ Zatwierdź",
+    "reject": "✕ Odrzuć"
+  },
+  "eventModeration": {
+    "activated": "Event aktywowany",
+    "rejected": "Event odrzucony",
+    "error": "Błąd",
+    "deleted": "Event usunięty",
+    "deleteError": "Błąd usuwania",
+    "activate": "Aktywuj",
+    "reject": "Odrzuć",
+    "delete": "Usuń",
+    "confirm": "Na pewno?",
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "facilityModeration": {
+    "approvedWithEvents": "Obiekt zatwierdzony · opublikowano eventy: {count}",
+    "organizerJoined": " · organizator dołączył do lineupu (lead)",
+    "skippedEvents": " · pominięto niekwalifikujące się: {count}",
+    "approved": "Obiekt zatwierdzony",
+    "rejectedWithEvent": "Zgłoszenie odrzucone wraz z dołączonym eventem ({count})",
+    "rejected": "Zgłoszenie odrzucone",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć"
+  },
+  "certificateModeration": {
+    "approved": "Certyfikat zatwierdzony",
+    "approveError": "Błąd zatwierdzania",
+    "rejected": "Certyfikat odrzucony",
+    "rejectError": "Błąd odrzucania",
+    "approve": "✓ Zatwierdź",
+    "reject": "✕ Odrzuć"
+  },
+  "submissionActions": {
+    "approved": "Sauna zatwierdzona i dodana do mapy",
+    "approveError": "Błąd zatwierdzania",
+    "rejected": "Zgłoszenie odrzucone",
+    "rejectError": "Błąd odrzucania",
+    "rejectReasonPlaceholder": "Powód odrzucenia (opcjonalnie)",
+    "rejecting": "Odrzucanie...",
+    "confirmReject": "Potwierdź odrzucenie",
+    "cancel": "Anuluj",
+    "approve": "✓ Zatwierdź",
+    "reject": "✕ Odrzuć"
+  },
+  "registrationModeration": {
+    "confirmed": "Potwierdzono zapis",
+    "rejected": "Zapis odrzucony",
+    "error": "Błąd",
+    "confirm": "Potwierdź",
+    "reject": "Odrzuć"
+  },
+  "managerApproval": {
+    "approved": "Manager zatwierdzony",
+    "rejected": "Wniosek odrzucony",
+    "error": "Błąd",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć"
+  },
+  "certificateTypes": {
+    "category": {
+      "certification": "Certyfikaty",
+      "championship_pl": "Mistrzostwa Polski",
+      "gladiators": "Battle of Gladiators",
+      "aufguss_wm": "Aufguss WM",
+      "classic_cup": "Modern Classic Cup",
+      "cup": "Puchary",
+      "other": "Inne"
+    },
+    "nameRequired": "Podaj nazwę",
+    "added": "Dodano pozycję słownika",
+    "error": "Błąd",
+    "activated": "Aktywowano",
+    "deactivated": "Dezaktywowano",
+    "addHeading": "Dodaj nową pozycję",
+    "namePlaceholder": "Nazwa certyfikatu",
+    "add": "Dodaj",
+    "deactivate": "Dezaktywuj",
+    "activate": "Aktywuj"
+  },
+  "userRole": {
+    "user": "Użytkownik",
+    "moderator": "Moderator",
+    "admin": "Administrator",
+    "updated": "Rola zaktualizowana",
+    "saveError": "Błąd zapisu"
+  },
+  "deleteReview": {
+    "deleted": "Recenzja usunięta",
+    "deleteError": "Błąd usuwania",
+    "delete": "Usuń",
+    "confirm": "Na pewno?",
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "deleteMaster": {
+    "codeMessages": {
+      "not_authorized": "Brak uprawnień do usunięcia profilu.",
+      "not_authenticated": "Musisz być zalogowany.",
+      "not_found": "Nie znaleziono profilu (mógł już zostać usunięty).",
+      "invalid_input": "Nieprawidłowe dane.",
+      "unexpected_error": "Nie udało się usunąć profilu."
+    },
+    "deleted": "Usunięto profil saunamistrza {name}",
+    "confirmPrefix": "Usunąć profil saunamistrza ",
+    "confirmSuffix": "? Tej operacji nie można cofnąć.",
+    "deleting": "Usuwanie…",
+    "delete": "Usuń",
+    "cancel": "Anuluj",
+    "deleteAria": "Usuń saunamistrza {name}",
+    "deleteTitle": "Usuń saunamistrza"
+  },
+  "editSauna": {
+    "category": {
+      "public_sauna": "Sauna publiczna",
+      "hotel_sauna": "Sauna hotelowa",
+      "private_sauna": "Sauna prywatna",
+      "sports_sauna": "Sauna sportowa",
+      "wellness_sauna": "Wellness / SPA",
+      "other": "Inne"
+    },
+    "status": {
+      "active": "Aktywna",
+      "pending": "Oczekuje",
+      "inactive": "Nieaktywna"
+    },
+    "saved": "Sauna zaktualizowana",
+    "saveError": "Błąd zapisu",
+    "deleted": "Sauna usunięta",
+    "deleteError": "Błąd usuwania",
+    "edit": "Edytuj",
+    "nameLabel": "Nazwa *",
+    "cityLabel": "Miasto",
+    "descriptionLabel": "Opis",
+    "websiteLabel": "Strona WWW",
+    "categoryLabel": "Kategoria",
+    "statusLabel": "Status",
+    "socialLabel": "Profile społecznościowe (https, tylko pasująca platforma)",
+    "socialAria": "Adres profilu {platform}",
+    "saving": "Zapisywanie...",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "deleteSauna": "Usuń saunę",
+    "confirm": "Na pewno?",
+    "confirmDelete": "Tak, usuń",
+    "no": "Nie"
+  }
+}

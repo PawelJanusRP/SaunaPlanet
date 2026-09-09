@@ -1,17 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   resolveEventParticipation,
   type ParticipationRole,
-} from '@/app/events/participationActions'
+} from '@/app/[locale]/events/participationActions'
 
-const ROLE_OPTIONS: { value: ParticipationRole; label: string }[] = [
-  { value: 'lead', label: 'Lead (prowadzący)' },
-  { value: 'assistant', label: 'Assistant (wsparcie)' },
-  { value: 'guest', label: 'Guest (gościnnie)' },
-]
+const ROLE_VALUES: ParticipationRole[] = ['lead', 'assistant', 'guest']
 
 /**
  * SP-037: staff-side resolution of a master participation request.
@@ -23,6 +20,7 @@ export default function ParticipationModerationActions({
 }: {
   assignmentId: string
 }) {
+  const t = useTranslations('workspace')
   const [role, setRole] = useState<ParticipationRole>('lead')
   const [isPending, startTransition] = useTransition()
 
@@ -37,8 +35,8 @@ export default function ParticipationModerationActions({
         toast.error(result.error)
         return
       }
-      if (decision === 'approved') toast.success('Saunamistrz dołączył do wydarzenia')
-      else toast.error('Zgłoszenie odrzucone')
+      if (decision === 'approved') toast.success(t('participationActions.approvedToast'))
+      else toast.error(t('participationActions.rejectedToast'))
     })
   }
 
@@ -48,10 +46,10 @@ export default function ParticipationModerationActions({
         value={role}
         onChange={(e) => setRole(e.target.value as ParticipationRole)}
         className="rounded-lg border px-2 py-1.5 text-xs"
-        aria-label="Rola saunamistrza"
+        aria-label={t('participationActions.ariaRole')}
       >
-        {ROLE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+        {ROLE_VALUES.map((value) => (
+          <option key={value} value={value}>{t(`roles.${value}`)}</option>
         ))}
       </select>
       <button
@@ -59,14 +57,14 @@ export default function ParticipationModerationActions({
         disabled={isPending}
         className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-40"
       >
-        Zatwierdź
+        {t('participationActions.approve')}
       </button>
       <button
         onClick={() => handle('rejected')}
         disabled={isPending}
         className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
       >
-        Odrzuć
+        {t('participationActions.reject')}
       </button>
     </div>
   )

@@ -78,6 +78,7 @@ export const DRAWER_NAV_ICONS: Record<string, LucideIcon> = {
   '/masters': UsersRound,
   '/sauny': Flame,
   '/about': Info,
+  '/help': CircleHelp,
   '/profile': UserRound,
   '/admin': ShieldCheck,
 }

@@ -1,21 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Link, useRouter } from '@/lib/i18n/navigation'
 import { useAuth } from './AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 import AvatarMenu from './workspace/AvatarMenu'
+import LanguageSelector from './LanguageSelector'
 import { DRAWER_NAV_ICONS, LOGOUT_ICON } from '@/lib/navigation/icons'
 
 const LogoutIcon = LOGOUT_ICON
-
-const roleLabel: Record<string, string> = {
-  admin: 'Administrator',
-  moderator: 'Moderator',
-  user: 'Użytkownik',
-}
 
 const roleBadge: Record<string, string> = {
   admin: 'bg-red-100 text-red-700',
@@ -26,9 +21,13 @@ const roleBadge: Record<string, string> = {
 export default function Navbar() {
   const { user, role, loading } = useAuth()
   const router = useRouter()
+  const t = useTranslations('nav')
+  const tRoles = useTranslations('common.roles')
   const [open, setOpen] = useState(false)
 
-  function close() { setOpen(false) }
+  function close() {
+    setOpen(false)
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -43,11 +42,11 @@ export default function Navbar() {
       {/* Top bar */}
       <nav className="flex items-center justify-between border-b bg-white px-4 py-3">
         <Link href="/" className="text-lg font-bold tracking-tight">
-          🌍 SaunaPlanet
+          🌍 {t('brand')}
         </Link>
         <button
           onClick={() => setOpen(true)}
-          aria-label="Menu"
+          aria-label={t('menu')}
           className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-gray-100"
         >
           <Menu className="h-[22px] w-[22px]" aria-hidden="true" />
@@ -55,12 +54,7 @@ export default function Navbar() {
       </nav>
 
       {/* Overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-transparent"
-          onClick={close}
-        />
-      )}
+      {open && <div className="fixed inset-0 z-40 bg-transparent" onClick={close} />}
 
       {/* Drawer */}
       <div
@@ -70,10 +64,10 @@ export default function Navbar() {
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
-          <span className="font-bold">🌍 SaunaPlanet</span>
+          <span className="font-bold">🌍 {t('brand')}</span>
           <button
             onClick={close}
-            aria-label="Zamknij menu"
+            aria-label={t('closeMenu')}
             className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-100"
           >
             <X className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -88,15 +82,21 @@ export default function Navbar() {
                 <div className="border-b px-5 py-4">
                   <p className="truncate text-sm font-medium text-gray-900">{user.email}</p>
                   {role && (
-                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${roleBadge[role] ?? roleBadge.user}`}>
-                      {roleLabel[role] ?? role}
+                    <span
+                      className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${roleBadge[role] ?? roleBadge.user}`}
+                    >
+                      {tRoles(role)}
                     </span>
                   )}
                 </div>
               ) : (
                 <div className="border-b px-5 py-4 space-y-2">
-                  <NavItem href="/auth/login" onClick={close} bold>Zaloguj się</NavItem>
-                  <NavItem href="/auth/register" onClick={close} highlight>Zarejestruj się</NavItem>
+                  <NavItem href="/auth/login" onClick={close} bold>
+                    {t('login')}
+                  </NavItem>
+                  <NavItem href="/auth/register" onClick={close} highlight>
+                    {t('register')}
+                  </NavItem>
                 </div>
               )}
             </>
@@ -106,16 +106,34 @@ export default function Navbar() {
           {user && (
             <div className="border-b px-5 py-3 space-y-1">
               <AvatarMenu onNavigate={close} />
-              <NavItem href="/submit" onClick={close}>Zgłoś saunę</NavItem>
+              <NavItem href="/submit" onClick={close}>
+                {t('submitSauna')}
+              </NavItem>
             </div>
           )}
 
           {/* Navigation */}
           <div className="border-b px-5 py-3 space-y-1">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-gray-400">Odkrywaj</p>
-            <NavItem href="/events" onClick={close}>Wydarzenia</NavItem>
-            <NavItem href="/masters" onClick={close}>Saunamistrzowie</NavItem>
-            <NavItem href="/about" onClick={close}>O aplikacji</NavItem>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
+              {t('discover')}
+            </p>
+            <NavItem href="/events" onClick={close}>
+              {t('events')}
+            </NavItem>
+            <NavItem href="/masters" onClick={close}>
+              {t('masters')}
+            </NavItem>
+            <NavItem href="/about" onClick={close}>
+              {t('about')}
+            </NavItem>
+            <NavItem href="/help" onClick={close}>
+              {t('help')}
+            </NavItem>
+          </div>
+
+          {/* Language */}
+          <div className="border-b px-5 py-3">
+            <LanguageSelector variant="menu" />
           </div>
 
           {/* Logout */}
@@ -126,7 +144,7 @@ export default function Navbar() {
                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 active:bg-red-100"
               >
                 <LogoutIcon className="h-4 w-4" aria-hidden="true" />
-                Wyloguj się
+                {t('logout')}
               </button>
             </div>
           )}

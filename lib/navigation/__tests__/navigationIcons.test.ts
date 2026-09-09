@@ -47,24 +47,25 @@ describe('icon mapping completeness', () => {
 describe('routes and labels stay unchanged (icons are presentation only)', () => {
   it('avatar-menu destinations keep their exact hrefs and labels', () => {
     expect(
-      WORKSPACE_DESTINATIONS.map(({ key, label, href }) => ({ key, label, href }))
+      WORKSPACE_DESTINATIONS.map(({ key, labelKey, href }) => ({ key, labelKey, href }))
     ).toEqual([
-      { key: 'profile', label: 'Mój profil', href: '/profile' },
-      { key: 'owner-workspace', label: 'Panel obiektu', href: '/workspace' },
-      { key: 'master-studio', label: 'Studio', href: '/studio' },
-      { key: 'admin', label: 'Panel admina', href: '/admin' },
+      // SP-047: config stores stable translation keys, resolved at render.
+      { key: 'profile', labelKey: 'nav.destinations.profile', href: '/profile' },
+      { key: 'owner-workspace', labelKey: 'nav.destinations.owner-workspace', href: '/workspace' },
+      { key: 'master-studio', labelKey: 'nav.destinations.master-studio', href: '/studio' },
+      { key: 'admin', labelKey: 'nav.destinations.admin', href: '/admin' },
     ])
   })
-  it('master studio nav keeps its exact routes and labels', () => {
+  it('master studio nav keeps its exact routes and label keys', () => {
     // SP-039P0 appended the public Help destination; all pre-existing
-    // entries stay byte-identical.
+    // entries keep their route. SP-047: labels are translation keys.
     expect(MASTER_NAV).toEqual([
-      { key: 'dashboard', label: 'Pulpit', href: '/studio' },
-      { key: 'profile', label: 'Profil', href: '/studio/profile' },
-      { key: 'events', label: 'Moje wydarzenia', href: '/studio/events' },
-      { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
-      { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
-      { key: 'help', label: 'Pomoc', href: '/help/saunamaster' },
+      { key: 'dashboard', labelKey: 'nav.master.dashboard', href: '/studio' },
+      { key: 'profile', labelKey: 'nav.master.profile', href: '/studio/profile' },
+      { key: 'events', labelKey: 'nav.master.events', href: '/studio/events' },
+      { key: 'affiliations', labelKey: 'nav.master.affiliations', href: '/studio/affiliations' },
+      { key: 'settings', labelKey: 'nav.master.settings', href: '/studio/settings' },
+      { key: 'help', labelKey: 'nav.master.help', href: '/help/saunamaster' },
     ])
   })
   it('personal nav keeps its exact routes and labels', () => {
@@ -100,8 +101,10 @@ describe('accessible markup contracts', () => {
     }
   })
   it('icon-only controls keep their accessible labels', () => {
-    expect(navbar).toContain('aria-label="Menu"')
-    expect(navbar).toContain('aria-label="Zamknij menu"')
+    // SP-047: labels are now translated via next-intl; the accessible label is
+    // still present, sourced from the nav catalog (t('menu') / t('closeMenu')).
+    expect(navbar).toContain("aria-label={t('menu')}")
+    expect(navbar).toContain("aria-label={t('closeMenu')}")
   })
   it('no raw inline svg remains in the navbar (single icon family)', () => {
     expect(navbar).not.toContain('<svg')
@@ -152,9 +155,10 @@ describe('map drawer and transparent backdrops', () => {
   it('map account panel uses the central Lucide mapping with accessible markup', () => {
     expect(saunaMap).toContain("from '@/lib/navigation/icons'")
     // Menu trigger lives in the shared MapControls; the account panel it opens
-    // still carries the accessible close control inside SaunaMap.
-    expect(mapControls).toContain('aria-label="Menu"')
-    expect(saunaMap).toContain('aria-label="Zamknij menu"')
+    // still carries the accessible close control inside SaunaMap. SP-047: both
+    // labels are now translated via next-intl (map + nav catalogs).
+    expect(mapControls).toContain("aria-label={t('menu')}")
+    expect(saunaMap).toContain("aria-label={tNav('closeMenu')}")
     expect(saunaMap).toContain('aria-hidden="true"')
   })
   it('map account panel keeps its exact routes and authorization gate', () => {

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { updateOwnMasterProfile, updateOwnMasterIdentity } from '@/app/(main)/studio/actions'
+import { updateOwnMasterProfile, updateOwnMasterIdentity } from '@/app/[locale]/(main)/studio/actions'
 import { slugify } from '@/lib/master/slug'
 import { LANGUAGE_OPTIONS, SPECIALTY_OPTIONS } from '@/lib/master/specialties'
 import { SOCIAL_PLATFORMS } from '@/lib/import/social'
@@ -46,6 +47,8 @@ export default function MasterProfileForm({
    *  demotes it to moderation (M10 trigger) — warn BEFORE save. */
   demotionWarning?: boolean
 }) {
+  const t = useTranslations('studio')
+  const tc = useTranslations('common')
   const [fullName, setFullName] = useState(initial.fullName)
   const [nickname, setNickname] = useState(initial.nickname ?? '')
   const [showNicknameOnly, setShowNicknameOnly] = useState(initial.showNicknameOnly)
@@ -75,11 +78,11 @@ export default function MasterProfileForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!fullName.trim()) {
-      toast.error('Imię i nazwisko nie może być puste')
+      toast.error(t('masterProfileForm.errorFullNameEmpty'))
       return
     }
     if (showNicknameOnly && !nickname.trim()) {
-      toast.error('Włączenie trybu pseudonimu wymaga podania pseudonimu')
+      toast.error(t('masterProfileForm.errorNicknameRequired'))
       return
     }
     startTransition(async () => {
@@ -114,11 +117,9 @@ export default function MasterProfileForm({
       if (result?.error) {
         toast.error(result.error)
       } else if (demotionWarning) {
-        toast.success(
-          'Profil zapisany — wrócił do moderacji i jest tymczasowo niewidoczny publicznie'
-        )
+        toast.success(t('masterProfileForm.savedDemotedToast'))
       } else {
-        toast.success('Profil zapisany')
+        toast.success(t('masterProfileForm.savedToast'))
       }
     })
   }
@@ -126,7 +127,7 @@ export default function MasterProfileForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Imię i nazwisko *</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('masterProfileForm.fullNameLabel')}</label>
         <input
           type="text"
           value={fullName}
@@ -134,17 +135,17 @@ export default function MasterProfileForm({
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
         <p className="mt-1 text-xs text-gray-400">
-          Widoczne publicznie, chyba że włączysz tryb pseudonimu poniżej.
+          {t('masterProfileForm.fullNameHint')}
         </p>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Pseudonim</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('masterProfileForm.nicknameLabel')}</label>
         <input
           type="text"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          placeholder="np. Mistrz Pary"
+          placeholder={t('masterProfileForm.nicknamePlaceholder')}
           maxLength={60}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
@@ -154,73 +155,70 @@ export default function MasterProfileForm({
             checked={showNicknameOnly}
             onChange={(e) => setShowNicknameOnly(e.target.checked)}
           />
-          Pokazuj tylko pseudonim
+          {t('masterProfileForm.showNicknameOnly')}
         </label>
         {showNicknameOnly && (
           <p className="mt-1 text-xs text-gray-500">
-            Twoje imię i nazwisko nie będzie widoczne publicznie — wszędzie
-            pojawi się pseudonim. Publiczny link profilu użyje identyfikatora,
-            aby adres nie zdradzał prawdziwych danych.
+            {t('masterProfileForm.showNicknameOnlyHint')}
           </p>
         )}
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">O sobie</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('masterProfileForm.bioLabel')}</label>
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           rows={4}
-          placeholder="Krótki opis doświadczenia, specjalizacji..."
+          placeholder={t('masterProfileForm.bioPlaceholder')}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
       </div>
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Adres profilu (publiczny link)
+          {t('masterProfileForm.slugLabel')}
         </label>
         <input
           type="text"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           onBlur={() => setSlug((s) => (s.trim() ? slugify(s) : ''))}
-          placeholder="np. jan-kowalski"
+          placeholder={t('masterProfileForm.slugPlaceholder')}
           className="w-full rounded-xl border px-3 py-2 font-mono text-sm"
         />
         <p className="mt-1 text-xs text-gray-400">
           {slug.trim()
-            ? `Twój link: sauna-planet.pl/masters/${slugify(slug) || '…'}`
-            : 'Małe litery, cyfry i myślniki (3–40 znaków). Bez adresu działa link techniczny.'}
+            ? t('masterProfileForm.slugYourLink', { slug: slugify(slug) || '…' })
+            : t('masterProfileForm.slugHint')}
         </p>
         {initial.slug && slugChanged && (
           <p className="mt-1 rounded-lg bg-orange-50 px-2 py-1 text-xs text-orange-700">
-            ⚠️ Zmiana adresu sprawi, że dotychczasowy link /masters/{initial.slug} przestanie
-            działać.
+            {t('masterProfileForm.slugChangeWarning', { slug: initial.slug })}
           </p>
         )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-gray-500">Miasto</label>
+          <label className="mb-1 block text-xs font-semibold text-gray-500">{t('masterProfileForm.cityLabel')}</label>
           <input
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="np. Poznań"
+            placeholder={t('masterProfileForm.cityPlaceholder')}
             className="w-full rounded-xl border px-3 py-2 text-sm"
           />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-gray-500">
-            Saunuję od roku
+            {t('masterProfileForm.experienceLabel')}
           </label>
           <input
             type="number"
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            placeholder="np. 2018"
+            placeholder={t('masterProfileForm.experiencePlaceholder')}
             min={1980}
             max={new Date().getFullYear()}
             className="w-full rounded-xl border px-3 py-2 text-sm"
@@ -229,7 +227,7 @@ export default function MasterProfileForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Specjalizacje</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('masterProfileForm.specialtiesLabel')}</label>
         <div className="flex flex-wrap gap-2">
           {SPECIALTY_OPTIONS.map((option) => {
             const active = specialties.includes(option.id)
@@ -244,7 +242,7 @@ export default function MasterProfileForm({
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {option.label}
+                {tc(`specialties.${option.id}`)}
               </button>
             )
           })}
@@ -253,7 +251,7 @@ export default function MasterProfileForm({
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Języki prowadzenia ceremonii
+          {t('masterProfileForm.languagesLabel')}
         </label>
         <div className="flex flex-wrap gap-2">
           {LANGUAGE_OPTIONS.map((option) => {
@@ -269,7 +267,7 @@ export default function MasterProfileForm({
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {option.label}
+                {tc(`languages.${option.code}`)}
               </button>
             )
           })}
@@ -278,7 +276,7 @@ export default function MasterProfileForm({
 
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-500">
-          Profile społecznościowe
+          {t('masterProfileForm.socialLabel')}
         </label>
         <div className="grid gap-2 sm:grid-cols-2">
           {SOCIAL_PLATFORMS.map((p) => (
@@ -287,32 +285,31 @@ export default function MasterProfileForm({
               type="url"
               value={social[p]}
               onChange={(e) => setSocial((prev) => ({ ...prev, [p]: e.target.value }))}
-              placeholder={`${SOCIAL_LABELS[p]} (https://...)`}
-              aria-label={`Adres profilu ${SOCIAL_LABELS[p]}`}
+              placeholder={t('masterProfileForm.socialPlaceholder', { platform: SOCIAL_LABELS[p] })}
+              aria-label={t('masterProfileForm.socialAriaLabel', { platform: SOCIAL_LABELS[p] })}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             />
           ))}
         </div>
         <p className="mt-1 text-xs text-gray-400">
-          Tylko adresy https na właściwej platformie zostaną zapisane.
+          {t('masterProfileForm.socialHint')}
         </p>
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-gray-500">Strona WWW</label>
+        <label className="mb-1 block text-xs font-semibold text-gray-500">{t('masterProfileForm.websiteLabel')}</label>
         <input
           type="url"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
-          placeholder="https://..."
+          placeholder={t('masterProfileForm.websitePlaceholder')}
           className="w-full rounded-xl border px-3 py-2 text-sm"
         />
       </div>
 
       {demotionWarning && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          ⚠️ Profil jest widoczny publicznie — zapis zmian tymczasowo ukryje go do
-          czasu ponownego zatwierdzenia przez moderację.
+          {t('masterProfileForm.demotionWarning')}
         </p>
       )}
       <button
@@ -321,10 +318,10 @@ export default function MasterProfileForm({
         className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
         {isPending
-          ? 'Zapisywanie...'
+          ? t('masterProfileForm.saving')
           : demotionWarning
-            ? 'Zapisz (profil wróci do moderacji)'
-            : 'Zapisz zmiany'}
+            ? t('masterProfileForm.saveDemoted')
+            : t('masterProfileForm.save')}
       </button>
     </form>
   )

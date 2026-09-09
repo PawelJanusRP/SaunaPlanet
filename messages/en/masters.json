@@ -1,0 +1,154 @@
+{
+  "directory": {
+    "backToMap": "← Back to map",
+    "title": "Sauna masters",
+    "empty": "No sauna masters",
+    "unassigned": "Without an assigned sauna"
+  },
+  "status": {
+    "pending": "Pending",
+    "rejected": "Rejected"
+  },
+  "profile": {
+    "notFound": "Sauna master not found",
+    "back": "Back",
+    "backToDirectory": "← Back to sauna masters",
+    "preview": {
+      "title": "PREVIEW — this profile is not public yet",
+      "onlyYou": "Only you can see this page",
+      "moderation": "(moderation)",
+      "afterPublication": "— the profile will appear in the directory once published."
+    },
+    "public": "🌍 public",
+    "foundingPartner": "Founding Partner",
+    "saunaSince": "in the sauna scene since {year}",
+    "reviewsCount": "{count, plural, one {# review} other {# reviews}}",
+    "website": "Website",
+    "affiliations": {
+      "title": "🤝 Venues",
+      "primary": "Home venue"
+    },
+    "certificates": {
+      "title": "🏅 Certificates and titles",
+      "empty": "No certificates.",
+      "pendingAdminOnly": "Pending (visible to admins only)"
+    },
+    "categories": {
+      "certification": "Certificates",
+      "championship_pl": "Polish Championship",
+      "gladiators": "Battle of Gladiators",
+      "aufguss_wm": "Aufguss WM",
+      "classic_cup": "Modern Classic Cup",
+      "cup": "Cups",
+      "other": "Other"
+    },
+    "upcomingEvents": {
+      "title": "🔥 Upcoming events",
+      "empty": "No upcoming events.",
+      "nextAppearance": "Next appearance"
+    },
+    "pastEvents": {
+      "title": "📅 Past events"
+    },
+    "role": "Role: {role}"
+  },
+  "levels": {
+    "master": "Master",
+    "senior": "Senior",
+    "certified": "Certified",
+    "guest": "Guest"
+  },
+  "eventRoles": {
+    "lead": "Lead",
+    "assistant": "Assistant",
+    "guest": "Guest"
+  },
+  "common": {
+    "close": "Close",
+    "nameLabel": "Full name *",
+    "namePlaceholder": "e.g. Jan Kowalski",
+    "levelLabel": "Level",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Short description (optional)...",
+    "saving": "Saving...",
+    "errorSave": "Save error"
+  },
+  "addMaster": {
+    "openButton": "➕ Add sauna master",
+    "title": "New sauna master",
+    "avatarAlt": "Avatar preview",
+    "changePhoto": "📷 Change photo",
+    "addPhoto": "📷 Add photo",
+    "homeSaunaLabel": "Home sauna",
+    "noSaunaAssignment": "No assignment",
+    "submit": "Add sauna master",
+    "validationName": "Enter a full name",
+    "success": "Sauna master added"
+  },
+  "addToSauna": {
+    "openButton": "➕ Add sauna master",
+    "title": "Add sauna master",
+    "tabExisting": "Existing",
+    "tabNew": "New profile",
+    "masterLabel": "Sauna master",
+    "selectMaster": "Select a sauna master",
+    "assignSection": "Assign to an event",
+    "eventLabel": "Event",
+    "noEventAssignment": "No assignment",
+    "roleLabel": "Role",
+    "noUpcomingEvents": "No upcoming events — after adding the sauna master, assign them to an event.",
+    "submit": "Save",
+    "validationName": "Enter the sauna master's full name",
+    "validationMaster": "Select a sauna master",
+    "successNewAndAssigned": "Sauna master added and assigned to the event",
+    "successProfileCreated": "Sauna master profile created",
+    "successAssigned": "Sauna master assigned to the event"
+  },
+  "editMaster": {
+    "openButton": "✏️ Edit profile",
+    "title": "Edit sauna master profile",
+    "bioPlaceholder": "Short description...",
+    "levelReadOnly": "Level: <b>{level}</b> — changed by moderation (level follows from certification).",
+    "submit": "Save changes",
+    "validationName": "Full name cannot be empty",
+    "noPermission": "You are not allowed to edit this profile",
+    "success": "Profile updated"
+  },
+  "addCertificate": {
+    "openButton": "🏅 Add certificate",
+    "title": "Add certificate",
+    "moderationNote": "The submission goes to moderation and will be published after an admin approves it.",
+    "certificateLabel": "Certificate *",
+    "loading": "Loading...",
+    "selectCertificate": "Select a certificate",
+    "customNameLabel": "Certificate name *",
+    "customNamePlaceholder": "e.g. Termy Mazowieckie certificate",
+    "yearLabel": "Year",
+    "yearPlaceholder": "e.g. 2024",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Additional information (optional)",
+    "submitAdmin": "Add certificate",
+    "submitUser": "Send submission",
+    "validationSelect": "Select a certificate",
+    "validationCustomName": "Enter the certificate name",
+    "successAdmin": "Certificate added",
+    "successUser": "Submission sent — awaiting approval"
+  },
+  "becomeMaster": {
+    "submittedTitle": "✓ Submission sent!",
+    "submittedBody": "An administrator will verify your profile and add it to the list.",
+    "promptTitle": "Are you a sauna master?",
+    "promptBody": "Submit your profile — an administrator will approve it and it will appear on the list.",
+    "promptButton": "Apply as a sauna master",
+    "formTitle": "Sauna master profile submission",
+    "nameLabel": "Full name *",
+    "namePlaceholder": "e.g. Anna Kowalska",
+    "aboutLabel": "About you",
+    "aboutPlaceholder": "Short description of your experience, specialties...",
+    "submit": "Send submission",
+    "sending": "Sending...",
+    "validationName": "Enter your full name",
+    "alreadyHasProfile": "This account already has a sauna master profile",
+    "errorSend": "Error sending the submission"
+  }
+}

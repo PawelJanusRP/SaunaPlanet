@@ -1,0 +1,63 @@
+{
+  "metadataTitle": "Zaproszenie dla saunamistrza — SaunaPlanet",
+  "brand": "SaunaPlanet",
+  "heading": "Zaproszenie dla saunamistrza",
+  "invitationValidUntil": "Zaproszenie ważne do: {date}",
+  "studioHintPrefix": "Twoje konto ma już profil saunamistrza —",
+  "studioHintLink": "przejdź do Master Studio",
+  "anonPrompt": "Aby przejąć ten profil, zaloguj się lub załóż konto.",
+  "action": {
+    "successTitle": "Profil należy teraz do Ciebie",
+    "successDescription": "Profil <strong>{name}</strong> został przypisany do Twojego konta i jest już <strong>widoczny publicznie</strong>. W Master Studio możesz teraz uzupełnić i edytować swoje dane.",
+    "goToStudio": "Przejdź do Master Studio",
+    "confirmDescription": "Przejmujesz profil <strong>{name}</strong>. Zostanie on trwale powiązany z kontem, na które jesteś teraz zalogowany, i od razu widoczny publicznie. Dane uzupełnisz i zmienisz w Master Studio.",
+    "claiming": "Przejmowanie…",
+    "claim": "Przejmij profil",
+    "refresh": "Odśwież stronę"
+  },
+  "results": {
+    "ok": "Gotowe.",
+    "sent": "Oznaczono jako wysłane.",
+    "revoked": "Zaproszenie zostało unieważnione.",
+    "already_sent": "Zaproszenie było już oznaczone jako wysłane.",
+    "already_revoked": "Zaproszenie było już unieważnione.",
+    "not_authenticated": "Musisz być zalogowany.",
+    "not_authorized": "Brak uprawnień.",
+    "master_not_found": "Nie znaleziono profilu saunamistrza.",
+    "master_already_claimed": "Ten profil jest już powiązany z kontem.",
+    "master_not_eligible": "Profil nie kwalifikuje się do zaproszenia.",
+    "active_invitation_exists": "Ten profil ma już aktywne zaproszenie — najpierw je unieważnij lub wygeneruj ponownie.",
+    "invitation_not_found": "Nie znaleziono zaproszenia.",
+    "invalid_transition": "Niedozwolona zmiana stanu zaproszenia.",
+    "invitation_already_terminal": "Zaproszenie jest już w stanie końcowym.",
+    "generation_conflict": "Konflikt podczas generowania zaproszenia — spróbuj ponownie.",
+    "rate_limited": "Za dużo prób — odczekaj chwilę i spróbuj ponownie.",
+    "unexpected_error": "Wystąpił nieoczekiwany błąd."
+  },
+  "invitationExtra": {
+    "payload_malformed": "Nieprawidłowa odpowiedź serwera — zaproszenie mogło zostać utworzone. Odśwież stronę i sprawdź stan.",
+    "invalid_input": "Nieprawidłowe dane formularza.",
+    "claim_origin_not_configured": "Nie skonfigurowano publicznego adresu strony przejęcia profilu. Zaproszenie nie zostało utworzone.",
+    "claim_origin_invalid": "Nie skonfigurowano poprawnego publicznego adresu strony przejęcia profilu. Zaproszenie nie zostało utworzone."
+  },
+  "publicState": {
+    "claimable": "Ten profil czeka na przejęcie.",
+    "invalid_or_unknown": "Ten link zaproszenia jest nieprawidłowy lub nieaktualny.",
+    "expired": "To zaproszenie wygasło — poproś administrację o nowy link.",
+    "revoked": "To zaproszenie zostało unieważnione — poproś administrację o nowy link.",
+    "already_claimed": "Ten profil został już przejęty.",
+    "unavailable": "Chwilowy problem techniczny — odśwież stronę i spróbuj ponownie."
+  },
+  "publicResult": {
+    "claimed": "Profil został przypisany do Twojego konta.",
+    "already_claimed_by_you": "Ten profil jest już przypisany do Twojego konta.",
+    "not_authenticated": "Zaloguj się, aby przejąć profil.",
+    "invalid_token": "Ten link zaproszenia jest nieprawidłowy lub nieaktualny.",
+    "expired": "To zaproszenie wygasło — poproś administrację o nowy link.",
+    "revoked": "To zaproszenie zostało unieważnione — poproś administrację o nowy link.",
+    "already_claimed": "Ten profil został już przejęty przez inne konto.",
+    "master_not_eligible": "Tego profilu nie można teraz przejąć — skontaktuj się z administracją.",
+    "user_already_master": "Twoje konto ma już profil saunamistrza — skontaktuj się z administracją.",
+    "unexpected_error": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+  }
+}

@@ -1,20 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 type CertType = { id: string; name: string; category: string }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  certification:   'Certyfikaty',
-  championship_pl: 'Mistrzostwa Polski',
-  gladiators:      'Battle of Gladiators',
-  aufguss_wm:      'Aufguss WM',
-  classic_cup:     'Modern Classic Cup',
-  cup:             'Puchary',
-  other:           'Inne',
+const CATEGORY_KEYS: Record<string, string> = {
+  certification:   'certification',
+  championship_pl: 'championship_pl',
+  gladiators:      'gladiators',
+  aufguss_wm:      'aufguss_wm',
+  classic_cup:     'classic_cup',
+  cup:             'cup',
+  other:           'other',
 }
 
 const OTHER_ID_NAME = 'Inny certyfikat'
@@ -26,6 +27,7 @@ export default function AddCertificateModal({
   masterId: string
   isAdmin: boolean
 }) {
+  const t = useTranslations('masters')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -68,11 +70,11 @@ export default function AddCertificateModal({
 
   async function handleSubmit() {
     if (!certTypeId) {
-      toast.error('Wybierz certyfikat')
+      toast.error(t('addCertificate.validationSelect'))
       return
     }
     if (isOther && !customName.trim()) {
-      toast.error('Podaj nazwę certyfikatu')
+      toast.error(t('addCertificate.validationCustomName'))
       return
     }
 
@@ -88,11 +90,11 @@ export default function AddCertificateModal({
       })
       if (error) throw error
 
-      toast.success(isAdmin ? 'Certyfikat dodany' : 'Zgłoszenie wysłane — czeka na akceptację')
+      toast.success(isAdmin ? t('addCertificate.successAdmin') : t('addCertificate.successUser'))
       handleClose()
       router.refresh()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+      toast.error(e instanceof Error ? e.message : t('common.errorSave'))
     } finally {
       setSaving(false)
     }
@@ -111,7 +113,7 @@ export default function AddCertificateModal({
         onClick={handleOpen}
         className="mt-3 w-full rounded-xl border border-yellow-400 bg-white px-3 py-2 text-sm font-semibold text-yellow-700 hover:bg-yellow-50"
       >
-        🏅 Dodaj certyfikat
+        {t('addCertificate.openButton')}
       </button>
     )
   }
@@ -120,30 +122,30 @@ export default function AddCertificateModal({
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-bold">Dodaj certyfikat</h2>
-          <button onClick={handleClose} className="text-gray-400 hover:text-gray-700">✕</button>
+          <h2 className="font-bold">{t('addCertificate.title')}</h2>
+          <button onClick={handleClose} aria-label={t('common.close')} className="text-gray-400 hover:text-gray-700">✕</button>
         </div>
 
         {!isAdmin && (
           <p className="mb-3 rounded-xl bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-            Zgłoszenie trafi do moderacji i zostanie opublikowane po akceptacji admina.
+            {t('addCertificate.moderationNote')}
           </p>
         )}
 
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Certyfikat *</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('addCertificate.certificateLabel')}</label>
             {!loaded ? (
-              <div className="rounded-xl border p-2 text-sm text-gray-400">Ładowanie...</div>
+              <div className="rounded-xl border p-2 text-sm text-gray-400">{t('addCertificate.loading')}</div>
             ) : (
               <select
                 value={certTypeId}
                 onChange={(e) => { setCertTypeId(e.target.value); setCustomName('') }}
                 className="w-full rounded-xl border p-2 text-sm"
               >
-                <option value="">Wybierz certyfikat</option>
+                <option value="">{t('addCertificate.selectCertificate')}</option>
                 {Object.entries(grouped).map(([cat, types]) => (
-                  <optgroup key={cat} label={CATEGORY_LABELS[cat] ?? cat}>
+                  <optgroup key={cat} label={CATEGORY_KEYS[cat] ? t(`profile.categories.${CATEGORY_KEYS[cat]}` as never) : cat}>
                     {types.map((ct) => (
                       <option key={ct.id} value={ct.id}>{ct.name}</option>
                     ))}
@@ -155,24 +157,24 @@ export default function AddCertificateModal({
 
           {isOther && (
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Nazwa certyfikatu *</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">{t('addCertificate.customNameLabel')}</label>
               <input
                 type="text"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                placeholder="np. Certyfikat Termy Mazowieckie"
+                placeholder={t('addCertificate.customNamePlaceholder')}
                 className="w-full rounded-xl border p-2 text-sm"
               />
             </div>
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Rok</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('addCertificate.yearLabel')}</label>
             <input
               type="number"
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              placeholder="np. 2024"
+              placeholder={t('addCertificate.yearPlaceholder')}
               min="1990"
               max={new Date().getFullYear()}
               className="w-full rounded-xl border p-2 text-sm"
@@ -181,12 +183,12 @@ export default function AddCertificateModal({
 
           {!isOther && (
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Uwagi</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">{t('addCertificate.notesLabel')}</label>
               <input
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Dodatkowe informacje (opcjonalnie)"
+                placeholder={t('addCertificate.notesPlaceholder')}
                 className="w-full rounded-xl border p-2 text-sm"
               />
             </div>
@@ -198,7 +200,7 @@ export default function AddCertificateModal({
           disabled={saving}
           className="mt-4 w-full rounded-xl bg-yellow-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {saving ? 'Zapisywanie...' : isAdmin ? 'Dodaj certyfikat' : 'Wyślij zgłoszenie'}
+          {saving ? t('common.saving') : isAdmin ? t('addCertificate.submitAdmin') : t('addCertificate.submitUser')}
         </button>
       </div>
     </div>

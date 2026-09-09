@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 
 type Master = {
   id: string
@@ -16,6 +17,7 @@ export default function AddEventMasterForm({
 }: {
   eventId: string
 }) {
+  const t = useTranslations('events')
   const router = useRouter()
   const [masters, setMasters] = useState<Master[]>([])
   const [masterId, setMasterId] = useState('')
@@ -34,7 +36,7 @@ export default function AddEventMasterForm({
 
       if (error) {
         console.error(error)
-        toast.error('Nie udało się pobrać saunamistrzów')
+        toast.error(t('eventMaster.loadError'))
         return
       }
 
@@ -46,11 +48,11 @@ export default function AddEventMasterForm({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [t])
 
   async function assignMaster() {
     if (!masterId) {
-      toast.error('Wybierz saunamistrza')
+      toast.error(t('eventMaster.selectValidation'))
       return
     }
 
@@ -70,11 +72,11 @@ export default function AddEventMasterForm({
 
     if (error) {
       console.error(error)
-      toast.error('Nie udało się przypisać saunamistrza')
+      toast.error(t('eventMaster.assignError'))
       return
     }
 
-    toast.success('Saunamistrz przypisany')
+    toast.success(t('eventMaster.assignSuccess'))
     setMasterId('')
     router.refresh()
   }
@@ -82,7 +84,7 @@ export default function AddEventMasterForm({
   return (
     <div className="mt-3 rounded-xl border bg-white p-3">
       <div className="mb-2 text-sm font-bold">
-        ➕ Przypisz saunamistrza
+        {t('eventMaster.heading')}
       </div>
 
       <select
@@ -90,7 +92,7 @@ export default function AddEventMasterForm({
         onChange={(e) => setMasterId(e.target.value)}
         className="mb-2 w-full rounded-xl border p-2 text-sm"
       >
-        <option value="">Wybierz saunamistrza</option>
+        <option value="">{t('eventMaster.selectPlaceholder')}</option>
 
         {masters.map((master) => (
           <option key={master.id} value={master.id}>
@@ -104,9 +106,9 @@ export default function AddEventMasterForm({
         onChange={(e) => setRole(e.target.value)}
         className="mb-2 w-full rounded-xl border p-2 text-sm"
       >
-        <option value="lead">Prowadzący</option>
-        <option value="assistant">Asystent</option>
-        <option value="guest">Gość</option>
+        <option value="lead">{t('eventMaster.roleLead')}</option>
+        <option value="assistant">{t('eventMaster.roleAssistant')}</option>
+        <option value="guest">{t('eventMaster.roleGuest')}</option>
       </select>
 
       <button
@@ -114,7 +116,7 @@ export default function AddEventMasterForm({
         disabled={saving}
         className="w-full rounded-xl bg-orange-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
-        {saving ? 'Przypisywanie...' : 'Przypisz'}
+        {saving ? t('eventMaster.assigning') : t('eventMaster.assign')}
       </button>
     </div>
   )

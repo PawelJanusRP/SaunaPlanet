@@ -20,15 +20,25 @@ import {
 } from '@/lib/master/publicationView'
 import { PUBLICATION_TRANSITION_MESSAGES_PL } from '@/lib/master/publicationTransitions'
 
-const pilotDetailPage = readFileSync('app/(main)/admin/masters/pilot/[id]/page.tsx', 'utf8')
+const pilotDetailPage = readFileSync('app/[locale]/(main)/admin/masters/pilot/[id]/page.tsx', 'utf8')
 const moderationControls = readFileSync('components/admin/PublicationModerationControls.tsx', 'utf8')
-const adminPage = readFileSync('app/(main)/admin/page.tsx', 'utf8')
-const studioPage = readFileSync('app/(main)/studio/page.tsx', 'utf8')
+const adminPage = readFileSync('app/[locale]/(main)/admin/page.tsx', 'utf8')
+const studioPage = readFileSync('app/[locale]/(main)/studio/page.tsx', 'utf8')
 const firstStepsCard = readFileSync('components/studio/FirstStepsCard.tsx', 'utf8')
 const onboarding = readFileSync('lib/master/onboarding.ts', 'utf8')
-const helpPage = readFileSync('app/(main)/help/saunamaster/page.tsx', 'utf8')
+const helpPage = readFileSync('app/[locale]/(main)/help/saunamaster/page.tsx', 'utf8')
 const supportModule = readFileSync('lib/help/support.ts', 'utf8')
 const supportNotice = readFileSync('components/help/SupportNotice.tsx', 'utf8')
+
+// SP-047: user-facing help/admin copy moved from JSX literals into the
+// versioned next-intl catalogs. The Polish reference catalog is now the
+// authoritative source for the content assertions below; the pages render it
+// via t(...) keys. Structure/security assertions still target the source.
+const helpCatalogPl = readFileSync('messages/pl/help.json', 'utf8')
+const adminCatalogPl = readFileSync('messages/pl/admin.json', 'utf8')
+// SP-047E2: publication status labels/hints resolved from the stable code via
+// the shared `publication` next-intl catalog (statusLabels.* / statusHints.*).
+const publicationCatalogPl = readFileSync('messages/pl/publication.json', 'utf8')
 
 describe('B — pilot invitation copy is current', () => {
   it('the obsolete "later stage" wording is absent', () => {
@@ -42,10 +52,11 @@ describe('B — pilot invitation copy is current', () => {
     }
   })
   it('the real claim flow is described instead', () => {
-    expect(pilotDetailPage).toContain('publiczną stronę przejęcia profilu')
-    expect(pilotDetailPage).toContain('loguje się lub zakłada konto')
-    expect(pilotDetailPage).toContain('Przejęcie nie publikuje profilu')
-    expect(pilotDetailPage).toContain('publiczny dopiero po zatwierdzeniu')
+    // SP-047: copy relocated to messages/pl/admin.json (rendered via t(...)).
+    expect(adminCatalogPl).toContain('publiczną stronę przejęcia profilu')
+    expect(adminCatalogPl).toContain('loguje się lub zakłada konto')
+    expect(adminCatalogPl).toContain('Przejęcie nie publikuje profilu')
+    expect(adminCatalogPl).toContain('publiczny dopiero po zatwierdzeniu')
   })
   it('no internal implementation details leak into the copy', () => {
     // Code comments may reference RPCs; the rendered copy must not expose
@@ -120,6 +131,7 @@ describe('E — public Quick Start page', () => {
     expect(helpPage).not.toMatch(/supabase|createClient|getUser|useAuth|redirect\(|cookies\(/i)
   })
   it('contains the ten agreed Polish sections', () => {
+    // SP-047: section titles relocated to messages/pl/help.json.
     for (const title of [
       'Jak przejąć profil',
       'Jak zalogować się lub założyć konto',
@@ -132,19 +144,28 @@ describe('E — public Quick Start page', () => {
       'Jak uzyskać pomoc',
       'Zasady bezpieczeństwa',
     ]) {
-      expect(helpPage).toContain(title)
+      expect(helpCatalogPl).toContain(title)
     }
   })
   it('reuses the shared status vocabulary instead of inventing labels', () => {
-    expect(helpPage).toContain('PUBLICATION_STATUS_LABELS_PL')
+    // SP-047E2: the page resolves labels/hints from the shared `publication`
+    // catalog via next-intl (statusLabels.* keyed by the stable code), so it
+    // invents no parallel labels; the pure lib PL map stays the canonical
+    // fallback with the same reference wording.
+    expect(helpPage).toContain("getTranslations('publication')")
+    expect(helpPage).toContain('statusLabels.${status}')
+    expect(publicationCatalogPl).toContain('Zgłoszony do moderacji')
     expect(PUBLICATION_STATUS_LABELS_PL.submitted).toBe('Zgłoszony do moderacji')
   })
   it('tells the truth about the pilot: claim ≠ publish, no reservations, support-mediated event changes', () => {
-    expect(helpPage).toContain('nie publikuje go')
-    expect(helpPage).toContain('Rezerwacja miejsc')
-    expect(helpPage).toContain('nie jest jeszcze dostępna')
-    expect(helpPage).toContain('Korekta lub odwołanie aktywnego wydarzenia')
-    expect(helpPage).toContain('tymczasowa procedura')
+    // SP-047: truth-telling copy relocated to messages/pl/help.json (rendered
+    // via t(...)); the guarantee is preserved, only the source of the string
+    // moved. The no-leak check still targets the rendered page source.
+    expect(helpCatalogPl).toContain('nie publikuje go')
+    expect(helpCatalogPl).toContain('Rezerwacja miejsc')
+    expect(helpCatalogPl).toContain('nie jest jeszcze dostępna')
+    expect(helpCatalogPl).toContain('Korekta lub odwołanie aktywnego wydarzenia')
+    expect(helpCatalogPl).toContain('tymczasowa procedura')
     // Internal backlog names never leak.
     expect(helpPage).not.toMatch(/\bG1\b|\bG2\b/)
   })
@@ -162,7 +183,10 @@ describe('H — one central support path', () => {
     )
   })
   it('Quick Start and Studio render the SAME central copy', () => {
-    expect(supportNotice).toContain("from '@/lib/help/support'")
+    // SP-047E2: the single central source is now the help catalog namespace
+    // (help.support.*), read by SupportNotice; both surfaces still render the
+    // one shared component, so the copy changes in exactly one place.
+    expect(supportNotice).toContain("useTranslations('help.support')")
     expect(helpPage).toContain('SupportNotice')
     expect(firstStepsCard).toContain('SupportNotice')
     // No surface duplicates the wording inline.

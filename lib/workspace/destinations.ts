@@ -20,21 +20,21 @@ import type { WorkspaceAccess, WorkspaceDestination } from './types'
 export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
   {
     key: 'profile',
-    label: 'Mój profil',
+    labelKey: 'nav.destinations.profile',
     href: '/profile',
     status: 'available',
     isVisible: (access) => access.isAuthenticated,
   },
   {
     key: 'owner-workspace',
-    label: 'Panel obiektu',
+    labelKey: 'nav.destinations.owner-workspace',
     href: '/workspace',
     status: 'available',
     isVisible: (access) => access.isAuthenticated && access.hasApprovedSaunaMembership,
   },
   {
     key: 'master-studio',
-    label: 'Studio',
+    labelKey: 'nav.destinations.master-studio',
     href: '/studio',
     status: 'available',
     // 4C2: pending claimed owners see the Studio too (publication workflow).
@@ -42,7 +42,7 @@ export const WORKSPACE_DESTINATIONS: WorkspaceDestination[] = [
   },
   {
     key: 'admin',
-    label: 'Panel admina',
+    labelKey: 'nav.destinations.admin',
     href: '/admin',
     status: 'available',
     badge: 'Admin',

@@ -1,0 +1,153 @@
+{
+  "aria": {
+    "activeFacility": "Aktywny obiekt",
+    "breadcrumbs": "Ścieżka nawigacji",
+    "nav": "Nawigacja panelu"
+  },
+  "status": {
+    "membership": {
+      "pending": "⏳ Oczekuje",
+      "approved": "✓ Aktywny",
+      "rejected": "✗ Odrzucony"
+    },
+    "registration": {
+      "confirmed": "✓ Potwierdzona",
+      "cancelled": "✗ Anulowana"
+    }
+  },
+  "roles": {
+    "lead": "Lead (prowadzący)",
+    "assistant": "Assistant (wsparcie)",
+    "guest": "Guest (gościnnie)"
+  },
+  "common": {
+    "master": "Saunamistrz",
+    "masterLowercase": "saunamistrz",
+    "userFallback": "Użytkownik",
+    "sending": "Wysyłanie...",
+    "submittedOn": "Zgłoszono: {date}"
+  },
+  "todayQueue": {
+    "title": "Na dziś",
+    "empty": "Brak pozycji do obsłużenia."
+  },
+  "dashboard": {
+    "subtitle": "Zarządzaj swoimi obiektami, rezerwacjami i wydarzeniami",
+    "empty": {
+      "title": "Nie zarządzasz jeszcze żadnym obiektem",
+      "description": "Zarządzanie sauną możesz zgłosić na stronie obiektu. Po zatwierdzeniu obiekt pojawi się tutaj.",
+      "action": "Przeglądaj sauny"
+    },
+    "myFacilities": "🏢 Moje obiekty",
+    "upcomingEvents": "🔥 Nadchodzące wydarzenia",
+    "seeAll": "Wszystkie →",
+    "noUpcomingTitle": "Brak nadchodzących wydarzeń",
+    "noUpcomingDescription": "Wydarzenia Twoich obiektów pojawią się tutaj.",
+    "quickActions": "⚡ Szybkie akcje",
+    "reservations": "🎟️ Rezerwacje",
+    "facilityPage": "🧖 Strona obiektu",
+    "submitFacility": "➕ Zgłoś nowy obiekt"
+  },
+  "events": {
+    "breadcrumb": "Wydarzenia",
+    "subtitle": "Wydarzenia Twoich obiektów",
+    "pickFacilityToAdd": "Aby dodać wydarzenie, wybierz konkretny obiekt w przełączniku powyżej — wydarzenie zawsze należy do jednego obiektu.",
+    "proposalsTitle": "📣 Propozycje wydarzeń ({count})",
+    "limit": "limit: {count}",
+    "organizedBy": "Organizuje:",
+    "proposalHint": "Zatwierdzenie publikuje wydarzenie i dodaje organizatora do lineupu z wybraną rolą — jedna, niepodzielna operacja.",
+    "sentInvitationsTitle": "📨 Wysłane zaproszenia ({count})",
+    "facilityInvitationBadge": "Zaproszenie obiektu",
+    "offeredRole": " · oferowana rola: ",
+    "sentOn": " · wysłane {date}",
+    "waitingForMaster": " · ⏳ czeka na saunamistrza",
+    "masterRequestsTitle": "🧖 Zgłoszenia saunamistrzów ({count})",
+    "masterRequestBadge": "Zgłoszenie saunamistrza",
+    "wantsToPerform": "chce wystąpić:",
+    "upcomingTitle": "🔥 Nadchodzące ({count})",
+    "noUpcomingTitle": "Brak nadchodzących wydarzeń",
+    "noUpcomingWithTarget": "Dodaj pierwsze wydarzenie dla swojego obiektu.",
+    "noUpcomingWithoutTarget": "Wydarzenia Twoich obiektów pojawią się tutaj.",
+    "pastTitle": "🗓️ Minione (ostatnie)",
+    "noPastTitle": "Brak minionych wydarzeń"
+  },
+  "reservations": {
+    "breadcrumb": "Rezerwacje",
+    "subtitle": "Rezerwacje wydarzeń Twoich obiektów",
+    "pendingTitle": "⏳ Oczekujące ({count})",
+    "noPendingTitle": "Brak oczekujących rezerwacji",
+    "noPendingDescription": "Nowe zapisy na wydarzenia Twoich obiektów pojawią się tutaj.",
+    "resolvedTitle": "🗂️ Rozstrzygnięte (ostatnie)",
+    "noResolvedTitle": "Brak rozstrzygniętych rezerwacji",
+    "noResolvedDescription": "Potwierdzone i odrzucone rezerwacje pojawią się tutaj."
+  },
+  "team": {
+    "breadcrumb": "Zespół",
+    "subtitle": "Saunamistrzowie afiliowani z Twoimi obiektami",
+    "requestsTitle": "📨 Zgłoszenia saunamistrzów ({count})",
+    "noRequestsTitle": "Brak oczekujących zgłoszeń",
+    "sentInvitationsTitle": "📤 Wysłane zaproszenia ({count})",
+    "noSentInvitationsTitle": "Brak oczekujących zaproszeń",
+    "withdraw": "Wycofaj",
+    "withdrawConfirm": "Na pewno wycofaj",
+    "activeTitle": "🤝 Afiliowani mistrzowie ({count})",
+    "noActiveTitle": "Brak afiliowanych saunamistrzów",
+    "noActiveDescription": "Zaproś saunamistrza poniżej albo zatwierdź jego zgłoszenie — relacja zawsze wymaga zgody obu stron.",
+    "inviteTitle": "➕ Zaproś saunamistrza ({facility})",
+    "inviteHint": "Saunamistrz musi przyjąć zaproszenie — afiliacja zawsze wymaga zgody obu stron.",
+    "pickFacilityToInvite": "Aby zaprosić saunamistrza, wybierz konkretny obiekt w przełączniku powyżej — zaproszenie zawsze dotyczy jednego obiektu."
+  },
+  "contextSwitcher": {
+    "allFacilities": "Wszystkie obiekty",
+    "activeContext": "Aktywny kontekst"
+  },
+  "eventProposalActions": {
+    "ariaRole": "Rola organizatora",
+    "approve": "Zatwierdź i opublikuj",
+    "reject": "Odrzuć",
+    "publishedToast": "Wydarzenie opublikowane — organizator dołączył do lineupu",
+    "rejectedToast": "Propozycja odrzucona"
+  },
+  "participationActions": {
+    "ariaRole": "Rola saunamistrza",
+    "approve": "Zatwierdź",
+    "reject": "Odrzuć",
+    "approvedToast": "Saunamistrz dołączył do wydarzenia",
+    "rejectedToast": "Zgłoszenie odrzucone"
+  },
+  "inviteMaster": {
+    "errorPickMaster": "Wybierz saunamistrza",
+    "successToast": "Zaproszenie wysłane — saunamistrz musi je przyjąć ({facility})",
+    "errorToast": "Błąd wysyłania zaproszenia",
+    "placeholder": "Wpisz imię saunamistrza",
+    "emptyLabel": "Nie znaleziono saunamistrza",
+    "ariaMaster": "Saunamistrz do zaproszenia",
+    "invite": "Zaproś"
+  },
+  "inviteMasterToEvent": {
+    "openButton": "📨 Zaproś saunamistrza",
+    "title": "Zaproś saunamistrza",
+    "subtitle": "Saunamistrz pojawi się w lineupie dopiero po przyjęciu zaproszenia — z dokładnie zaoferowaną rolą.",
+    "close": "✕",
+    "ariaEvent": "Wydarzenie",
+    "selectEvent": "— wybierz wydarzenie —",
+    "placeholder": "Wpisz imię saunamistrza",
+    "emptyLabel": "Nie znaleziono saunamistrza",
+    "ariaMaster": "Saunamistrz do zaproszenia",
+    "profile": "profil",
+    "ariaOfferedRole": "Oferowana rola",
+    "offeredRoleOption": "Oferowana rola: {role}",
+    "submit": "Wyślij zaproszenie",
+    "errorPickEvent": "Wybierz wydarzenie",
+    "errorPickMaster": "Wybierz saunamistrza",
+    "successToast": "Zaproszenie wysłane — saunamistrz musi je przyjąć"
+  },
+  "createEvent": {
+    "add": "➕ Dodaj wydarzenie"
+  },
+  "withdrawInvitation": {
+    "confirm": "Wycofać zaproszenie dla „{name}”?",
+    "withdraw": "Wycofaj",
+    "successToast": "Zaproszenie wycofane"
+  }
+}

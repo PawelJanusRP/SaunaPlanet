@@ -13,6 +13,7 @@
 
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { extractFacilityDraft } from '@/app/saunas/importActions'
 import {
   INITIAL_PREVIEW_STATE,
@@ -26,66 +27,80 @@ import {
 } from '@/lib/import/previewState'
 import type { ExtractedField, FacilityDraft, SourceKind } from '@/lib/import/types'
 
-const SOURCE_KIND_LABELS: Record<SourceKind, string> = {
-  website: 'Strona internetowa',
-  facebook_page: 'Strona na Facebooku',
-  facebook_post: 'Post na Facebooku',
-  facebook_event: 'Wydarzenie na Facebooku',
-  instagram_profile: 'Profil na Instagramie',
-  instagram_post: 'Post na Instagramie',
-  google_maps: 'Google Maps',
-  unsupported: 'Nieobsługiwane źródło',
+type ImportT = ReturnType<typeof useTranslations<'sauna'>>
+
+const SOURCE_KIND_KEYS = new Set<SourceKind>([
+  'website',
+  'facebook_page',
+  'facebook_post',
+  'facebook_event',
+  'instagram_profile',
+  'instagram_post',
+  'google_maps',
+  'unsupported',
+])
+
+const FIELD_KEYS = new Set([
+  'name',
+  'description',
+  'address',
+  'city',
+  'country',
+  'phone',
+  'email',
+  'website',
+  'geo',
+  'openingHours',
+  'imageUrl',
+  'socialLinks',
+  'sourceTitle',
+])
+
+const MATCH_REASON_KEYS = new Set([
+  'name',
+  'location',
+  'website',
+  'source_url',
+  'phone',
+])
+
+function sourceKindLabel(t: ImportT, kind: SourceKind): string {
+  return SOURCE_KIND_KEYS.has(kind) ? t(`import.sourceKind.${kind}`) : kind
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  name: 'Nazwa',
-  description: 'Opis',
-  address: 'Adres',
-  city: 'Miasto',
-  country: 'Kraj',
-  phone: 'Telefon',
-  email: 'E-mail',
-  website: 'Strona WWW',
-  geo: 'Współrzędne',
-  openingHours: 'Godziny otwarcia',
-  imageUrl: 'Obraz ze źródła',
-  socialLinks: 'Profile społecznościowe',
-  sourceTitle: 'Tytuł źródła',
+function fieldLabel(t: ImportT, key: string): string {
+  return FIELD_KEYS.has(key) ? t(`import.field.${key}`) : key
 }
 
-const MATCH_REASON_LABELS: Record<string, string> = {
-  name: 'podobna nazwa',
-  location: 'bliska lokalizacja',
-  website: 'ta sama strona WWW',
-  source_url: 'ten sam adres źródłowy',
-  phone: 'ten sam numer telefonu',
+function matchReasonLabel(t: ImportT, reason: string): string {
+  return MATCH_REASON_KEYS.has(reason) ? t(`import.matchReason.${reason}`) : reason
 }
 
-function provenanceLabel(field: ExtractedField<unknown>): string {
-  if (field.origin === 'jsonld') return 'Znalezione w danych strukturalnych strony'
+function provenanceLabel(t: ImportT, field: ExtractedField<unknown>): string {
+  if (field.origin === 'jsonld') return t('import.provenance.jsonld')
   if (field.origin === 'opengraph' || field.origin === 'metadata') {
-    return 'Znalezione w metadanych strony'
+    return t('import.provenance.metadata')
   }
-  return 'Prawdopodobna wartość — sprawdź przed wysłaniem'
+  return t('import.provenance.likely')
 }
 
-function confidenceLabel(field: ExtractedField<unknown>): string | null {
-  if (field.confidence === 'low') return 'sprawdź przed wysłaniem'
-  if (field.confidence === 'medium') return 'średnia pewność'
+function confidenceLabel(t: ImportT, field: ExtractedField<unknown>): string | null {
+  if (field.confidence === 'low') return t('import.confidence.low')
+  if (field.confidence === 'medium') return t('import.confidence.medium')
   return null
 }
 
-function unsupportedMessage(kind: SourceKind | undefined): string {
+function unsupportedMessage(t: ImportT, kind: SourceKind | undefined): string {
   if (kind === 'google_maps') {
-    return 'Import z Google Maps nie jest obsługiwany. Wklej adres oficjalnej strony obiektu albo wypełnij formularz ręcznie.'
+    return t('import.unsupported.google_maps')
   }
   if (kind === 'facebook_page' || kind === 'facebook_post' || kind === 'facebook_event') {
-    return 'Facebook nie udostępnia tych danych do automatycznego importu. Skopiuj informacje ręcznie do formularza poniżej.'
+    return t('import.unsupported.facebook')
   }
   if (kind === 'instagram_profile' || kind === 'instagram_post') {
-    return 'Instagram nie udostępnia danych do automatycznego importu. Skopiuj informacje ręcznie do formularza poniżej.'
+    return t('import.unsupported.instagram')
   }
-  return 'Automatyczny import z tego źródła nie jest obsługiwany — wypełnij formularz ręcznie.'
+  return t('import.unsupported.generic')
 }
 
 function fieldValueText(key: string, field: ExtractedField<unknown>): string {
@@ -118,6 +133,7 @@ export default function ImportFromUrlSection({
   onApply: (draft: FacilityDraft, importId: string | null, importImage: boolean) => void
   onClearImport: () => void
 }) {
+  const t = useTranslations('sauna')
   const [inputUrl, setInputUrl] = useState('')
   const [preview, setPreview] = useState<ImportPreviewState>(INITIAL_PREVIEW_STATE)
   const [applied, setApplied] = useState(false)
@@ -136,7 +152,7 @@ export default function ImportFromUrlSection({
   async function handleExtract() {
     const trimmed = inputUrl.trim()
     if (!trimmed) {
-      toast.error('Podaj adres URL do zaimportowania')
+      toast.error(t('import.errorNoUrl'))
       return
     }
     const { state: loading, token } = beginExtraction(stateRef.current, trimmed)
@@ -162,7 +178,7 @@ export default function ImportFromUrlSection({
     const hasImage = preview.result.draft.imageUrl !== undefined
     onApply(preview.result.draft, preview.result.importId, hasImage && importImage)
     setApplied(true)
-    toast.success('Dane przeniesione do formularza — sprawdź i uzupełnij przed wysłaniem')
+    toast.success(t('import.applied'))
   }
 
   const result = preview.phase === 'success' ? preview.result : null
@@ -177,12 +193,10 @@ export default function ImportFromUrlSection({
   return (
     <div className="mb-4 rounded-3xl border bg-white p-6 shadow-sm">
       <h2 className="mb-1 text-sm font-semibold text-gray-800">
-        🔗 Importuj dane z adresu URL
+        {t('import.heading')}
       </h2>
       <p className="mb-3 text-xs text-gray-500">
-        Wklej adres strony obiektu — spróbujemy wstępnie wypełnić formularz.
-        Wszystkie dane sprawdzisz i poprawisz przed wysłaniem; nic nie
-        publikuje się automatycznie.
+        {t('import.intro')}
       </p>
 
       <div className="flex gap-2">
@@ -191,8 +205,8 @@ export default function ImportFromUrlSection({
           value={inputUrl}
           onChange={(e) => setInputUrl(e.target.value)}
           className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          placeholder="https://adres-strony-obiektu.pl"
-          aria-label="Adres URL do zaimportowania"
+          placeholder={t('import.urlPlaceholder')}
+          aria-label={t('import.urlAriaLabel')}
         />
         {preview.phase === 'loading' ? (
           <button
@@ -200,7 +214,7 @@ export default function ImportFromUrlSection({
             onClick={handleCancel}
             className="shrink-0 rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
           >
-            Anuluj
+            {t('import.cancel')}
           </button>
         ) : (
           <button
@@ -208,18 +222,18 @@ export default function ImportFromUrlSection({
             onClick={handleExtract}
             className="shrink-0 rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
           >
-            Pobierz dane
+            {t('import.fetch')}
           </button>
         )}
       </div>
 
       {preview.phase === 'loading' && (
-        <p className="mt-3 text-sm text-gray-500">⏳ Pobieranie danych ze strony…</p>
+        <p className="mt-3 text-sm text-gray-500">{t('import.loading')}</p>
       )}
 
       {staleUrl && (
         <p className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-2 text-xs text-gray-600">
-          Poniższy podgląd dotyczy wcześniej przetworzonego adresu:{' '}
+          {t('import.stalePreview')}{' '}
           <span className="font-mono">{preview.processedInput}</span>
         </p>
       )}
@@ -228,12 +242,12 @@ export default function ImportFromUrlSection({
         <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
           <p className="text-sm text-orange-800">
             {preview.error.code === 'unsupported-source'
-              ? unsupportedMessage(preview.error.sourceKind)
-              : preview.error.message}
+              ? unsupportedMessage(t, preview.error.sourceKind)
+              : t(`import.results.${preview.error.code}`)}
           </p>
           {preview.error.sourceKind && (
             <p className="mt-1 text-xs text-orange-700">
-              Rozpoznane źródło: {SOURCE_KIND_LABELS[preview.error.sourceKind]}
+              {t('import.recognizedSource')} {sourceKindLabel(t, preview.error.sourceKind)}
               {preview.error.requestedUrl && (
                 <>
                   {' · '}
@@ -243,7 +257,7 @@ export default function ImportFromUrlSection({
             </p>
           )}
           <p className="mt-1 text-xs text-orange-700">
-            Formularz poniżej działa normalnie — możesz wypełnić go ręcznie.
+            {t('import.manualHint')}
           </p>
           {(preview.error.code === 'fetch-failed' || preview.error.code === 'fetch-blocked') && (
             <button
@@ -251,7 +265,7 @@ export default function ImportFromUrlSection({
               onClick={handleExtract}
               className="mt-2 rounded-xl border border-orange-300 px-3 py-1.5 text-xs text-orange-800 hover:bg-orange-100"
             >
-              Spróbuj ponownie
+              {t('import.retry')}
             </button>
           )}
         </div>
@@ -261,10 +275,10 @@ export default function ImportFromUrlSection({
         <div className="mt-3 space-y-3">
           <div className="rounded-xl border border-green-200 bg-green-50 p-3">
             <p className="text-sm font-semibold text-green-800">
-              {result.result === 'ok' ? '✅ Pobrano dane ze strony' : '🟡 Pobrano częściowe dane'}
+              {result.result === 'ok' ? t('import.resultOk') : t('import.resultPartial')}
             </p>
             <p className="mt-1 text-xs text-green-700">
-              Źródło: {SOURCE_KIND_LABELS[result.sourceKind]} ·{' '}
+              {t('import.resultSource')} {sourceKindLabel(t, result.sourceKind)} ·{' '}
               <span className="break-all font-mono">{result.requestedUrl}</span>
             </p>
           </div>
@@ -274,11 +288,11 @@ export default function ImportFromUrlSection({
               <li key={key} className="rounded-xl border p-2.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xs font-medium text-gray-500">
-                    {FIELD_LABELS[key] ?? key}
+                    {fieldLabel(t, key)}
                   </span>
-                  {confidenceLabel(field) && (
+                  {confidenceLabel(t, field) && (
                     <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
-                      {confidenceLabel(field)}
+                      {confidenceLabel(t, field)}
                     </span>
                   )}
                 </div>
@@ -291,12 +305,11 @@ export default function ImportFromUrlSection({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={String(field.value)}
-                      alt="Podgląd obrazu ze strony źródłowej"
+                      alt={t('import.imagePreviewAlt')}
                       className="mt-1 max-h-40 rounded-lg border object-cover"
                     />
                     <p className="mt-1 text-[10px] text-gray-400">
-                      To jest podgląd ze strony źródłowej — nic nie zostało
-                      jeszcze skopiowane do SaunaPlanet.
+                      {t('import.imagePreviewNote')}
                     </p>
                     <label className="mt-2 flex items-start gap-2 text-xs text-gray-700">
                       <input
@@ -306,11 +319,11 @@ export default function ImportFromUrlSection({
                         className="mt-0.5"
                       />
                       <span>
-                        Zaimportuj to zdjęcie do SaunaPlanet
+                        {t('import.imageImportLabel')}
                         <span className="block text-[10px] text-gray-400">
                           {importImage
-                            ? 'Zdjęcie zostanie skopiowane do zgłoszenia PO jego wysłaniu.'
-                            : 'Zdjęcie NIE zostanie skopiowane — pozostanie tylko podgląd.'}
+                            ? t('import.imageImportOn')
+                            : t('import.imageImportOff')}
                         </span>
                       </span>
                     </label>
@@ -319,7 +332,7 @@ export default function ImportFromUrlSection({
                   <p className="break-words text-sm text-gray-800">{fieldValueText(key, field)}</p>
                 )}
                 <p className="mt-0.5 text-[10px] text-gray-400">
-                  {provenanceLabel(field)} ({field.sourceHint})
+                  {provenanceLabel(t, field)} ({field.sourceHint})
                 </p>
               </li>
             ))}
@@ -327,32 +340,31 @@ export default function ImportFromUrlSection({
 
           {extraKeys.length > 0 && (
             <p className="text-xs text-gray-500">
-              ℹ️ Pola{' '}
-              {extraKeys.map((k) => FIELD_LABELS[k] ?? k).join(', ')} nie mają
-              jeszcze miejsca w formularzu — zostały zapisane w dzienniku importu
-              i będą wykorzystane w kolejnych wersjach.
+              {t('import.extraFields', {
+                fields: extraKeys.map((k) => fieldLabel(t, k)).join(', '),
+              })}
             </p>
           )}
 
           {result.duplicates.length > 0 && (
             <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-3">
               <p className="mb-1 text-sm font-semibold text-yellow-800">
-                ⚠️ Ten obiekt może już istnieć w SaunaPlanet.
+                {t('import.duplicatesHeading')}
               </p>
               <ul className="mb-1 space-y-1 text-sm text-yellow-800">
                 {result.duplicates.map((d) => (
                   <li key={d.id}>
                     • {d.name}
                     {d.city && ` (${d.city})`}
-                    {d.status === 'pending' && ' — czeka na moderację'}
+                    {d.status === 'pending' && t('import.duplicatePending')}
                     {d.distance_m !== null && ` · ${(d.distance_m / 1000).toFixed(1)} km`}
                     {d.match_reasons.length > 0 &&
-                      ` · ${d.match_reasons.map((r) => MATCH_REASON_LABELS[r] ?? r).join(', ')}`}
+                      ` · ${d.match_reasons.map((r) => matchReasonLabel(t, r)).join(', ')}`}
                     {d.status === 'active' && (
                       <>
                         {' · '}
                         <a href={`/sauna/${d.id}`} target="_blank" className="underline">
-                          zobacz obiekt
+                          {t('import.duplicateSeeVenue')}
                         </a>
                       </>
                     )}
@@ -360,8 +372,7 @@ export default function ImportFromUrlSection({
                 ))}
               </ul>
               <p className="text-xs text-yellow-700">
-                Jeśli to ten sam obiekt, nie zgłaszaj go ponownie. Decyzję
-                ostatecznie podejmuje moderacja.
+                {t('import.duplicatesHint')}
               </p>
             </div>
           )}
@@ -372,14 +383,14 @@ export default function ImportFromUrlSection({
               onClick={handleApply}
               className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
             >
-              {applied ? 'Wypełnij ponownie' : 'Wypełnij formularz danymi'}
+              {applied ? t('import.applyAgain') : t('import.apply')}
             </button>
             <button
               type="button"
               onClick={handleClear}
               className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
             >
-              Wyczyść zaimportowane dane
+              {t('import.clear')}
             </button>
           </div>
         </div>

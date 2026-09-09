@@ -1,7 +1,8 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/lib/i18n/navigation'
+import { usePathname } from '@/lib/i18n/navigation'
 import type { WorkspaceNavItem } from '@/lib/workspace/types'
 import { WORKSPACE_NAV_ICONS } from '@/lib/navigation/icons'
 
@@ -16,13 +17,16 @@ import { WORKSPACE_NAV_ICONS } from '@/lib/navigation/icons'
 export default function WorkspaceNav({
   items,
   activeKey,
-  ariaLabel = 'Nawigacja panelu',
+  ariaLabel,
 }: {
   items: WorkspaceNavItem[]
   activeKey?: string
   ariaLabel?: string
 }) {
+  const t = useTranslations('workspace')
+  const tRoot = useTranslations()
   const pathname = usePathname()
+  const navAriaLabel = ariaLabel ?? t('aria.nav')
 
   function isActive(item: WorkspaceNavItem) {
     if (activeKey !== undefined) return item.key === activeKey
@@ -30,7 +34,7 @@ export default function WorkspaceNav({
   }
 
   return (
-    <nav aria-label={ariaLabel}>
+    <nav aria-label={navAriaLabel}>
       <ul className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:gap-0.5 md:overflow-visible md:pb-0">
         {items.map((item) => {
           const active = isActive(item)
@@ -47,7 +51,7 @@ export default function WorkspaceNav({
                 }`}
               >
                 {Icon && <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />}
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{tRoot(item.labelKey)}</span>
                 {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
                   <span
                     className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${

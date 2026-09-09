@@ -38,7 +38,12 @@ export type WorkspaceDestinationKey =
 
 export type WorkspaceDestination = {
   key: WorkspaceDestinationKey
-  label: string
+  /**
+   * SP-047: semantic translation key (e.g. 'nav.destinations.profile'),
+   * resolved with next-intl at render. Configuration stores stable keys, not
+   * localized text.
+   */
+  labelKey: string
   href: string
   /**
    * 'available' = the route exists; 'planned' = the route is not implemented
@@ -52,7 +57,8 @@ export type WorkspaceDestination = {
 
 export type WorkspaceNavItem = {
   key: string
-  label: string
+  /** SP-047: semantic translation key resolved with next-intl at render. */
+  labelKey: string
   href: string
   /** Pending-count badge (workspaces are queues first). */
   badgeCount?: number
@@ -61,4 +67,11 @@ export type WorkspaceNavItem = {
 export type WorkspaceBreadcrumb = {
   label: string
   href?: string
+  /**
+   * SP-047E2: optional semantic key for fixed breadcrumb items (workspace
+   * roots), resolved with next-intl at render. When absent, `label` is used
+   * as-is (page-provided labels are already localized; the brand root stays
+   * literal).
+   */
+  labelKey?: string
 }

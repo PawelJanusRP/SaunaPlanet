@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 
 type EditSaunaModalProps = {
@@ -22,6 +23,7 @@ export default function EditItemModal({
   onClose,
   onSaved,
 }: EditSaunaModalProps) {
+  const t = useTranslations('sauna')
   const [name, setName] = useState(item.name)
   const [description, setDescription] = useState(item.description ?? '')
   const [category, setCategory] = useState(item.category)
@@ -31,7 +33,7 @@ export default function EditItemModal({
 
   async function handleSave() {
     if (!name.trim()) {
-      toast.error('Podaj nazwę sauny')
+      toast.error(t('editModal.errorNoName'))
       return
     }
 
@@ -58,25 +60,25 @@ export default function EditItemModal({
     }
 
     await onSaved()
-    toast.success('Sauna zaktualizowana')
+    toast.success(t('editModal.successUpdated'))
     onClose()
   }
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40">
       <div className="w-80 rounded-xl bg-white p-4 shadow-xl">
-        <h2 className="mb-3 text-lg font-bold">Edytuj saunę</h2>
+        <h2 className="mb-3 text-lg font-bold">{t('editModal.heading')}</h2>
 
         <input
           className="mb-2 w-full rounded border p-2"
-          placeholder="Nazwa sauny"
+          placeholder={t('editModal.namePlaceholder')}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <textarea
           className="mb-2 h-28 w-full rounded border p-2"
-          placeholder="Opis"
+          placeholder={t('editModal.descriptionPlaceholder')}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
@@ -86,23 +88,23 @@ export default function EditItemModal({
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="public_sauna">🧖 Sauna publiczna</option>
-          <option value="spa">♨️ SPA / wellness</option>
-          <option value="hotel">🏨 Sauna hotelowa</option>
-          <option value="outdoor">🌲 Sauna plenerowa</option>
-          <option value="event">🔥 Event saunowy</option>
+          <option value="public_sauna">{t('editModal.categories.public_sauna')}</option>
+          <option value="spa">{t('editModal.categories.spa')}</option>
+          <option value="hotel">{t('editModal.categories.hotel')}</option>
+          <option value="outdoor">{t('editModal.categories.outdoor')}</option>
+          <option value="event">{t('editModal.categories.event')}</option>
         </select>
 
         <input
           className="mb-2 w-full rounded border p-2"
-          placeholder="Miasto (opcjonalnie)"
+          placeholder={t('editModal.cityPlaceholder')}
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
 
         <input
           className="mb-3 w-full rounded border p-2"
-          placeholder="Strona www (opcjonalnie)"
+          placeholder={t('editModal.websitePlaceholder')}
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
         />
@@ -113,7 +115,7 @@ export default function EditItemModal({
             className="flex-1 rounded bg-gray-200 p-2 text-sm font-semibold"
             disabled={loading}
           >
-            Anuluj
+            {t('editModal.cancel')}
           </button>
 
           <button
@@ -121,7 +123,7 @@ export default function EditItemModal({
             className="flex-1 rounded bg-black p-2 text-sm font-semibold text-white disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? 'Zapisuję...' : 'Zapisz'}
+            {loading ? t('editModal.saving') : t('editModal.save')}
           </button>
         </div>
       </div>

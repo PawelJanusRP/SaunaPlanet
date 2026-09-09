@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/lib/i18n/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
   inviteMasterToEvent,
   type ParticipationRole,
-} from '@/app/events/participationActions'
+} from '@/app/[locale]/events/participationActions'
 import FacilityCombobox from '@/components/FacilityCombobox'
 
 export type InvitableEvent = { id: string; title: string; eventDate: string; saunaName: string | null }
@@ -18,11 +19,7 @@ export type InvitableMaster = {
   avatarUrl: string | null
 }
 
-const ROLE_OPTIONS: { value: ParticipationRole; label: string }[] = [
-  { value: 'lead', label: 'Lead (prowadzący)' },
-  { value: 'assistant', label: 'Assistant (wsparcie)' },
-  { value: 'guest', label: 'Guest (gościnnie)' },
-]
+const ROLE_VALUES: ParticipationRole[] = ['lead', 'assistant', 'guest']
 
 /**
  * SP-037B slice 5 (rule D): the facility invites a master to a specific
@@ -38,6 +35,7 @@ export default function InviteMasterToEventForm({
   events: InvitableEvent[]
   masters: InvitableMaster[]
 }) {
+  const t = useTranslations('workspace')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -49,8 +47,8 @@ export default function InviteMasterToEventForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!eventId) { toast.error('Wybierz wydarzenie'); return }
-    if (!masterId) { toast.error('Wybierz saunamistrza'); return }
+    if (!eventId) { toast.error(t('inviteMasterToEvent.errorPickEvent')); return }
+    if (!masterId) { toast.error(t('inviteMasterToEvent.errorPickMaster')); return }
 
     setSaving(true)
     const result = await inviteMasterToEvent(eventId, masterId, role)
@@ -60,7 +58,7 @@ export default function InviteMasterToEventForm({
       router.refresh()
       return
     }
-    toast.success('Zaproszenie wysłane — saunamistrz musi je przyjąć')
+    toast.success(t('inviteMasterToEvent.successToast'))
     setOpen(false)
     setEventId('')
     setMasterId(null)
@@ -74,7 +72,7 @@ export default function InviteMasterToEventForm({
         onClick={() => setOpen(true)}
         className="rounded-xl border border-orange-300 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50"
       >
-        📨 Zaproś saunamistrza
+        {t('inviteMasterToEvent.openButton')}
       </button>
     )
   }
@@ -87,13 +85,12 @@ export default function InviteMasterToEventForm({
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Zaproś saunamistrza</h2>
+            <h2 className="text-lg font-bold">{t('inviteMasterToEvent.title')}</h2>
             <p className="text-sm text-gray-500">
-              Saunamistrz pojawi się w lineupie dopiero po przyjęciu
-              zaproszenia — z dokładnie zaoferowaną rolą.
+              {t('inviteMasterToEvent.subtitle')}
             </p>
           </div>
-          <button type="button" onClick={() => setOpen(false)} className="text-gray-500">✕</button>
+          <button type="button" onClick={() => setOpen(false)} className="text-gray-500">{t('inviteMasterToEvent.close')}</button>
         </div>
 
         <div className="space-y-3">
@@ -101,9 +98,9 @@ export default function InviteMasterToEventForm({
             className="w-full rounded-xl border p-3 text-sm"
             value={eventId}
             onChange={(e) => setEventId(e.target.value)}
-            aria-label="Wydarzenie"
+            aria-label={t('inviteMasterToEvent.ariaEvent')}
           >
-            <option value="">— wybierz wydarzenie —</option>
+            <option value="">{t('inviteMasterToEvent.selectEvent')}</option>
             {events.map((ev) => (
               <option key={ev.id} value={ev.id}>
                 {ev.title} · {ev.eventDate}{ev.saunaName ? ` · ${ev.saunaName}` : ''}
@@ -115,10 +112,10 @@ export default function InviteMasterToEventForm({
             saunas={masters.map((m) => ({ id: m.id, name: m.name, city: m.level }))}
             value={masterId}
             onChange={setMasterId}
-            placeholder="Wpisz imię saunamistrza"
-            emptyLabel="Nie znaleziono saunamistrza"
+            placeholder={t('inviteMasterToEvent.placeholder')}
+            emptyLabel={t('inviteMasterToEvent.emptyLabel')}
             groupWhenEmpty={false}
-            ariaLabel="Saunamistrz do zaproszenia"
+            ariaLabel={t('inviteMasterToEvent.ariaMaster')}
           />
 
           {selectedMaster && (
@@ -132,9 +129,9 @@ export default function InviteMasterToEventForm({
               <div className="min-w-0 text-sm">
                 <p className="font-semibold">{selectedMaster.name}</p>
                 <p className="text-xs text-gray-500">
-                  {selectedMaster.level ?? 'saunamistrz'} ·{' '}
+                  {selectedMaster.level ?? t('common.masterLowercase')} ·{' '}
                   <Link href={`/masters/${selectedMaster.id}`} target="_blank" className="underline">
-                    profil
+                    {t('inviteMasterToEvent.profile')}
                   </Link>
                 </p>
               </div>
@@ -145,10 +142,10 @@ export default function InviteMasterToEventForm({
             className="w-full rounded-xl border p-3 text-sm"
             value={role}
             onChange={(e) => setRole(e.target.value as ParticipationRole)}
-            aria-label="Oferowana rola"
+            aria-label={t('inviteMasterToEvent.ariaOfferedRole')}
           >
-            {ROLE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>Oferowana rola: {o.label}</option>
+            {ROLE_VALUES.map((value) => (
+              <option key={value} value={value}>{t('inviteMasterToEvent.offeredRoleOption', { role: t(`roles.${value}`) })}</option>
             ))}
           </select>
 
@@ -157,7 +154,7 @@ export default function InviteMasterToEventForm({
             disabled={saving}
             className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-orange-700 disabled:opacity-60"
           >
-            {saving ? 'Wysyłanie...' : 'Wyślij zaproszenie'}
+            {saving ? t('common.sending') : t('inviteMasterToEvent.submit')}
           </button>
         </div>
       </form>

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
@@ -18,6 +19,7 @@ export default function AddMasterToSaunaModal({
 }: {
   existingEvents: Event[]
 }) {
+  const t = useTranslations('masters')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>('existing')
@@ -70,7 +72,7 @@ export default function AddMasterToSaunaModal({
 
       if (mode === 'new') {
         if (!name.trim()) {
-          toast.error('Podaj imię i nazwisko saunamistrza')
+          toast.error(t('addToSauna.validationName'))
           return
         }
 
@@ -84,7 +86,7 @@ export default function AddMasterToSaunaModal({
         resolvedMasterId = data.id
       } else {
         if (!masterId) {
-          toast.error('Wybierz saunamistrza')
+          toast.error(t('addToSauna.validationMaster'))
           return
         }
       }
@@ -100,15 +102,15 @@ export default function AddMasterToSaunaModal({
       const msg =
         mode === 'new'
           ? eventId
-            ? 'Saunamistrz dodany i przypisany do wydarzenia'
-            : 'Profil saunamistrza utworzony'
-          : 'Saunamistrz przypisany do wydarzenia'
+            ? t('addToSauna.successNewAndAssigned')
+            : t('addToSauna.successProfileCreated')
+          : t('addToSauna.successAssigned')
 
       toast.success(msg)
       handleClose()
       router.refresh()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+      toast.error(e instanceof Error ? e.message : t('common.errorSave'))
     } finally {
       setSaving(false)
     }
@@ -120,7 +122,7 @@ export default function AddMasterToSaunaModal({
         onClick={handleOpen}
         className="mt-3 w-full rounded-xl border border-yellow-400 bg-white px-3 py-2 text-sm font-semibold text-yellow-700 transition hover:bg-yellow-50"
       >
-        ➕ Dodaj saunamistrza
+        {t('addToSauna.openButton')}
       </button>
     )
   }
@@ -129,8 +131,8 @@ export default function AddMasterToSaunaModal({
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-bold">Dodaj saunamistrza</h2>
-          <button onClick={handleClose} className="text-gray-400 hover:text-gray-700">✕</button>
+          <h2 className="font-bold">{t('addToSauna.title')}</h2>
+          <button onClick={handleClose} aria-label={t('common.close')} className="text-gray-400 hover:text-gray-700">✕</button>
         </div>
 
         <div className="mb-4 flex overflow-hidden rounded-xl border text-sm font-semibold">
@@ -138,25 +140,25 @@ export default function AddMasterToSaunaModal({
             onClick={() => setMode('existing')}
             className={`flex-1 py-2 transition ${mode === 'existing' ? 'bg-yellow-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
           >
-            Istniejący
+            {t('addToSauna.tabExisting')}
           </button>
           <button
             onClick={() => setMode('new')}
             className={`flex-1 py-2 transition ${mode === 'new' ? 'bg-yellow-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
           >
-            Nowy profil
+            {t('addToSauna.tabNew')}
           </button>
         </div>
 
         {mode === 'existing' ? (
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Saunamistrz</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('addToSauna.masterLabel')}</label>
             <select
               value={masterId}
               onChange={(e) => setMasterId(e.target.value)}
               className="w-full rounded-xl border p-2 text-sm"
             >
-              <option value="">Wybierz saunamistrza</option>
+              <option value="">{t('addToSauna.selectMaster')}</option>
               {allMasters.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}{m.level ? ` (${m.level})` : ''}
@@ -167,35 +169,35 @@ export default function AddMasterToSaunaModal({
         ) : (
           <div className="space-y-3">
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Imię i nazwisko *</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">{t('common.nameLabel')}</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="np. Jan Kowalski"
+                placeholder={t('common.namePlaceholder')}
                 className="w-full rounded-xl border p-2 text-sm"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Poziom</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">{t('common.levelLabel')}</label>
               <select
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
                 className="w-full rounded-xl border p-2 text-sm"
               >
-                <option value="master">Master</option>
-                <option value="senior">Senior</option>
-                <option value="certified">Certified</option>
-                <option value="guest">Guest</option>
+                <option value="master">{t('levels.master')}</option>
+                <option value="senior">{t('levels.senior')}</option>
+                <option value="certified">{t('levels.certified')}</option>
+                <option value="guest">{t('levels.guest')}</option>
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold text-gray-700">Bio</label>
+              <label className="mb-1 block text-sm font-semibold text-gray-700">{t('common.bioLabel')}</label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={2}
-                placeholder="Krótki opis (opcjonalnie)..."
+                placeholder={t('common.bioPlaceholder')}
                 className="w-full rounded-xl border p-2 text-sm"
               />
             </div>
@@ -204,15 +206,15 @@ export default function AddMasterToSaunaModal({
 
         {existingEvents.length > 0 ? (
           <div className="mt-4 space-y-3 border-t pt-4">
-            <div className="text-sm font-semibold text-gray-700">Przypisz do wydarzenia</div>
+            <div className="text-sm font-semibold text-gray-700">{t('addToSauna.assignSection')}</div>
             <div>
-              <label className="mb-1 block text-xs text-gray-500">Wydarzenie</label>
+              <label className="mb-1 block text-xs text-gray-500">{t('addToSauna.eventLabel')}</label>
               <select
                 value={eventId}
                 onChange={(e) => setEventId(e.target.value)}
                 className="w-full rounded-xl border p-2 text-sm"
               >
-                <option value="">Bez przypisania</option>
+                <option value="">{t('addToSauna.noEventAssignment')}</option>
                 {existingEvents.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.title} ({e.event_date.substring(0, 10)})
@@ -222,22 +224,22 @@ export default function AddMasterToSaunaModal({
             </div>
             {eventId && (
               <div>
-                <label className="mb-1 block text-xs text-gray-500">Rola</label>
+                <label className="mb-1 block text-xs text-gray-500">{t('addToSauna.roleLabel')}</label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full rounded-xl border p-2 text-sm"
                 >
-                  <option value="lead">Prowadzący</option>
-                  <option value="assistant">Asystent</option>
-                  <option value="guest">Gość</option>
+                  <option value="lead">{t('eventRoles.lead')}</option>
+                  <option value="assistant">{t('eventRoles.assistant')}</option>
+                  <option value="guest">{t('eventRoles.guest')}</option>
                 </select>
               </div>
             )}
           </div>
         ) : (
           <p className="mt-3 text-xs text-gray-400">
-            Brak nadchodzących wydarzeń — po dodaniu saunamistrza przypisz go do wydarzenia.
+            {t('addToSauna.noUpcomingEvents')}
           </p>
         )}
 
@@ -246,7 +248,7 @@ export default function AddMasterToSaunaModal({
           disabled={saving}
           className="mt-4 w-full rounded-xl bg-yellow-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {saving ? 'Zapisywanie...' : 'Zapisz'}
+          {saving ? t('common.saving') : t('addToSauna.submit')}
         </button>
       </div>
     </div>

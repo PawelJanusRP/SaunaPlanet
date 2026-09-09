@@ -1,0 +1,68 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "submit": "Submit",
+    "back": "Back",
+    "confirm": "Confirm",
+    "retry": "Try again",
+    "search": "Search",
+    "loadMore": "Show more"
+  },
+  "state": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "empty": "No data"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "moderator": "Moderator",
+    "user": "User"
+  },
+  "language": {
+    "label": "Language",
+    "choose": "Choose language"
+  },
+  "specialties": {
+    "classic-aufguss": "Classic Aufguss",
+    "show-aufguss": "Show Aufguss",
+    "relaxation-ceremony": "Relaxation ceremony",
+    "herbal-ceremony": "Herbal ceremony",
+    "meditation-ceremony": "Meditation ceremony",
+    "peeling-ritual": "Peeling ritual",
+    "cosmetic-ritual": "Cosmetic ritual",
+    "sound-ceremony": "Sound ceremony",
+    "themed-ceremony": "Themed ceremony",
+    "competition-ceremony": "Competition ceremony",
+    "large-event-hosting": "Hosting large events",
+    "training-workshops": "Training & workshops"
+  },
+  "languages": {
+    "pl": "Polish",
+    "en": "English",
+    "de": "German",
+    "uk": "Ukrainian",
+    "cs": "Czech",
+    "sk": "Slovak",
+    "fr": "French",
+    "es": "Spanish"
+  },
+  "validation": {
+    "name-empty": "Full name cannot be empty",
+    "website-invalid-url": "Enter a valid website address (https://...)",
+    "website-not-https": "The website must use https://",
+    "website-credentials": "The website address cannot contain credentials",
+    "website-port": "The website address cannot use a non-standard port",
+    "slug-too-short": "The profile address must be at least 3 characters",
+    "slug-too-long": "The profile address can be at most 40 characters",
+    "slug-invalid-shape": "The profile address may contain only lowercase letters, digits and single hyphens",
+    "slug-reserved": "This profile address is reserved — choose another",
+    "slug-uuid-like": "This profile address looks like a technical identifier — choose another",
+    "year-future": "The start year cannot be in the future",
+    "year-invalid": "Enter a valid start year (from 1980)"
+  }
+}

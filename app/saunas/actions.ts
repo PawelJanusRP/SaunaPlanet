@@ -1,8 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { sanitizeSocialLinks } from '@/lib/import/social'
+
+// Minimal shape of the next-intl translator used by the sync helpers below.
+// getTranslations() resolves the active locale via the NEXT_LOCALE cookie
+// fallback inside Server Actions (see i18n/request.ts).
+type SaunaT = Awaited<ReturnType<typeof getTranslations<'sauna'>>>
 
 /**
  * SP-036 facility submission workflow (docs/SP036_ARCHITECTURE.md §5.1).
@@ -53,29 +59,30 @@ const OPEN_SUBMISSION_LIMIT = 5
  * (already user-oriented Polish) pass through, everything else maps to a
  * category message and the raw cause goes to the server log only.
  */
-function translateDbError(raw: string): string {
+function translateDbError(raw: string, t: SaunaT): string {
   // own trigger/RPC messages are user-oriented Polish — pass them through
   if (/oczekując|moderacj|nie istnieje|Tylko zatwierdzony|musi mieć|wymaga|dołączony|można tworzyć|Limit miejsc|Podaj |Współrzędne/.test(raw)) {
     return raw
   }
   if (raw.includes('row-level security') || raw.includes('permission denied')) {
-    return 'Brak uprawnień do wykonania tej operacji'
+    return t('actions.dbNoPermission')
   }
   console.error('facility action db error:', raw)
-  return 'Operacja nie powiodła się — spróbuj ponownie'
+  return t('actions.dbGeneric')
 }
 
 function validateCoordinates(
   lat: number | null,
-  lng: number | null
+  lng: number | null,
+  t: SaunaT
 ): string | null {
   if (lat === null && lng === null) return null // optional (e.g. /submit)
-  if (lat === null || lng === null) return 'Podaj obie współrzędne albo żadną'
+  if (lat === null || lng === null) return t('actions.coordsBothOrNone')
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return 'Współrzędne muszą być liczbami'
+    return t('actions.coordsNotNumbers')
   }
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    return 'Współrzędne są poza dopuszczalnym zakresem'
+    return t('actions.coordsOutOfRange')
   }
   return null
 }
@@ -109,12 +116,13 @@ export async function submitFacility(
   data: FacilitySubmissionInput
 ): Promise<{ id?: string; status?: 'pending' | 'active'; error?: string }> {
   try {
+    const t = await getTranslations('sauna')
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Musisz być zalogowany, aby zgłosić saunę' }
+    if (!user) return { error: t('actions.loginRequired') }
 
-    if (!data.name.trim()) return { error: 'Podaj nazwę sauny lub obiektu' }
-    const coordError = validateCoordinates(data.latitude, data.longitude)
+    if (!data.name.trim()) return { error: t('actions.noName') }
+    const coordError = validateCoordinates(data.latitude, data.longitude, t)
     if (coordError) return { error: coordError }
 
     const role = await getCurrentUserRole()
@@ -130,7 +138,7 @@ export async function submitFacility(
         .eq('status', 'pending')
       if ((count ?? 0) >= OPEN_SUBMISSION_LIMIT) {
         return {
-          error: `Masz już ${OPEN_SUBMISSION_LIMIT} zgłoszeń oczekujących na moderację — poczekaj na ich rozpatrzenie`,
+          error: t('actions.submissionCap', { limit: OPEN_SUBMISSION_LIMIT }),
         }
       }
     }
@@ -159,13 +167,13 @@ export async function submitFacility(
       .select('id, status')
       .single()
 
-    if (error) return { error: translateDbError(error.message) }
+    if (error) return { error: translateDbError(error.message, t) }
 
     revalidatePath('/admin')
     return { id: created.id, status: created.status as 'pending' | 'active' }
   } catch (e) {
     console.error('submitFacility failed:', e)
-    return { error: 'Nie udało się zgłosić sauny — spróbuj ponownie' }
+    return { error: (await getTranslations('sauna'))('actions.submitFailed') }
   }
 }
 
@@ -197,6 +205,7 @@ export async function submitFacilityWithEvent(
   eventStatus?: 'pending'
   error?: string
 }> {
+  const t = await getTranslations('sauna')
   const supabase = await createClient()
   const { data, error } = await supabase.rpc(
     'submit_facility_with_master_event',
@@ -217,7 +226,7 @@ export async function submitFacilityWithEvent(
     }
   )
 
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: translateDbError(error.message, t) }
 
   const result = data as { facility_id: string; event_id: string }
 
@@ -253,7 +262,10 @@ export async function submitFacilityWithEvent(
 
 async function assertModerationResult(): Promise<string | null> {
   const role = await getCurrentUserRole()
-  if (role !== 'admin' && role !== 'moderator') return 'Brak uprawnień'
+  if (role !== 'admin' && role !== 'moderator') {
+    const t = await getTranslations('sauna')
+    return t('actions.unauthorized')
+  }
   return null
 }
 
@@ -273,11 +285,12 @@ export async function approveFacility(
   const denied = await assertModerationResult()
   if (denied) return { error: denied }
 
+  const t = await getTranslations('sauna')
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('approve_facility_submission', {
     target_sauna_id: saunaId,
   })
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: translateDbError(error.message, t) }
 
   revalidatePath('/admin')
   revalidatePath('/events')
@@ -307,11 +320,12 @@ export async function rejectFacility(
   const denied = await assertModerationResult()
   if (denied) return { error: denied }
 
+  const t = await getTranslations('sauna')
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('reject_facility_submission', {
     target_sauna_id: saunaId,
   })
-  if (error) return { error: translateDbError(error.message) }
+  if (error) return { error: translateDbError(error.message, t) }
 
   revalidatePath('/admin')
   const result = data as { rejected_event_ids?: string[] } | null

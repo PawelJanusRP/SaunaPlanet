@@ -1,9 +1,10 @@
 'use client'
 
 import { useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
-import { withdrawEventInvitation } from '@/app/events/participationActions'
+import { withdrawEventInvitation } from '@/app/[locale]/events/participationActions'
 
 /**
  * SP-037B slice 5: staff withdraws a pending invitation. MVP limitation
@@ -16,15 +17,16 @@ export default function WithdrawInvitationButton({
   invitationId: string
   masterName: string
 }) {
+  const t = useTranslations('workspace')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   function handleWithdraw() {
-    if (!confirm(`Wycofać zaproszenie dla „${masterName}”?`)) return
+    if (!confirm(t('withdrawInvitation.confirm', { name: masterName }))) return
     startTransition(async () => {
       const result = await withdrawEventInvitation(invitationId)
       if (result.error) toast.error(result.error)
-      else toast.success('Zaproszenie wycofane')
+      else toast.success(t('withdrawInvitation.successToast'))
       router.refresh()
     })
   }
@@ -35,7 +37,7 @@ export default function WithdrawInvitationButton({
       disabled={isPending}
       className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
     >
-      Wycofaj
+      {t('withdrawInvitation.withdraw')}
     </button>
   )
 }

@@ -12,42 +12,23 @@ export const MASTER_STUDIO_LABEL = 'Studio'
 export const MASTER_STUDIO_HOME = '/studio'
 
 export const MASTER_NAV: WorkspaceNavItem[] = [
-  { key: 'dashboard', label: 'Pulpit', href: '/studio' },
-  { key: 'profile', label: 'Profil', href: '/studio/profile' },
-  { key: 'events', label: 'Moje wydarzenia', href: '/studio/events' },
-  { key: 'affiliations', label: 'Afiliacje', href: '/studio/affiliations' },
-  { key: 'settings', label: 'Ustawienia', href: '/studio/settings' },
+  { key: 'dashboard', labelKey: 'nav.master.dashboard', href: '/studio' },
+  { key: 'profile', labelKey: 'nav.master.profile', href: '/studio/profile' },
+  { key: 'events', labelKey: 'nav.master.events', href: '/studio/events' },
+  { key: 'affiliations', labelKey: 'nav.master.affiliations', href: '/studio/affiliations' },
+  { key: 'settings', labelKey: 'nav.master.settings', href: '/studio/settings' },
   // SP-039P0: public Quick Start — reachable for every owner, including
   // pending ones (help never depends on approved status).
-  { key: 'help', label: 'Pomoc', href: '/help/saunamaster' },
+  { key: 'help', labelKey: 'nav.master.help', href: '/help/saunamaster' },
 ]
 
 /** Breadcrumb trail: platform root → studio home → optional current page. */
 export function masterBreadcrumbs(pageLabel?: string): WorkspaceBreadcrumb[] {
   const trail: WorkspaceBreadcrumb[] = [
     { label: 'SaunaPlanet', href: '/' },
-    { label: MASTER_STUDIO_LABEL, href: MASTER_STUDIO_HOME },
+    { label: MASTER_STUDIO_LABEL, labelKey: 'nav.destinations.master-studio', href: MASTER_STUDIO_HOME },
   ]
   if (pageLabel) trail.push({ label: pageLabel })
   return trail
 }
 
-export const MASTER_STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Oczekuje na moderację',
-  approved: '✓ Zatwierdzony',
-  rejected: '✗ Odrzucony',
-}
-
-export const AFFILIATION_STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Oczekuje',
-  approved: '✓ Aktywna',
-  rejected: '✗ Odrzucona',
-  ended: '— Zakończona',
-}
-
-/** SP-037: sauna_event_masters statuses as seen by the master. */
-export const PARTICIPATION_STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Oczekuje na decyzję obiektu',
-  approved: '✓ Występujesz',
-  rejected: '✗ Odrzucone',
-}

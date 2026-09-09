@@ -34,7 +34,7 @@ vi.mock('@/lib/supabase/server', () => ({
   getCurrentUserRole: vi.fn(async () => 'admin'),
 }))
 
-vi.mock('@/app/(main)/admin/claimActions', () => ({
+vi.mock('@/app/[locale]/(main)/admin/claimActions', () => ({
   createClaimInvitation: vi.fn(),
   regenerateClaimInvitation: vi.fn(),
   markClaimInvitationSent: vi.fn(),
@@ -46,11 +46,11 @@ import {
   createClaimInvitation,
   listClaimInvitations,
   regenerateClaimInvitation,
-} from '@/app/(main)/admin/claimActions'
+} from '@/app/[locale]/(main)/admin/claimActions'
 import {
   generateMasterInvitation,
   regenerateMasterInvitation,
-} from '@/app/(main)/admin/masters/pilot/actions'
+} from '@/app/[locale]/(main)/admin/masters/pilot/actions'
 
 const MASTER_ID = '33333333-3333-3333-3333-333333333333'
 const ORIGINAL_ORIGIN = process.env.CLAIM_PUBLIC_ORIGIN

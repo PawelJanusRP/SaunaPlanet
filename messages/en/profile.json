@@ -1,0 +1,177 @@
+{
+  "greeting": "Hi, {name}!",
+  "todayQueue": {
+    "empty": "No events today."
+  },
+  "ownerWorkspace": {
+    "title": "🏢 Owner workspace",
+    "description": "Managing facilities, reservations and events has moved to the owner workspace.",
+    "cta": "Go →"
+  },
+  "dashboard": {
+    "upcomingEvents": {
+      "title": "🔥 Upcoming events",
+      "seeAll": "See all →",
+      "emptyTitle": "No upcoming events",
+      "emptyDescription": "Register for an event or mark it as “I'm going” and it will appear here.",
+      "emptyAction": "Browse events"
+    },
+    "favorites": {
+      "title": "♥ Favorite saunas",
+      "seeAll": "See all ({count}) →"
+    },
+    "activity": {
+      "title": "⭐ Recent activity",
+      "seeAll": "My reviews →",
+      "emptyTitle": "No activity",
+      "emptyDescription": "Your sauna and event reviews will appear here.",
+      "eventReviewKind": "Event review",
+      "saunaReviewKind": "Sauna review",
+      "eventFallback": "Event",
+      "saunaFallback": "Sauna"
+    }
+  },
+  "favorites": {
+    "subtitle": "Saunas you marked as favorites",
+    "breadcrumb": "Favorites",
+    "title": "♥ Favorite saunas ({count})",
+    "emptyTitle": "No favorite saunas",
+    "emptyDescription": "Add saunas to favorites on their pages to keep them at hand.",
+    "emptyAction": "Browse saunas"
+  },
+  "details": {
+    "subtitle": "Your public identity on SaunaPlanet",
+    "breadcrumb": "Profile",
+    "nameSection": "Full name",
+    "nameHint": "Shown next to your reviews and comments.",
+    "comingSoonSection": "Coming soon to your profile",
+    "comingSoonBadge": "Soon",
+    "fields": {
+      "avatar": {
+        "label": "Avatar",
+        "hint": "Profile photo shown next to reviews"
+      },
+      "bio": {
+        "label": "Bio",
+        "hint": "A short description about you"
+      },
+      "location": {
+        "label": "Location",
+        "hint": "Your city"
+      },
+      "languages": {
+        "label": "Languages",
+        "hint": "Languages you speak"
+      },
+      "publicProfile": {
+        "label": "Public profile",
+        "hint": "Profile visibility to other users"
+      }
+    }
+  },
+  "events": {
+    "subtitle": "Your reservations and followed events",
+    "breadcrumb": "Events",
+    "status": {
+      "pending": "⏳ Pending",
+      "confirmed": "✓ Confirmed",
+      "cancelled": "✗ Cancelled"
+    },
+    "reservations": {
+      "title": "🎟️ My reservations",
+      "emptyTitle": "No reservations",
+      "emptyDescription": "Click “Register” on an event page to reserve a spot.",
+      "emptyAction": "Browse events"
+    },
+    "interested": {
+      "title": "🔥 Following (“I'm going”)",
+      "emptyTitle": "No followed events",
+      "emptyDescription": "Mark an upcoming event as “I'm going” and it will appear here.",
+      "emptyAction": "Browse events"
+    }
+  },
+  "reviews": {
+    "subtitle": "Reviews you have written",
+    "breadcrumb": "Reviews",
+    "saunaFallback": "Sauna",
+    "eventFallback": "Event",
+    "saunaSection": {
+      "title": "🧖 Sauna reviews",
+      "emptyTitle": "No sauna reviews",
+      "emptyDescription": "Rate a sauna you visited on its page and the review will appear here.",
+      "emptyAction": "Browse saunas"
+    },
+    "eventSection": {
+      "title": "🔥 Event reviews",
+      "emptyTitle": "No event reviews",
+      "emptyDescription": "After an event ends you can rate it on its page.",
+      "emptyAction": "Browse events"
+    }
+  },
+  "settings": {
+    "subtitle": "Account settings",
+    "breadcrumb": "Settings",
+    "accountSection": "Account details",
+    "email": "Email:",
+    "role": "Role:",
+    "createdAt": "Account created:",
+    "id": "ID:",
+    "roles": {
+      "user": "User",
+      "moderator": "Moderator",
+      "admin": "Administrator"
+    },
+    "passwordSection": "Password",
+    "notificationsSection": "Notifications",
+    "notificationsEmptyTitle": "Notification settings will be available soon",
+    "notificationsEmptyDescription": "Notifications about reservations and events will arrive with the notification system."
+  },
+  "editName": {
+    "labelInline": "Full name: ",
+    "notProvided": "Not provided",
+    "edit": "Edit",
+    "heading": "Full name",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "firstNamePlaceholder": "John",
+    "lastNamePlaceholder": "Smith",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "errorSave": "Save failed",
+    "successSave": "Details updated"
+  },
+  "changePassword": {
+    "trigger": "Change password",
+    "heading": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Repeat password",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "errorTooShort": "Password must be at least 6 characters",
+    "errorMismatch": "Passwords do not match",
+    "success": "Password changed"
+  },
+  "uploadImage": {
+    "avatar": {
+      "add": "📷 Add avatar",
+      "change": "📷 Change avatar",
+      "success": "Avatar updated",
+      "error": "Avatar upload failed",
+      "denied": "You are not allowed to change this profile's avatar"
+    },
+    "cover": {
+      "add": "🖼️ Add cover photo",
+      "change": "🖼️ Change cover photo",
+      "success": "Cover photo updated",
+      "error": "Cover photo upload failed",
+      "denied": "You are not allowed to change this profile's photo"
+    },
+    "uploading": "Uploading..."
+  },
+  "actions": {
+    "mustBeLoggedIn": "You must be signed in",
+    "managerRequestDuplicate": "You have already requested this sauna"
+  }
+}

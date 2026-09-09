@@ -1,0 +1,53 @@
+{
+  "results": {
+    "submitted": "Profil został zgłoszony do publikacji — czeka na moderację.",
+    "already_submitted": "Profil jest już zgłoszony do publikacji.",
+    "withdrawn": "Zgłoszenie zostało wycofane.",
+    "already_draft": "Profil jest już w wersji roboczej.",
+    "unpublished": "Profil został wycofany z publikacji.",
+    "already_unpublished": "Profil nie jest opublikowany.",
+    "published": "Profil został opublikowany.",
+    "already_published": "Profil jest już opublikowany.",
+    "changes_requested": "Przekazano prośbę o zmiany do właściciela profilu.",
+    "already_changes_requested": "Prośba o zmiany została już przekazana.",
+    "suspended": "Publikacja profilu została zawieszona.",
+    "already_suspended": "Publikacja profilu jest już zawieszona.",
+    "restored": "Profil przywrócono do wersji roboczej.",
+    "invalid_transition": "Ta operacja nie jest możliwa w obecnym stanie profilu.",
+    "profile_incomplete": "Profil jest niekompletny — uzupełnij wymagane pola przed zgłoszeniem.",
+    "reason_required": "Podaj uzasadnienie tej operacji.",
+    "master_not_found": "Nie znaleziono profilu saunamistrza.",
+    "master_not_approved": "Profil nie został jeszcze zatwierdzony przez moderację.",
+    "not_owner": "Tylko właściciel profilu może wykonać tę operację.",
+    "not_authenticated": "Zaloguj się, aby wykonać tę operację.",
+    "not_authorized": "Nie masz uprawnień do tej operacji.",
+    "unavailable": "Chwilowy problem techniczny — spróbuj ponownie."
+  },
+  "missingFields": {
+    "name": "imię i nazwisko",
+    "city": "miasto lub obszar działania",
+    "bio": "opis (min. 80 znaków)",
+    "avatar": "zdjęcie profilowe",
+    "specialties": "co najmniej jedna specjalizacja"
+  },
+  "statusLabels": {
+    "draft": "Wersja robocza",
+    "submitted": "Zgłoszony do moderacji",
+    "changes_requested": "Moderacja prosi o zmiany",
+    "published": "Opublikowany",
+    "legacy_published": "Opublikowany (profil zweryfikowany historycznie)",
+    "suspended": "Publikacja zawieszona"
+  },
+  "statusHints": {
+    "draft": "Profil nie jest widoczny publicznie. Uzupełnij wymagane pola i zgłoś go do publikacji.",
+    "submitted": "Profil czeka na przegląd moderacji. Do czasu zatwierdzenia nie jest widoczny publicznie.",
+    "changes_requested": "Moderacja poprosiła o poprawki. Po ich wprowadzeniu zgłoś profil ponownie.",
+    "published": "Profil jest widoczny publicznie w katalogu saunamistrzów.",
+    "legacy_published": "Profil jest widoczny publicznie na dotychczasowych zasadach.",
+    "suspended": "Publikacja została zawieszona przez moderację. Skontaktuj się z administracją."
+  },
+  "notApprovedGuidance": {
+    "message": "Najpierw zatwierdź profil saunamistrza. Publikacja wizytówki jest możliwa dopiero po zatwierdzeniu profilu podstawowego.",
+    "actionLabel": "Przejdź do moderacji saunamistrzów"
+  }
+}

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useTranslations, useFormatter } from 'next-intl'
+import { formatEventPrice } from '@/lib/i18n/formatPrice'
+import { Link } from '@/lib/i18n/navigation'
 import CalendarView from '@/components/events/CalendarView'
 
 type UpcomingEvent = {
@@ -20,6 +22,8 @@ export default function EventsPageClient({
 }: {
   events: UpcomingEvent[]
 }) {
+  const t = useTranslations('events')
+  const format = useFormatter()
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const currentDate = new Date()
@@ -48,7 +52,7 @@ export default function EventsPageClient({
 
           {selectedEvents.length === 0 ? (
             <div className="text-sm text-gray-600">
-              Brak wydarzeń tego dnia.
+              {t('list.emptyForDay')}
             </div>
           ) : (
             <div className="space-y-3">
@@ -70,14 +74,12 @@ export default function EventsPageClient({
                   <div className="text-sm text-gray-500">
                     {event.event_time
                       ? event.event_time.substring(0, 5)
-                      : 'Godzina niepodana'}
+                      : t('list.timeMissing')}
                   </div>
 
                   {event.price && (
                     <div className="mt-1 text-sm font-semibold text-orange-700">
-                      {event.price.includes('zł')
-                        ? event.price
-                        : `${event.price} zł`}
+                      {formatEventPrice(format, event.price)}
                     </div>
                   )}
                 </Link>
