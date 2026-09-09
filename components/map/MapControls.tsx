@@ -37,7 +37,7 @@ export default function MapControls({
 }: Props) {
   return (
     <>
-      <button type="button" onClick={onFilters} aria-label="Filtry" title="Filtry" className={`${BTN} relative`} style={TL}>
+      <button type="button" onClick={onFilters} aria-label="Filtry" title="Filtry" className={BTN} style={TL}>
         <SlidersHorizontal className="h-[22px] w-[22px]" aria-hidden="true" />
         {filtersActive && (
           <span
