@@ -253,5 +253,23 @@
       "nickname_too_long": "Pseudonym is too long (max. 60 characters)",
       "unexpected_error": "Couldn't save the data — please try again"
     }
+  },
+  "status": {
+    "master": {
+      "pending": "⏳ Awaiting moderation",
+      "approved": "✓ Approved",
+      "rejected": "✗ Rejected"
+    },
+    "affiliation": {
+      "pending": "⏳ Pending",
+      "approved": "✓ Active",
+      "rejected": "✗ Rejected",
+      "ended": "— Ended"
+    },
+    "participation": {
+      "pending": "⏳ Awaiting the venue’s decision",
+      "approved": "✓ You’re performing",
+      "rejected": "✗ Rejected"
+    }
   }
 }

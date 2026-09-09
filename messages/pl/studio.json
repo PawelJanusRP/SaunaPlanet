@@ -253,5 +253,23 @@
       "nickname_too_long": "Pseudonim jest za długi (maks. 60 znaków)",
       "unexpected_error": "Nie udało się zapisać danych — spróbuj ponownie"
     }
+  },
+  "status": {
+    "master": {
+      "pending": "⏳ Oczekuje na moderację",
+      "approved": "✓ Zatwierdzony",
+      "rejected": "✗ Odrzucony"
+    },
+    "affiliation": {
+      "pending": "⏳ Oczekuje",
+      "approved": "✓ Aktywna",
+      "rejected": "✗ Odrzucona",
+      "ended": "— Zakończona"
+    },
+    "participation": {
+      "pending": "⏳ Oczekuje na decyzję obiektu",
+      "approved": "✓ Występujesz",
+      "rejected": "✗ Odrzucone"
+    }
   }
 }

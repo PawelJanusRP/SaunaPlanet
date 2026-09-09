@@ -9,7 +9,6 @@ import MasterProfileForm from '@/components/studio/MasterProfileForm'
 import UploadAvatarButton, { UploadMasterImageButton } from '@/components/UploadAvatarButton'
 import {
   MASTER_NAV,
-  MASTER_STATUS_LABELS,
   MASTER_STUDIO_LABEL,
   masterBreadcrumbs,
 } from '@/lib/workspace/master'
@@ -107,7 +106,7 @@ export default async function StudioProfilePage() {
               </span>
             )}
             <span className="rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-600">
-              {MASTER_STATUS_LABELS[profile.status] ?? profile.status}
+              {t.has(`status.master.${profile.status}`) ? t(`status.master.${profile.status}`) : profile.status}
             </span>
           </div>
           <p className="mb-4 text-xs text-gray-400">

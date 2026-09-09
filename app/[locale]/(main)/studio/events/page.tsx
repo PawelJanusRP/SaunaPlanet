@@ -13,7 +13,6 @@ import InvitationResponseButtons from '@/components/studio/InvitationResponseBut
 import {
   MASTER_NAV,
   MASTER_STUDIO_LABEL,
-  PARTICIPATION_STATUS_LABELS,
   masterBreadcrumbs,
 } from '@/lib/workspace/master'
 import { loadMasterStudioScope } from '@/lib/workspace/masterServer'
@@ -204,7 +203,7 @@ export default async function StudioEventsPage() {
                     </span>
                   ) : (
                     <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                      {PARTICIPATION_STATUS_LABELS.approved}
+                      {t('status.participation.approved')}
                     </span>
                   )}
                 </div>
@@ -229,7 +228,7 @@ export default async function StudioEventsPage() {
                     }`}
                   >
                     {r.status === 'rejected'
-                      ? PARTICIPATION_STATUS_LABELS.rejected
+                      ? t('status.participation.rejected')
                       : t('events.appearanceFinished')}
                   </span>
                 </div>

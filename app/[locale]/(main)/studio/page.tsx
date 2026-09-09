@@ -12,7 +12,6 @@ import FirstStepsCard from '@/components/studio/FirstStepsCard'
 import PublicationStatusCard from '@/components/studio/PublicationStatusCard'
 import {
   MASTER_NAV,
-  MASTER_STATUS_LABELS,
   MASTER_STUDIO_LABEL,
   masterBreadcrumbs,
 } from '@/lib/workspace/master'
@@ -174,7 +173,7 @@ export default async function StudioDashboardPage() {
               <p className="font-bold">{profile.name}</p>
               <p className="mt-0.5 text-sm text-gray-500">
                 {profile.level && <span className="mr-2 capitalize">{profile.level}</span>}
-                {MASTER_STATUS_LABELS[profile.status] ?? profile.status}
+                {t.has(`status.master.${profile.status}`) ? t(`status.master.${profile.status}`) : profile.status}
               </p>
               <Link href={`/masters/${profile.id}`} className="mt-0.5 inline-block text-sm text-orange-700 hover:underline">
                 {t('dashboard.viewPublicProfile')}

@@ -7,7 +7,6 @@ import WorkspaceSection from '@/components/workspace/WorkspaceSection'
 import StudioAccessNotice from '@/components/studio/StudioAccessNotice'
 import {
   MASTER_NAV,
-  MASTER_STATUS_LABELS,
   MASTER_STUDIO_LABEL,
   masterBreadcrumbs,
 } from '@/lib/workspace/master'
@@ -48,7 +47,7 @@ export default async function StudioSettingsPage() {
             <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5">
               <span className="text-gray-500">{t('settings.profileStatus')}</span>
               <span className="font-semibold text-gray-700">
-                {MASTER_STATUS_LABELS[profile.status] ?? profile.status}
+                {t.has(`status.master.${profile.status}`) ? t(`status.master.${profile.status}`) : profile.status}
               </span>
             </div>
           </div>

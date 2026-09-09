@@ -11,7 +11,6 @@ import EndAffiliationButton from '@/components/studio/EndAffiliationButton'
 import SetPrimaryAffiliationButton from '@/components/studio/SetPrimaryAffiliationButton'
 import RequestAffiliationForm from '@/components/studio/RequestAffiliationForm'
 import {
-  AFFILIATION_STATUS_LABELS,
   MASTER_NAV,
   MASTER_STUDIO_LABEL,
   masterBreadcrumbs,
@@ -194,7 +193,7 @@ export default async function StudioAffiliationsPage() {
                     {a.saunaName}{a.saunaCity ? ` · ${a.saunaCity}` : ''}
                   </span>
                   <span className="shrink-0 text-xs font-semibold text-gray-500">
-                    {AFFILIATION_STATUS_LABELS[a.status] ?? a.status}
+                    {t.has(`status.affiliation.${a.status}`) ? t(`status.affiliation.${a.status}`) : a.status}
                   </span>
                 </div>
               ))}

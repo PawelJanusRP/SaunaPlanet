@@ -32,22 +32,3 @@ export function masterBreadcrumbs(pageLabel?: string): WorkspaceBreadcrumb[] {
   return trail
 }
 
-export const MASTER_STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Oczekuje na moderację',
-  approved: '✓ Zatwierdzony',
-  rejected: '✗ Odrzucony',
-}
-
-export const AFFILIATION_STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Oczekuje',
-  approved: '✓ Aktywna',
-  rejected: '✗ Odrzucona',
-  ended: '— Zakończona',
-}
-
-/** SP-037: sauna_event_masters statuses as seen by the master. */
-export const PARTICIPATION_STATUS_LABELS: Record<string, string> = {
-  pending: '⏳ Oczekuje na decyzję obiektu',
-  approved: '✓ Występujesz',
-  rejected: '✗ Odrzucone',
-}

@@ -253,5 +253,23 @@
       "nickname_too_long": "Das Pseudonym ist zu lang (max. 60 Zeichen)",
       "unexpected_error": "Die Daten konnten nicht gespeichert werden — bitte versuche es erneut"
     }
+  },
+  "status": {
+    "master": {
+      "pending": "⏳ Wartet auf Moderation",
+      "approved": "✓ Genehmigt",
+      "rejected": "✗ Abgelehnt"
+    },
+    "affiliation": {
+      "pending": "⏳ Ausstehend",
+      "approved": "✓ Aktiv",
+      "rejected": "✗ Abgelehnt",
+      "ended": "— Beendet"
+    },
+    "participation": {
+      "pending": "⏳ Wartet auf Entscheidung der Anlage",
+      "approved": "✓ Du trittst auf",
+      "rejected": "✗ Abgelehnt"
+    }
   }
 }
