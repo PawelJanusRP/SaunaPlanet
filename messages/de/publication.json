@@ -1,0 +1,33 @@
+{
+  "results": {
+    "submitted": "Dein Profil wurde zur Veröffentlichung eingereicht — wartet auf Moderation.",
+    "already_submitted": "Das Profil ist bereits zur Veröffentlichung eingereicht.",
+    "withdrawn": "Die Einreichung wurde zurückgezogen.",
+    "already_draft": "Das Profil ist bereits ein Entwurf.",
+    "unpublished": "Das Profil wurde depubliziert.",
+    "already_unpublished": "Das Profil ist nicht veröffentlicht.",
+    "published": "Das Profil wurde veröffentlicht.",
+    "already_published": "Das Profil ist bereits veröffentlicht.",
+    "changes_requested": "Eine Änderungsanfrage wurde an den Profilinhaber gesendet.",
+    "already_changes_requested": "Eine Änderungsanfrage wurde bereits gesendet.",
+    "suspended": "Die Veröffentlichung des Profils wurde ausgesetzt.",
+    "already_suspended": "Die Veröffentlichung des Profils ist bereits ausgesetzt.",
+    "restored": "Das Profil wurde als Entwurf wiederhergestellt.",
+    "invalid_transition": "Dieser Vorgang ist im aktuellen Profilstatus nicht möglich.",
+    "profile_incomplete": "Das Profil ist unvollständig — fülle die erforderlichen Felder vor dem Einreichen aus.",
+    "reason_required": "Bitte gib eine Begründung für diesen Vorgang an.",
+    "master_not_found": "Saunameister-Profil nicht gefunden.",
+    "master_not_approved": "Das Profil wurde noch nicht von der Moderation genehmigt.",
+    "not_owner": "Nur der Profilinhaber kann diesen Vorgang ausführen.",
+    "not_authenticated": "Melde dich an, um diesen Vorgang auszuführen.",
+    "not_authorized": "Du hast keine Berechtigung für diesen Vorgang.",
+    "unavailable": "Vorübergehendes technisches Problem — bitte versuche es erneut."
+  },
+  "missingFields": {
+    "name": "Name",
+    "city": "Stadt oder Einsatzgebiet",
+    "bio": "Beschreibung (mind. 80 Zeichen)",
+    "avatar": "Profilfoto",
+    "specialties": "mindestens eine Spezialisierung"
+  }
+}

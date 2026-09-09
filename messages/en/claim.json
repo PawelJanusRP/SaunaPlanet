@@ -14,5 +14,50 @@
     "claiming": "Claiming…",
     "claim": "Claim profile",
     "refresh": "Refresh page"
+  },
+  "results": {
+    "ok": "Done.",
+    "sent": "Marked as sent.",
+    "revoked": "The invitation has been revoked.",
+    "already_sent": "The invitation was already marked as sent.",
+    "already_revoked": "The invitation was already revoked.",
+    "not_authenticated": "You must be signed in.",
+    "not_authorized": "You do not have permission.",
+    "master_not_found": "Sauna master profile not found.",
+    "master_already_claimed": "This profile is already linked to an account.",
+    "master_not_eligible": "This profile is not eligible for an invitation.",
+    "active_invitation_exists": "This profile already has an active invitation — revoke or regenerate it first.",
+    "invitation_not_found": "Invitation not found.",
+    "invalid_transition": "This invitation state change is not allowed.",
+    "invitation_already_terminal": "The invitation is already in a final state.",
+    "generation_conflict": "Conflict while generating the invitation — please try again.",
+    "rate_limited": "Too many attempts — wait a moment and try again.",
+    "unexpected_error": "An unexpected error occurred."
+  },
+  "invitationExtra": {
+    "payload_malformed": "Invalid server response — the invitation may have been created. Refresh the page and check its status.",
+    "invalid_input": "Invalid form data.",
+    "claim_origin_not_configured": "The public claim page URL is not configured. The invitation was not created.",
+    "claim_origin_invalid": "The public claim page URL is not configured correctly. The invitation was not created."
+  },
+  "publicState": {
+    "claimable": "This profile is ready to be claimed.",
+    "invalid_or_unknown": "This invitation link is invalid or out of date.",
+    "expired": "This invitation has expired — ask the administrators for a new link.",
+    "revoked": "This invitation has been revoked — ask the administrators for a new link.",
+    "already_claimed": "This profile has already been claimed.",
+    "unavailable": "Temporary technical problem — refresh the page and try again."
+  },
+  "publicResult": {
+    "claimed": "The profile has been assigned to your account.",
+    "already_claimed_by_you": "This profile is already assigned to your account.",
+    "not_authenticated": "Sign in to claim the profile.",
+    "invalid_token": "This invitation link is invalid or out of date.",
+    "expired": "This invitation has expired — ask the administrators for a new link.",
+    "revoked": "This invitation has been revoked — ask the administrators for a new link.",
+    "already_claimed": "This profile has already been claimed by another account.",
+    "master_not_eligible": "This profile cannot be claimed right now — contact the administrators.",
+    "user_already_master": "Your account already has a sauna master profile — contact the administrators.",
+    "unexpected_error": "An unexpected error occurred. Please try again."
   }
 }

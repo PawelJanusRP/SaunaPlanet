@@ -232,7 +232,22 @@
     "apply": "Fill the form with this data",
     "clear": "Clear imported data",
     "errorNoUrl": "Enter a URL to import",
-    "applied": "Data moved to the form — review and complete it before submitting"
+    "applied": "Data moved to the form — review and complete it before submitting",
+    "results": {
+      "unauthenticated": "You must be signed in to import data",
+      "invalid-url": "Enter a valid, complete website address (https://...)",
+      "rate-limited": "You have reached the hourly import limit — try again later",
+      "unsupported-source": "Automatic import from this source is not supported — you can fill in the form manually",
+      "fetch-blocked": "This address cannot be fetched — you can fill in the form manually",
+      "fetch-failed": "Could not fetch data from this page — you can fill in the form manually"
+    },
+    "imageResults": {
+      "not-available": "The photo from the page is not available for import",
+      "fetch-failed": "Could not fetch the photo from the source page",
+      "unsupported-image": "The image format is not supported (JPEG, PNG or WebP)",
+      "upload-failed": "Could not save the photo to SaunaPlanet",
+      "attach-failed": "Could not attach the photo to the submission"
+    }
   },
   "provenance": {
     "sourceKind": {

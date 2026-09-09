@@ -243,7 +243,7 @@ export default function ImportFromUrlSection({
           <p className="text-sm text-orange-800">
             {preview.error.code === 'unsupported-source'
               ? unsupportedMessage(t, preview.error.sourceKind)
-              : preview.error.message}
+              : t(`import.results.${preview.error.code}`)}
           </p>
           {preview.error.sourceKind && (
             <p className="mt-1 text-xs text-orange-700">

@@ -1,0 +1,33 @@
+{
+  "results": {
+    "submitted": "Your profile has been submitted for publication — awaiting moderation.",
+    "already_submitted": "The profile is already submitted for publication.",
+    "withdrawn": "The submission has been withdrawn.",
+    "already_draft": "The profile is already a draft.",
+    "unpublished": "The profile has been unpublished.",
+    "already_unpublished": "The profile is not published.",
+    "published": "The profile has been published.",
+    "already_published": "The profile is already published.",
+    "changes_requested": "A change request has been sent to the profile owner.",
+    "already_changes_requested": "A change request has already been sent.",
+    "suspended": "The profile publication has been suspended.",
+    "already_suspended": "The profile publication is already suspended.",
+    "restored": "The profile has been restored to a draft.",
+    "invalid_transition": "This operation is not possible in the current profile state.",
+    "profile_incomplete": "The profile is incomplete — fill in the required fields before submitting.",
+    "reason_required": "Please provide a reason for this operation.",
+    "master_not_found": "Sauna master profile not found.",
+    "master_not_approved": "The profile has not been approved by moderation yet.",
+    "not_owner": "Only the profile owner can perform this operation.",
+    "not_authenticated": "Sign in to perform this operation.",
+    "not_authorized": "You do not have permission for this operation.",
+    "unavailable": "Temporary technical problem — please try again."
+  },
+  "missingFields": {
+    "name": "full name",
+    "city": "city or area of operation",
+    "bio": "description (min. 80 characters)",
+    "avatar": "profile photo",
+    "specialties": "at least one specialty"
+  }
+}

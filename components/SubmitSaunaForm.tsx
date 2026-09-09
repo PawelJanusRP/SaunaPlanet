@@ -219,7 +219,11 @@ export default function SubmitSaunaForm({ isMaster = false }: { isMaster?: boole
           setImageNote(
             imageResult.ok
               ? t('submit.imageNoteAdded')
-              : t('submit.imageNoteFailedManual', { message: imageResult.message })
+              : t('submit.imageNoteFailedManual', {
+                  // SP-047E1: resolve the image-import failure from its stable
+                  // reason code (pure lib unchanged).
+                  message: t(`import.imageResults.${imageResult.reason}`),
+                })
           )
         } else {
           setImageNote(

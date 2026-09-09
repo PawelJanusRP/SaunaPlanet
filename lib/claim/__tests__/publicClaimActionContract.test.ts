@@ -13,6 +13,15 @@ const rpcMock = vi.fn()
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({ rpc: rpcMock })),
 }))
+// SP-047E1: the action resolves the user-visible message from the stable code
+// via next-intl at the presentation boundary. next-intl's getTranslations needs
+// a request scope that this node test does not provide, so stub it to a
+// passthrough (key -> key). Behaviour/security assertions below check the CODE
+// and message-presence, never the exact wording — the PL/EN/DE wording is
+// verified separately by the catalog-mapping test and catalog parity.
+vi.mock('next-intl/server', () => ({
+  getTranslations: async () => (key: string) => key,
+}))
 
 import { claimMasterProfile, inspectMasterClaimInvitation } from '@/app/(bare)/claim/actions'
 

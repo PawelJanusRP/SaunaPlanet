@@ -9,10 +9,7 @@ import {
   unpublishOwnMasterProfile,
   withdrawOwnMasterSubmission,
 } from '@/app/[locale]/(main)/studio/publicationActions'
-import {
-  PUBLICATION_MISSING_FIELD_LABELS_PL,
-  type PublicationTransitionResult,
-} from '@/lib/master/publicationTransitions'
+import type { PublicationTransitionResult } from '@/lib/master/publicationTransitions'
 import type { OwnerPublicationAction } from '@/lib/master/publicationView'
 
 /**
@@ -27,6 +24,9 @@ export default function OwnerPublicationActions({
   actions: OwnerPublicationAction[]
 }) {
   const t = useTranslations('studio')
+  // SP-047E1: publication transition messages/missing-field labels resolved from
+  // the stable transition code (pure lib unchanged) via next-intl.
+  const tp = useTranslations('publication')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [missing, setMissing] = useState<string[]>([])
@@ -35,17 +35,15 @@ export default function OwnerPublicationActions({
     startTransition(async () => {
       const result = await action()
       if (result.code === 'profile_incomplete') {
-        setMissing(
-          result.missing.map((code) => PUBLICATION_MISSING_FIELD_LABELS_PL[code])
-        )
-        toast.error(result.message)
+        setMissing(result.missing.map((code) => tp(`missingFields.${code}`)))
+        toast.error(tp(`results.${result.code}`))
         return
       }
       setMissing([])
       if (result.ok) {
-        toast.success(result.message)
+        toast.success(tp(`results.${result.code}`))
       } else {
-        toast.error(result.message)
+        toast.error(tp(`results.${result.code}`))
       }
       router.refresh()
     })

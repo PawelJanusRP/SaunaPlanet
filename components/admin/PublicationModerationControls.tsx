@@ -34,6 +34,9 @@ export default function PublicationModerationControls({
   actions: ModeratorPublicationAction[]
 }) {
   const t = useTranslations('admin.publicationControls')
+  // SP-047E1: transition messages resolved from the stable code (pure lib
+  // unchanged) via next-intl.
+  const tp = useTranslations('publication')
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [reason, setReason] = useState('')
@@ -69,10 +72,10 @@ export default function PublicationModerationControls({
           break
       }
       if (result.ok) {
-        toast.success(result.message)
+        toast.success(tp(`results.${result.code}`))
         setReason('')
       } else {
-        toast.error(result.message)
+        toast.error(tp(`results.${result.code}`))
       }
       setShowMasterNotApprovedHint(result.code === 'master_not_approved')
       router.refresh()

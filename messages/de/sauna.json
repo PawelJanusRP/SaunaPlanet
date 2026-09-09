@@ -232,7 +232,22 @@
     "apply": "Formular mit diesen Daten ausfüllen",
     "clear": "Importierte Daten löschen",
     "errorNoUrl": "Geben Sie eine zu importierende URL ein",
-    "applied": "Daten ins Formular übernommen — prüfen und vervollständigen Sie sie vor dem Senden"
+    "applied": "Daten ins Formular übernommen — prüfen und vervollständigen Sie sie vor dem Senden",
+    "results": {
+      "unauthenticated": "Du musst angemeldet sein, um Daten zu importieren",
+      "invalid-url": "Gib eine gültige, vollständige Website-Adresse ein (https://...)",
+      "rate-limited": "Das stündliche Importlimit ist erreicht — versuche es später",
+      "unsupported-source": "Automatischer Import aus dieser Quelle wird nicht unterstützt — du kannst das Formular manuell ausfüllen",
+      "fetch-blocked": "Diese Adresse kann nicht abgerufen werden — du kannst das Formular manuell ausfüllen",
+      "fetch-failed": "Daten von dieser Seite konnten nicht abgerufen werden — du kannst das Formular manuell ausfüllen"
+    },
+    "imageResults": {
+      "not-available": "Das Foto von der Seite ist nicht zum Import verfügbar",
+      "fetch-failed": "Das Foto konnte von der Quellseite nicht abgerufen werden",
+      "unsupported-image": "Das Bildformat wird nicht unterstützt (JPEG, PNG oder WebP)",
+      "upload-failed": "Das Foto konnte nicht bei SaunaPlanet gespeichert werden",
+      "attach-failed": "Das Foto konnte der Einreichung nicht angehängt werden"
+    }
   },
   "provenance": {
     "sourceKind": {

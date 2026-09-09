@@ -9,13 +9,11 @@
 // as page metadata and as an HTTP header (next.config).
 
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { inspectMasterClaimInvitation } from '@/app/(bare)/claim/actions'
 import { resolveClaimPageView } from '@/lib/claim/claimPage'
-import {
-  isValidClaimTokenShape,
-  PUBLIC_INSPECTION_MESSAGES_PL,
-} from '@/lib/claim/publicClaim'
+import { isValidClaimTokenShape } from '@/lib/claim/publicClaim'
 import ClaimAuthPanel from '@/components/claim/ClaimAuthPanel'
 import ClaimActionPanel from '@/components/claim/ClaimActionPanel'
 import { Link } from '@/lib/i18n/navigation'
@@ -104,13 +102,15 @@ export default async function ClaimMasterPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
+  const tClaim = await getTranslations('claim')
 
   // Fail closed BEFORE any boundary call on a malformed shape.
   const inspection = isValidClaimTokenShape(token)
     ? await inspectMasterClaimInvitation(token)
     : {
         state: 'invalid_or_unknown' as const,
-        message: PUBLIC_INSPECTION_MESSAGES_PL.invalid_or_unknown,
+        // SP-047E1: same code the pure lib would map, resolved via next-intl.
+        message: tClaim('publicState.invalid_or_unknown'),
         preview: null,
       }
 

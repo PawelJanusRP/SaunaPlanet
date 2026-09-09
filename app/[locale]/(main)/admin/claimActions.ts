@@ -14,21 +14,31 @@
 // never re-exported from this module.
 
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
-import { claimMessagePl, toClaimResultCode } from '@/lib/claim/errors'
+import { toClaimResultCode } from '@/lib/claim/errors'
 import type { ClaimActionResult, ClaimRpcResult } from '@/lib/claim/types'
 
-function mapResult(res: ClaimRpcResult | null, hadError: boolean): ClaimActionResult {
+// SP-047E1: the stable result code (from the pure lib) stays canonical; the
+// user-visible message is resolved from that code via next-intl at this
+// presentation boundary. No RPC/authorization/token behaviour changes.
+type ClaimT = Awaited<ReturnType<typeof getTranslations<'claim'>>>
+
+function mapResult(
+  res: ClaimRpcResult | null,
+  hadError: boolean,
+  t: ClaimT
+): ClaimActionResult {
   if (hadError || !res || typeof res.code !== 'string') {
     // Never surface a raw PostgreSQL error to the caller/browser.
     return {
       ok: false,
       code: 'unexpected_error',
-      message: claimMessagePl('unexpected_error'),
+      message: t('results.unexpected_error'),
     }
   }
   const code = toClaimResultCode(res.code)
-  return { ok: !!res.ok, code, message: claimMessagePl(code), data: res.data }
+  return { ok: !!res.ok, code, message: t(`results.${code}`), data: res.data }
 }
 
 export async function createClaimInvitation(
@@ -37,12 +47,13 @@ export async function createClaimInvitation(
   validDays: number = 14
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
+  const t = await getTranslations('claim')
   const { data, error } = await supabase.rpc('admin_create_master_claim_invitation', {
     p_master_id: masterId,
     p_valid_days: validDays,
     p_admin_note: adminNote ?? null,
   })
-  const result = mapResult(data as ClaimRpcResult | null, !!error)
+  const result = mapResult(data as ClaimRpcResult | null, !!error, t)
   if (result.ok) revalidatePath('/admin')
   return result
 }
@@ -53,12 +64,13 @@ export async function markClaimInvitationSent(
   deliveryTargetHint?: string | null
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
+  const t = await getTranslations('claim')
   const { data, error } = await supabase.rpc('admin_mark_master_claim_sent', {
     p_invitation_id: invitationId,
     p_delivery_channel: deliveryChannel,
     p_delivery_target_hint: deliveryTargetHint ?? null,
   })
-  const result = mapResult(data as ClaimRpcResult | null, !!error)
+  const result = mapResult(data as ClaimRpcResult | null, !!error, t)
   if (result.ok) revalidatePath('/admin')
   return result
 }
@@ -68,11 +80,12 @@ export async function revokeClaimInvitation(
   reason: string
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
+  const t = await getTranslations('claim')
   const { data, error } = await supabase.rpc('admin_revoke_master_claim_invitation', {
     p_invitation_id: invitationId,
     p_reason: reason,
   })
-  const result = mapResult(data as ClaimRpcResult | null, !!error)
+  const result = mapResult(data as ClaimRpcResult | null, !!error, t)
   if (result.ok) revalidatePath('/admin')
   return result
 }
@@ -83,28 +96,31 @@ export async function regenerateClaimInvitation(
   validDays: number = 14
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
+  const t = await getTranslations('claim')
   const { data, error } = await supabase.rpc('admin_regenerate_master_claim_invitation', {
     p_master_id: masterId,
     p_reason: reason,
     p_valid_days: validDays,
   })
-  const result = mapResult(data as ClaimRpcResult | null, !!error)
+  const result = mapResult(data as ClaimRpcResult | null, !!error, t)
   if (result.ok) revalidatePath('/admin')
   return result
 }
 
 export async function listClaimInvitations(): Promise<ClaimActionResult> {
   const supabase = await createClient()
+  const t = await getTranslations('claim')
   const { data, error } = await supabase.rpc('admin_list_master_claim_invitations')
-  return mapResult(data as ClaimRpcResult | null, !!error)
+  return mapResult(data as ClaimRpcResult | null, !!error, t)
 }
 
 export async function getClaimInvitation(
   invitationId: string
 ): Promise<ClaimActionResult> {
   const supabase = await createClient()
+  const t = await getTranslations('claim')
   const { data, error } = await supabase.rpc('admin_get_master_claim_invitation', {
     p_id: invitationId,
   })
-  return mapResult(data as ClaimRpcResult | null, !!error)
+  return mapResult(data as ClaimRpcResult | null, !!error, t)
 }

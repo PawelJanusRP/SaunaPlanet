@@ -14,5 +14,50 @@
     "claiming": "Wird übernommen…",
     "claim": "Profil übernehmen",
     "refresh": "Seite aktualisieren"
+  },
+  "results": {
+    "ok": "Fertig.",
+    "sent": "Als gesendet markiert.",
+    "revoked": "Die Einladung wurde widerrufen.",
+    "already_sent": "Die Einladung war bereits als gesendet markiert.",
+    "already_revoked": "Die Einladung war bereits widerrufen.",
+    "not_authenticated": "Du musst angemeldet sein.",
+    "not_authorized": "Keine Berechtigung.",
+    "master_not_found": "Saunameister-Profil nicht gefunden.",
+    "master_already_claimed": "Dieses Profil ist bereits mit einem Konto verknüpft.",
+    "master_not_eligible": "Dieses Profil ist nicht für eine Einladung berechtigt.",
+    "active_invitation_exists": "Dieses Profil hat bereits eine aktive Einladung — widerrufe sie zuerst oder erstelle sie neu.",
+    "invitation_not_found": "Einladung nicht gefunden.",
+    "invalid_transition": "Diese Statusänderung der Einladung ist nicht zulässig.",
+    "invitation_already_terminal": "Die Einladung ist bereits in einem Endzustand.",
+    "generation_conflict": "Konflikt beim Erstellen der Einladung — bitte erneut versuchen.",
+    "rate_limited": "Zu viele Versuche — warte einen Moment und versuche es erneut.",
+    "unexpected_error": "Ein unerwarteter Fehler ist aufgetreten."
+  },
+  "invitationExtra": {
+    "payload_malformed": "Ungültige Serverantwort — die Einladung wurde möglicherweise erstellt. Aktualisiere die Seite und prüfe den Status.",
+    "invalid_input": "Ungültige Formulardaten.",
+    "claim_origin_not_configured": "Die öffentliche URL der Übernahmeseite ist nicht konfiguriert. Die Einladung wurde nicht erstellt.",
+    "claim_origin_invalid": "Die öffentliche URL der Übernahmeseite ist nicht korrekt konfiguriert. Die Einladung wurde nicht erstellt."
+  },
+  "publicState": {
+    "claimable": "Dieses Profil kann übernommen werden.",
+    "invalid_or_unknown": "Dieser Einladungslink ist ungültig oder nicht mehr aktuell.",
+    "expired": "Diese Einladung ist abgelaufen — bitte die Administratoren um einen neuen Link.",
+    "revoked": "Diese Einladung wurde widerrufen — bitte die Administratoren um einen neuen Link.",
+    "already_claimed": "Dieses Profil wurde bereits übernommen.",
+    "unavailable": "Vorübergehendes technisches Problem — aktualisiere die Seite und versuche es erneut."
+  },
+  "publicResult": {
+    "claimed": "Das Profil wurde deinem Konto zugewiesen.",
+    "already_claimed_by_you": "Dieses Profil ist bereits deinem Konto zugewiesen.",
+    "not_authenticated": "Melde dich an, um das Profil zu übernehmen.",
+    "invalid_token": "Dieser Einladungslink ist ungültig oder nicht mehr aktuell.",
+    "expired": "Diese Einladung ist abgelaufen — bitte die Administratoren um einen neuen Link.",
+    "revoked": "Diese Einladung wurde widerrufen — bitte die Administratoren um einen neuen Link.",
+    "already_claimed": "Dieses Profil wurde bereits von einem anderen Konto übernommen.",
+    "master_not_eligible": "Dieses Profil kann derzeit nicht übernommen werden — kontaktiere die Administratoren.",
+    "user_already_master": "Dein Konto hat bereits ein Saunameister-Profil — kontaktiere die Administratoren.",
+    "unexpected_error": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut."
   }
 }

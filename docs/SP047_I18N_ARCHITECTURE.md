@@ -256,22 +256,30 @@ The RC localizes the entire UI surface (all pages, forms and modals) in PL/EN/DE
 - **Presentation status labels** (master / affiliation / participation) → studio
   catalog; **specialty & language** labels → common catalog.
 
-**Still deferred** (tracked by `scripts/i18n-audit.mjs`; ~136 strings in
-`lib/*`):
+**Done in SP-047E1** — the security/behaviour-sensitive pure-lib **messages** are
+now localized at the presentation boundary (the pure libs keep their canonical
+codes and PL reference maps unchanged; components/actions resolve the message
+from the stable code via next-intl):
 
-1. **Pure-lib code→message maps returned by actions** — `lib/claim/*`
-   (`claimMessagePl`, `invitationControlMessagePl`, `publicClaim`, `pilot`),
-   `lib/master/publicationTransitions.ts`, `lib/import/*`. These are consumed by
-   both Server Actions and components and are pinned by the claim/publication
-   security & behaviour contract tests. Migrating them means passing a translator
-   into (or resolving keys around) pure functions AND updating the assertions in
-   those contract tests — a coordinated change kept separate to avoid weakening
-   security contracts. Until then these toasts render in Polish.
-2. **Validation / onboarding / help / publication-view labels** —
-   `lib/master/{profileUpdate,completeness,onboarding,publicationView}.ts`,
-   `lib/help/support.ts`, and the workspace **breadcrumb** labels in
-   `lib/workspace/{master,personal,owner}.ts`. Same coordinated-migration shape
-   (each is multi-test-pinned).
+- claim invitation results (`claim.results` / `claim.invitationExtra`),
+- public claim states & results (`claim.publicState` / `claim.publicResult`),
+- publication transition messages + missing-field labels (`publication.*`),
+- import result/error + image-import messages (`sauna.import.results` /
+  `sauna.import.imageResults`).
+Message-mapping is covered by `lib/i18n/__tests__/e1MessageMapping.test.ts`; all
+claim/publication security & behaviour contracts stay green (the direct-action
+behavioural test stubs next-intl's `getTranslations` and asserts the CODE, not
+the wording).
+
+**Still deferred to SP-047E2** (tracked by `scripts/i18n-audit.mjs`):
+
+1. **Validation messages** — `lib/master/profileUpdate.ts`,
+   `lib/claim/invitationControls.ts` (`validateDeliveryHint` /
+   `validateInvitationReason`).
+2. **Onboarding / help / publication-view & pilot presentation labels** —
+   `lib/master/{completeness,onboarding,publicationView}.ts`, `lib/claim/pilot.ts`
+   (readiness/filter/required-field labels), `lib/help/support.ts`, and the
+   workspace **breadcrumb** labels in `lib/workspace/{master,personal,owner}.ts`.
 3. **`zł` (PLN) currency suffix** on user-entered prices — locale-aware currency
    formatter is a separate enhancement.
 4. **Locale-aware date formatting** — a few pages still call

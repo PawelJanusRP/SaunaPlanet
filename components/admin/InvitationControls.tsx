@@ -52,6 +52,14 @@ export default function InvitationControls({
   latestInvitationId: string | null
 }) {
   const t = useTranslations('admin.invitationControls')
+  // SP-047E1: resolve a failure result's user-visible message from its stable
+  // code (claim results catalog, with the invitation-only extras as a fallback).
+  // Success messages are already localized by their Server Actions.
+  const tClaim = useTranslations('claim')
+  const resultMessage = (code: string) =>
+    tClaim.has(`invitationExtra.${code}`)
+      ? tClaim(`invitationExtra.${code}`)
+      : tClaim(`results.${code}`)
   const [panel, setPanel] = useState<OpenPanel>('none')
   const [secret, setSecret] = useState<OneTimeSecret | null>(null)
 
@@ -83,7 +91,7 @@ export default function InvitationControls({
         adminNote || null
       )
       if (!result.ok) {
-        toast.error(result.message)
+        toast.error(resultMessage(result.code))
         if (result.code === 'active_invitation_exists' || result.code === 'payload_malformed') {
           router.refresh()
         }
@@ -111,7 +119,7 @@ export default function InvitationControls({
     startTransition(async () => {
       const result = await markMasterInvitationSent(latestInvitationId, channel, hint || null)
       if (!result.ok) {
-        toast.error(result.message)
+        toast.error(resultMessage(result.code))
         return
       }
       toast.success(result.message)
@@ -129,7 +137,7 @@ export default function InvitationControls({
     startTransition(async () => {
       const result = await revokeMasterInvitation(latestInvitationId, revokeReason)
       if (!result.ok) {
-        toast.error(result.message)
+        toast.error(resultMessage(result.code))
         return
       }
       toast.success(result.message)
@@ -150,7 +158,7 @@ export default function InvitationControls({
         Number(validDays)
       )
       if (!result.ok) {
-        toast.error(result.message)
+        toast.error(resultMessage(result.code))
         if (result.code === 'payload_malformed') router.refresh()
         return
       }

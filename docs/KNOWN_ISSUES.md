@@ -17,20 +17,19 @@ Many systems were implemented incrementally and have already been debugged.
 # SP-047 i18n — remaining hardcoded Polish (RC follow-ups)
 
 The SP-047 Release Candidate localizes the whole UI (pages, forms, modals) in
-PL/EN/DE, plus server-action direct messages, side-navigation labels, and
-status/specialty/language labels. `scripts/i18n-audit.mjs` reports the remainder
-(~136 strings in `lib/*`); these are deferred follow-ups (details in
-`docs/SP047_I18N_ARCHITECTURE.md §17`):
+PL/EN/DE, plus server-action direct messages, side-navigation labels,
+status/specialty/language labels, and — since **SP-047E1** — the
+security/behaviour-sensitive pure-lib **messages** (claim, public claim,
+publication transitions, import) resolved from their stable codes at the
+presentation boundary (pure libs unchanged). Remaining (deferred to **SP-047E2**;
+details in `docs/SP047_I18N_ARCHITECTURE.md §17`):
 
-* **Pure-lib code→message maps returned by actions** — `lib/claim/*`,
-  `lib/master/publicationTransitions.ts`, `lib/import/*`. Consumed by actions +
-  components and pinned by claim/publication security & behaviour contract tests;
-  migrating requires updating those test assertions too — a coordinated change
-  kept separate to avoid weakening security contracts. Rendered in Polish until
-  then.
-* **Validation / onboarding / help / publication-view / breadcrumb labels** in
-  `lib/master/*`, `lib/help/support.ts`, `lib/workspace/*` breadcrumbs — same
-  multi-test-pinned coordinated migration.
+* **Validation messages** (`lib/master/profileUpdate.ts`,
+  `validateDeliveryHint`/`validateInvitationReason` in
+  `lib/claim/invitationControls.ts`).
+* **Onboarding / help / publication-view / pilot presentation / breadcrumb
+  labels** in `lib/master/*`, `lib/claim/pilot.ts`, `lib/help/support.ts`,
+  `lib/workspace/*` breadcrumbs.
 * **`zł` currency suffix**, a few **`toLocaleDateString('pl-PL')`** calls, and
   **per-entity `hreflang`** on detail pages — formatting/SEO enhancements.
 

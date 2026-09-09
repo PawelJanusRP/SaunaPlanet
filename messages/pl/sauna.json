@@ -232,7 +232,22 @@
     "apply": "Wypełnij formularz danymi",
     "clear": "Wyczyść zaimportowane dane",
     "errorNoUrl": "Podaj adres URL do zaimportowania",
-    "applied": "Dane przeniesione do formularza — sprawdź i uzupełnij przed wysłaniem"
+    "applied": "Dane przeniesione do formularza — sprawdź i uzupełnij przed wysłaniem",
+    "results": {
+      "unauthenticated": "Musisz być zalogowany, aby importować dane",
+      "invalid-url": "Podaj poprawny, pełny adres strony (https://...)",
+      "rate-limited": "Wykorzystano limit importów na godzinę — spróbuj później",
+      "unsupported-source": "Automatyczny import z tego źródła nie jest obsługiwany — możesz wypełnić formularz ręcznie",
+      "fetch-blocked": "Ten adres nie może zostać pobrany — możesz wypełnić formularz ręcznie",
+      "fetch-failed": "Nie udało się pobrać danych z tej strony — możesz wypełnić formularz ręcznie"
+    },
+    "imageResults": {
+      "not-available": "Zdjęcie ze strony nie jest dostępne do importu",
+      "fetch-failed": "Nie udało się pobrać zdjęcia ze strony źródłowej",
+      "unsupported-image": "Format zdjęcia nie jest obsługiwany (JPEG, PNG lub WebP)",
+      "upload-failed": "Nie udało się zapisać zdjęcia w SaunaPlanet",
+      "attach-failed": "Nie udało się dołączyć zdjęcia do zgłoszenia"
+    }
   },
   "provenance": {
     "sourceKind": {
