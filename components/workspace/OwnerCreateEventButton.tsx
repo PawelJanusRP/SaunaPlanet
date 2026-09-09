@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import AddEventModal from '@/components/AddEventModal'
 
@@ -16,6 +17,7 @@ export default function OwnerCreateEventButton({
   saunaId: string
   saunaName: string
 }) {
+  const t = useTranslations('workspace')
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -25,7 +27,7 @@ export default function OwnerCreateEventButton({
         onClick={() => setOpen(true)}
         className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-700"
       >
-        ➕ Dodaj wydarzenie
+        {t('createEvent.add')}
       </button>
       {open && (
         <AddEventModal

@@ -1,1 +1,158 @@
-{}
+{
+  "greeting": "Cześć, {name}!",
+  "todayQueue": {
+    "empty": "Brak wydarzeń na dziś."
+  },
+  "ownerWorkspace": {
+    "title": "🏢 Panel obiektu",
+    "description": "Zarządzanie obiektami, rezerwacjami i wydarzeniami przeniosło się do Panelu obiektu.",
+    "cta": "Przejdź →"
+  },
+  "dashboard": {
+    "upcomingEvents": {
+      "title": "🔥 Nadchodzące wydarzenia",
+      "seeAll": "Wszystkie →",
+      "emptyTitle": "Brak nadchodzących wydarzeń",
+      "emptyDescription": "Zapisz się na wydarzenie lub oznacz je jako „Idę”, a pojawi się tutaj.",
+      "emptyAction": "Przeglądaj wydarzenia"
+    },
+    "favorites": {
+      "title": "♥ Ulubione sauny",
+      "seeAll": "Wszystkie ({count}) →"
+    },
+    "activity": {
+      "title": "⭐ Ostatnia aktywność",
+      "seeAll": "Moje recenzje →",
+      "emptyTitle": "Brak aktywności",
+      "emptyDescription": "Twoje recenzje saun i wydarzeń pojawią się tutaj.",
+      "eventReviewKind": "Recenzja wydarzenia",
+      "saunaReviewKind": "Recenzja sauny",
+      "eventFallback": "Wydarzenie",
+      "saunaFallback": "Sauna"
+    }
+  },
+  "favorites": {
+    "subtitle": "Sauny, które oznaczyłeś jako ulubione",
+    "breadcrumb": "Ulubione",
+    "title": "♥ Ulubione sauny ({count})",
+    "emptyTitle": "Brak ulubionych saun",
+    "emptyDescription": "Dodaj sauny do ulubionych na ich stronach, aby mieć je pod ręką.",
+    "emptyAction": "Przeglądaj sauny"
+  },
+  "details": {
+    "subtitle": "Twoja publiczna tożsamość na SaunaPlanet",
+    "breadcrumb": "Profil",
+    "nameSection": "Imię i nazwisko",
+    "nameHint": "Wyświetlane przy Twoich recenzjach i komentarzach.",
+    "comingSoonSection": "Wkrótce w Twoim profilu",
+    "comingSoonBadge": "Wkrótce",
+    "fields": {
+      "avatar": { "label": "Awatar", "hint": "Zdjęcie profilowe widoczne przy recenzjach" },
+      "bio": { "label": "Bio", "hint": "Krótki opis o Tobie" },
+      "location": { "label": "Lokalizacja", "hint": "Twoje miasto" },
+      "languages": { "label": "Języki", "hint": "Języki, którymi się posługujesz" },
+      "publicProfile": { "label": "Profil publiczny", "hint": "Widoczność profilu dla innych użytkowników" }
+    }
+  },
+  "events": {
+    "subtitle": "Twoje rezerwacje i obserwowane wydarzenia",
+    "breadcrumb": "Wydarzenia",
+    "status": {
+      "pending": "⏳ Oczekuje",
+      "confirmed": "✓ Potwierdzona",
+      "cancelled": "✗ Anulowana"
+    },
+    "reservations": {
+      "title": "🎟️ Moje rezerwacje",
+      "emptyTitle": "Brak rezerwacji",
+      "emptyDescription": "Kliknij „Zapisz się” na stronie wydarzenia, aby zarezerwować miejsce.",
+      "emptyAction": "Przeglądaj wydarzenia"
+    },
+    "interested": {
+      "title": "🔥 Obserwowane („Idę”)",
+      "emptyTitle": "Brak obserwowanych wydarzeń",
+      "emptyDescription": "Oznacz nadchodzące wydarzenie jako „Idę”, a pojawi się tutaj.",
+      "emptyAction": "Przeglądaj wydarzenia"
+    }
+  },
+  "reviews": {
+    "subtitle": "Recenzje, które napisałeś",
+    "breadcrumb": "Recenzje",
+    "saunaFallback": "Sauna",
+    "eventFallback": "Wydarzenie",
+    "saunaSection": {
+      "title": "🧖 Recenzje saun",
+      "emptyTitle": "Brak recenzji saun",
+      "emptyDescription": "Oceń odwiedzoną saunę na jej stronie, a recenzja pojawi się tutaj.",
+      "emptyAction": "Przeglądaj sauny"
+    },
+    "eventSection": {
+      "title": "🔥 Recenzje wydarzeń",
+      "emptyTitle": "Brak recenzji wydarzeń",
+      "emptyDescription": "Po zakończonym wydarzeniu możesz wystawić mu ocenę na jego stronie.",
+      "emptyAction": "Przeglądaj wydarzenia"
+    }
+  },
+  "settings": {
+    "subtitle": "Ustawienia konta",
+    "breadcrumb": "Ustawienia",
+    "accountSection": "Dane konta",
+    "email": "Email:",
+    "role": "Rola:",
+    "createdAt": "Konto utworzone:",
+    "id": "ID:",
+    "roles": {
+      "user": "Użytkownik",
+      "moderator": "Moderator",
+      "admin": "Administrator"
+    },
+    "passwordSection": "Hasło",
+    "notificationsSection": "Powiadomienia",
+    "notificationsEmptyTitle": "Ustawienia powiadomień będą dostępne wkrótce",
+    "notificationsEmptyDescription": "Powiadomienia o rezerwacjach i wydarzeniach pojawią się wraz z systemem notyfikacji."
+  },
+  "editName": {
+    "labelInline": "Imię i nazwisko: ",
+    "notProvided": "Nie podano",
+    "edit": "Edytuj",
+    "heading": "Imię i nazwisko",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "firstNamePlaceholder": "Jan",
+    "lastNamePlaceholder": "Kowalski",
+    "saving": "Zapisywanie...",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "errorSave": "Błąd zapisu",
+    "successSave": "Dane zaktualizowane"
+  },
+  "changePassword": {
+    "trigger": "Zmień hasło",
+    "heading": "Zmień hasło",
+    "newPassword": "Nowe hasło",
+    "confirmPassword": "Powtórz hasło",
+    "saving": "Zapisywanie...",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "errorTooShort": "Hasło musi mieć co najmniej 6 znaków",
+    "errorMismatch": "Hasła nie są zgodne",
+    "success": "Hasło zostało zmienione"
+  },
+  "uploadImage": {
+    "avatar": {
+      "add": "📷 Dodaj avatar",
+      "change": "📷 Zmień avatar",
+      "success": "Avatar zaktualizowany",
+      "error": "Błąd uploadu avatara",
+      "denied": "Brak uprawnień do zmiany avatara tego profilu"
+    },
+    "cover": {
+      "add": "🖼️ Dodaj zdjęcie w tle",
+      "change": "🖼️ Zmień zdjęcie w tle",
+      "success": "Zdjęcie w tle zaktualizowane",
+      "error": "Błąd uploadu zdjęcia w tle",
+      "denied": "Brak uprawnień do zmiany zdjęcia tego profilu"
+    },
+    "uploading": "Wysyłanie..."
+  }
+}

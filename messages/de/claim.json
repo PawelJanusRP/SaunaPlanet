@@ -1,1 +1,18 @@
-{}
+{
+  "metadataTitle": "Einladung für einen Saunameister — SaunaPlanet",
+  "brand": "SaunaPlanet",
+  "heading": "Einladung für einen Saunameister",
+  "invitationValidUntil": "Einladung gültig bis: {date}",
+  "studioHintPrefix": "Dein Konto hat bereits ein Saunameister-Profil —",
+  "studioHintLink": "zum Master-Studio",
+  "anonPrompt": "Um dieses Profil zu übernehmen, melde dich an oder erstelle ein Konto.",
+  "action": {
+    "successTitle": "Das Profil gehört jetzt dir",
+    "successDescription": "Das Profil <strong>{name}</strong> wurde deinem Konto zugewiesen und ist jetzt <strong>öffentlich sichtbar</strong>. Im Master-Studio kannst du deine Daten nun vervollständigen und bearbeiten.",
+    "goToStudio": "Zum Master-Studio",
+    "confirmDescription": "Du übernimmst das Profil <strong>{name}</strong>. Es wird dauerhaft mit dem Konto verknüpft, mit dem du gerade angemeldet bist, und sofort öffentlich sichtbar. Die Daten vervollständigst und änderst du im Master-Studio.",
+    "claiming": "Wird übernommen…",
+    "claim": "Profil übernehmen",
+    "refresh": "Seite aktualisieren"
+  }
+}

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -21,6 +22,7 @@ import {
 import { loadPublicationState } from '@/lib/master/publicationServer'
 
 export default async function StudioProfilePage() {
+  const t = await getTranslations('studio')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -55,24 +57,22 @@ export default async function StudioProfilePage() {
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Twój publiczny profil saunamistrza"
+      subtitle={t('profile.subtitle')}
       contextLabel={profile.name}
-      breadcrumbs={masterBreadcrumbs('Profil')}
+      breadcrumbs={masterBreadcrumbs(t('profile.breadcrumb'))}
       nav={MASTER_NAV}
       activeNavKey="profile"
     >
       <div className="space-y-4 sm:space-y-6">
         {demotionWarning && (
           <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            <p className="font-semibold">⚠️ Profil jest widoczny publicznie.</p>
+            <p className="font-semibold">{t('profile.publicVisibleWarningTitle')}</p>
             <p className="mt-1">
-              Zapisanie zmian w publicznych polach (w tym zdjęć) tymczasowo ukryje
-              profil z katalogu — wróci do moderacji i pojawi się ponownie po jej
-              zatwierdzeniu.
+              {t('profile.publicVisibleWarningBody')}
             </p>
           </div>
         )}
-        <WorkspaceSection title="📷 Zdjęcia profilu">
+        <WorkspaceSection title={t('profile.photosTitle')}>
           <div className="flex items-center gap-4">
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -87,7 +87,7 @@ export default async function StudioProfilePage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.coverImageUrl}
-                alt="Zdjęcie w tle profilu"
+                alt={t('profile.coverAlt')}
                 className="mb-2 h-28 w-full rounded-xl object-cover"
               />
             )}
@@ -99,11 +99,11 @@ export default async function StudioProfilePage() {
           </div>
         </WorkspaceSection>
 
-        <WorkspaceSection title="✏️ Dane profilu">
+        <WorkspaceSection title={t('profile.dataTitle')}>
           <div className="mb-4 flex flex-wrap gap-2 text-sm">
             {profile.level && (
               <span className="rounded-full bg-gray-100 px-3 py-1 font-semibold capitalize text-gray-600">
-                Poziom: {profile.level}
+                {t('profile.level', { level: profile.level })}
               </span>
             )}
             <span className="rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-600">
@@ -111,8 +111,7 @@ export default async function StudioProfilePage() {
             </span>
           </div>
           <p className="mb-4 text-xs text-gray-400">
-            Poziom i status zmienia moderacja (poziom wynika z certyfikacji) — pozostałe dane
-            profilu edytujesz tutaj.
+            {t('profile.levelStatusHint')}
           </p>
           <MasterProfileForm
             demotionWarning={demotionWarning}
@@ -132,9 +131,9 @@ export default async function StudioProfilePage() {
           />
         </WorkspaceSection>
 
-        <WorkspaceSection title="🌍 Profil publiczny">
+        <WorkspaceSection title={t('profile.publicProfileTitle')}>
           <p className="text-sm text-gray-600">
-            Tak widzą Cię użytkownicy:{' '}
+            {t('profile.publicProfileHowUsersSee')}{' '}
             <Link
               href={`/masters/${profile.slug ?? profile.id}`}
               className="font-semibold text-orange-700 hover:underline"
@@ -143,7 +142,7 @@ export default async function StudioProfilePage() {
             </Link>
           </p>
           <p className="mt-2 text-xs text-gray-400">
-            Certyfikaty dodasz na stronie profilu publicznego (każdy przechodzi moderację).
+            {t('profile.certificatesHint')}
           </p>
         </WorkspaceSection>
       </div>

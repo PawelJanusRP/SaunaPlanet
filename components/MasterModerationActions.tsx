@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { approveMaster, rejectMaster } from '@/app/[locale]/(main)/admin/actions'
 
 export default function MasterModerationActions({ masterId }: { masterId: string }) {
+  const t = useTranslations('admin')
   const [isPending, startTransition] = useTransition()
   const [rejecting, setRejecting] = useState(false)
   const [note, setNote] = useState('')
@@ -13,9 +15,9 @@ export default function MasterModerationActions({ masterId }: { masterId: string
     startTransition(async () => {
       try {
         await approveMaster(masterId)
-        toast.success('Profil saunamistrza zatwierdzony')
+        toast.success(t('masterModeration.approved'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd zatwierdzania')
+        toast.error(e instanceof Error ? e.message : t('masterModeration.approveError'))
       }
     })
   }
@@ -24,10 +26,10 @@ export default function MasterModerationActions({ masterId }: { masterId: string
     startTransition(async () => {
       try {
         await rejectMaster(masterId, note)
-        toast.success('Profil odrzucony')
+        toast.success(t('masterModeration.rejected'))
         setRejecting(false)
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd odrzucania')
+        toast.error(e instanceof Error ? e.message : t('masterModeration.rejectError'))
       }
     })
   }
@@ -39,7 +41,7 @@ export default function MasterModerationActions({ masterId }: { masterId: string
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Powód odrzucenia (opcjonalnie)"
+          placeholder={t('masterModeration.rejectReasonPlaceholder')}
           className="rounded-xl border px-3 py-1.5 text-sm"
         />
         <div className="flex gap-2">
@@ -48,13 +50,13 @@ export default function MasterModerationActions({ masterId }: { masterId: string
             disabled={isPending}
             className="rounded-xl bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
           >
-            {isPending ? 'Odrzucanie...' : 'Potwierdź odrzucenie'}
+            {isPending ? t('masterModeration.rejecting') : t('masterModeration.confirmReject')}
           </button>
           <button
             onClick={() => setRejecting(false)}
             className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
           >
-            Anuluj
+            {t('masterModeration.cancel')}
           </button>
         </div>
       </div>
@@ -68,14 +70,14 @@ export default function MasterModerationActions({ masterId }: { masterId: string
         disabled={isPending}
         className="rounded-xl bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700 disabled:opacity-50"
       >
-        {isPending ? '...' : '✓ Zatwierdź'}
+        {isPending ? '...' : t('masterModeration.approve')}
       </button>
       <button
         onClick={() => setRejecting(true)}
         disabled={isPending}
         className="rounded-xl border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
       >
-        ✕ Odrzuć
+        {t('masterModeration.reject')}
       </button>
     </div>
   )

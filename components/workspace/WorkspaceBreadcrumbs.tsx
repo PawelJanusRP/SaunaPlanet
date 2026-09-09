@@ -1,11 +1,14 @@
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import type { WorkspaceBreadcrumb } from '@/lib/workspace/types'
 
-export default function WorkspaceBreadcrumbs({ items }: { items: WorkspaceBreadcrumb[] }) {
+export default async function WorkspaceBreadcrumbs({ items }: { items: WorkspaceBreadcrumb[] }) {
   if (items.length === 0) return null
 
+  const t = await getTranslations('workspace')
+
   return (
-    <nav aria-label="Ścieżka nawigacji" className="mb-3 text-xs text-gray-400">
+    <nav aria-label={t('aria.breadcrumbs')} className="mb-3 text-xs text-gray-400">
       <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1

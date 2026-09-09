@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { updateEventStatusAdmin, deleteEventAdmin } from '@/app/[locale]/(main)/admin/actions'
 
@@ -11,6 +12,7 @@ export default function EventModerationActions({
   eventId: string
   status: string
 }) {
+  const t = useTranslations('admin')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -18,9 +20,9 @@ export default function EventModerationActions({
     startTransition(async () => {
       try {
         await updateEventStatusAdmin(eventId, newStatus)
-        toast.success(newStatus === 'active' ? 'Event aktywowany' : 'Event odrzucony')
+        toast.success(newStatus === 'active' ? t('eventModeration.activated') : t('eventModeration.rejected'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd')
+        toast.error(e instanceof Error ? e.message : t('eventModeration.error'))
       }
     })
   }
@@ -29,9 +31,9 @@ export default function EventModerationActions({
     startTransition(async () => {
       try {
         await deleteEventAdmin(eventId)
-        toast.success('Event usunięty')
+        toast.success(t('eventModeration.deleted'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd usuwania')
+        toast.error(e instanceof Error ? e.message : t('eventModeration.deleteError'))
       }
     })
   }
@@ -44,7 +46,7 @@ export default function EventModerationActions({
           disabled={isPending}
           className="rounded-lg bg-green-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
         >
-          Aktywuj
+          {t('eventModeration.activate')}
         </button>
       )}
       {status !== 'rejected' && (
@@ -53,7 +55,7 @@ export default function EventModerationActions({
           disabled={isPending}
           className="rounded-lg bg-orange-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
         >
-          Odrzuć
+          {t('eventModeration.reject')}
         </button>
       )}
 
@@ -63,24 +65,24 @@ export default function EventModerationActions({
           disabled={isPending}
           className="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
         >
-          Usuń
+          {t('eventModeration.delete')}
         </button>
       ) : (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-red-600">Na pewno?</span>
+          <span className="text-xs text-red-600">{t('eventModeration.confirm')}</span>
           <button
             onClick={handleDelete}
             disabled={isPending}
             className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
           >
-            Tak
+            {t('eventModeration.yes')}
           </button>
           <button
             onClick={() => setConfirmDelete(false)}
             disabled={isPending}
             className="rounded-lg border px-2.5 py-1 text-xs text-gray-600 disabled:opacity-50"
           >
-            Nie
+            {t('eventModeration.no')}
           </button>
         </div>
       )}

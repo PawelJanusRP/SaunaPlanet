@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import EditEventForm from '@/components/EditEventForm'
@@ -28,6 +29,7 @@ export default async function OwnerEventsPage({
 }: {
   searchParams: Promise<{ context?: string }>
 }) {
+  const t = await getTranslations('workspace')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -164,9 +166,9 @@ export default async function OwnerEventsPage({
   return (
     <WorkspaceShell
       title={OWNER_WORKSPACE_LABEL}
-      subtitle="Wydarzenia Twoich obiektów"
+      subtitle={t('events.subtitle')}
       contextLabel={options.length > 0 ? workspaceContextLabel(context, options, OWNER_ALL_FACILITIES_LABEL) : undefined}
-      breadcrumbs={ownerBreadcrumbs(context, 'Wydarzenia')}
+      breadcrumbs={ownerBreadcrumbs(context, t('events.breadcrumb'))}
       nav={ownerNav(context)}
       actions={
         options.length > 1 ? (
@@ -174,7 +176,7 @@ export default async function OwnerEventsPage({
             options={options}
             activeId={context.scope === 'one' ? context.option.id : null}
             allLabel={OWNER_ALL_FACILITIES_LABEL}
-            ariaLabel="Aktywny obiekt"
+            ariaLabel={t('aria.activeFacility')}
           />
         ) : undefined
       }
@@ -203,14 +205,13 @@ export default async function OwnerEventsPage({
             </div>
           ) : (
             <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-              Aby dodać wydarzenie, wybierz konkretny obiekt w przełączniku powyżej —
-              wydarzenie zawsze należy do jednego obiektu.
+              {t('events.pickFacilityToAdd')}
             </div>
           )
         )}
 
         {eventProposals.length > 0 && (
-          <WorkspaceSection title={`📣 Propozycje wydarzeń (${eventProposals.length})`}>
+          <WorkspaceSection title={t('events.proposalsTitle', { count: eventProposals.length })}>
             <div className="space-y-3">
               {eventProposals.map((p) => (
                 <div key={p.id} className="rounded-2xl border border-orange-200 bg-orange-50/40 p-4">
@@ -231,7 +232,7 @@ export default async function OwnerEventsPage({
                         {p.event_date?.substring(0, 10)}
                         {p.event_time ? ` · ${String(p.event_time).substring(0, 5)}` : ''}
                         {p.price && <> · {p.price}</>}
-                        {p.max_participants != null && <> · limit: {p.max_participants}</>}
+                        {p.max_participants != null && <> · {t('events.limit', { count: p.max_participants })}</>}
                       </p>
                       {context.scope === 'all' && p.saunas?.name && (
                         <p className="mt-0.5 text-sm text-gray-400">
@@ -242,9 +243,9 @@ export default async function OwnerEventsPage({
                         <p className="mt-1.5 text-sm text-gray-600">{p.description}</p>
                       )}
                       <p className="mt-1.5 text-xs text-gray-500">
-                        Organizuje:{' '}
+                        {t('events.organizedBy')}{' '}
                         <Link href={`/masters/${p.organizer?.id}`} className="font-medium hover:underline">
-                          {p.organizer?.name ?? 'Saunamistrz'}
+                          {p.organizer?.name ?? t('common.master')}
                         </Link>
                         {p.organizer?.level && (
                           <span className="ml-1 text-gray-400">· {p.organizer.level}</span>
@@ -254,8 +255,7 @@ export default async function OwnerEventsPage({
                   </div>
                   <div className="mt-3 border-t pt-3">
                     <p className="mb-2 text-xs text-gray-500">
-                      Zatwierdzenie publikuje wydarzenie i dodaje organizatora do lineupu
-                      z wybraną rolą — jedna, niepodzielna operacja.
+                      {t('events.proposalHint')}
                     </p>
                     <EventProposalActions eventId={p.id} />
                   </div>
@@ -266,7 +266,7 @@ export default async function OwnerEventsPage({
         )}
 
         {sentInvitations.length > 0 && (
-          <WorkspaceSection title={`📨 Wysłane zaproszenia (${sentInvitations.length})`}>
+          <WorkspaceSection title={t('events.sentInvitationsTitle', { count: sentInvitations.length })}>
             <div className="space-y-3">
               {sentInvitations.map((inv) => (
                 <div key={inv.id} className="rounded-2xl border p-4">
@@ -281,10 +281,10 @@ export default async function OwnerEventsPage({
                       <div className="min-w-0">
                         <p className="font-semibold text-gray-800">
                           <Link href={`/masters/${inv.sauna_masters?.id}`} className="hover:underline">
-                            {inv.sauna_masters?.name ?? 'Saunamistrz'}
+                            {inv.sauna_masters?.name ?? t('common.master')}
                           </Link>
                           <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700">
-                            Zaproszenie obiektu
+                            {t('events.facilityInvitationBadge')}
                           </span>
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500">
@@ -293,15 +293,15 @@ export default async function OwnerEventsPage({
                           </Link>
                           {' · '}{inv.sauna_events?.event_date?.substring(0, 10)}
                           {context.scope === 'all' && inv.sauna_events?.saunas?.name && <> · {inv.sauna_events.saunas.name}</>}
-                          {' · oferowana rola: '}<span className="font-medium">{inv.role}</span>
-                          {' · wysłane '}{new Date(inv.created_at).toLocaleDateString('pl-PL')}
-                          {' · ⏳ czeka na saunamistrza'}
+                          {t('events.offeredRole')}<span className="font-medium">{inv.role}</span>
+                          {t('events.sentOn', { date: new Date(inv.created_at).toLocaleDateString('pl-PL') })}
+                          {t('events.waitingForMaster')}
                         </p>
                       </div>
                     </div>
                     <WithdrawInvitationButton
                       invitationId={inv.id}
-                      masterName={inv.sauna_masters?.name ?? 'saunamistrz'}
+                      masterName={inv.sauna_masters?.name ?? t('common.masterLowercase')}
                     />
                   </div>
                 </div>
@@ -311,7 +311,7 @@ export default async function OwnerEventsPage({
         )}
 
         {participationRequests.length > 0 && (
-          <WorkspaceSection title={`🧖 Zgłoszenia saunamistrzów (${participationRequests.length})`}>
+          <WorkspaceSection title={t('events.masterRequestsTitle', { count: participationRequests.length })}>
             <div className="space-y-3">
               {participationRequests.map((r) => (
                 <div key={r.id} className="rounded-2xl border border-yellow-200 bg-yellow-50/40 p-4">
@@ -329,17 +329,17 @@ export default async function OwnerEventsPage({
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-800">
                         <Link href={`/masters/${r.sauna_masters?.id}`} className="hover:underline">
-                          {r.sauna_masters?.name ?? 'Saunamistrz'}
+                          {r.sauna_masters?.name ?? t('common.master')}
                         </Link>
                         <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-bold text-yellow-700">
-                          Zgłoszenie saunamistrza
+                          {t('events.masterRequestBadge')}
                         </span>
                         {r.sauna_masters?.level && (
                           <span className="ml-2 text-xs font-normal text-gray-400">{r.sauna_masters.level}</span>
                         )}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-500">
-                        chce wystąpić:{' '}
+                        {t('events.wantsToPerform')}{' '}
                         <Link href={`/events/${r.sauna_events?.id}`} className="font-medium hover:underline">
                           {r.sauna_events?.title}
                         </Link>
@@ -359,15 +359,15 @@ export default async function OwnerEventsPage({
           </WorkspaceSection>
         )}
 
-        <WorkspaceSection title={`🔥 Nadchodzące (${upcoming.length})`}>
+        <WorkspaceSection title={t('events.upcomingTitle', { count: upcoming.length })}>
           {upcoming.length === 0 ? (
             <WorkspaceEmptyState
               icon="🔥"
-              title="Brak nadchodzących wydarzeń"
+              title={t('events.noUpcomingTitle')}
               description={
                 createTarget
-                  ? 'Dodaj pierwsze wydarzenie dla swojego obiektu.'
-                  : 'Wydarzenia Twoich obiektów pojawią się tutaj.'
+                  ? t('events.noUpcomingWithTarget')
+                  : t('events.noUpcomingWithoutTarget')
               }
             />
           ) : (
@@ -393,11 +393,11 @@ export default async function OwnerEventsPage({
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="🗓️ Minione (ostatnie)">
+        <WorkspaceSection title={t('events.pastTitle')}>
           {past.length === 0 ? (
             <WorkspaceEmptyState
               icon="🗓️"
-              title="Brak minionych wydarzeń"
+              title={t('events.noPastTitle')}
             />
           ) : (
             <div className="space-y-3">

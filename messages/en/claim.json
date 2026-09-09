@@ -1,1 +1,18 @@
-{}
+{
+  "metadataTitle": "Invitation for a sauna master — SaunaPlanet",
+  "brand": "SaunaPlanet",
+  "heading": "Invitation for a sauna master",
+  "invitationValidUntil": "Invitation valid until: {date}",
+  "studioHintPrefix": "Your account already has a sauna master profile —",
+  "studioHintLink": "go to Master Studio",
+  "anonPrompt": "To claim this profile, log in or create an account.",
+  "action": {
+    "successTitle": "The profile now belongs to you",
+    "successDescription": "The profile <strong>{name}</strong> has been assigned to your account and is now <strong>publicly visible</strong>. In Master Studio you can now complete and edit your details.",
+    "goToStudio": "Go to Master Studio",
+    "confirmDescription": "You are claiming the profile <strong>{name}</strong>. It will be permanently linked to the account you are currently logged in with and immediately visible publicly. You'll complete and change the details in Master Studio.",
+    "claiming": "Claiming…",
+    "claim": "Claim profile",
+    "refresh": "Refresh page"
+  }
+}

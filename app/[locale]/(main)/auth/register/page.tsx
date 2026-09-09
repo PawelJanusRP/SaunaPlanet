@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
 export default function RegisterPage() {
+  const t = useTranslations('auth')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -16,12 +18,12 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (password !== confirm) {
-      toast.error('Hasła nie są zgodne')
+      toast.error(t('common.errorMismatch'))
       return
     }
 
     if (password.length < 6) {
-      toast.error('Hasło musi mieć co najmniej 6 znaków')
+      toast.error(t('common.errorTooShort'))
       return
     }
 
@@ -50,16 +52,18 @@ export default function RegisterPage() {
       <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-sm rounded-3xl border bg-white p-8 text-center shadow-sm">
           <div className="mb-4 text-5xl">📧</div>
-          <h1 className="mb-2 text-2xl font-bold">Sprawdź skrzynkę</h1>
+          <h1 className="mb-2 text-2xl font-bold">{t('common.checkInbox')}</h1>
           <p className="text-sm text-gray-500">
-            Wysłaliśmy link aktywacyjny na adres <strong>{email}</strong>.
-            Kliknij go, aby aktywować konto.
+            {t.rich('register.doneDescription', {
+              email,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </p>
           <Link
             href="/auth/login"
             className="mt-6 inline-block text-sm text-gray-500 hover:text-black"
           >
-            Wróć do logowania
+            {t('common.backToLogin')}
           </Link>
         </div>
       </main>
@@ -69,12 +73,12 @@ export default function RegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm rounded-3xl border bg-white p-8 shadow-sm">
-        <h1 className="mb-6 text-2xl font-bold">Zarejestruj się</h1>
+        <h1 className="mb-6 text-2xl font-bold">{t('register.title')}</h1>
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Email
+              {t('common.email')}
             </label>
             <input
               type="email"
@@ -82,13 +86,13 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="ty@example.com"
+              placeholder={t('common.emailPlaceholder')}
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Hasło
+              {t('common.password')}
             </label>
             <input
               type="password"
@@ -102,7 +106,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Powtórz hasło
+              {t('common.confirmPassword')}
             </label>
             <input
               type="password"
@@ -119,14 +123,14 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full rounded-xl bg-black py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
           >
-            {loading ? 'Rejestrowanie...' : 'Zarejestruj się'}
+            {loading ? t('register.submitting') : t('register.submit')}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Masz już konto?{' '}
+          {t('register.haveAccount')}{' '}
           <Link href="/auth/login" className="font-medium text-black hover:underline">
-            Zaloguj się
+            {t('register.loginLink')}
           </Link>
         </p>
       </div>

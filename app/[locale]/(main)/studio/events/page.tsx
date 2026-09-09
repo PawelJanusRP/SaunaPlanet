@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -26,6 +27,7 @@ const HISTORY_PREVIEW_LIMIT = 15
  * RLS shows the owner every own row regardless of status.
  */
 export default async function StudioEventsPage() {
+  const t = await getTranslations('studio')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -106,7 +108,7 @@ export default async function StudioEventsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function EventLine({ r }: { r: any }) {
     const ev = r.sauna_events
-    if (!ev) return <span className="text-sm text-gray-400">Wydarzenie usunięte</span>
+    if (!ev) return <span className="text-sm text-gray-400">{t('events.eventDeleted')}</span>
     return (
       <div className="min-w-0">
         <p className="font-semibold text-gray-800">
@@ -116,7 +118,7 @@ export default async function StudioEventsPage() {
           {eventDate(r)}
           {ev.event_time ? ` · ${String(ev.event_time).substring(0, 5)}` : ''}
           {ev.saunas?.name && <> · {ev.saunas.name}{ev.saunas.city ? ` (${ev.saunas.city})` : ''}</>}
-          {r.role && <> · rola: {r.role}</>}
+          {r.role && <> · {t('events.role', { role: r.role })}</>}
         </p>
       </div>
     )
@@ -125,8 +127,8 @@ export default async function StudioEventsPage() {
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Wydarzenia, które organizujesz i na których występujesz"
-      breadcrumbs={masterBreadcrumbs('Moje wydarzenia')}
+      subtitle={t('events.subtitle')}
+      breadcrumbs={masterBreadcrumbs(t('events.breadcrumb'))}
       nav={MASTER_NAV}
     >
       <div className="space-y-4 sm:space-y-6">
@@ -135,7 +137,7 @@ export default async function StudioEventsPage() {
         </div>
 
         {invitations.length > 0 && (
-          <WorkspaceSection title={`📨 Zaproszenia od obiektów (${invitations.length})`}>
+          <WorkspaceSection title={t('events.invitationsTitle', { count: invitations.length })}>
             <div className="space-y-3">
               {invitations.map((r) => (
                 <div key={r.id} className="rounded-2xl border border-orange-200 bg-orange-50/40 p-4">
@@ -143,9 +145,7 @@ export default async function StudioEventsPage() {
                     <div className="min-w-0">
                       <EventLine r={r} />
                       <p className="mt-1 text-xs text-orange-700">
-                        Obiekt zaprasza Cię do wystąpienia — oferowana rola:{' '}
-                        <span className="font-semibold">{r.role}</span>
-                        {' '}(przyjęcie zachowuje dokładnie tę rolę)
+                        {t('events.invitationOfferedRole', { role: r.role })}
                       </p>
                     </div>
                     <InvitationResponseButtons invitationId={r.id} offeredRole={r.role} />
@@ -156,12 +156,12 @@ export default async function StudioEventsPage() {
           </WorkspaceSection>
         )}
 
-        <WorkspaceSection title={`⏳ Oczekujące zgłoszenia (${pending.length})`}>
+        <WorkspaceSection title={t('events.pendingTitle', { count: pending.length })}>
           {pending.length === 0 ? (
             <WorkspaceEmptyState
               icon="🧖"
-              title="Brak oczekujących zgłoszeń"
-              description="Znajdź wydarzenie na mapie lub liście wydarzeń i zgłoś swój udział z jego strony."
+              title={t('events.pendingEmptyTitle')}
+              description={t('events.pendingEmptyDescription')}
             />
           ) : (
             <div className="space-y-3">
@@ -171,7 +171,7 @@ export default async function StudioEventsPage() {
                   {isOwnProposal(r) ? (
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-                        📣 Twoja propozycja wydarzenia — czeka na managera obiektu
+                        {t('events.ownProposalBadge')}
                       </span>
                       <WithdrawProposalButton
                         eventId={r.sauna_events?.id}
@@ -190,9 +190,9 @@ export default async function StudioEventsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title={`🔥 Nadchodzące wydarzenia (${upcoming.length})`}>
+        <WorkspaceSection title={t('events.upcomingTitle', { count: upcoming.length })}>
           {upcoming.length === 0 ? (
-            <WorkspaceEmptyState icon="🔥" title="Brak nadchodzących wydarzeń" />
+            <WorkspaceEmptyState icon="🔥" title={t('events.upcomingEmptyTitle')} />
           ) : (
             <div className="space-y-3">
               {upcoming.map((r) => (
@@ -200,7 +200,7 @@ export default async function StudioEventsPage() {
                   <EventLine r={r} />
                   {r.sauna_events?.organizer_master_id === profile.id ? (
                     <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
-                      📣 Organizator
+                      {t('events.organizerBadge')}
                     </span>
                   ) : (
                     <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
@@ -213,9 +213,9 @@ export default async function StudioEventsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="🗓️ Historia">
+        <WorkspaceSection title={t('events.historyTitle')}>
           {history.length === 0 ? (
-            <WorkspaceEmptyState icon="🗓️" title="Brak historii wydarzeń" />
+            <WorkspaceEmptyState icon="🗓️" title={t('events.historyEmptyTitle')} />
           ) : (
             <div className="space-y-3">
               {history.map((r) => (
@@ -230,7 +230,7 @@ export default async function StudioEventsPage() {
                   >
                     {r.status === 'rejected'
                       ? PARTICIPATION_STATUS_LABELS.rejected
-                      : 'Wystąpienie zakończone'}
+                      : t('events.appearanceFinished')}
                   </span>
                 </div>
               ))}

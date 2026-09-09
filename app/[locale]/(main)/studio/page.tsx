@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -29,6 +30,7 @@ import { computeMasterCompleteness } from '@/lib/master/completeness'
 import { deriveFirstSteps } from '@/lib/master/onboarding'
 
 export default async function StudioDashboardPage() {
+  const t = await getTranslations('studio')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -121,7 +123,7 @@ export default async function StudioDashboardPage() {
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Twoja przestrzeń zawodowa saunamistrza"
+      subtitle={t('dashboard.subtitle')}
       contextLabel={profile.name}
       breadcrumbs={masterBreadcrumbs()}
       nav={MASTER_NAV}
@@ -134,11 +136,11 @@ export default async function StudioDashboardPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-800">
-                        Zaproszenie do afiliacji: {a.saunaName}
+                        {t('dashboard.invitationTitle', { sauna: a.saunaName })}
                         {a.saunaCity && <span className="ml-1 font-normal text-gray-400">· {a.saunaCity}</span>}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-400">
-                        Wysłano: {new Date(a.createdAt).toLocaleDateString('pl-PL')}
+                        {t('dashboard.invitationSentAt', { date: new Date(a.createdAt).toLocaleDateString('pl-PL') })}
                       </p>
                     </div>
                     <AffiliationDecisionActions affiliationId={a.id} />
@@ -154,10 +156,10 @@ export default async function StudioDashboardPage() {
         <FirstStepsCard firstSteps={firstSteps} />
 
         <WorkspaceSection
-          title="🧖 Profil"
+          title={t('dashboard.profileTitle')}
           action={
             <Link href="/studio/profile" className="text-orange-700 hover:underline">
-              Edytuj →
+              {t('dashboard.edit')}
             </Link>
           }
         >
@@ -175,7 +177,7 @@ export default async function StudioDashboardPage() {
                 {MASTER_STATUS_LABELS[profile.status] ?? profile.status}
               </p>
               <Link href={`/masters/${profile.id}`} className="mt-0.5 inline-block text-sm text-orange-700 hover:underline">
-                Zobacz profil publiczny →
+                {t('dashboard.viewPublicProfile')}
               </Link>
             </div>
           </div>
@@ -183,7 +185,7 @@ export default async function StudioDashboardPage() {
 
         {/* Anchor target of the first-steps "wysłany do moderacji" step. */}
         <div id="publikacja" className="scroll-mt-20">
-        <WorkspaceSection title="📣 Publikacja profilu">
+        <WorkspaceSection title={t('dashboard.publicationTitle')}>
           <PublicationStatusCard
             publicationStatus={publicationStatus}
             publiclyVisible={publiclyVisible}
@@ -199,41 +201,41 @@ export default async function StudioDashboardPage() {
 
         {isApproved && (
         <WorkspaceSection
-          title="🤝 Afiliacje"
+          title={t('dashboard.affiliationsTitle')}
           action={
             <Link href="/studio/affiliations" className="text-orange-700 hover:underline">
-              Zarządzaj →
+              {t('dashboard.manage')}
             </Link>
           }
         >
           {active.length === 0 && ownRequests.length === 0 && invitations.length === 0 ? (
             <WorkspaceEmptyState
               icon="🤝"
-              title="Brak afiliacji z obiektami"
-              description="Afiliacja to stała relacja z sauną — w przyszłości pozwoli publikować tam Twoje seanse."
+              title={t('dashboard.affiliationsEmptyTitle')}
+              description={t('dashboard.affiliationsEmptyDescription')}
               actionHref="/studio/affiliations"
-              actionLabel="Poproś o afiliację"
+              actionLabel={t('dashboard.requestAffiliation')}
             />
           ) : (
             <div className="space-y-2 text-sm">
               {primary && (
                 <p className="rounded-xl bg-orange-50 px-4 py-2.5 font-semibold text-orange-800">
-                  ⭐ Główna: {primary.saunaName}
+                  {t('dashboard.primary', { sauna: primary.saunaName })}
                   {primary.saunaCity && <span className="font-normal text-orange-600"> · {primary.saunaCity}</span>}
                 </p>
               )}
               <p className="rounded-xl bg-gray-50 px-4 py-2.5 text-gray-700">
-                Aktywne: <span className="font-semibold">{active.length}</span>
+                {t('dashboard.active')} <span className="font-semibold">{active.length}</span>
                 {ownRequests.length > 0 && (
-                  <span className="ml-3">Twoje zgłoszenia: <span className="font-semibold">{ownRequests.length}</span></span>
+                  <span className="ml-3">{t('dashboard.ownRequests')} <span className="font-semibold">{ownRequests.length}</span></span>
                 )}
                 {invitations.length > 0 && (
-                  <span className="ml-3">Zaproszenia do rozstrzygnięcia: <span className="font-semibold">{invitations.length}</span></span>
+                  <span className="ml-3">{t('dashboard.invitationsToDecide')} <span className="font-semibold">{invitations.length}</span></span>
                 )}
               </p>
               {!primary && active.length > 0 && (
                 <p className="text-xs text-gray-400">
-                  Wskazówka: oznacz jedną z aktywnych afiliacji jako główną.
+                  {t('dashboard.primaryHint')}
                 </p>
               )}
             </div>
@@ -241,27 +243,27 @@ export default async function StudioDashboardPage() {
         </WorkspaceSection>
         )}
 
-        <WorkspaceSection title="⚡ Szybkie akcje">
+        <WorkspaceSection title={t('dashboard.quickActionsTitle')}>
           <div className="flex flex-wrap gap-2">
             {isApproved && (
             <Link
               href="/studio/affiliations"
               className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
             >
-              🤝 Poproś o afiliację
+              {t('dashboard.quickRequestAffiliation')}
             </Link>
             )}
             <Link
               href={`/masters/${profile.id}`}
               className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
             >
-              🧖 Profil publiczny
+              {t('dashboard.quickPublicProfile')}
             </Link>
             <Link
               href="/studio/profile"
               className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
             >
-              ✏️ Edytuj profil
+              {t('dashboard.quickEditProfile')}
             </Link>
           </div>
         </WorkspaceSection>

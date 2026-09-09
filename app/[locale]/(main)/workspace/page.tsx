@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import RegistrationModerationActions from '@/components/RegistrationModerationActions'
@@ -18,22 +19,23 @@ import { loadOwnerWorkspaceScope } from '@/lib/workspace/ownerServer'
 
 const EVENTS_PREVIEW_LIMIT = 5
 
-const membershipStatusChip: Record<string, React.ReactNode> = {
-  pending: <span className="text-xs font-semibold text-yellow-600">⏳ Oczekuje</span>,
-  approved: <span className="text-xs font-semibold text-green-600">✓ Aktywny</span>,
-  rejected: <span className="text-xs font-semibold text-red-500">✗ Odrzucony</span>,
-}
-
 export default async function OwnerDashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ context?: string }>
 }) {
+  const t = await getTranslations('workspace')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/auth/login')
+  }
+
+  const membershipStatusChip: Record<string, React.ReactNode> = {
+    pending: <span className="text-xs font-semibold text-yellow-600">{t('status.membership.pending')}</span>,
+    approved: <span className="text-xs font-semibold text-green-600">{t('status.membership.approved')}</span>,
+    rejected: <span className="text-xs font-semibold text-red-500">{t('status.membership.rejected')}</span>,
   }
 
   const { context: contextParam } = await searchParams
@@ -82,9 +84,9 @@ export default async function OwnerDashboardPage({
         const regNameById: Record<string, string> = {}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const p of (regProfiles ?? []) as any[]) {
-          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Użytkownik'
+          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || t('common.userFallback')
         }
-        pendingRegistrations = pendingRegistrations.map((r) => ({ ...r, _userName: regNameById[r.user_id] ?? 'Użytkownik' }))
+        pendingRegistrations = pendingRegistrations.map((r) => ({ ...r, _userName: regNameById[r.user_id] ?? t('common.userFallback') }))
       }
     }
   }
@@ -94,7 +96,7 @@ export default async function OwnerDashboardPage({
   return (
     <WorkspaceShell
       title={OWNER_WORKSPACE_LABEL}
-      subtitle="Zarządzaj swoimi obiektami, rezerwacjami i wydarzeniami"
+      subtitle={t('dashboard.subtitle')}
       contextLabel={options.length > 0 ? workspaceContextLabel(context, options, OWNER_ALL_FACILITIES_LABEL) : undefined}
       breadcrumbs={ownerBreadcrumbs(context)}
       nav={ownerNav(context)}
@@ -104,7 +106,7 @@ export default async function OwnerDashboardPage({
             options={options}
             activeId={activeFacilityId}
             allLabel={OWNER_ALL_FACILITIES_LABEL}
-            ariaLabel="Aktywny obiekt"
+            ariaLabel={t('aria.activeFacility')}
           />
         ) : undefined
       }
@@ -129,7 +131,7 @@ export default async function OwnerDashboardPage({
                           )}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-400">
-                          Zgłoszono: {new Date(reg.created_at).toLocaleDateString('pl-PL')}
+                          {t('common.submittedOn', { date: new Date(reg.created_at).toLocaleDateString('pl-PL') })}
                         </p>
                       </div>
                       <RegistrationModerationActions registrationId={reg.id} />
@@ -146,14 +148,14 @@ export default async function OwnerDashboardPage({
         {memberships.length === 0 ? (
           <WorkspaceEmptyState
             icon="🏢"
-            title="Nie zarządzasz jeszcze żadnym obiektem"
-            description="Zarządzanie sauną możesz zgłosić na stronie obiektu. Po zatwierdzeniu obiekt pojawi się tutaj."
+            title={t('dashboard.empty.title')}
+            description={t('dashboard.empty.description')}
             actionHref="/sauny"
-            actionLabel="Przeglądaj sauny"
+            actionLabel={t('dashboard.empty.action')}
           />
         ) : (
           <>
-            <WorkspaceSection title="🏢 Moje obiekty">
+            <WorkspaceSection title={t('dashboard.myFacilities')}>
               <div className="space-y-2">
                 {memberships.map((m) => (
                   <div key={m.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5">
@@ -168,21 +170,21 @@ export default async function OwnerDashboardPage({
             </WorkspaceSection>
 
             <WorkspaceSection
-              title="🔥 Nadchodzące wydarzenia"
+              title={t('dashboard.upcomingEvents')}
               action={
                 <Link
                   href={withWorkspaceContext('/workspace/events', context)}
                   className="text-orange-700 hover:underline"
                 >
-                  Wszystkie →
+                  {t('dashboard.seeAll')}
                 </Link>
               }
             >
               {upcomingEvents.length === 0 ? (
                 <WorkspaceEmptyState
                   icon="🔥"
-                  title="Brak nadchodzących wydarzeń"
-                  description="Wydarzenia Twoich obiektów pojawią się tutaj."
+                  title={t('dashboard.noUpcomingTitle')}
+                  description={t('dashboard.noUpcomingDescription')}
                 />
               ) : (
                 <div className="space-y-3">
@@ -208,27 +210,27 @@ export default async function OwnerDashboardPage({
               )}
             </WorkspaceSection>
 
-            <WorkspaceSection title="⚡ Szybkie akcje">
+            <WorkspaceSection title={t('dashboard.quickActions')}>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={withWorkspaceContext('/workspace/reservations', context)}
                   className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
                 >
-                  🎟️ Rezerwacje
+                  {t('dashboard.reservations')}
                 </Link>
                 {activeFacilityId && (
                   <Link
                     href={`/sauna/${activeFacilityId}`}
                     className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
                   >
-                    🧖 Strona obiektu
+                    {t('dashboard.facilityPage')}
                   </Link>
                 )}
                 <Link
                   href="/submit"
                   className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-100"
                 >
-                  ➕ Zgłoś nowy obiekt
+                  {t('dashboard.submitFacility')}
                 </Link>
               </div>
             </WorkspaceSection>

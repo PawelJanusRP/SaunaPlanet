@@ -11,6 +11,7 @@
 // re-open their invitation link after activating the account.
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -18,6 +19,7 @@ import { toast } from 'sonner'
 type Mode = 'login' | 'register'
 
 export default function ClaimAuthPanel() {
+  const t = useTranslations('auth')
   const router = useRouter()
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
@@ -31,9 +33,9 @@ export default function ClaimAuthPanel() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      toast.error('Nie udało się zalogować — sprawdź adres e-mail i hasło.')
+      toast.error(t('claimPanel.loginError'))
     } else {
-      toast.success('Zalogowano pomyślnie')
+      toast.success(t('claimPanel.loginSuccess'))
       router.refresh()
     }
     setLoading(false)
@@ -42,7 +44,7 @@ export default function ClaimAuthPanel() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     if (password.length < 6) {
-      toast.error('Hasło musi mieć co najmniej 6 znaków')
+      toast.error(t('common.errorTooShort'))
       return
     }
     setLoading(true)
@@ -57,7 +59,7 @@ export default function ClaimAuthPanel() {
       },
     })
     if (error) {
-      toast.error('Nie udało się utworzyć konta. Spróbuj ponownie.')
+      toast.error(t('claimPanel.registerError'))
     } else {
       setRegistered(true)
     }
@@ -68,11 +70,12 @@ export default function ClaimAuthPanel() {
     return (
       <div className="rounded-2xl border bg-white p-6 text-center">
         <div className="mb-3 text-4xl">📧</div>
-        <h2 className="mb-2 text-lg font-semibold">Sprawdź skrzynkę</h2>
+        <h2 className="mb-2 text-lg font-semibold">{t('common.checkInbox')}</h2>
         <p className="text-sm text-gray-600">
-          Wysłaliśmy link aktywacyjny na adres <strong>{email}</strong>. Po
-          aktywacji konta <strong>otwórz ponownie link z zaproszenia</strong>{' '}
-          (ten, który przeniósł Cię na tę stronę) i dokończ przejęcie profilu.
+          {t.rich('claimPanel.registeredDescription', {
+            email,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
       </div>
     )
@@ -88,7 +91,7 @@ export default function ClaimAuthPanel() {
             mode === 'login' ? 'bg-white shadow-sm' : 'text-gray-500'
           }`}
         >
-          Mam konto
+          {t('claimPanel.haveAccount')}
         </button>
         <button
           type="button"
@@ -97,7 +100,7 @@ export default function ClaimAuthPanel() {
             mode === 'register' ? 'bg-white shadow-sm' : 'text-gray-500'
           }`}
         >
-          Załóż konto
+          {t('claimPanel.createAccount')}
         </button>
       </div>
 
@@ -107,7 +110,7 @@ export default function ClaimAuthPanel() {
       >
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Email
+            {t('common.email')}
           </label>
           <input
             type="email"
@@ -116,12 +119,12 @@ export default function ClaimAuthPanel() {
             required
             autoComplete="email"
             className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-            placeholder="ty@example.com"
+            placeholder={t('common.emailPlaceholder')}
           />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Hasło
+            {t('common.password')}
           </label>
           <input
             type="password"
@@ -139,15 +142,15 @@ export default function ClaimAuthPanel() {
           className="w-full rounded-xl bg-black py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
           {loading
-            ? 'Chwila…'
+            ? t('claimPanel.submitting')
             : mode === 'login'
-              ? 'Zaloguj się'
-              : 'Załóż konto'}
+              ? t('claimPanel.login')
+              : t('claimPanel.register')}
         </button>
       </form>
 
       <p className="mt-3 text-center text-xs text-gray-500">
-        Po zalogowaniu wrócisz dokładnie tutaj i potwierdzisz przejęcie profilu.
+        {t('claimPanel.afterLoginHint')}
       </p>
     </div>
   )

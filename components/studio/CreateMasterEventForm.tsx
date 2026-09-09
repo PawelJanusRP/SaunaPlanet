@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createMasterEvent } from '@/app/[locale]/events/participationActions'
@@ -15,6 +16,7 @@ type SaunaOption = FacilityOption
  * statuses the database returned.
  */
 export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[] }) {
+  const t = useTranslations('studio')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -29,15 +31,15 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!saunaId) {
-      toast.error('Wybierz obiekt')
+      toast.error(t('createEvent.errorSelectFacility'))
       return
     }
     if (!title.trim()) {
-      toast.error('Podaj nazwę wydarzenia')
+      toast.error(t('createEvent.errorEventName'))
       return
     }
     if (!eventDate) {
-      toast.error('Podaj datę wydarzenia')
+      toast.error(t('createEvent.errorEventDate'))
       return
     }
 
@@ -60,13 +62,9 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
 
     // Routing feedback strictly from the RPC result (source of truth)
     if (result.eventStatus === 'active') {
-      toast.success(
-        'Wydarzenie opublikowane! Jesteś organizatorem (rola: lead) — obiekt nie ma managera, więc publikacja jest natychmiastowa.'
-      )
+      toast.success(t('createEvent.publishedToast'))
     } else {
-      toast.success(
-        'Propozycja wysłana — obiekt ma managera, więc wydarzenie i Twój udział czekają na jego akceptację.'
-      )
+      toast.success(t('createEvent.proposalSentToast'))
     }
 
     setOpen(false)
@@ -88,7 +86,7 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
         onClick={() => setOpen(true)}
         className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
       >
-        🔥 Utwórz wydarzenie
+        {t('createEvent.openButton')}
       </button>
     )
   }
@@ -101,15 +99,13 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Utwórz wydarzenie</h2>
+            <h2 className="text-lg font-bold">{t('createEvent.modalTitle')}</h2>
             <p className="text-sm text-gray-500">
-              O tym, czy wydarzenie publikuje się od razu, czy trafia do
-              akceptacji managera, decyduje stan obiektu — dowiesz się po
-              wysłaniu.
+              {t('createEvent.modalSubtitle')}
             </p>
           </div>
           <button type="button" onClick={() => setOpen(false)} className="text-gray-500">
-            ✕
+            {t('createEvent.close')}
           </button>
         </div>
 
@@ -122,7 +118,7 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
 
           <input
             className="w-full rounded-xl border p-3 text-sm"
-            placeholder="Nazwa wydarzenia, np. Noc saunowa"
+            placeholder={t('createEvent.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -145,7 +141,7 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
           <div className="grid grid-cols-2 gap-2">
             <input
               className="w-full rounded-xl border p-3 text-sm"
-              placeholder="Cena, np. 120 zł"
+              placeholder={t('createEvent.pricePlaceholder')}
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
@@ -153,7 +149,7 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
               type="number"
               min={1}
               className="w-full rounded-xl border p-3 text-sm"
-              placeholder="Limit miejsc"
+              placeholder={t('createEvent.maxParticipantsPlaceholder')}
               value={maxParticipants}
               onChange={(e) => setMaxParticipants(e.target.value)}
             />
@@ -161,7 +157,7 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
 
           <textarea
             className="min-h-24 w-full rounded-xl border p-3 text-sm"
-            placeholder="Opis wydarzenia"
+            placeholder={t('createEvent.descriptionPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -171,7 +167,7 @@ export default function CreateMasterEventForm({ saunas }: { saunas: SaunaOption[
             disabled={saving}
             className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-orange-700 disabled:opacity-60"
           >
-            {saving ? 'Wysyłanie...' : 'Utwórz wydarzenie'}
+            {saving ? t('createEvent.submitting') : t('createEvent.submit')}
           </button>
         </div>
       </form>

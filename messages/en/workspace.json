@@ -1,1 +1,153 @@
-{}
+{
+  "aria": {
+    "activeFacility": "Active facility",
+    "breadcrumbs": "Breadcrumb navigation",
+    "nav": "Workspace navigation"
+  },
+  "status": {
+    "membership": {
+      "pending": "⏳ Pending",
+      "approved": "✓ Active",
+      "rejected": "✗ Rejected"
+    },
+    "registration": {
+      "confirmed": "✓ Confirmed",
+      "cancelled": "✗ Cancelled"
+    }
+  },
+  "roles": {
+    "lead": "Lead",
+    "assistant": "Assistant",
+    "guest": "Guest"
+  },
+  "common": {
+    "master": "Sauna master",
+    "masterLowercase": "sauna master",
+    "userFallback": "User",
+    "sending": "Sending...",
+    "submittedOn": "Submitted: {date}"
+  },
+  "todayQueue": {
+    "title": "Today",
+    "empty": "Nothing to handle."
+  },
+  "dashboard": {
+    "subtitle": "Manage your facilities, reservations and events",
+    "empty": {
+      "title": "You don't manage any facility yet",
+      "description": "You can request to manage a sauna on its facility page. Once approved, the facility appears here.",
+      "action": "Browse saunas"
+    },
+    "myFacilities": "🏢 My facilities",
+    "upcomingEvents": "🔥 Upcoming events",
+    "seeAll": "See all →",
+    "noUpcomingTitle": "No upcoming events",
+    "noUpcomingDescription": "Your facilities' events will appear here.",
+    "quickActions": "⚡ Quick actions",
+    "reservations": "🎟️ Reservations",
+    "facilityPage": "🧖 Facility page",
+    "submitFacility": "➕ Submit a new facility"
+  },
+  "events": {
+    "breadcrumb": "Events",
+    "subtitle": "Your facilities' events",
+    "pickFacilityToAdd": "To add an event, select a specific facility in the switcher above — an event always belongs to a single facility.",
+    "proposalsTitle": "📣 Event proposals ({count})",
+    "limit": "limit: {count}",
+    "organizedBy": "Organized by:",
+    "proposalHint": "Approving publishes the event and adds the organizer to the lineup with the chosen role — a single, indivisible operation.",
+    "sentInvitationsTitle": "📨 Sent invitations ({count})",
+    "facilityInvitationBadge": "Facility invitation",
+    "offeredRole": " · offered role: ",
+    "sentOn": " · sent {date}",
+    "waitingForMaster": " · ⏳ waiting for the sauna master",
+    "masterRequestsTitle": "🧖 Sauna master requests ({count})",
+    "masterRequestBadge": "Sauna master request",
+    "wantsToPerform": "wants to perform:",
+    "upcomingTitle": "🔥 Upcoming ({count})",
+    "noUpcomingTitle": "No upcoming events",
+    "noUpcomingWithTarget": "Add the first event for your facility.",
+    "noUpcomingWithoutTarget": "Your facilities' events will appear here.",
+    "pastTitle": "🗓️ Past (recent)",
+    "noPastTitle": "No past events"
+  },
+  "reservations": {
+    "breadcrumb": "Reservations",
+    "subtitle": "Reservations for your facilities' events",
+    "pendingTitle": "⏳ Pending ({count})",
+    "noPendingTitle": "No pending reservations",
+    "noPendingDescription": "New sign-ups for your facilities' events will appear here.",
+    "resolvedTitle": "🗂️ Resolved (recent)",
+    "noResolvedTitle": "No resolved reservations",
+    "noResolvedDescription": "Confirmed and rejected reservations will appear here."
+  },
+  "team": {
+    "breadcrumb": "Team",
+    "subtitle": "Sauna masters affiliated with your facilities",
+    "requestsTitle": "📨 Sauna master requests ({count})",
+    "noRequestsTitle": "No pending requests",
+    "sentInvitationsTitle": "📤 Sent invitations ({count})",
+    "noSentInvitationsTitle": "No pending invitations",
+    "withdraw": "Withdraw",
+    "withdrawConfirm": "Confirm withdrawal",
+    "activeTitle": "🤝 Affiliated masters ({count})",
+    "noActiveTitle": "No affiliated sauna masters",
+    "noActiveDescription": "Invite a sauna master below or approve their request — the relationship always requires both sides to agree.",
+    "inviteTitle": "➕ Invite a sauna master ({facility})",
+    "inviteHint": "The sauna master must accept the invitation — an affiliation always requires both sides to agree.",
+    "pickFacilityToInvite": "To invite a sauna master, select a specific facility in the switcher above — an invitation always concerns a single facility."
+  },
+  "contextSwitcher": {
+    "allFacilities": "All facilities",
+    "activeContext": "Active context"
+  },
+  "eventProposalActions": {
+    "ariaRole": "Organizer role",
+    "approve": "Approve and publish",
+    "reject": "Reject",
+    "publishedToast": "Event published — the organizer joined the lineup",
+    "rejectedToast": "Proposal rejected"
+  },
+  "participationActions": {
+    "ariaRole": "Sauna master role",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approvedToast": "The sauna master joined the event",
+    "rejectedToast": "Request rejected"
+  },
+  "inviteMaster": {
+    "errorPickMaster": "Select a sauna master",
+    "successToast": "Invitation sent — the sauna master must accept it ({facility})",
+    "errorToast": "Failed to send the invitation",
+    "placeholder": "Enter the sauna master's name",
+    "emptyLabel": "No sauna master found",
+    "ariaMaster": "Sauna master to invite",
+    "invite": "Invite"
+  },
+  "inviteMasterToEvent": {
+    "openButton": "📨 Invite a sauna master",
+    "title": "Invite a sauna master",
+    "subtitle": "The sauna master will appear on the lineup only after accepting the invitation — with exactly the offered role.",
+    "close": "✕",
+    "ariaEvent": "Event",
+    "selectEvent": "— select an event —",
+    "placeholder": "Enter the sauna master's name",
+    "emptyLabel": "No sauna master found",
+    "ariaMaster": "Sauna master to invite",
+    "profile": "profile",
+    "ariaOfferedRole": "Offered role",
+    "offeredRoleOption": "Offered role: {role}",
+    "submit": "Send invitation",
+    "errorPickEvent": "Select an event",
+    "errorPickMaster": "Select a sauna master",
+    "successToast": "Invitation sent — the sauna master must accept it"
+  },
+  "createEvent": {
+    "add": "➕ Add event"
+  },
+  "withdrawInvitation": {
+    "confirm": "Withdraw the invitation for “{name}”?",
+    "withdraw": "Withdraw",
+    "successToast": "Invitation withdrawn"
+  }
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -16,20 +17,10 @@ const KINDS = {
   avatar: {
     column: 'avatar_url',
     path: (masterId: string, file: string) => `${masterId}/${file}`,
-    addLabel: '📷 Dodaj avatar',
-    changeLabel: '📷 Zmień avatar',
-    successMessage: 'Avatar zaktualizowany',
-    errorMessage: 'Błąd uploadu avatara',
-    deniedMessage: 'Brak uprawnień do zmiany avatara tego profilu',
   },
   cover: {
     column: 'cover_image_url',
     path: (masterId: string, file: string) => `${masterId}/covers/${file}`,
-    addLabel: '🖼️ Dodaj zdjęcie w tle',
-    changeLabel: '🖼️ Zmień zdjęcie w tle',
-    successMessage: 'Zdjęcie w tle zaktualizowane',
-    errorMessage: 'Błąd uploadu zdjęcia w tle',
-    deniedMessage: 'Brak uprawnień do zmiany zdjęcia tego profilu',
   },
 } as const
 
@@ -42,6 +33,7 @@ export function UploadMasterImageButton({
   kind: keyof typeof KINDS
   currentUrl: string | null
 }) {
+  const t = useTranslations('profile')
   const [loading, setLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
   const router = useRouter()
@@ -78,16 +70,16 @@ export function UploadMasterImageButton({
       if (dbError) throw dbError
       // RLS mismatch updates 0 rows without an error — fail loud instead
       if (!updated || updated.length === 0) {
-        throw new Error(config.deniedMessage)
+        throw new Error(t(`uploadImage.${kind}.denied`))
       }
 
       router.refresh()
-      toast.success(config.successMessage)
+      toast.success(t(`uploadImage.${kind}.success`))
     } catch (e) {
       if (e instanceof Error) {
         toast.error(e.message)
       } else {
-        toast.error(config.errorMessage)
+        toast.error(t(`uploadImage.${kind}.error`))
       }
     } finally {
       setLoading(false)
@@ -115,7 +107,7 @@ export function UploadMasterImageButton({
           loading ? 'cursor-not-allowed opacity-50' : ''
         }`}
       >
-        {loading ? 'Wysyłanie...' : currentUrl ? config.changeLabel : config.addLabel}
+        {loading ? t('uploadImage.uploading') : currentUrl ? t(`uploadImage.${kind}.change`) : t(`uploadImage.${kind}.add`)}
       </label>
     </>
   )

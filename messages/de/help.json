@@ -1,1 +1,122 @@
-{}
+{
+  "saunamaster": {
+    "metaTitle": "Schnellstart für Saunameister — SaunaPlanet",
+    "metaDescription": "Wie du dein Saunameister-Profil beanspruchst, dein Profil vervollständigst, veröffentlichst und dein erstes Event auf SaunaPlanet anlegst.",
+    "title": "Schnellstart für Saunameister",
+    "intro": "Willkommen bei SaunaPlanet! Diese Anleitung führt dich Schritt für Schritt von der Einladung bis zum öffentlichen Profil und deinem ersten Event. Jeder Abschnitt ist eine kurze Aufgabe — du kannst jederzeit hierher zurückkehren.",
+    "tocLabel": "Inhaltsverzeichnis",
+    "tocHeading": "Inhaltsverzeichnis",
+    "toc": {
+      "przejecie": "Wie du dein Profil beanspruchst",
+      "konto": "Wie du dich anmeldest oder ein Konto erstellst",
+      "studio": "Wie du das Master-Studio betrittst",
+      "wizytowka": "Wie du dein Profil vervollständigst",
+      "publikacja": "Wie Vorschau und Veröffentlichung funktionieren",
+      "statusy": "Was die Moderationsstatus bedeuten",
+      "wydarzenie": "Wie du ein Event hinzufügst",
+      "obiekty": "Events in verwalteten und nicht verwalteten Anlagen",
+      "pomoc": "Wie du Hilfe erhältst",
+      "bezpieczenstwo": "Sicherheitsregeln"
+    },
+    "przejecie": {
+      "title": "1. Wie du dein Profil beanspruchst",
+      "p1": "SaunaPlanet hat ein Saunameister-Profil für dich vorbereitet. Die Einladung, die du erhältst, enthält einen Link zur Seite für die Profilübernahme.",
+      "step1": "Öffne den Link aus der Einladung — du siehst das vorbereitete Profil.",
+      "step2": "Melde dich an oder erstelle ein Konto (Abschnitt 2).",
+      "step3Prefix": "Klicke auf ",
+      "step3Cta": "„Profil übernehmen“",
+      "step3Suffix": ". Ab diesem Moment ist das Profil mit deinem Konto verknüpft und nur du verwaltest es.",
+      "importantLabel": "Wichtig:",
+      "importantMiddle": "die Übernahme des Profils ",
+      "importantBold": "veröffentlicht es nicht",
+      "importantSuffix": ". Das Profil wird erst öffentlich, nachdem du es vervollständigt, eingereicht und die Moderation es genehmigt hat (Abschnitte 4–5).",
+      "linkKey": "Der Einladungslink ist einmalig, hat ein Ablaufdatum und funktioniert wie ein Schlüssel zu deinem Profil — gib ihn an niemanden weiter. Ist der Link abgelaufen oder funktioniert nicht, fordere eine neue Einladung an (Abschnitt 9)."
+    },
+    "konto": {
+      "title": "2. Wie du dich anmeldest oder ein Konto erstellst",
+      "p1": "Zur Übernahme des Profils brauchst du ein normales SaunaPlanet-Konto. Auf der Übernahmeseite kannst du dich anmelden oder registrieren, ohne diese Seite zu verlassen.",
+      "step1": "Hast du ein Konto? Melde dich mit deiner E-Mail-Adresse und deinem Passwort an.",
+      "step2": "Noch kein Konto? Registriere dich. Bestätige nach der Registrierung deine E-Mail-Adresse (Aktivierungslink) und öffne dann den Einladungslink erneut."
+    },
+    "studio": {
+      "title": "3. Wie du das Master-Studio betrittst",
+      "p1": "Das Master-Studio ist dein Arbeitsbereich: Profil, Veröffentlichung und Events. Nach der Übernahme des Profils gelangst du dorthin über die Schaltfläche „Zum Master-Studio“, und später jederzeit:",
+      "step1": "Melde dich bei SaunaPlanet an.",
+      "step2Prefix": "Öffne das Kontomenü und wähle ",
+      "step2Bold": "Studio",
+      "step2Suffix": ".",
+      "step3Prefix": "Du kannst auch direkt zu ",
+      "step3Suffix": " gehen.",
+      "note": "Das Studio funktioniert direkt nach der Übernahme des Profils — auch bevor die Moderation dein Saunameister-Profil genehmigt hat."
+    },
+    "wizytowka": {
+      "title": "4. Wie du dein Profil vervollständigst",
+      "p1Prefix": "Dein Profil bearbeitest du im Studio, im Tab ",
+      "p1Bold": "Profil",
+      "p1Suffix": ". Für die Veröffentlichung sind erforderlich:",
+      "req1": "Vor- und Nachname,",
+      "req2": "Stadt oder Tätigkeitsgebiet,",
+      "req3": "Beschreibung (mindestens 80 Zeichen),",
+      "req4": "Profilfoto,",
+      "req5": "mindestens eine Spezialisierung.",
+      "recommended": "Empfohlene Felder (eine eigene Profiladresse, Sprachen, Links zu Websites und sozialen Medien) blockieren die Veröffentlichung nicht, stärken aber dein Profil. Die Karte „Erste Schritte“ im Studio zeigt laufend an, was noch fehlt."
+    },
+    "publikacja": {
+      "title": "5. Wie Vorschau und Veröffentlichung funktionieren",
+      "previewLabel": "Vorschau:",
+      "previewText": "im Studio kannst du dein Profil jederzeit genau so ansehen, wie andere es sehen werden. Solange das Profil nicht veröffentlicht ist, siehst nur du die Vorschau.",
+      "submitLabel": "Einreichung:",
+      "submitText": "wenn die Pflichtfelder ausgefüllt sind, reiche das Profil über die Schaltfläche im Studio zur Veröffentlichung ein. Bis zur Entscheidung kannst du die Einreichung zurückziehen.",
+      "moderationLabel": "Moderation:",
+      "moderationText": "die Moderation kann das Profil genehmigen oder Änderungen anfragen — die Nachricht mit der Begründung siehst du im Studio. Nach den Korrekturen reichst du das Profil erneut ein.",
+      "publicationLabel": "Veröffentlichung:",
+      "publicationText": "nach der Genehmigung ist das Profil im Saunameister-Verzeichnis öffentlich sichtbar.",
+      "noticeLabel": "Hinweis:",
+      "noticeText": "eine wesentliche Bearbeitung eines veröffentlichten Profils (z. B. Änderung der Beschreibung oder des Fotos) blendet es vorübergehend aus dem Verzeichnis aus — es kehrt zurück, nachdem die Moderation es erneut genehmigt hat. Das ist normales Verhalten, kein Fehler. Ein Profil mit ausgesetzter Veröffentlichung kann nicht eigenständig veröffentlicht werden — kontaktiere den Support (Abschnitt 9)."
+    },
+    "statusy": {
+      "title": "6. Was die Moderationsstatus bedeuten"
+    },
+    "wydarzenie": {
+      "title": "7. Wie du ein Event hinzufügst",
+      "p1": "Events kannst du hinzufügen, sobald dein Saunameister-Profil von der Moderation genehmigt wurde.",
+      "step1Prefix": "Gehe ins Studio und öffne den Tab ",
+      "step1Bold": "Meine Events",
+      "step1Suffix": ".",
+      "step2": "Klicke auf „Event erstellen“.",
+      "step3Prefix": "Gib die erforderlichen Informationen an: ",
+      "step3Facility": "Anlage (Sauna)",
+      "step3Middle": ", ",
+      "step3Name": "Name",
+      "step3Middle2": " und ",
+      "step3Date": "Datum",
+      "step3Suffix": ". Du kannst Uhrzeit, Preis, Plätzeanzahl und Beschreibung hinzufügen.",
+      "step4": "Speichern — was danach mit dem Event geschieht, beschreibt Abschnitt 8.",
+      "affiliation": "Du brauchst keine Zugehörigkeit zu einer Anlage, um dort ein Event hinzuzufügen. Anlagen können dich auch selbst zu ihren Events einladen — die Einladung nimmst du im Tab Meine Events an oder lehnst sie ab. An einem Event können mehrere Saunameister mitwirken.",
+      "reservations": "Die Platzreservierung durch Teilnehmer ist auf SaunaPlanet noch nicht verfügbar.",
+      "correctionLabel": "Korrektur oder Absage eines aktiven Events:",
+      "correctionText": "in der aktuellen Pilotversion der App nimmt der SaunaPlanet-Support Änderungen an einem bereits aktiven Event vor — kontaktiere uns (Abschnitt 9). Das ist ein vorübergehendes Verfahren für die Dauer des Pilotbetriebs."
+    },
+    "obiekty": {
+      "title": "8. Events in verwalteten und nicht verwalteten Anlagen",
+      "managedLabel": "Verwaltete Anlage",
+      "managedText": " (hat einen eigenen Betreuer auf SaunaPlanet): dein Event gelangt dorthin als Vorschlag zur Annahme. Bis zur Entscheidung kannst du es zurückziehen; öffentlich wird es nach der Annahme.",
+      "unmanagedLabel": "Nicht verwaltete Anlage:",
+      "unmanagedText": " das Event ist sofort aktiv, und du bist sein Veranstalter.",
+      "visibility": "Öffentlich sichtbar sind ausschließlich aktive Events — auf der Karte, auf der Events-Seite und in deinem Profil."
+    },
+    "pomoc": {
+      "title": "9. Wie du Hilfe erhältst"
+    },
+    "bezpieczenstwo": {
+      "title": "10. Sicherheitsregeln",
+      "rule1": "Gib dein Kontopasswort an niemanden weiter — niemand von SaunaPlanet wird jemals danach fragen.",
+      "rule2": "Teile den aktiven Link zur Profilübernahme mit niemandem — er funktioniert wie ein Schlüssel zu deinem Profil.",
+      "rule3": "Verdecke auf Screenshots, die du an den Support sendest, Passwörter und Einladungslinks.",
+      "rule4": "Wenn du vermutest, dass jemand Unbefugtes deinen Link oder dein Konto benutzt hat, kontaktiere so schnell wie möglich den Support (Abschnitt 9)."
+    }
+  },
+  "support": {
+    "requestChecklistIntro": "Bitte gib in deiner Anfrage an:"
+  }
+}

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import TodayQueue from '@/components/workspace/TodayQueue'
@@ -16,6 +17,7 @@ const EVENTS_PREVIEW_LIMIT = 3
 const ACTIVITY_PREVIEW_LIMIT = 4
 
 export default async function PersonalDashboardPage() {
+  const t = await getTranslations('profile')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -102,8 +104,8 @@ export default async function PersonalDashboardPage() {
     ...((eventReviewsRaw ?? []) as any[]).map((r) => ({
       id: `event-${r.id}`,
       href: `/events/${r.event_id}`,
-      label: r.sauna_events?.title ?? 'Wydarzenie',
-      kind: 'Recenzja wydarzenia',
+      label: r.sauna_events?.title ?? t('dashboard.activity.eventFallback'),
+      kind: t('dashboard.activity.eventReviewKind'),
       rating: r.rating,
       created_at: r.created_at,
     })),
@@ -111,8 +113,8 @@ export default async function PersonalDashboardPage() {
     ...((saunaReviewsRaw ?? []) as any[]).map((r) => ({
       id: `sauna-${r.id}`,
       href: `/sauna/${r.sauna_id}`,
-      label: r.saunas?.name ?? 'Sauna',
-      kind: 'Recenzja sauny',
+      label: r.saunas?.name ?? t('dashboard.activity.saunaFallback'),
+      kind: t('dashboard.activity.saunaReviewKind'),
       rating: r.rating,
       created_at: r.created_at,
     })),
@@ -125,11 +127,11 @@ export default async function PersonalDashboardPage() {
   return (
     <WorkspaceShell
       title={PERSONAL_WORKSPACE_LABEL}
-      subtitle={displayName ? `Cześć, ${displayName}!` : user.email ?? undefined}
+      subtitle={displayName ? t('greeting', { name: displayName }) : user.email ?? undefined}
       breadcrumbs={personalBreadcrumbs()}
       nav={PERSONAL_NAV}
       todayQueue={
-        <TodayQueue emptyLabel="Brak wydarzeń na dziś.">
+        <TodayQueue emptyLabel={t('todayQueue.empty')}>
           {todayEvents.length > 0 ? (
             <div className="space-y-2">
               {todayEvents.map((interest) => {
@@ -168,30 +170,30 @@ export default async function PersonalDashboardPage() {
             className="flex items-center justify-between gap-3 rounded-3xl border bg-white p-4 shadow-sm transition-colors hover:bg-orange-50 sm:p-5"
           >
             <div className="min-w-0">
-              <p className="font-bold">🏢 Panel obiektu</p>
+              <p className="font-bold">{t('ownerWorkspace.title')}</p>
               <p className="mt-0.5 text-sm text-gray-500">
-                Zarządzanie obiektami, rezerwacjami i wydarzeniami przeniosło się do Panelu obiektu.
+                {t('ownerWorkspace.description')}
               </p>
             </div>
-            <span className="shrink-0 font-semibold text-orange-700">Przejdź →</span>
+            <span className="shrink-0 font-semibold text-orange-700">{t('ownerWorkspace.cta')}</span>
           </Link>
         )}
 
         <WorkspaceSection
-          title="🔥 Nadchodzące wydarzenia"
+          title={t('dashboard.upcomingEvents.title')}
           action={
             <Link href="/profile/events" className="text-orange-700 hover:underline">
-              Wszystkie →
+              {t('dashboard.upcomingEvents.seeAll')}
             </Link>
           }
         >
           {upcomingEvents.length === 0 ? (
             <WorkspaceEmptyState
               icon="🔥"
-              title="Brak nadchodzących wydarzeń"
-              description="Zapisz się na wydarzenie lub oznacz je jako „Idę”, a pojawi się tutaj."
+              title={t('dashboard.upcomingEvents.emptyTitle')}
+              description={t('dashboard.upcomingEvents.emptyDescription')}
               actionHref="/events"
-              actionLabel="Przeglądaj wydarzenia"
+              actionLabel={t('dashboard.upcomingEvents.emptyAction')}
             />
           ) : (
             <div className="space-y-3">
@@ -222,20 +224,20 @@ export default async function PersonalDashboardPage() {
         </WorkspaceSection>
 
         <WorkspaceSection
-          title="♥ Ulubione sauny"
+          title={t('dashboard.favorites.title')}
           action={
             <Link href="/profile/favorites" className="text-orange-700 hover:underline">
-              Wszystkie ({favorites.length}) →
+              {t('dashboard.favorites.seeAll', { count: favorites.length })}
             </Link>
           }
         >
           {previewFavorites.length === 0 ? (
             <WorkspaceEmptyState
               icon="🧖"
-              title="Brak ulubionych saun"
-              description="Dodaj sauny do ulubionych na ich stronach, aby mieć je pod ręką."
+              title={t('favorites.emptyTitle')}
+              description={t('favorites.emptyDescription')}
               actionHref="/sauny"
-              actionLabel="Przeglądaj sauny"
+              actionLabel={t('favorites.emptyAction')}
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -271,18 +273,18 @@ export default async function PersonalDashboardPage() {
         </WorkspaceSection>
 
         <WorkspaceSection
-          title="⭐ Ostatnia aktywność"
+          title={t('dashboard.activity.title')}
           action={
             <Link href="/profile/reviews" className="text-orange-700 hover:underline">
-              Moje recenzje →
+              {t('dashboard.activity.seeAll')}
             </Link>
           }
         >
           {recentActivity.length === 0 ? (
             <WorkspaceEmptyState
               icon="⭐"
-              title="Brak aktywności"
-              description="Twoje recenzje saun i wydarzeń pojawią się tutaj."
+              title={t('dashboard.activity.emptyTitle')}
+              description={t('dashboard.activity.emptyDescription')}
             />
           ) : (
             <div className="space-y-2">

@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { approveSubmission, rejectSubmission } from '@/app/[locale]/(main)/admin/actions'
 
 export default function SubmissionActions({ submissionId }: { submissionId: string }) {
+  const t = useTranslations('admin')
   const [isPending, startTransition] = useTransition()
   const [rejecting, setRejecting] = useState(false)
   const [note, setNote] = useState('')
@@ -13,9 +15,9 @@ export default function SubmissionActions({ submissionId }: { submissionId: stri
     startTransition(async () => {
       try {
         await approveSubmission(submissionId)
-        toast.success('Sauna zatwierdzona i dodana do mapy')
+        toast.success(t('submissionActions.approved'))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd zatwierdzania')
+        toast.error(e instanceof Error ? e.message : t('submissionActions.approveError'))
       }
     })
   }
@@ -24,10 +26,10 @@ export default function SubmissionActions({ submissionId }: { submissionId: stri
     startTransition(async () => {
       try {
         await rejectSubmission(submissionId, note)
-        toast.success('Zgłoszenie odrzucone')
+        toast.success(t('submissionActions.rejected'))
         setRejecting(false)
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd odrzucania')
+        toast.error(e instanceof Error ? e.message : t('submissionActions.rejectError'))
       }
     })
   }
@@ -39,7 +41,7 @@ export default function SubmissionActions({ submissionId }: { submissionId: stri
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Powód odrzucenia (opcjonalnie)"
+          placeholder={t('submissionActions.rejectReasonPlaceholder')}
           className="rounded-xl border px-3 py-1.5 text-sm"
         />
         <div className="flex gap-2">
@@ -48,13 +50,13 @@ export default function SubmissionActions({ submissionId }: { submissionId: stri
             disabled={isPending}
             className="rounded-xl bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
           >
-            {isPending ? 'Odrzucanie...' : 'Potwierdź odrzucenie'}
+            {isPending ? t('submissionActions.rejecting') : t('submissionActions.confirmReject')}
           </button>
           <button
             onClick={() => setRejecting(false)}
             className="rounded-xl border px-3 py-1.5 text-sm hover:bg-gray-50"
           >
-            Anuluj
+            {t('submissionActions.cancel')}
           </button>
         </div>
       </div>
@@ -68,14 +70,14 @@ export default function SubmissionActions({ submissionId }: { submissionId: stri
         disabled={isPending}
         className="rounded-xl bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700 disabled:opacity-50"
       >
-        {isPending ? '...' : '✓ Zatwierdź'}
+        {isPending ? '...' : t('submissionActions.approve')}
       </button>
       <button
         onClick={() => setRejecting(true)}
         disabled={isPending}
         className="rounded-xl border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
       >
-        ✕ Odrzuć
+        {t('submissionActions.reject')}
       </button>
     </div>
   )

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -33,6 +34,7 @@ export default async function OwnerTeamPage({
 }: {
   searchParams: Promise<{ context?: string }>
 }) {
+  const t = await getTranslations('workspace')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -96,7 +98,7 @@ export default async function OwnerTeamPage({
         <div className="min-w-0">
           <p className="font-semibold text-gray-800">
             <Link href={`/masters/${master?.id}`} className="hover:underline">
-              {master?.name ?? 'Saunamistrz'}
+              {master?.name ?? t('common.master')}
             </Link>
             {master?.level && <span className="ml-2 text-xs font-normal capitalize text-gray-400">{master.level}</span>}
           </p>
@@ -112,9 +114,9 @@ export default async function OwnerTeamPage({
   return (
     <WorkspaceShell
       title={OWNER_WORKSPACE_LABEL}
-      subtitle="Saunamistrzowie afiliowani z Twoimi obiektami"
+      subtitle={t('team.subtitle')}
       contextLabel={options.length > 0 ? workspaceContextLabel(context, options, OWNER_ALL_FACILITIES_LABEL) : undefined}
-      breadcrumbs={ownerBreadcrumbs(context, 'Zespół')}
+      breadcrumbs={ownerBreadcrumbs(context, t('team.breadcrumb'))}
       nav={ownerNav(context)}
       activeNavKey="team"
       actions={
@@ -123,15 +125,15 @@ export default async function OwnerTeamPage({
             options={options}
             activeId={context.scope === 'one' ? context.option.id : null}
             allLabel={OWNER_ALL_FACILITIES_LABEL}
-            ariaLabel="Aktywny obiekt"
+            ariaLabel={t('aria.activeFacility')}
           />
         ) : undefined
       }
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title={`📨 Zgłoszenia saunamistrzów (${requests.length})`}>
+        <WorkspaceSection title={t('team.requestsTitle', { count: requests.length })}>
           {requests.length === 0 ? (
-            <WorkspaceEmptyState icon="📨" title="Brak oczekujących zgłoszeń" />
+            <WorkspaceEmptyState icon="📨" title={t('team.noRequestsTitle')} />
           ) : (
             <div className="space-y-3">
               {requests.map((a) => (
@@ -146,9 +148,9 @@ export default async function OwnerTeamPage({
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title={`📤 Wysłane zaproszenia (${invitations.length})`}>
+        <WorkspaceSection title={t('team.sentInvitationsTitle', { count: invitations.length })}>
           {invitations.length === 0 ? (
-            <WorkspaceEmptyState icon="📤" title="Brak oczekujących zaproszeń" />
+            <WorkspaceEmptyState icon="📤" title={t('team.noSentInvitationsTitle')} />
           ) : (
             <div className="space-y-3">
               {invitations.map((a) => (
@@ -157,8 +159,8 @@ export default async function OwnerTeamPage({
                     <MasterLine a={a} />
                     <EndAffiliationButton
                       affiliationId={a.id}
-                      label="Wycofaj"
-                      confirmLabel="Na pewno wycofaj"
+                      label={t('team.withdraw')}
+                      confirmLabel={t('team.withdrawConfirm')}
                     />
                   </div>
                 </div>
@@ -167,12 +169,12 @@ export default async function OwnerTeamPage({
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title={`🤝 Afiliowani mistrzowie (${active.length})`}>
+        <WorkspaceSection title={t('team.activeTitle', { count: active.length })}>
           {active.length === 0 ? (
             <WorkspaceEmptyState
               icon="🤝"
-              title="Brak afiliowanych saunamistrzów"
-              description="Zaproś saunamistrza poniżej albo zatwierdź jego zgłoszenie — relacja zawsze wymaga zgody obu stron."
+              title={t('team.noActiveTitle')}
+              description={t('team.noActiveDescription')}
             />
           ) : (
             <div className="space-y-3">
@@ -190,20 +192,19 @@ export default async function OwnerTeamPage({
 
         {options.length > 0 && (
           inviteTarget ? (
-            <WorkspaceSection title={`➕ Zaproś saunamistrza (${inviteTarget.label})`}>
+            <WorkspaceSection title={t('team.inviteTitle', { facility: inviteTarget.label })}>
               <InviteMasterForm
                 saunaId={inviteTarget.id}
                 saunaName={inviteTarget.label}
                 masters={masterOptions}
               />
               <p className="mt-2 text-xs text-gray-400">
-                Saunamistrz musi przyjąć zaproszenie — afiliacja zawsze wymaga zgody obu stron.
+                {t('team.inviteHint')}
               </p>
             </WorkspaceSection>
           ) : (
             <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-              Aby zaprosić saunamistrza, wybierz konkretny obiekt w przełączniku powyżej —
-              zaproszenie zawsze dotyczy jednego obiektu.
+              {t('team.pickFacilityToInvite')}
             </div>
           )
         )}

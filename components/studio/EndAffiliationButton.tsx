@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { endAffiliation } from '@/app/[locale]/(main)/studio/actions'
 

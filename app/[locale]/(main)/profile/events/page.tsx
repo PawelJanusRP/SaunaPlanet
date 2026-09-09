@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -10,13 +11,14 @@ import {
   personalBreadcrumbs,
 } from '@/lib/workspace/personal'
 
-const registrationStatusLabel: Record<string, { label: string; className: string }> = {
-  pending: { label: '⏳ Oczekuje', className: 'bg-yellow-100 text-yellow-700' },
-  confirmed: { label: '✓ Potwierdzona', className: 'bg-green-100 text-green-700' },
-  cancelled: { label: '✗ Anulowana', className: 'bg-red-100 text-red-600' },
+const registrationStatusClass: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  confirmed: 'bg-green-100 text-green-700',
+  cancelled: 'bg-red-100 text-red-600',
 }
 
 export default async function PersonalEventsPage() {
+  const t = await getTranslations('profile')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -81,29 +83,29 @@ export default async function PersonalEventsPage() {
   return (
     <WorkspaceShell
       title={PERSONAL_WORKSPACE_LABEL}
-      subtitle="Twoje rezerwacje i obserwowane wydarzenia"
-      breadcrumbs={personalBreadcrumbs('Wydarzenia')}
+      subtitle={t('events.subtitle')}
+      breadcrumbs={personalBreadcrumbs(t('events.breadcrumb'))}
       nav={PERSONAL_NAV}
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title="🎟️ Moje rezerwacje">
+        <WorkspaceSection title={t('events.reservations.title')}>
           {registrations.length === 0 ? (
             <WorkspaceEmptyState
               icon="🎟️"
-              title="Brak rezerwacji"
-              description="Kliknij „Zapisz się” na stronie wydarzenia, aby zarezerwować miejsce."
+              title={t('events.reservations.emptyTitle')}
+              description={t('events.reservations.emptyDescription')}
               actionHref="/events"
-              actionLabel="Przeglądaj wydarzenia"
+              actionLabel={t('events.reservations.emptyAction')}
             />
           ) : (
             <div className="space-y-3">
               {registrations.map((reg) => {
-                const status = registrationStatusLabel[reg.status]
+                const statusClass = registrationStatusClass[reg.status]
                 return (
                   <EventRow key={reg.id} event={reg.sauna_events}>
-                    {status && (
-                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${status.className}`}>
-                        {status.label}
+                    {statusClass && (
+                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass}`}>
+                        {t(`events.status.${reg.status}`)}
                       </span>
                     )}
                   </EventRow>
@@ -113,14 +115,14 @@ export default async function PersonalEventsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="🔥 Obserwowane („Idę”)">
+        <WorkspaceSection title={t('events.interested.title')}>
           {upcomingInterests.length === 0 ? (
             <WorkspaceEmptyState
               icon="🔥"
-              title="Brak obserwowanych wydarzeń"
-              description="Oznacz nadchodzące wydarzenie jako „Idę”, a pojawi się tutaj."
+              title={t('events.interested.emptyTitle')}
+              description={t('events.interested.emptyDescription')}
               actionHref="/events"
-              actionLabel="Przeglądaj wydarzenia"
+              actionLabel={t('events.interested.emptyAction')}
             />
           ) : (
             <div className="space-y-3">

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import EditProfileNameForm from '@/components/EditProfileNameForm'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -14,15 +15,10 @@ import {
  * database columns yet, so they render as consistent "coming soon" rows —
  * never as editable inputs or fake values.
  */
-const PLANNED_PROFILE_FIELDS = [
-  { label: 'Awatar', hint: 'Zdjęcie profilowe widoczne przy recenzjach' },
-  { label: 'Bio', hint: 'Krótki opis o Tobie' },
-  { label: 'Lokalizacja', hint: 'Twoje miasto' },
-  { label: 'Języki', hint: 'Języki, którymi się posługujesz' },
-  { label: 'Profil publiczny', hint: 'Widoczność profilu dla innych użytkowników' },
-]
+const PLANNED_PROFILE_FIELDS = ['avatar', 'bio', 'location', 'languages', 'publicProfile'] as const
 
 export default async function PersonalDetailsPage() {
+  const t = await getTranslations('profile')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -39,14 +35,14 @@ export default async function PersonalDetailsPage() {
   return (
     <WorkspaceShell
       title={PERSONAL_WORKSPACE_LABEL}
-      subtitle="Twoja publiczna tożsamość na SaunaPlanet"
-      breadcrumbs={personalBreadcrumbs('Profil')}
+      subtitle={t('details.subtitle')}
+      breadcrumbs={personalBreadcrumbs(t('details.breadcrumb'))}
       nav={PERSONAL_NAV}
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title="Imię i nazwisko">
+        <WorkspaceSection title={t('details.nameSection')}>
           <p className="mb-2 text-sm text-gray-500">
-            Wyświetlane przy Twoich recenzjach i komentarzach.
+            {t('details.nameHint')}
           </p>
           <EditProfileNameForm
             firstName={profile?.first_name ?? ''}
@@ -54,16 +50,16 @@ export default async function PersonalDetailsPage() {
           />
         </WorkspaceSection>
 
-        <WorkspaceSection title="Wkrótce w Twoim profilu">
+        <WorkspaceSection title={t('details.comingSoonSection')}>
           <ul className="divide-y">
             {PLANNED_PROFILE_FIELDS.map((field) => (
-              <li key={field.label} className="flex items-center justify-between gap-3 py-3">
+              <li key={field} className="flex items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-700">{field.label}</p>
-                  <p className="text-xs text-gray-400">{field.hint}</p>
+                  <p className="text-sm font-semibold text-gray-700">{t(`details.fields.${field}.label`)}</p>
+                  <p className="text-xs text-gray-400">{t(`details.fields.${field}.hint`)}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-500">
-                  Wkrótce
+                  {t('details.comingSoonBadge')}
                 </span>
               </li>
             ))}

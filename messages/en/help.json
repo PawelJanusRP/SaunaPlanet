@@ -1,1 +1,122 @@
-{}
+{
+  "saunamaster": {
+    "metaTitle": "Sauna master quick start — SaunaPlanet",
+    "metaDescription": "How to claim your sauna master profile, complete your profile, publish it and add your first event on SaunaPlanet.",
+    "title": "Sauna master quick start",
+    "intro": "Welcome to SaunaPlanet! This guide walks you step by step from the invitation to a public profile and your first event. Each section is a single short task — you can come back here any time.",
+    "tocLabel": "Table of contents",
+    "tocHeading": "Table of contents",
+    "toc": {
+      "przejecie": "How to claim your profile",
+      "konto": "How to sign in or create an account",
+      "studio": "How to enter Master Studio",
+      "wizytowka": "How to complete your profile",
+      "publikacja": "How preview and publication work",
+      "statusy": "What the moderation statuses mean",
+      "wydarzenie": "How to add an event",
+      "obiekty": "Events at managed and unmanaged facilities",
+      "pomoc": "How to get help",
+      "bezpieczenstwo": "Security rules"
+    },
+    "przejecie": {
+      "title": "1. How to claim your profile",
+      "p1": "SaunaPlanet has prepared a sauna master profile for you. The invitation you receive contains a link to the profile claim page.",
+      "step1": "Open the link from the invitation — you will see the prepared profile.",
+      "step2": "Sign in or create an account (section 2).",
+      "step3Prefix": "Click ",
+      "step3Cta": "“Claim profile”",
+      "step3Suffix": ". From that moment the profile is linked to your account and only you manage it.",
+      "importantLabel": "Important:",
+      "importantMiddle": "claiming the profile ",
+      "importantBold": "does not publish it",
+      "importantSuffix": ". The profile becomes public only after you complete it, submit it and it is approved by moderation (sections 4–5).",
+      "linkKey": "The invitation link is single-use, has an expiry date and works like a key to your profile — do not pass it to anyone. If the link has expired or does not work, request a new invitation (section 9)."
+    },
+    "konto": {
+      "title": "2. How to sign in or create an account",
+      "p1": "To claim the profile you need a regular SaunaPlanet account. On the claim page you can sign in or register without leaving this page.",
+      "step1": "Have an account? Sign in with your e-mail address and password.",
+      "step2": "No account yet? Register. After registering, confirm your e-mail address (activation link), then open the invitation link once more."
+    },
+    "studio": {
+      "title": "3. How to enter Master Studio",
+      "p1": "Master Studio is your workspace: profile, publication and events. After claiming the profile you enter it with the “Go to Master Studio” button, and later at any time:",
+      "step1": "Sign in to SaunaPlanet.",
+      "step2Prefix": "Open the account menu and choose ",
+      "step2Bold": "Studio",
+      "step2Suffix": ".",
+      "step3Prefix": "You can also go directly to ",
+      "step3Suffix": ".",
+      "note": "Studio works right after you claim the profile — even before moderation approves your sauna master profile."
+    },
+    "wizytowka": {
+      "title": "4. How to complete your profile",
+      "p1Prefix": "You edit your profile in Studio, in the ",
+      "p1Bold": "Profile",
+      "p1Suffix": " tab. Publication requires:",
+      "req1": "full name,",
+      "req2": "city or area of activity,",
+      "req3": "description (at least 80 characters),",
+      "req4": "profile photo,",
+      "req5": "at least one specialty.",
+      "recommended": "Recommended fields (a custom profile address, languages, links to websites and social media) do not block publication, but strengthen your profile. The “First steps” card in Studio shows in real time what is still missing."
+    },
+    "publikacja": {
+      "title": "5. How preview and publication work",
+      "previewLabel": "Preview:",
+      "previewText": "in Studio you can always view your profile exactly as others will see it. Until the profile is published, only you can see the preview.",
+      "submitLabel": "Submission:",
+      "submitText": "once the required fields are filled in, submit the profile for publication with the button in Studio. Until a decision is made you can withdraw the submission.",
+      "moderationLabel": "Moderation:",
+      "moderationText": "moderation may approve the profile or request changes — you will see the message with the reasons in Studio. After making corrections you submit the profile again.",
+      "publicationLabel": "Publication:",
+      "publicationText": "once approved, the profile is publicly visible in the sauna master directory.",
+      "noticeLabel": "Note:",
+      "noticeText": "a significant edit to a published profile (e.g. changing the description or photo) temporarily hides it from the directory — it returns after it is approved again by moderation. This is normal behaviour, not a bug. A profile with suspended publication cannot be published on your own — contact support (section 9)."
+    },
+    "statusy": {
+      "title": "6. What the moderation statuses mean"
+    },
+    "wydarzenie": {
+      "title": "7. How to add an event",
+      "p1": "You can add events once your sauna master profile has been approved by moderation.",
+      "step1Prefix": "Enter Studio and open the ",
+      "step1Bold": "My events",
+      "step1Suffix": " tab.",
+      "step2": "Click “Create event”.",
+      "step3Prefix": "Provide the required information: ",
+      "step3Facility": "facility (sauna)",
+      "step3Middle": ", ",
+      "step3Name": "name",
+      "step3Middle2": " and ",
+      "step3Date": "date",
+      "step3Suffix": ". You can add a time, price, capacity and description.",
+      "step4": "Save — what happens next with the event is described in section 8.",
+      "affiliation": "You do not need an affiliation with a facility to add an event there. Facilities can also invite you to their own events — you accept or decline the invitation in the My events tab. A single event may feature several sauna masters.",
+      "reservations": "Seat reservation by participants is not yet available on SaunaPlanet.",
+      "correctionLabel": "Correcting or cancelling an active event:",
+      "correctionText": "in the current pilot version of the app, changes to an already active event are made by SaunaPlanet support — contact us (section 9). This is a temporary procedure for the duration of the pilot."
+    },
+    "obiekty": {
+      "title": "8. Events at managed and unmanaged facilities",
+      "managedLabel": "Managed facility",
+      "managedText": " (has its own steward on SaunaPlanet): your event reaches it as a proposal for acceptance. Until a decision is made you can withdraw it; it becomes public after acceptance.",
+      "unmanagedLabel": "Unmanaged facility:",
+      "unmanagedText": " the event is active immediately, and you are its organizer.",
+      "visibility": "Only active events are publicly visible — on the map, on the events page and on your profile."
+    },
+    "pomoc": {
+      "title": "9. How to get help"
+    },
+    "bezpieczenstwo": {
+      "title": "10. Security rules",
+      "rule1": "Never share your account password with anyone — nobody from SaunaPlanet will ever ask for it.",
+      "rule2": "Do not share an active profile claim link with anyone — it works like a key to your profile.",
+      "rule3": "On screenshots you send to support, hide passwords and invitation links.",
+      "rule4": "If you suspect someone unauthorized has used your link or account, contact support as soon as possible (section 9)."
+    }
+  },
+  "support": {
+    "requestChecklistIntro": "In your request please include:"
+  }
+}

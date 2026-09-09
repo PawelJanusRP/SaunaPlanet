@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { usePathname } from '@/lib/i18n/navigation'
 import type { WorkspaceNavItem } from '@/lib/workspace/types'
@@ -16,13 +17,15 @@ import { WORKSPACE_NAV_ICONS } from '@/lib/navigation/icons'
 export default function WorkspaceNav({
   items,
   activeKey,
-  ariaLabel = 'Nawigacja panelu',
+  ariaLabel,
 }: {
   items: WorkspaceNavItem[]
   activeKey?: string
   ariaLabel?: string
 }) {
+  const t = useTranslations('workspace')
   const pathname = usePathname()
+  const navAriaLabel = ariaLabel ?? t('aria.nav')
 
   function isActive(item: WorkspaceNavItem) {
     if (activeKey !== undefined) return item.key === activeKey
@@ -30,7 +33,7 @@ export default function WorkspaceNav({
   }
 
   return (
-    <nav aria-label={ariaLabel}>
+    <nav aria-label={navAriaLabel}>
       <ul className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:gap-0.5 md:overflow-visible md:pb-0">
         {items.map((item) => {
           const active = isActive(item)

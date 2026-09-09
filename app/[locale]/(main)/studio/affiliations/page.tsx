@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -19,16 +20,26 @@ import { loadMasterStudioScope, type MasterAffiliation } from '@/lib/workspace/m
 
 const HISTORY_PREVIEW_LIMIT = 10
 
-function SaunaLine({ a }: { a: MasterAffiliation }) {
+function SaunaLine({
+  a,
+  primaryTag,
+  ownRequestLabel,
+  facilityInvitationLabel,
+}: {
+  a: MasterAffiliation
+  primaryTag: string
+  ownRequestLabel: string
+  facilityInvitationLabel: string
+}) {
   return (
     <div className="min-w-0">
       <p className="font-semibold text-gray-800">
         <Link href={`/sauna/${a.saunaId}`} className="hover:underline">{a.saunaName}</Link>
         {a.saunaCity && <span className="ml-1 font-normal text-gray-400">· {a.saunaCity}</span>}
-        {a.isPrimary && <span className="ml-2 text-orange-600">⭐ główna</span>}
+        {a.isPrimary && <span className="ml-2 text-orange-600">{primaryTag}</span>}
       </p>
       <p className="mt-0.5 text-xs text-gray-400">
-        {a.initiatedBy === 'master' ? 'Twoje zgłoszenie' : 'Zaproszenie obiektu'}
+        {a.initiatedBy === 'master' ? ownRequestLabel : facilityInvitationLabel}
         {' · '}{new Date(a.createdAt).toLocaleDateString('pl-PL')}
       </p>
     </div>
@@ -36,6 +47,7 @@ function SaunaLine({ a }: { a: MasterAffiliation }) {
 }
 
 export default async function StudioAffiliationsPage() {
+  const t = await getTranslations('studio')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -77,22 +89,27 @@ export default async function StudioAffiliationsPage() {
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Twoje relacje z obiektami"
+      subtitle={t('affiliations.subtitle')}
       contextLabel={profile.name}
-      breadcrumbs={masterBreadcrumbs('Afiliacje')}
+      breadcrumbs={masterBreadcrumbs(t('affiliations.breadcrumb'))}
       nav={MASTER_NAV}
       activeNavKey="affiliations"
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title={`📨 Zaproszenia od obiektów (${invitations.length})`}>
+        <WorkspaceSection title={t('affiliations.invitationsTitle', { count: invitations.length })}>
           {invitations.length === 0 ? (
-            <WorkspaceEmptyState icon="📨" title="Brak oczekujących zaproszeń" />
+            <WorkspaceEmptyState icon="📨" title={t('affiliations.invitationsEmptyTitle')} />
           ) : (
             <div className="space-y-3">
               {invitations.map((a) => (
                 <div key={a.id} className="rounded-xl border border-yellow-200 bg-yellow-50 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <SaunaLine a={a} />
+                    <SaunaLine
+                      a={a}
+                      primaryTag={t('affiliations.primaryTag')}
+                      ownRequestLabel={t('affiliations.ownRequestLabel')}
+                      facilityInvitationLabel={t('affiliations.facilityInvitationLabel')}
+                    />
                     <AffiliationDecisionActions affiliationId={a.id} />
                   </div>
                 </div>
@@ -101,19 +118,24 @@ export default async function StudioAffiliationsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title={`📤 Moje zgłoszenia (${ownRequests.length})`}>
+        <WorkspaceSection title={t('affiliations.ownRequestsTitle', { count: ownRequests.length })}>
           {ownRequests.length === 0 ? (
-            <WorkspaceEmptyState icon="📤" title="Brak oczekujących zgłoszeń" />
+            <WorkspaceEmptyState icon="📤" title={t('affiliations.ownRequestsEmptyTitle')} />
           ) : (
             <div className="space-y-3">
               {ownRequests.map((a) => (
                 <div key={a.id} className="rounded-xl border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <SaunaLine a={a} />
+                    <SaunaLine
+                      a={a}
+                      primaryTag={t('affiliations.primaryTag')}
+                      ownRequestLabel={t('affiliations.ownRequestLabel')}
+                      facilityInvitationLabel={t('affiliations.facilityInvitationLabel')}
+                    />
                     <EndAffiliationButton
                       affiliationId={a.id}
-                      label="Wycofaj"
-                      confirmLabel="Na pewno wycofaj"
+                      label={t('affiliations.withdraw')}
+                      confirmLabel={t('affiliations.withdrawConfirm')}
                     />
                   </div>
                 </div>
@@ -122,19 +144,24 @@ export default async function StudioAffiliationsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title={`🤝 Aktywne afiliacje (${active.length})`}>
+        <WorkspaceSection title={t('affiliations.activeTitle', { count: active.length })}>
           {active.length === 0 ? (
             <WorkspaceEmptyState
               icon="🤝"
-              title="Brak aktywnych afiliacji"
-              description="Afiliacja to stała relacja z obiektem — poproś o nią poniżej albo przyjmij zaproszenie."
+              title={t('affiliations.activeEmptyTitle')}
+              description={t('affiliations.activeEmptyDescription')}
             />
           ) : (
             <div className="space-y-3">
               {active.map((a) => (
                 <div key={a.id} className="rounded-xl border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <SaunaLine a={a} />
+                    <SaunaLine
+                      a={a}
+                      primaryTag={t('affiliations.primaryTag')}
+                      ownRequestLabel={t('affiliations.ownRequestLabel')}
+                      facilityInvitationLabel={t('affiliations.facilityInvitationLabel')}
+                    />
                     <div className="flex flex-wrap items-center gap-2">
                       {!a.isPrimary && <SetPrimaryAffiliationButton affiliationId={a.id} />}
                       <EndAffiliationButton affiliationId={a.id} />
@@ -146,22 +173,20 @@ export default async function StudioAffiliationsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="➕ Poproś o afiliację">
+        <WorkspaceSection title={t('affiliations.requestTitle')}>
           {legacyHomeSaunaHint && (
             <p className="mb-3 rounded-xl bg-gray-50 px-4 py-2.5 text-sm text-gray-600">
-              Twoja dotychczasowa sauna macierzysta to{' '}
-              <span className="font-semibold">{profile.homeSauna!.name}</span> (dane przejściowe).
-              Wyślij jej zgłoszenie afiliacji, aby przenieść relację do nowego modelu.
+              {t('affiliations.legacyHomeSaunaHint', { sauna: profile.homeSauna!.name })}
             </p>
           )}
           <RequestAffiliationForm saunas={saunaOptions} />
           <p className="mt-2 text-xs text-gray-400">
-            Obiekt musi zatwierdzić zgłoszenie — afiliacja zawsze wymaga zgody obu stron.
+            {t('affiliations.requestBothSidesHint')}
           </p>
         </WorkspaceSection>
 
         {history.length > 0 && (
-          <WorkspaceSection title="🗂️ Historia">
+          <WorkspaceSection title={t('affiliations.historyTitle')}>
             <div className="space-y-2">
               {history.map((a) => (
                 <div key={a.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5 text-sm">

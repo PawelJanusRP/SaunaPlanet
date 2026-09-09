@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -36,6 +37,7 @@ function ReviewCard({
 }
 
 export default async function PersonalReviewsPage() {
+  const t = await getTranslations('profile')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -64,19 +66,19 @@ export default async function PersonalReviewsPage() {
   return (
     <WorkspaceShell
       title={PERSONAL_WORKSPACE_LABEL}
-      subtitle="Recenzje, które napisałeś"
-      breadcrumbs={personalBreadcrumbs('Recenzje')}
+      subtitle={t('reviews.subtitle')}
+      breadcrumbs={personalBreadcrumbs(t('reviews.breadcrumb'))}
       nav={PERSONAL_NAV}
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title="🧖 Recenzje saun">
+        <WorkspaceSection title={t('reviews.saunaSection.title')}>
           {saunaReviews.length === 0 ? (
             <WorkspaceEmptyState
               icon="🧖"
-              title="Brak recenzji saun"
-              description="Oceń odwiedzoną saunę na jej stronie, a recenzja pojawi się tutaj."
+              title={t('reviews.saunaSection.emptyTitle')}
+              description={t('reviews.saunaSection.emptyDescription')}
               actionHref="/sauny"
-              actionLabel="Przeglądaj sauny"
+              actionLabel={t('reviews.saunaSection.emptyAction')}
             />
           ) : (
             <div className="space-y-3">
@@ -84,7 +86,7 @@ export default async function PersonalReviewsPage() {
                 <ReviewCard
                   key={review.id}
                   href={`/sauna/${review.sauna_id}`}
-                  title={review.saunas?.name ?? 'Sauna'}
+                  title={review.saunas?.name ?? t('reviews.saunaFallback')}
                   rating={review.rating}
                   text={review.review_text}
                   createdAt={review.created_at}
@@ -94,14 +96,14 @@ export default async function PersonalReviewsPage() {
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="🔥 Recenzje wydarzeń">
+        <WorkspaceSection title={t('reviews.eventSection.title')}>
           {eventReviews.length === 0 ? (
             <WorkspaceEmptyState
               icon="🔥"
-              title="Brak recenzji wydarzeń"
-              description="Po zakończonym wydarzeniu możesz wystawić mu ocenę na jego stronie."
+              title={t('reviews.eventSection.emptyTitle')}
+              description={t('reviews.eventSection.emptyDescription')}
               actionHref="/events"
-              actionLabel="Przeglądaj wydarzenia"
+              actionLabel={t('reviews.eventSection.emptyAction')}
             />
           ) : (
             <div className="space-y-3">
@@ -109,7 +111,7 @@ export default async function PersonalReviewsPage() {
                 <ReviewCard
                   key={review.id}
                   href={`/events/${review.event_id}`}
-                  title={review.sauna_events?.title ?? 'Wydarzenie'}
+                  title={review.sauna_events?.title ?? t('reviews.eventFallback')}
                   rating={review.rating}
                   text={review.comment}
                   createdAt={review.created_at}

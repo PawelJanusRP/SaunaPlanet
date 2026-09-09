@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { inviteMaster } from '@/app/[locale]/(main)/studio/actions'
 import FacilityCombobox from '@/components/FacilityCombobox'
@@ -21,22 +22,23 @@ export default function InviteMasterForm({
   saunaName: string
   masters: MasterOption[]
 }) {
+  const t = useTranslations('workspace')
   const [masterId, setMasterId] = useState('')
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!masterId) {
-      toast.error('Wybierz saunamistrza')
+      toast.error(t('inviteMaster.errorPickMaster'))
       return
     }
     startTransition(async () => {
       try {
         await inviteMaster(saunaId, masterId)
-        toast.success(`Zaproszenie wysłane — saunamistrz musi je przyjąć (${saunaName})`)
+        toast.success(t('inviteMaster.successToast', { facility: saunaName }))
         setMasterId('')
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd wysyłania zaproszenia')
+        toast.error(e instanceof Error ? e.message : t('inviteMaster.errorToast'))
       }
     })
   }
@@ -48,10 +50,10 @@ export default function InviteMasterForm({
           saunas={masters.map((m) => ({ id: m.id, name: m.name, city: null }))}
           value={masterId || null}
           onChange={(id) => setMasterId(id ?? '')}
-          placeholder="Wpisz imię saunamistrza"
-          emptyLabel="Nie znaleziono saunamistrza"
+          placeholder={t('inviteMaster.placeholder')}
+          emptyLabel={t('inviteMaster.emptyLabel')}
           groupWhenEmpty={false}
-          ariaLabel="Saunamistrz do zaproszenia"
+          ariaLabel={t('inviteMaster.ariaMaster')}
         />
       </div>
       <button
@@ -59,7 +61,7 @@ export default function InviteMasterForm({
         disabled={isPending}
         className="rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-orange-700 disabled:opacity-60"
       >
-        {isPending ? 'Wysyłanie...' : 'Zaproś'}
+        {isPending ? t('common.sending') : t('inviteMaster.invite')}
       </button>
     </form>
   )

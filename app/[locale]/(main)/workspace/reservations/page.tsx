@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import RegistrationModerationActions from '@/components/RegistrationModerationActions'
@@ -17,21 +18,22 @@ import { loadOwnerWorkspaceScope } from '@/lib/workspace/ownerServer'
 
 const RESOLVED_PREVIEW_LIMIT = 20
 
-const registrationStatusChip: Record<string, { label: string; className: string }> = {
-  confirmed: { label: '✓ Potwierdzona', className: 'bg-green-100 text-green-700' },
-  cancelled: { label: '✗ Anulowana', className: 'bg-red-100 text-red-600' },
-}
-
 export default async function OwnerReservationsPage({
   searchParams,
 }: {
   searchParams: Promise<{ context?: string }>
 }) {
+  const t = await getTranslations('workspace')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/auth/login')
+  }
+
+  const registrationStatusChip: Record<string, { label: string; className: string }> = {
+    confirmed: { label: t('status.registration.confirmed'), className: 'bg-green-100 text-green-700' },
+    cancelled: { label: t('status.registration.cancelled'), className: 'bg-red-100 text-red-600' },
   }
 
   const { context: contextParam } = await searchParams
@@ -66,9 +68,9 @@ export default async function OwnerReservationsPage({
         const regNameById: Record<string, string> = {}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const p of (regProfiles ?? []) as any[]) {
-          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Użytkownik'
+          regNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || t('common.userFallback')
         }
-        registrations = registrations.map((r) => ({ ...r, _userName: regNameById[r.user_id] ?? 'Użytkownik' }))
+        registrations = registrations.map((r) => ({ ...r, _userName: regNameById[r.user_id] ?? t('common.userFallback') }))
       }
     }
   }
@@ -94,7 +96,7 @@ export default async function OwnerReservationsPage({
           {context.scope === 'all' && ev?.saunas?.name && <span className="ml-1">· {ev.saunas.name}</span>}
         </p>
         <p className="mt-0.5 text-xs text-gray-400">
-          Zgłoszono: {new Date(reg.created_at).toLocaleDateString('pl-PL')}
+          {t('common.submittedOn', { date: new Date(reg.created_at).toLocaleDateString('pl-PL') })}
         </p>
       </div>
     )
@@ -103,9 +105,9 @@ export default async function OwnerReservationsPage({
   return (
     <WorkspaceShell
       title={OWNER_WORKSPACE_LABEL}
-      subtitle="Rezerwacje wydarzeń Twoich obiektów"
+      subtitle={t('reservations.subtitle')}
       contextLabel={options.length > 0 ? workspaceContextLabel(context, options, OWNER_ALL_FACILITIES_LABEL) : undefined}
-      breadcrumbs={ownerBreadcrumbs(context, 'Rezerwacje')}
+      breadcrumbs={ownerBreadcrumbs(context, t('reservations.breadcrumb'))}
       nav={ownerNav(context)}
       actions={
         options.length > 1 ? (
@@ -113,18 +115,18 @@ export default async function OwnerReservationsPage({
             options={options}
             activeId={context.scope === 'one' ? context.option.id : null}
             allLabel={OWNER_ALL_FACILITIES_LABEL}
-            ariaLabel="Aktywny obiekt"
+            ariaLabel={t('aria.activeFacility')}
           />
         ) : undefined
       }
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title={`⏳ Oczekujące (${pending.length})`}>
+        <WorkspaceSection title={t('reservations.pendingTitle', { count: pending.length })}>
           {pending.length === 0 ? (
             <WorkspaceEmptyState
               icon="✅"
-              title="Brak oczekujących rezerwacji"
-              description="Nowe zapisy na wydarzenia Twoich obiektów pojawią się tutaj."
+              title={t('reservations.noPendingTitle')}
+              description={t('reservations.noPendingDescription')}
             />
           ) : (
             <div className="space-y-3">
@@ -140,12 +142,12 @@ export default async function OwnerReservationsPage({
           )}
         </WorkspaceSection>
 
-        <WorkspaceSection title="🗂️ Rozstrzygnięte (ostatnie)">
+        <WorkspaceSection title={t('reservations.resolvedTitle')}>
           {resolved.length === 0 ? (
             <WorkspaceEmptyState
               icon="🗂️"
-              title="Brak rozstrzygniętych rezerwacji"
-              description="Potwierdzone i odrzucone rezerwacje pojawią się tutaj."
+              title={t('reservations.noResolvedTitle')}
+              description={t('reservations.noResolvedDescription')}
             />
           ) : (
             <div className="space-y-2">

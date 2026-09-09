@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -11,6 +12,7 @@ import {
 } from '@/lib/workspace/personal'
 
 export default async function PersonalFavoritesPage() {
+  const t = await getTranslations('profile')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -44,18 +46,18 @@ export default async function PersonalFavoritesPage() {
   return (
     <WorkspaceShell
       title={PERSONAL_WORKSPACE_LABEL}
-      subtitle="Sauny, które oznaczyłeś jako ulubione"
-      breadcrumbs={personalBreadcrumbs('Ulubione')}
+      subtitle={t('favorites.subtitle')}
+      breadcrumbs={personalBreadcrumbs(t('favorites.breadcrumb'))}
       nav={PERSONAL_NAV}
     >
-      <WorkspaceSection title={`♥ Ulubione sauny (${favorites.length})`}>
+      <WorkspaceSection title={t('favorites.title', { count: favorites.length })}>
         {favorites.length === 0 ? (
           <WorkspaceEmptyState
             icon="🧖"
-            title="Brak ulubionych saun"
-            description="Dodaj sauny do ulubionych na ich stronach, aby mieć je pod ręką."
+            title={t('favorites.emptyTitle')}
+            description={t('favorites.emptyDescription')}
             actionHref="/sauny"
-            actionLabel="Przeglądaj sauny"
+            actionLabel={t('favorites.emptyAction')}
           />
         ) : (
           <div className="space-y-3">

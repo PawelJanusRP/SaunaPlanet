@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import WorkspaceShell from '@/components/workspace/WorkspaceShell'
@@ -13,6 +14,7 @@ import {
 import { loadMasterStudioScope } from '@/lib/workspace/masterServer'
 
 export default async function StudioSettingsPage() {
+  const t = await getTranslations('studio')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -30,38 +32,38 @@ export default async function StudioSettingsPage() {
   return (
     <WorkspaceShell
       title={MASTER_STUDIO_LABEL}
-      subtitle="Ustawienia Studia"
+      subtitle={t('settings.subtitle')}
       contextLabel={profile.name}
-      breadcrumbs={masterBreadcrumbs('Ustawienia')}
+      breadcrumbs={masterBreadcrumbs(t('settings.breadcrumb'))}
       nav={MASTER_NAV}
       activeNavKey="settings"
     >
       <div className="space-y-4 sm:space-y-6">
-        <WorkspaceSection title="👤 Konto i profil">
+        <WorkspaceSection title={t('settings.accountProfileTitle')}>
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5">
-              <span className="text-gray-500">Konto</span>
+              <span className="text-gray-500">{t('settings.account')}</span>
               <span className="font-semibold text-gray-700">{user.email}</span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5">
-              <span className="text-gray-500">Status profilu</span>
+              <span className="text-gray-500">{t('settings.profileStatus')}</span>
               <span className="font-semibold text-gray-700">
                 {MASTER_STATUS_LABELS[profile.status] ?? profile.status}
               </span>
             </div>
           </div>
           <p className="mt-3 text-sm text-gray-500">
-            Ustawienia konta (hasło, dane osobiste) znajdziesz w{' '}
+            {t('settings.accountSettingsHint')}{' '}
             <Link href="/profile/settings" className="font-semibold text-orange-700 hover:underline">
-              ustawieniach profilu osobistego →
+              {t('settings.personalProfileSettingsLink')}
             </Link>
           </p>
         </WorkspaceSection>
 
-        <WorkspaceSection title="🔔 Powiadomienia">
+        <WorkspaceSection title={t('settings.notificationsTitle')}>
           <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-2.5 text-sm">
-            <span className="text-gray-500">Powiadomienia o zaproszeniach i zapisach</span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Wkrótce</span>
+            <span className="text-gray-500">{t('settings.notificationsLabel')}</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{t('settings.comingSoon')}</span>
           </div>
         </WorkspaceSection>
       </div>

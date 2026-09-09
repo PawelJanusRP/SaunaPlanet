@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
 export default function ChangePasswordForm() {
+  const t = useTranslations('profile')
   const [open, setOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -14,12 +16,12 @@ export default function ChangePasswordForm() {
     e.preventDefault()
 
     if (password.length < 6) {
-      toast.error('Hasło musi mieć co najmniej 6 znaków')
+      toast.error(t('changePassword.errorTooShort'))
       return
     }
 
     if (password !== confirm) {
-      toast.error('Hasła nie są zgodne')
+      toast.error(t('changePassword.errorMismatch'))
       return
     }
 
@@ -30,7 +32,7 @@ export default function ChangePasswordForm() {
     if (error) {
       toast.error(error.message)
     } else {
-      toast.success('Hasło zostało zmienione')
+      toast.success(t('changePassword.success'))
       setPassword('')
       setConfirm('')
       setOpen(false)
@@ -46,14 +48,14 @@ export default function ChangePasswordForm() {
           onClick={() => setOpen(true)}
           className="text-sm text-gray-500 hover:text-black underline"
         >
-          Zmień hasło
+          {t('changePassword.trigger')}
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">Zmień hasło</p>
+          <p className="text-sm font-medium text-gray-700">{t('changePassword.heading')}</p>
 
           <div>
-            <label className="mb-1 block text-xs text-gray-500">Nowe hasło</label>
+            <label className="mb-1 block text-xs text-gray-500">{t('changePassword.newPassword')}</label>
             <input
               type="password"
               value={password}
@@ -65,7 +67,7 @@ export default function ChangePasswordForm() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-gray-500">Powtórz hasło</label>
+            <label className="mb-1 block text-xs text-gray-500">{t('changePassword.confirmPassword')}</label>
             <input
               type="password"
               value={confirm}
@@ -82,14 +84,14 @@ export default function ChangePasswordForm() {
               disabled={loading}
               className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
-              {loading ? 'Zapisywanie...' : 'Zapisz'}
+              {loading ? t('changePassword.saving') : t('changePassword.save')}
             </button>
             <button
               type="button"
               onClick={() => { setOpen(false); setPassword(''); setConfirm('') }}
               className="rounded-xl border px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
             >
-              Anuluj
+              {t('changePassword.cancel')}
             </button>
           </div>
         </form>
