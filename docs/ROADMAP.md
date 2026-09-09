@@ -562,9 +562,8 @@ Long-term priority:
 > invitations go to all 10 SP-039P pilot participants.** SP-047 does not affect
 > that gate.
 
-**SP-047 — Internationalization & Localization (PL/EN/DE)** — the next
-implementation release. **Status: release candidate complete on
-`feature/sp-047-i18n-pl-en-de`, READY FOR OWNER QA (not merged/deployed).**
+**SP-047 — Internationalization & Localization (PL/EN/DE)** —
+**CLOSED / DEPLOYED / VERIFIED (production 2026-09-09, merge `3f27922`).**
 Multilingual architecture on next-intl (App Router): canonical `/{locale}/…`
 URLs (pl/en/de), root locale negotiation, permanent legacy→`/pl` redirects,
 file-based message catalogs, shared language selector, fully localized UI +

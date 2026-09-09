@@ -4,12 +4,16 @@ Last updated: 2026-09-09 (`main` @ `d960bc5`-era with SP-039 Slices 1–3
 deployed; Slice 4 complete on `feature/sp-039-master-public-claim`,
 merge-readiness review passed, merge pending).
 
-**SP-047 Internationalization & Localization (PL/EN/DE)** — a full multilingual
-release candidate is complete on `feature/sp-047-i18n-pl-en-de` (next-intl,
-locale-prefixed URLs, root negotiation, legacy→/pl redirects, localized UI +
-messages, locale-aware date/number/currency formatting, international
-SEO/hreflang/sitemap, global Help hub). Zero production DB migrations.
-**NOT merged/deployed — READY FOR OWNER QA.** See docs/SP047_I18N_ARCHITECTURE.md.
+**SP-047 Internationalization & Localization (PL/EN/DE)** —
+**CLOSED / DEPLOYED / VERIFIED (production 2026-09-09)**, merged to `main` via
+`merge: SP-047 internationalization PL EN DE`. next-intl, locale-prefixed
+canonical URLs (`/pl` `/en` `/de`), root locale negotiation (307 → cookie →
+Accept-Language → PL), permanent legacy→/pl redirects, fully localized UI +
+server-action/pure-lib messages, locale-aware date/number/PLN formatting,
+international SEO (per-locale canonical + hreflang + x-default = root,
+multilingual sitemap, robots private-area exclusions), global Help hub, language
+selector in the map menu + Navbar. Zero production DB migrations. UGC/entity
+content stays in its original language. See docs/SP047_I18N_ARCHITECTURE.md.
 
 This is the canonical **handover document** for ongoing development. Its purpose
 is orientation: a new AI or human session should understand the current project

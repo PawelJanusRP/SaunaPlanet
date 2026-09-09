@@ -14,7 +14,13 @@ Many systems were implemented incrementally and have already been debugged.
 
 ---
 
-# SP-047 i18n — remaining hardcoded Polish (RC follow-ups)
+# SP-047 i18n — shipped (CLOSED / DEPLOYED 2026-09-09)
+
+SP-047 (PL/EN/DE) is deployed to production (`main` @ `3f27922`). No known
+accidental Polish-only user-visible UI remains; the only residual Polish
+literals are a persisted `author_name` fallback (stored data) and a developer
+`console.warn` (both intentional). A safe dynamic-entity sitemap enumeration is
+a possible future enhancement (detail pages already carry canonical + hreflang).
 
 The SP-047 Release Candidate localizes the whole UI (pages, forms, modals) in
 PL/EN/DE, plus server-action direct messages, side-navigation labels,

@@ -21,8 +21,8 @@ export type ChangelogEntry = {
 /** Newest release first. */
 export const changelog: ChangelogEntry[] = [
   {
-    // SP-047 release candidate — production availability set at deploy.
-    date: 'W przygotowaniu',
+    // SP-047 — deployed to production 2026-09-09.
+    date: '9 września 2026',
     title: 'SaunaPlanet po polsku, angielsku i niemiecku',
     items: [
       'Aplikacja jest teraz dostępna w trzech językach: polskim, angielskim i niemieckim.',

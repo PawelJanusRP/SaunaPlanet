@@ -1,5 +1,10 @@
 # SP-047 — Internationalization & Localization Architecture (PL / EN / DE)
 
+> **Status: CLOSED / DEPLOYED / VERIFIED — production 2026-09-09** (merged to
+> `main` as `3f27922`, deployed via Vercel Git Integration; production smoke on
+> https://sauna-planet.pl GREEN: locale entry/negotiation, PL/EN/DE routes,
+> legacy→/pl redirects, canonical+hreflang+x-default, auth/claim safety).
+
 Target multilingual architecture for SaunaPlanet. This is the design we keep as
 more languages (Swedish, Finnish, Italian, Spanish, …) are added later: adding a
 language is a **catalog task**, not an application-routing refactor.
