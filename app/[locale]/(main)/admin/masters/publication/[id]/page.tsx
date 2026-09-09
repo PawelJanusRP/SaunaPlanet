@@ -1,5 +1,6 @@
-import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { Link } from '@/lib/i18n/navigation'
+import { notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import PublicationModerationControls from '@/components/admin/PublicationModerationControls'
 import {

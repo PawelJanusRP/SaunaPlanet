@@ -11,7 +11,7 @@
 // re-open their invitation link after activating the account.
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 

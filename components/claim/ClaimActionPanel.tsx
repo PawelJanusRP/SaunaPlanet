@@ -9,8 +9,8 @@
 // hide the action; retryable ones keep it available.
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { Link } from '@/lib/i18n/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { claimMasterProfile } from '@/app/(bare)/claim/actions'
 import { useAuth } from '@/components/AuthProvider'
 import {

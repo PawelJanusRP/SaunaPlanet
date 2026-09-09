@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { CircleCheck, Circle, CircleHelp } from 'lucide-react'
 import SupportNotice from '@/components/help/SupportNotice'
 import type { FirstStep, FirstSteps } from '@/lib/master/onboarding'

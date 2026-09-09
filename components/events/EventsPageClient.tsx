@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import CalendarView from '@/components/events/CalendarView'
 
 type UpcomingEvent = {

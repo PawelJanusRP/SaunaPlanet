@@ -13,7 +13,7 @@
 // server state re-renders — no optimistic transitions.
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
   generateMasterInvitation,

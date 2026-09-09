@@ -1,5 +1,6 @@
-import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
+import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { getClaimInvitation, listClaimInvitations } from '@/app/[locale]/(main)/admin/claimActions'
 import InvitationControls from '@/components/admin/InvitationControls'

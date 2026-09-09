@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import type { WorkspaceBreadcrumb } from '@/lib/workspace/types'
 
 export default function WorkspaceBreadcrumbs({ items }: { items: WorkspaceBreadcrumb[] }) {

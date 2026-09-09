@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createMasterEvent } from '@/app/[locale]/events/participationActions'
 import FacilityCombobox, { type FacilityOption } from '@/components/FacilityCombobox'

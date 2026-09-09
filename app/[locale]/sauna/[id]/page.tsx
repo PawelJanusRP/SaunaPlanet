@@ -1,7 +1,7 @@
 import AddEventMasterForm from '@/components/AddEventMasterForm'
 import AddMasterToSaunaModal from '@/components/AddMasterToSaunaModal'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import AddReviewForm from '@/components/AddReviewForm'
 import Navbar from '@/components/Navbar'
 import { toggleFavoriteSauna, requestManagerRole } from '@/app/[locale]/(main)/profile/actions'

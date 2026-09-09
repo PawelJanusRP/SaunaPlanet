@@ -9,7 +9,7 @@
 // never queries master_private_identity or any private field.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { Search, X, MapPin, ExternalLink, ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { searchMastersNormalized, type PublicMasterResult } from '@/lib/map/masterSearch'

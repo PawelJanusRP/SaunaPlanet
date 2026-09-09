@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import SupportNotice from '@/components/help/SupportNotice'
 import {
   PUBLICATION_STATUS_HINTS_PL,

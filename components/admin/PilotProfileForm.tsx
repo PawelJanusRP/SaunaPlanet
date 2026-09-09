@@ -7,7 +7,7 @@
 // here: generation/sending belongs to Slice 3B3.
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import {
   createPreparedMasterProfile,

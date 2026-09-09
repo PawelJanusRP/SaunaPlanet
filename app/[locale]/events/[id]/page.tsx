@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import EditEventForm from '@/components/EditEventForm'
 import AddEventMasterForm from '@/components/AddEventMasterForm'

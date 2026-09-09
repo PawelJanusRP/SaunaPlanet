@@ -1,6 +1,6 @@
 import EventsPageClient from '@/components/events/EventsPageClient'
 import { createClient } from '@supabase/supabase-js'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import type { UpcomingEventRow } from '@/lib/types'
 

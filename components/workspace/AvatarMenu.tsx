@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import { getVisibleWorkspaceDestinations } from '@/lib/workspace/destinations'
 import { WORKSPACE_DESTINATION_ICONS } from '@/lib/navigation/icons'

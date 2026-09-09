@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import SubmissionActions from '@/components/SubmissionActions'
 import MasterModerationActions from '@/components/MasterModerationActions'

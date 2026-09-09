@@ -18,7 +18,7 @@ import {
 } from '@/lib/claim/publicClaim'
 import ClaimAuthPanel from '@/components/claim/ClaimAuthPanel'
 import ClaimActionPanel from '@/components/claim/ClaimActionPanel'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 
 export const metadata: Metadata = {
   title: 'Zaproszenie dla saunamistrza — SaunaPlanet',

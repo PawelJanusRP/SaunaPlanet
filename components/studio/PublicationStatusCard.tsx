@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import OwnerPublicationActions from '@/components/studio/OwnerPublicationActions'
 import type { PublicationStatus } from '@/lib/master/publicationTransitions'
 import {

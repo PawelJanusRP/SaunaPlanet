@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import EditEventForm from '@/components/EditEventForm'
 import DeleteEventButton from '@/components/DeleteEventButton'

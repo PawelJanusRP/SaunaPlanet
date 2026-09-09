@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import UploadAvatarButton, { UploadMasterImageButton } from '@/components/UploadAvatarButton'
 import EditSaunaMasterModal from '@/components/EditSaunaMasterModal'
 import AddCertificateModal from '@/components/AddCertificateModal'
