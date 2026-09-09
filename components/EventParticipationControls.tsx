@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import {
   requestEventParticipation,
   withdrawEventParticipation,
-} from '@/app/events/participationActions'
+} from '@/app/[locale]/events/participationActions'
 
 /**
  * SP-037: the master-facing state of event participation, rendered on the

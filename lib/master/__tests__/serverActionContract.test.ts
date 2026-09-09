@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const ACTIONS = readFileSync('app/(main)/studio/actions.ts', 'utf8')
+const ACTIONS = readFileSync('app/[locale]/(main)/studio/actions.ts', 'utf8')
 const FORM = readFileSync('components/studio/MasterProfileForm.tsx', 'utf8')
 
 describe("studio actions 'use server' export contract", () => {

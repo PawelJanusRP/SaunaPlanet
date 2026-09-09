@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { inviteMaster } from '@/app/(main)/studio/actions'
+import { inviteMaster } from '@/app/[locale]/(main)/studio/actions'
 import FacilityCombobox from '@/components/FacilityCombobox'
 
 type MasterOption = { id: string; name: string }

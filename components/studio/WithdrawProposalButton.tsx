@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { toast } from 'sonner'
-import { withdrawMasterEventProposal } from '@/app/events/participationActions'
+import { withdrawMasterEventProposal } from '@/app/[locale]/events/participationActions'
 
 /**
  * SP-037B: withdraws a pending master-event PROPOSAL — deletes the whole

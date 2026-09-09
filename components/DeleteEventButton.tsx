@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { deleteEvent } from '@/app/events/actions'
+import { deleteEvent } from '@/app/[locale]/events/actions'
 
 export default function DeleteEventButton({
   eventId,

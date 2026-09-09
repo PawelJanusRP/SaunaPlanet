@@ -1,0 +1,30 @@
+{
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "submit": "Submit",
+    "back": "Back",
+    "confirm": "Confirm",
+    "retry": "Try again",
+    "search": "Search",
+    "loadMore": "Show more"
+  },
+  "state": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "empty": "No data"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "moderator": "Moderator",
+    "user": "User"
+  },
+  "language": {
+    "label": "Language",
+    "choose": "Choose language"
+  }
+}

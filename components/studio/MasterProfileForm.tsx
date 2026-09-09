@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { updateOwnMasterProfile, updateOwnMasterIdentity } from '@/app/(main)/studio/actions'
+import { updateOwnMasterProfile, updateOwnMasterIdentity } from '@/app/[locale]/(main)/studio/actions'
 import { slugify } from '@/lib/master/slug'
 import { LANGUAGE_OPTIONS, SPECIALTY_OPTIONS } from '@/lib/master/specialties'
 import { SOCIAL_PLATFORMS } from '@/lib/import/social'

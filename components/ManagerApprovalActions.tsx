@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
-import { approveManagerRequest, rejectManagerRequest } from '@/app/(main)/admin/actions'
+import { approveManagerRequest, rejectManagerRequest } from '@/app/[locale]/(main)/admin/actions'
 import { toast } from 'sonner'
 
 export default function ManagerApprovalActions({ managerId }: { managerId: string }) {

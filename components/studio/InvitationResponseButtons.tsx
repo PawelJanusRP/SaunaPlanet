@@ -3,7 +3,7 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { respondToEventInvitation } from '@/app/events/participationActions'
+import { respondToEventInvitation } from '@/app/[locale]/events/participationActions'
 
 /**
  * SP-037B slice 5: the invited master accepts or declines. Acceptance

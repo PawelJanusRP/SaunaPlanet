@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { deleteReviewAdmin } from '@/app/(main)/admin/actions'
+import { deleteReviewAdmin } from '@/app/[locale]/(main)/admin/actions'
 
 export default function DeleteReviewButton({ reviewId }: { reviewId: string }) {
   const [confirm, setConfirm] = useState(false)

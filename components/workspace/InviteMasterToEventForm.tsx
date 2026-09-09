@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import {
   inviteMasterToEvent,
   type ParticipationRole,
-} from '@/app/events/participationActions'
+} from '@/app/[locale]/events/participationActions'
 import FacilityCombobox from '@/components/FacilityCombobox'
 
 export type InvitableEvent = { id: string; title: string; eventDate: string; saunaName: string | null }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addEventReview } from '@/app/events/actions'
+import { addEventReview } from '@/app/[locale]/events/actions'
 import { toast } from 'sonner'
 
 export default function EventReviewForm({ eventId }: { eventId: string }) {

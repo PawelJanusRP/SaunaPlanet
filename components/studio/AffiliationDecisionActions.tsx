@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { toast } from 'sonner'
-import { respondToAffiliation } from '@/app/(main)/studio/actions'
+import { respondToAffiliation } from '@/app/[locale]/(main)/studio/actions'
 
 /**
  * Approve/reject pair for a pending affiliation handshake. Used by BOTH

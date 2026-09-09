@@ -1,0 +1,30 @@
+{
+  "actions": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "close": "Zamknij",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "add": "Dodaj",
+    "submit": "Wyślij",
+    "back": "Wróć",
+    "confirm": "Potwierdź",
+    "retry": "Spróbuj ponownie",
+    "search": "Szukaj",
+    "loadMore": "Pokaż więcej"
+  },
+  "state": {
+    "loading": "Ładowanie…",
+    "saving": "Zapisywanie…",
+    "empty": "Brak danych"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "moderator": "Moderator",
+    "user": "Użytkownik"
+  },
+  "language": {
+    "label": "Język",
+    "choose": "Wybierz język"
+  }
+}

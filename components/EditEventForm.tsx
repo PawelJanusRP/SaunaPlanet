@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { updateEvent } from '@/app/events/actions'
+import { updateEvent } from '@/app/[locale]/events/actions'
 
 type Props = {
   eventId: string

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { endAffiliation } from '@/app/(main)/studio/actions'
+import { endAffiliation } from '@/app/[locale]/(main)/studio/actions'
 
 /**
  * Ends an affiliation with a two-tap confirm: withdrawal of an own pending

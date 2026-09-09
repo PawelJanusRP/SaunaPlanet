@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { updateEventStatusAdmin, deleteEventAdmin } from '@/app/(main)/admin/actions'
+import { updateEventStatusAdmin, deleteEventAdmin } from '@/app/[locale]/(main)/admin/actions'
 
 export default function EventModerationActions({
   eventId,

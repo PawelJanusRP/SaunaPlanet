@@ -8,7 +8,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Trash2 } from 'lucide-react'
-import { deleteMasterProfile } from '@/app/masters/actions'
+import { deleteMasterProfile } from '@/app/[locale]/masters/actions'
 
 const CODE_MESSAGES: Record<string, string> = {
   not_authorized: 'Brak uprawnień do usunięcia profilu.',

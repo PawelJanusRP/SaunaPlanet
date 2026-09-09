@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { approveMaster, rejectMaster } from '@/app/(main)/admin/actions'
+import { approveMaster, rejectMaster } from '@/app/[locale]/(main)/admin/actions'
 
 export default function MasterModerationActions({ masterId }: { masterId: string }) {
   const [isPending, startTransition] = useTransition()

@@ -20,7 +20,7 @@ import {
   markMasterInvitationSent,
   regenerateMasterInvitation,
   revokeMasterInvitation,
-} from '@/app/(main)/admin/masters/pilot/actions'
+} from '@/app/[locale]/(main)/admin/masters/pilot/actions'
 import {
   DELIVERY_CHANNEL_LABELS_PL,
   DELIVERY_HINT_EXAMPLES,

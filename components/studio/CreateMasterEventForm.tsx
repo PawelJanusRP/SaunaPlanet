@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { createMasterEvent } from '@/app/events/participationActions'
+import { createMasterEvent } from '@/app/[locale]/events/participationActions'
 import FacilityCombobox, { type FacilityOption } from '@/components/FacilityCombobox'
 
 type SaunaOption = FacilityOption

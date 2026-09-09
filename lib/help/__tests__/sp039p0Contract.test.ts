@@ -20,13 +20,13 @@ import {
 } from '@/lib/master/publicationView'
 import { PUBLICATION_TRANSITION_MESSAGES_PL } from '@/lib/master/publicationTransitions'
 
-const pilotDetailPage = readFileSync('app/(main)/admin/masters/pilot/[id]/page.tsx', 'utf8')
+const pilotDetailPage = readFileSync('app/[locale]/(main)/admin/masters/pilot/[id]/page.tsx', 'utf8')
 const moderationControls = readFileSync('components/admin/PublicationModerationControls.tsx', 'utf8')
-const adminPage = readFileSync('app/(main)/admin/page.tsx', 'utf8')
-const studioPage = readFileSync('app/(main)/studio/page.tsx', 'utf8')
+const adminPage = readFileSync('app/[locale]/(main)/admin/page.tsx', 'utf8')
+const studioPage = readFileSync('app/[locale]/(main)/studio/page.tsx', 'utf8')
 const firstStepsCard = readFileSync('components/studio/FirstStepsCard.tsx', 'utf8')
 const onboarding = readFileSync('lib/master/onboarding.ts', 'utf8')
-const helpPage = readFileSync('app/(main)/help/saunamaster/page.tsx', 'utf8')
+const helpPage = readFileSync('app/[locale]/(main)/help/saunamaster/page.tsx', 'utf8')
 const supportModule = readFileSync('lib/help/support.ts', 'utf8')
 const supportNotice = readFileSync('components/help/SupportNotice.tsx', 'utf8')
 

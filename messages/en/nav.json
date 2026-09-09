@@ -1,0 +1,13 @@
+{
+  "brand": "SaunaPlanet",
+  "menu": "Menu",
+  "closeMenu": "Close menu",
+  "login": "Sign in",
+  "register": "Sign up",
+  "logout": "Sign out",
+  "submitSauna": "Submit a sauna",
+  "discover": "Discover",
+  "events": "Events",
+  "masters": "Sauna masters",
+  "about": "About the app"
+}

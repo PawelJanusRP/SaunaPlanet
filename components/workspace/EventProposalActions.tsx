@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import {
   resolveMasterEventProposal,
   type ParticipationRole,
-} from '@/app/events/participationActions'
+} from '@/app/[locale]/events/participationActions'
 
 const ROLE_OPTIONS: { value: ParticipationRole; label: string }[] = [
   { value: 'lead', label: 'Lead (prowadzący)' },

@@ -11,7 +11,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { claimMasterProfile } from '@/app/claim/actions'
+import { claimMasterProfile } from '@/app/(bare)/claim/actions'
 import { useAuth } from '@/components/AuthProvider'
 import {
   TERMINAL_PUBLIC_CLAIM_CODES,

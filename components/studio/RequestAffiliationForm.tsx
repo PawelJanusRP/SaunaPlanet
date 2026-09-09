@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { requestAffiliation } from '@/app/(main)/studio/actions'
+import { requestAffiliation } from '@/app/[locale]/(main)/studio/actions'
 import FacilityCombobox, { type FacilityOption } from '@/components/FacilityCombobox'
 
 type SaunaOption = FacilityOption

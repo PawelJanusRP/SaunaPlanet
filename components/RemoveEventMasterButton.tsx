@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { toast } from 'sonner'
-import { removeEventMaster } from '@/app/events/actions'
+import { removeEventMaster } from '@/app/[locale]/events/actions'
 
 export default function RemoveEventMasterButton({
   eventId,

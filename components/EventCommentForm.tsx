@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addEventComment } from '@/app/events/actions'
+import { addEventComment } from '@/app/[locale]/events/actions'
 import { toast } from 'sonner'
 
 export default function EventCommentForm({ eventId }: { eventId: string }) {

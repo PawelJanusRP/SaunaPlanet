@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { approveSubmission, rejectSubmission } from '@/app/(main)/admin/actions'
+import { approveSubmission, rejectSubmission } from '@/app/[locale]/(main)/admin/actions'
 
 export default function SubmissionActions({ submissionId }: { submissionId: string }) {
   const [isPending, startTransition] = useTransition()

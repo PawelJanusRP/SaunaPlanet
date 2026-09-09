@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import {
   createPreparedMasterProfile,
   updatePreparedMasterProfile,
-} from '@/app/(main)/admin/masters/pilot/actions'
+} from '@/app/[locale]/(main)/admin/masters/pilot/actions'
 import { slugify } from '@/lib/master/slug'
 import { LANGUAGE_OPTIONS, SPECIALTY_OPTIONS } from '@/lib/master/specialties'
 import { SOCIAL_PLATFORMS } from '@/lib/import/social'

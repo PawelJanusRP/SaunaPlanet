@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { toast } from 'sonner'
-import { setPrimaryAffiliation } from '@/app/(main)/studio/actions'
+import { setPrimaryAffiliation } from '@/app/[locale]/(main)/studio/actions'
 
 /** Marks an approved affiliation as the master's primary one. */
 export default function SetPrimaryAffiliationButton({ affiliationId }: { affiliationId: string }) {

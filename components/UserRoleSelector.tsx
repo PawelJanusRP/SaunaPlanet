@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { updateUserRole } from '@/app/(main)/admin/actions'
+import { updateUserRole } from '@/app/[locale]/(main)/admin/actions'
 import { toast } from 'sonner'
 
 const ROLES = [

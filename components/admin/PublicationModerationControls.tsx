@@ -10,7 +10,7 @@ import {
   restoreMasterPublication,
   suspendMasterPublication,
   unpublishMasterAsModerator,
-} from '@/app/(main)/admin/masters/publication/actions'
+} from '@/app/[locale]/(main)/admin/masters/publication/actions'
 import type { PublicationTransitionResult } from '@/lib/master/publicationTransitions'
 import {
   MASTER_NOT_APPROVED_GUIDANCE_PL,

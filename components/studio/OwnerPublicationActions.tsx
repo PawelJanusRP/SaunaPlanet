@@ -7,7 +7,7 @@ import {
   submitOwnMasterForPublication,
   unpublishOwnMasterProfile,
   withdrawOwnMasterSubmission,
-} from '@/app/(main)/studio/publicationActions'
+} from '@/app/[locale]/(main)/studio/publicationActions'
 import {
   PUBLICATION_MISSING_FIELD_LABELS_PL,
   type PublicationTransitionResult,

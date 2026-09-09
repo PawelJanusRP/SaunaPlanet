@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { createEvent } from '@/app/events/actions'
+import { createEvent } from '@/app/[locale]/events/actions'
 
 type AddEventModalProps = {
   saunaId: string

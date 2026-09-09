@@ -3,7 +3,7 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { withdrawEventInvitation } from '@/app/events/participationActions'
+import { withdrawEventInvitation } from '@/app/[locale]/events/participationActions'
 
 /**
  * SP-037B slice 5: staff withdraws a pending invitation. MVP limitation

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { addCertificateType, toggleCertificateType } from '@/app/(main)/admin/actions'
+import { addCertificateType, toggleCertificateType } from '@/app/[locale]/(main)/admin/actions'
 
 const CATEGORY_LABELS: Record<string, string> = {
   certification:   'Certyfikaty',

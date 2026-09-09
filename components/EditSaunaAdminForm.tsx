@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { updateSaunaAdmin, deleteSaunaAdmin } from '@/app/(main)/admin/actions'
+import { updateSaunaAdmin, deleteSaunaAdmin } from '@/app/[locale]/(main)/admin/actions'
 
 const CATEGORIES = [
   { value: 'public_sauna', label: 'Sauna publiczna' },

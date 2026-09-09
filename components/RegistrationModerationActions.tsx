@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
-import { updateRegistrationStatus } from '@/app/events/actions'
+import { updateRegistrationStatus } from '@/app/[locale]/events/actions'
 import { toast } from 'sonner'
 
 export default function RegistrationModerationActions({ registrationId }: { registrationId: string }) {

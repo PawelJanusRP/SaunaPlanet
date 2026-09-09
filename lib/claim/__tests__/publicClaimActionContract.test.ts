@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const src = readFileSync('app/claim/actions.ts', 'utf8')
+const src = readFileSync('app/(bare)/claim/actions.ts', 'utf8')
 
 // --- vi.mock factories are hoisted: literals only inside (3B3 lesson). ---
 const rpcMock = vi.fn()
@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({ rpc: rpcMock })),
 }))
 
-import { claimMasterProfile, inspectMasterClaimInvitation } from '@/app/claim/actions'
+import { claimMasterProfile, inspectMasterClaimInvitation } from '@/app/(bare)/claim/actions'
 
 const TOKEN = 'B'.repeat(43)
 

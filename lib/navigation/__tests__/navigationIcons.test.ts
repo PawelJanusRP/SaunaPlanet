@@ -100,8 +100,10 @@ describe('accessible markup contracts', () => {
     }
   })
   it('icon-only controls keep their accessible labels', () => {
-    expect(navbar).toContain('aria-label="Menu"')
-    expect(navbar).toContain('aria-label="Zamknij menu"')
+    // SP-047: labels are now translated via next-intl; the accessible label is
+    // still present, sourced from the nav catalog (t('menu') / t('closeMenu')).
+    expect(navbar).toContain("aria-label={t('menu')}")
+    expect(navbar).toContain("aria-label={t('closeMenu')}")
   })
   it('no raw inline svg remains in the navbar (single icon family)', () => {
     expect(navbar).not.toContain('<svg')

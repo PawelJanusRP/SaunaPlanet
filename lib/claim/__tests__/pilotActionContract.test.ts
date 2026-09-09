@@ -6,13 +6,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const ACTIONS_PATH = join('app', '(main)', 'admin', 'masters', 'pilot', 'actions.ts')
+const ACTIONS_PATH = join('app', '[locale]', '(main)', 'admin', 'masters', 'pilot', 'actions.ts')
 const ACTIONS = readFileSync(ACTIONS_PATH, 'utf8')
 
 const PILOT_UI_FILES = [
-  join('app', '(main)', 'admin', 'masters', 'pilot', 'page.tsx'),
-  join('app', '(main)', 'admin', 'masters', 'pilot', 'new', 'page.tsx'),
-  join('app', '(main)', 'admin', 'masters', 'pilot', '[id]', 'page.tsx'),
+  join('app', '[locale]', '(main)', 'admin', 'masters', 'pilot', 'page.tsx'),
+  join('app', '[locale]', '(main)', 'admin', 'masters', 'pilot', 'new', 'page.tsx'),
+  join('app', '[locale]', '(main)', 'admin', 'masters', 'pilot', '[id]', 'page.tsx'),
   join('components', 'admin', 'PilotProfileForm.tsx'),
 ]
 

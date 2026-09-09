@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { toast } from 'sonner'
-import { approveCertificate, rejectCertificate } from '@/app/(main)/admin/actions'
+import { approveCertificate, rejectCertificate } from '@/app/[locale]/(main)/admin/actions'
 
 export default function CertificateModerationActions({ certId }: { certId: string }) {
   const [isPending, startTransition] = useTransition()
