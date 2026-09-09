@@ -5,9 +5,14 @@
   "login": "Sign in",
   "register": "Sign up",
   "logout": "Sign out",
+  "logoutShort": "Sign out",
   "submitSauna": "Submit a sauna",
   "discover": "Discover",
   "events": "Events",
   "masters": "Sauna masters",
-  "about": "About the app"
+  "saunas": "Saunas",
+  "about": "About the app",
+  "myProfile": "My profile",
+  "adminPanel": "Admin panel",
+  "adminBadge": "Admin"
 }

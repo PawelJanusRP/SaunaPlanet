@@ -5,9 +5,14 @@
   "login": "Zaloguj się",
   "register": "Zarejestruj się",
   "logout": "Wyloguj się",
+  "logoutShort": "Wyloguj",
   "submitSauna": "Zgłoś saunę",
   "discover": "Odkrywaj",
   "events": "Wydarzenia",
   "masters": "Saunamistrzowie",
-  "about": "O aplikacji"
+  "saunas": "Sauny",
+  "about": "O aplikacji",
+  "myProfile": "Mój profil",
+  "adminPanel": "Panel admina",
+  "adminBadge": "Admin"
 }

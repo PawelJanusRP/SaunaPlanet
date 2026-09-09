@@ -23,8 +23,9 @@ import AddSaunaForm from '@/components/AddSaunaForm'
 import AddPhotoModal from '@/components/AddPhotoModal'
 import EditSaunaModal from '@/components/EditSaunaModal'
 import AddEventModal from '@/components/AddEventModal'
-import Link from 'next/link'
+import { Link } from '@/lib/i18n/navigation'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations, useLocale } from 'next-intl'
 import { Info, X, Camera, Globe, Pencil, Flame } from 'lucide-react'
 import MapControls from '@/components/map/MapControls'
 import MapSearchPanel from '@/components/map/MapSearchPanel'
@@ -180,23 +181,6 @@ function getCategoryEmoji(category: string) {
   }
 }
 
-function getCategoryLabel(category: string) {
-  switch (category) {
-    case 'public_sauna':
-      return 'Sauna publiczna'
-    case 'spa':
-      return 'SPA / wellness'
-    case 'hotel':
-      return 'Sauna hotelowa'
-    case 'event':
-      return 'Event saunowy'
-    case 'outdoor':
-      return 'Sauna plenerowa'
-    default:
-      return category
-  }
-}
-
 function getCategoryColor(category: string) {
   switch (category) {
     case 'public_sauna':
@@ -221,7 +205,8 @@ function createSaunaIcon(
   category: string,
   hasUpcomingEvent = false,
   avgRating: number | null = null,
-  masters: Sauna['masters'] = []
+  masters: Sauna['masters'] = [],
+  locale = 'pl'
 ) {
   const categoryEmoji = getCategoryEmoji(category)
   const categoryColor = getCategoryColor(category)
@@ -242,7 +227,7 @@ function createSaunaIcon(
       : m.level === 'senior' ? '#a855f7'
       : m.level === 'certified' ? '#3b82f6'
       : '#9ca3af'
-    return `<a href="/masters/${m.id}" title="${m.name}" onclick="event.stopPropagation()" style="position:absolute;left:${left}px;top:${top}px;z-index:1001;width:${satSize}px;height:${satSize}px;border-radius:9999px;display:block;cursor:pointer;"><img src="${m.avatar_url}" style="width:100%;height:100%;border-radius:9999px;object-fit:cover;border:2px solid ${color};background:white;box-shadow:0 1px 4px rgba(0,0,0,0.35);" /></a>`
+    return `<a href="/${locale}/masters/${m.id}" title="${m.name}" onclick="event.stopPropagation()" style="position:absolute;left:${left}px;top:${top}px;z-index:1001;width:${satSize}px;height:${satSize}px;border-radius:9999px;display:block;cursor:pointer;"><img src="${m.avatar_url}" style="width:100%;height:100%;border-radius:9999px;object-fit:cover;border:2px solid ${color};background:white;box-shadow:0 1px 4px rgba(0,0,0,0.35);" /></a>`
   }).join('')
   return L.divIcon({
     className: '',
@@ -381,6 +366,7 @@ function SaunaPopup({
   onEdit: (sauna: Sauna) => void
   onAddEvent: (sauna: Sauna) => void
 }) {
+  const t = useTranslations('map')
   const [imageIndex, setImageIndex] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
   const [events, setEvents] = useState<SaunaEvent[]>([])
@@ -491,7 +477,7 @@ function SaunaPopup({
           </div>
         ) : (
           <div className="mb-3 flex h-24 w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-400">
-            Brak zdjęcia
+            {t('popup.noPhoto')}
           </div>
         )}
 
@@ -500,7 +486,7 @@ function SaunaPopup({
         </h3>
 		{sauna.avg_rating && (
 		<div className="mb-2 text-sm font-semibold text-yellow-600">
-			⭐ {Number(sauna.avg_rating).toFixed(1)} ({sauna.review_count} opinii)
+			⭐ {Number(sauna.avg_rating).toFixed(1)} ({t('popup.reviewsCount', { count: sauna.review_count })})
 		</div>
 		)}
 		
@@ -510,7 +496,10 @@ function SaunaPopup({
 
         <div className="mb-3 flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-gray-100 px-2 py-1">
-            {getCategoryEmoji(sauna.category)} {getCategoryLabel(sauna.category)}
+            {getCategoryEmoji(sauna.category)}{' '}
+            {t.has(`categoryLabel.${sauna.category}`)
+              ? t(`categoryLabel.${sauna.category}`)
+              : sauna.category}
           </span>
 
           {sauna.city && (
@@ -528,7 +517,7 @@ function SaunaPopup({
 		{events.length > 0 && (
 		<div className="mb-3 rounded-xl border border-orange-200 bg-orange-50 p-2">
 			<div className="mb-2 text-sm font-bold text-orange-700">
-			🔥 Najbliższe wydarzenia
+			🔥 {t('popup.upcomingEvents')}
 			</div>
 		
 			<div className="space-y-2">
@@ -564,8 +553,8 @@ function SaunaPopup({
         <div className="flex items-center gap-2">
           <Link
             href={`/sauna/${sauna.id}`}
-            aria-label="Szczegóły obiektu"
-            title="Szczegóły obiektu"
+            aria-label={t('popup.details')}
+            title={t('popup.details')}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 !text-white"
           >
             <Info className="h-5 w-5" aria-hidden="true" />
@@ -575,8 +564,8 @@ function SaunaPopup({
               href={sauna.website}
               target="_blank"
               rel="noreferrer"
-              aria-label="Oficjalna strona"
-              title="Oficjalna strona"
+              aria-label={t('popup.website')}
+              title={t('popup.website')}
               className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600 !text-white"
             >
               <Globe className="h-5 w-5" aria-hidden="true" />
@@ -585,8 +574,8 @@ function SaunaPopup({
           <button
             type="button"
             onClick={() => onAddPhoto(sauna.id)}
-            aria-label="Dodaj zdjęcie"
-            title="Dodaj zdjęcie"
+            aria-label={t('popup.addPhoto')}
+            title={t('popup.addPhoto')}
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 bg-white text-gray-700"
           >
             <Camera className="h-5 w-5" aria-hidden="true" />
@@ -594,8 +583,8 @@ function SaunaPopup({
           <button
             type="button"
             onClick={() => onAddEvent(sauna)}
-            aria-label="Dodaj event"
-            title="Dodaj event"
+            aria-label={t('popup.addEvent')}
+            title={t('popup.addEvent')}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-600 text-white"
           >
             <Flame className="h-5 w-5" aria-hidden="true" />
@@ -603,8 +592,8 @@ function SaunaPopup({
           <button
             type="button"
             onClick={() => onEdit(sauna)}
-            aria-label="Edytuj saunę"
-            title="Edytuj saunę"
+            aria-label={t('popup.editSauna')}
+            title={t('popup.editSauna')}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-800 text-white"
           >
             <Pencil className="h-5 w-5" aria-hidden="true" />
@@ -616,12 +605,6 @@ function SaunaPopup({
   )
 }
 
-const roleLabel: Record<string, string> = {
-  admin: 'Administrator',
-  moderator: 'Moderator',
-  user: 'Użytkownik',
-}
-
 const roleBadge: Record<string, string> = {
   admin: 'bg-red-100 text-red-700',
   moderator: 'bg-orange-100 text-orange-700',
@@ -630,6 +613,10 @@ const roleBadge: Record<string, string> = {
 
 export default function SaunaMap() {
   const { user, role } = useAuth()
+  const t = useTranslations('map')
+  const tNav = useTranslations('nav')
+  const tRoles = useTranslations('common.roles')
+  const locale = useLocale()
   const [items, setItems] = useState<Sauna[]>([])
   const [topSaunas, setTopSaunas] = useState<TopSauna[]>([])
   const [, setUpcomingEvents] = useState<UpcomingEvent[]>([])
@@ -736,7 +723,7 @@ export default function SaunaMap() {
 
     if (error) {
       console.error(error)
-      toast.error('Nie udało się pobrać listy saun')
+      toast.error(t('toast.loadSaunasError'))
       setLoading(false)
       return
     }
@@ -759,11 +746,11 @@ export default function SaunaMap() {
     )
     setLoading(false)
     setClusterRefreshKey((k) => k + 1)
-  }, [userLocation, radiusKm])
+  }, [userLocation, radiusKm, t])
 
   async function centerOnUserLocation() {
     if (!navigator.geolocation) {
-      toast.error('Geolokalizacja nie jest wspierana')
+      toast.error(t('toast.geolocationUnsupported'))
       return
     }
 
@@ -778,10 +765,10 @@ export default function SaunaMap() {
         setSelectedLocation(coords)
         setCenterTrigger((value) => value + 1)
 
-        toast.success('Wycentrowano mapę')
+        toast.success(t('toast.centered'))
       },
       () => {
-        toast.error('Nie udało się pobrać lokalizacji')
+        toast.error(t('toast.geolocationError'))
       },
       {
         enableHighAccuracy: true,
@@ -947,7 +934,7 @@ export default function SaunaMap() {
       if (cancelled) return
 
       if (error || !data) {
-        toast.error('Nie znaleziono wskazanej sauny')
+        toast.error(t('toast.saunaNotFound'))
         return
       }
 
@@ -958,7 +945,7 @@ export default function SaunaMap() {
     return () => {
       cancelled = true
     }
-  }, [deepLinkSaunaId])
+  }, [deepLinkSaunaId, t])
 
   // SP-039I: once the recentre above has loaded the target into `items`, select
   // it. Existing MapFocusController (flyTo zoom 16) and the popup effect above
@@ -1016,7 +1003,7 @@ export default function SaunaMap() {
           />
 
           <Marker position={selectedLocation} icon={markerIcon}>
-            <Popup>Nowa sauna tutaj</Popup>
+            <Popup>{t('popup.newSaunaHere')}</Popup>
           </Marker>
 
           {contextMenuLocation && (
@@ -1029,7 +1016,7 @@ export default function SaunaMap() {
               }}
             >
               <div className="flex flex-col gap-2">
-                <div className="text-sm font-semibold">Co chcesz zrobić?</div>
+                <div className="text-sm font-semibold">{t('context.title')}</div>
 
                 <button
                   className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white"
@@ -1046,7 +1033,7 @@ export default function SaunaMap() {
                     }, 0)
                   }}
                 >
-                  Dodaj saunę tutaj
+                  {t('context.addSaunaHere')}
                 </button>
               </div>
             </Popup>
@@ -1067,7 +1054,8 @@ export default function SaunaMap() {
 				  item.category,
 				  item.has_upcoming_event,
 				  item.avg_rating,
-				  item.masters
+				  item.masters,
+				  locale
 				)}
                 eventHandlers={{
                   click: () => {
@@ -1161,7 +1149,7 @@ export default function SaunaMap() {
 
               <button
                 onClick={() => setShowAccountPanel(false)}
-                aria-label="Zamknij menu"
+                aria-label={tNav('closeMenu')}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
               >
                 <X className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -1174,35 +1162,35 @@ export default function SaunaMap() {
                   <p className="truncate font-medium text-gray-900">{user.email}</p>
                   {role && (
                     <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${roleBadge[role] ?? roleBadge.user}`}>
-                      {roleLabel[role] ?? role}
+                      {tRoles(role)}
                     </span>
                   )}
                 </div>
               ) : (
                 <div className="border-b px-4 py-4 space-y-2">
-                  <PanelNavItem href="/auth/login" onClick={() => setShowAccountPanel(false)} bold>Zaloguj się</PanelNavItem>
-                  <PanelNavItem href="/auth/register" onClick={() => setShowAccountPanel(false)} highlight>Zarejestruj się</PanelNavItem>
+                  <PanelNavItem href="/auth/login" onClick={() => setShowAccountPanel(false)} bold>{tNav('login')}</PanelNavItem>
+                  <PanelNavItem href="/auth/register" onClick={() => setShowAccountPanel(false)} highlight>{tNav('register')}</PanelNavItem>
                 </div>
               )}
 
               {user && (
                 <div className="border-b px-4 py-3 space-y-1">
-                  <PanelNavItem href="/profile" onClick={() => setShowAccountPanel(false)}>Mój profil</PanelNavItem>
-                  <PanelNavItem href="/submit" onClick={() => setShowAccountPanel(false)}>Zgłoś saunę</PanelNavItem>
+                  <PanelNavItem href="/profile" onClick={() => setShowAccountPanel(false)}>{tNav('myProfile')}</PanelNavItem>
+                  <PanelNavItem href="/submit" onClick={() => setShowAccountPanel(false)}>{tNav('submitSauna')}</PanelNavItem>
                   {(role === 'admin' || role === 'moderator') && (
-                    <PanelNavItem href="/admin" onClick={() => setShowAccountPanel(false)} badge="Admin">
-                      Panel admina
+                    <PanelNavItem href="/admin" onClick={() => setShowAccountPanel(false)} badge={tNav('adminBadge')}>
+                      {tNav('adminPanel')}
                     </PanelNavItem>
                   )}
                 </div>
               )}
 
               <div className="border-b px-4 py-3 space-y-1">
-                <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Odkrywaj</p>
-                <PanelNavItem href="/events" onClick={() => setShowAccountPanel(false)}>Wydarzenia</PanelNavItem>
-                <PanelNavItem href="/masters" onClick={() => setShowAccountPanel(false)}>Saunamistrzowie</PanelNavItem>
-                <PanelNavItem href="/sauny" onClick={() => setShowAccountPanel(false)}>Sauny</PanelNavItem>
-                <PanelNavItem href="/about" onClick={() => setShowAccountPanel(false)}>O aplikacji</PanelNavItem>
+                <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('account.discover')}</p>
+                <PanelNavItem href="/events" onClick={() => setShowAccountPanel(false)}>{tNav('events')}</PanelNavItem>
+                <PanelNavItem href="/masters" onClick={() => setShowAccountPanel(false)}>{tNav('masters')}</PanelNavItem>
+                <PanelNavItem href="/sauny" onClick={() => setShowAccountPanel(false)}>{tNav('saunas')}</PanelNavItem>
+                <PanelNavItem href="/about" onClick={() => setShowAccountPanel(false)}>{tNav('about')}</PanelNavItem>
               </div>
 
               {user && (
@@ -1216,7 +1204,7 @@ export default function SaunaMap() {
                     className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 active:bg-red-200"
                   >
                     <LogoutIcon className="h-4 w-4" aria-hidden="true" />
-                    Wyloguj
+                    {tNav('logoutShort')}
                   </button>
                 </div>
               )}
@@ -1231,7 +1219,7 @@ export default function SaunaMap() {
           onClose={() => setUploadItemId(null)}
           onUploaded={async () => {
             await loadSaunas()
-            toast.success('Dodano zdjęcie')
+            toast.success(t('toast.photoAdded'))
           }}
         />
       )}

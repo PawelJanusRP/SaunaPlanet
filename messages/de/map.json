@@ -1,1 +1,87 @@
-{}
+{
+  "controls": {
+    "filters": "Filter",
+    "menu": "Menü",
+    "search": "Suchen",
+    "myLocation": "Mein Standort"
+  },
+  "search": {
+    "title": "Suchen",
+    "placeholder": "Saunen und Saunameister suchen…",
+    "clear": "Löschen",
+    "close": "Schließen",
+    "back": "Zurück zu den Ergebnissen",
+    "hint": "Suche nach Saunen, Städten und Saunameistern.",
+    "recommended": "Empfohlen — TOP SaunaPlanet",
+    "saunasHeading": "Saunen",
+    "mastersHeading": "Saunameister",
+    "noSaunas": "Keine Saunen.",
+    "noMasters": "Keine Saunameister.",
+    "searching": "Suche läuft…",
+    "masterProfileAria": "Saunameister-Profil"
+  },
+  "master": {
+    "openFullProfile": "Vollständiges Saunameister-Profil öffnen",
+    "fullProfile": "Vollständiges Profil",
+    "upcomingEvents": "Kommende Events",
+    "noUpcomingEvents": "Keine kommenden Events.",
+    "showSaunaOnMap": "Sauna {name} auf der Karte anzeigen"
+  },
+  "filters": {
+    "title": "Filter",
+    "clear": "Löschen",
+    "close": "Filter schließen",
+    "mapMode": "Kartenmodus",
+    "category": "Kategorie",
+    "features": "Filter",
+    "radius": "Umkreis",
+    "withPhoto": "Mit Foto",
+    "eventWithin7Days": "Event in 7 Tagen",
+    "modes": {
+      "all": "Alles",
+      "saunas": "Saunen",
+      "events": "Events"
+    },
+    "categories": {
+      "all": "Alle",
+      "public_sauna": "Öffentlich",
+      "spa": "Spa",
+      "hotel": "Hotel",
+      "event": "Event",
+      "outdoor": "Draußen"
+    }
+  },
+  "popup": {
+    "noPhoto": "Kein Foto",
+    "reviewsCount": "{count, plural, one {# Bewertung} other {# Bewertungen}}",
+    "upcomingEvents": "Kommende Events",
+    "details": "Details zur Anlage",
+    "website": "Offizielle Website",
+    "addPhoto": "Foto hinzufügen",
+    "addEvent": "Event hinzufügen",
+    "editSauna": "Sauna bearbeiten",
+    "newSaunaHere": "Neue Sauna hier"
+  },
+  "context": {
+    "title": "Was möchtest du tun?",
+    "addSaunaHere": "Hier eine Sauna hinzufügen"
+  },
+  "account": {
+    "discover": "Entdecken"
+  },
+  "toast": {
+    "loadSaunasError": "Die Saunaliste konnte nicht geladen werden",
+    "geolocationUnsupported": "Geolokalisierung wird nicht unterstützt",
+    "centered": "Karte zentriert",
+    "geolocationError": "Dein Standort konnte nicht ermittelt werden",
+    "saunaNotFound": "Die angeforderte Sauna wurde nicht gefunden",
+    "photoAdded": "Foto hinzugefügt"
+  },
+  "categoryLabel": {
+    "public_sauna": "Öffentliche Sauna",
+    "spa": "Spa / Wellness",
+    "hotel": "Hotelsauna",
+    "event": "Sauna-Event",
+    "outdoor": "Außensauna"
+  }
+}

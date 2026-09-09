@@ -5,9 +5,14 @@
   "login": "Anmelden",
   "register": "Registrieren",
   "logout": "Abmelden",
+  "logoutShort": "Abmelden",
   "submitSauna": "Sauna melden",
   "discover": "Entdecken",
   "events": "Events",
   "masters": "Saunameister",
-  "about": "Über die App"
+  "saunas": "Saunen",
+  "about": "Über die App",
+  "myProfile": "Mein Profil",
+  "adminPanel": "Admin-Bereich",
+  "adminBadge": "Admin"
 }

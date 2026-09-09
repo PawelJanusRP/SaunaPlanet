@@ -154,9 +154,10 @@ describe('map drawer and transparent backdrops', () => {
   it('map account panel uses the central Lucide mapping with accessible markup', () => {
     expect(saunaMap).toContain("from '@/lib/navigation/icons'")
     // Menu trigger lives in the shared MapControls; the account panel it opens
-    // still carries the accessible close control inside SaunaMap.
-    expect(mapControls).toContain('aria-label="Menu"')
-    expect(saunaMap).toContain('aria-label="Zamknij menu"')
+    // still carries the accessible close control inside SaunaMap. SP-047: both
+    // labels are now translated via next-intl (map + nav catalogs).
+    expect(mapControls).toContain("aria-label={t('menu')}")
+    expect(saunaMap).toContain("aria-label={tNav('closeMenu')}")
     expect(saunaMap).toContain('aria-hidden="true"')
   })
   it('map account panel keeps its exact routes and authorization gate', () => {

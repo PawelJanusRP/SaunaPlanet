@@ -1,1 +1,87 @@
-{}
+{
+  "controls": {
+    "filters": "Filters",
+    "menu": "Menu",
+    "search": "Search",
+    "myLocation": "My location"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search saunas and sauna masters…",
+    "clear": "Clear",
+    "close": "Close",
+    "back": "Back to results",
+    "hint": "Search saunas, cities and sauna masters.",
+    "recommended": "Recommended — TOP SaunaPlanet",
+    "saunasHeading": "Saunas",
+    "mastersHeading": "Sauna masters",
+    "noSaunas": "No saunas.",
+    "noMasters": "No sauna masters.",
+    "searching": "Searching…",
+    "masterProfileAria": "Sauna master profile"
+  },
+  "master": {
+    "openFullProfile": "Open full sauna master profile",
+    "fullProfile": "Full profile",
+    "upcomingEvents": "Upcoming events",
+    "noUpcomingEvents": "No upcoming events.",
+    "showSaunaOnMap": "Show sauna {name} on the map"
+  },
+  "filters": {
+    "title": "Filters",
+    "clear": "Clear",
+    "close": "Close filters",
+    "mapMode": "Map mode",
+    "category": "Category",
+    "features": "Filters",
+    "radius": "Radius",
+    "withPhoto": "With photo",
+    "eventWithin7Days": "Event within 7 days",
+    "modes": {
+      "all": "All",
+      "saunas": "Saunas",
+      "events": "Events"
+    },
+    "categories": {
+      "all": "All",
+      "public_sauna": "Public",
+      "spa": "Spa",
+      "hotel": "Hotel",
+      "event": "Event",
+      "outdoor": "Outdoor"
+    }
+  },
+  "popup": {
+    "noPhoto": "No photo",
+    "reviewsCount": "{count, plural, one {# review} other {# reviews}}",
+    "upcomingEvents": "Upcoming events",
+    "details": "Facility details",
+    "website": "Official website",
+    "addPhoto": "Add photo",
+    "addEvent": "Add event",
+    "editSauna": "Edit sauna",
+    "newSaunaHere": "New sauna here"
+  },
+  "context": {
+    "title": "What would you like to do?",
+    "addSaunaHere": "Add a sauna here"
+  },
+  "account": {
+    "discover": "Discover"
+  },
+  "toast": {
+    "loadSaunasError": "Could not load the list of saunas",
+    "geolocationUnsupported": "Geolocation is not supported",
+    "centered": "Map centered",
+    "geolocationError": "Could not get your location",
+    "saunaNotFound": "The requested sauna was not found",
+    "photoAdded": "Photo added"
+  },
+  "categoryLabel": {
+    "public_sauna": "Public sauna",
+    "spa": "Spa / wellness",
+    "hotel": "Hotel sauna",
+    "event": "Sauna event",
+    "outdoor": "Outdoor sauna"
+  }
+}

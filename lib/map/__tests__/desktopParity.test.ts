@@ -19,8 +19,10 @@ describe('SP-045 desktop parity — shared floating controls', () => {
     expect(mapControls).not.toContain('lg:hidden')
   })
   it('MapControls expose all four accessible corner actions', () => {
-    for (const label of ['Filtry', 'Menu', 'Szukaj', 'Moja lokalizacja']) {
-      expect(mapControls).toContain(`aria-label="${label}"`)
+    // SP-047: the four accessible labels come from the map catalog via
+    // next-intl (t('filters' | 'menu' | 'search' | 'myLocation')).
+    for (const key of ['filters', 'menu', 'search', 'myLocation']) {
+      expect(mapControls).toContain(`aria-label={t('${key}')}`)
     }
   })
   it('SaunaMap wires the single shared control set (no legacy desktop chrome)', () => {

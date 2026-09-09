@@ -6,6 +6,7 @@
 // component only renders the controls and forwards intent.
 
 import { Menu, Search, SlidersHorizontal, LocateFixed } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type Props = {
   onSearch: () => void
@@ -35,9 +36,10 @@ export default function MapControls({
   onGeolocate,
   filtersActive = false,
 }: Props) {
+  const t = useTranslations('map.controls')
   return (
     <>
-      <button type="button" onClick={onFilters} aria-label="Filtry" title="Filtry" className={BTN} style={TL}>
+      <button type="button" onClick={onFilters} aria-label={t('filters')} title={t('filters')} className={BTN} style={TL}>
         <SlidersHorizontal className="h-[22px] w-[22px]" aria-hidden="true" />
         {filtersActive && (
           <span
@@ -47,15 +49,15 @@ export default function MapControls({
         )}
       </button>
 
-      <button type="button" onClick={onMenu} aria-label="Menu" title="Menu" className={BTN} style={TR}>
+      <button type="button" onClick={onMenu} aria-label={t('menu')} title={t('menu')} className={BTN} style={TR}>
         <Menu className="h-[22px] w-[22px]" aria-hidden="true" />
       </button>
 
-      <button type="button" onClick={onSearch} aria-label="Szukaj" title="Szukaj" className={BTN} style={BL}>
+      <button type="button" onClick={onSearch} aria-label={t('search')} title={t('search')} className={BTN} style={BL}>
         <Search className="h-[22px] w-[22px]" aria-hidden="true" />
       </button>
 
-      <button type="button" onClick={onGeolocate} aria-label="Moja lokalizacja" title="Moja lokalizacja" className={BTN} style={BR}>
+      <button type="button" onClick={onGeolocate} aria-label={t('myLocation')} title={t('myLocation')} className={BTN} style={BR}>
         <LocateFixed className="h-[22px] w-[22px]" aria-hidden="true" />
       </button>
     </>
