@@ -51,5 +51,104 @@
       "title": "📅 Vergangene Events"
     },
     "role": "Rolle: {role}"
+  },
+  "levels": {
+    "master": "Master",
+    "senior": "Senior",
+    "certified": "Certified",
+    "guest": "Guest"
+  },
+  "eventRoles": {
+    "lead": "Leitung",
+    "assistant": "Assistenz",
+    "guest": "Gast"
+  },
+  "common": {
+    "close": "Schließen",
+    "nameLabel": "Vor- und Nachname *",
+    "namePlaceholder": "z. B. Jan Kowalski",
+    "levelLabel": "Level",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Kurze Beschreibung (optional)...",
+    "saving": "Wird gespeichert...",
+    "errorSave": "Fehler beim Speichern"
+  },
+  "addMaster": {
+    "openButton": "➕ Saunameister hinzufügen",
+    "title": "Neuer Saunameister",
+    "avatarAlt": "Avatar-Vorschau",
+    "changePhoto": "📷 Foto ändern",
+    "addPhoto": "📷 Foto hinzufügen",
+    "homeSaunaLabel": "Stammsauna",
+    "noSaunaAssignment": "Keine Zuordnung",
+    "submit": "Saunameister hinzufügen",
+    "validationName": "Vor- und Nachnamen eingeben",
+    "success": "Saunameister hinzugefügt"
+  },
+  "addToSauna": {
+    "openButton": "➕ Saunameister hinzufügen",
+    "title": "Saunameister hinzufügen",
+    "tabExisting": "Bestehend",
+    "tabNew": "Neues Profil",
+    "masterLabel": "Saunameister",
+    "selectMaster": "Saunameister auswählen",
+    "assignSection": "Einem Event zuordnen",
+    "eventLabel": "Event",
+    "noEventAssignment": "Keine Zuordnung",
+    "roleLabel": "Rolle",
+    "noUpcomingEvents": "Keine kommenden Events — ordne den Saunameister nach dem Hinzufügen einem Event zu.",
+    "submit": "Speichern",
+    "validationName": "Vor- und Nachnamen des Saunameisters eingeben",
+    "validationMaster": "Saunameister auswählen",
+    "successNewAndAssigned": "Saunameister hinzugefügt und dem Event zugeordnet",
+    "successProfileCreated": "Saunameister-Profil erstellt",
+    "successAssigned": "Saunameister dem Event zugeordnet"
+  },
+  "editMaster": {
+    "openButton": "✏️ Profil bearbeiten",
+    "title": "Saunameister-Profil bearbeiten",
+    "bioPlaceholder": "Kurze Beschreibung...",
+    "levelReadOnly": "Level: <b>{level}</b> — wird von der Moderation geändert (das Level ergibt sich aus der Zertifizierung).",
+    "submit": "Änderungen speichern",
+    "validationName": "Vor- und Nachname dürfen nicht leer sein",
+    "noPermission": "Keine Berechtigung, dieses Profil zu bearbeiten",
+    "success": "Profil aktualisiert"
+  },
+  "addCertificate": {
+    "openButton": "🏅 Zertifikat hinzufügen",
+    "title": "Zertifikat hinzufügen",
+    "moderationNote": "Die Einreichung geht an die Moderation und wird nach der Freigabe durch einen Admin veröffentlicht.",
+    "certificateLabel": "Zertifikat *",
+    "loading": "Wird geladen...",
+    "selectCertificate": "Zertifikat auswählen",
+    "customNameLabel": "Name des Zertifikats *",
+    "customNamePlaceholder": "z. B. Zertifikat Termy Mazowieckie",
+    "yearLabel": "Jahr",
+    "yearPlaceholder": "z. B. 2024",
+    "notesLabel": "Anmerkungen",
+    "notesPlaceholder": "Zusätzliche Informationen (optional)",
+    "submitAdmin": "Zertifikat hinzufügen",
+    "submitUser": "Einreichung senden",
+    "validationSelect": "Zertifikat auswählen",
+    "validationCustomName": "Name des Zertifikats eingeben",
+    "successAdmin": "Zertifikat hinzugefügt",
+    "successUser": "Einreichung gesendet — wartet auf Freigabe"
+  },
+  "becomeMaster": {
+    "submittedTitle": "✓ Einreichung gesendet!",
+    "submittedBody": "Ein Administrator prüft dein Profil und fügt es der Liste hinzu.",
+    "promptTitle": "Bist du Saunameister?",
+    "promptBody": "Reiche dein Profil ein — ein Administrator gibt es frei und es erscheint in der Liste.",
+    "promptButton": "Als Saunameister bewerben",
+    "formTitle": "Einreichung eines Saunameister-Profils",
+    "nameLabel": "Vor- und Nachname *",
+    "namePlaceholder": "z. B. Anna Kowalska",
+    "aboutLabel": "Über dich",
+    "aboutPlaceholder": "Kurze Beschreibung deiner Erfahrung, Spezialisierungen...",
+    "submit": "Einreichung senden",
+    "sending": "Wird gesendet...",
+    "validationName": "Gib deinen Vor- und Nachnamen ein",
+    "alreadyHasProfile": "Dieses Konto hat bereits ein Saunameister-Profil",
+    "errorSend": "Fehler beim Senden der Einreichung"
   }
 }

@@ -8,6 +8,7 @@
  * anything — moderation decisions stay in FacilityModerationActions.
  */
 
+import { getLocale, getTranslations } from 'next-intl/server'
 import { openingHoursSummary } from '@/lib/import/previewState'
 import type { OpeningHoursDraft } from '@/lib/import/types'
 
@@ -20,45 +21,41 @@ export type ImportLogProvenanceRow = {
   extracted: Record<string, unknown> | null
 }
 
-const DB_SOURCE_KIND_LABELS: Record<string, string> = {
-  website: 'Strona internetowa',
-  facebook_page: 'Strona na Facebooku',
-  facebook_event: 'Wydarzenie na Facebooku',
-  instagram: 'Instagram',
-  google_maps: 'Google Maps',
-  other: 'Inne źródło',
-}
+const DB_SOURCE_KIND_KEYS = new Set([
+  'website',
+  'facebook_page',
+  'facebook_event',
+  'instagram',
+  'google_maps',
+  'other',
+])
 
-const FIELD_LABELS: Record<string, string> = {
-  name: 'Nazwa',
-  description: 'Opis',
-  address: 'Adres',
-  city: 'Miasto',
-  country: 'Kraj',
-  phone: 'Telefon',
-  email: 'E-mail',
-  website: 'Strona WWW',
-  geo: 'Współrzędne',
-  openingHours: 'Godziny otwarcia',
-  imageUrl: 'Obraz ze źródła',
-  socialLinks: 'Profile społecznościowe',
-  sourceTitle: 'Tytuł źródła',
-}
+const FIELD_KEYS = new Set([
+  'name',
+  'description',
+  'address',
+  'city',
+  'country',
+  'phone',
+  'email',
+  'website',
+  'geo',
+  'openingHours',
+  'imageUrl',
+  'socialLinks',
+  'sourceTitle',
+])
 
-const ORIGIN_LABELS: Record<string, string> = {
-  jsonld: 'dane strukturalne',
-  opengraph: 'metadane (OG)',
-  metadata: 'metadane strony',
-  html: 'treść strony',
-  inferred: 'wywnioskowane',
-  user: 'użytkownik',
-}
+const ORIGIN_KEYS = new Set([
+  'jsonld',
+  'opengraph',
+  'metadata',
+  'html',
+  'inferred',
+  'user',
+])
 
-const CONFIDENCE_LABELS: Record<string, string> = {
-  high: 'wysoka pewność',
-  medium: 'średnia pewność',
-  low: 'niska pewność',
-}
+const CONFIDENCE_KEYS = new Set(['high', 'medium', 'low'])
 
 type DraftField = {
   value: unknown
@@ -80,7 +77,9 @@ function fieldValueText(key: string, value: unknown): string {
   return String(value)
 }
 
-export default function ImportProvenancePanel({ row }: { row: ImportLogProvenanceRow }) {
+export default async function ImportProvenancePanel({ row }: { row: ImportLogProvenanceRow }) {
+  const t = await getTranslations('sauna')
+  const locale = await getLocale()
   const extracted = row.extracted ?? {}
   const draft = (extracted.draft ?? {}) as Record<string, DraftField>
   const fields = Object.entries(draft).filter(
@@ -90,10 +89,12 @@ export default function ImportProvenancePanel({ row }: { row: ImportLogProvenanc
   return (
     <div className="rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-900">
       <p className="font-semibold">
-        🔗 Dane zgłoszenia pochodzą z importu URL
+        {t('provenance.heading')}
       </p>
       <p className="mt-0.5">
-        {DB_SOURCE_KIND_LABELS[row.source_kind] ?? row.source_kind}
+        {DB_SOURCE_KIND_KEYS.has(row.source_kind)
+          ? t(`provenance.sourceKind.${row.source_kind}`)
+          : row.source_kind}
         {' · '}
         <a
           href={row.url}
@@ -104,26 +105,32 @@ export default function ImportProvenancePanel({ row }: { row: ImportLogProvenanc
           {row.url}
         </a>
         {' · '}
-        {new Date(row.created_at).toLocaleString('pl-PL', {
+        {new Date(row.created_at).toLocaleString(locale, {
           day: 'numeric',
           month: 'long',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
         })}
-        {row.result === 'partial' && ' · import częściowy'}
+        {row.result === 'partial' && t('provenance.partialImport')}
       </p>
       {fields.length > 0 && (
         <ul className="mt-1.5 space-y-0.5">
           {fields.map(([key, field]) => (
             <li key={key} className="text-blue-800">
-              <span className="font-medium">{FIELD_LABELS[key] ?? key}:</span>{' '}
+              <span className="font-medium">
+                {FIELD_KEYS.has(key) ? t(`provenance.field.${key}`) : key}:
+              </span>{' '}
               <span className="break-words">{fieldValueText(key, field.value)}</span>
               <span className="text-blue-500">
                 {' — '}
-                {ORIGIN_LABELS[field.origin ?? ''] ?? field.origin}
+                {field.origin && ORIGIN_KEYS.has(field.origin)
+                  ? t(`provenance.origin.${field.origin}`)
+                  : field.origin}
                 {field.confidence && field.confidence !== 'high' && (
-                  <> · {CONFIDENCE_LABELS[field.confidence] ?? field.confidence}</>
+                  <> · {CONFIDENCE_KEYS.has(field.confidence)
+                    ? t(`provenance.confidence.${field.confidence}`)
+                    : field.confidence}</>
                 )}
                 {field.sourceHint && <> ({field.sourceHint})</>}
               </span>
@@ -132,8 +139,7 @@ export default function ImportProvenancePanel({ row }: { row: ImportLogProvenanc
         </ul>
       )}
       <p className="mt-1 text-[10px] text-blue-500">
-        Wartości pokazują wynik ekstrakcji ze źródła — zgłaszający mógł je
-        zredagować przed wysłaniem; porównaj z danymi zgłoszenia powyżej.
+        {t('provenance.footnote')}
       </p>
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -17,13 +18,7 @@ import BundledEventFields, {
   type BundledEventDraft,
 } from '@/components/BundledEventFields'
 
-const categories = [
-  { value: 'public_sauna', label: '🧖 Sauna publiczna' },
-  { value: 'spa', label: '♨️ SPA / wellness' },
-  { value: 'hotel', label: '🏨 Sauna hotelowa' },
-  { value: 'outdoor', label: '🌲 Sauna plenerowa' },
-  { value: 'event', label: '🔥 Event saunowy' },
-]
+const CATEGORY_VALUES = ['public_sauna', 'spa', 'hotel', 'outdoor', 'event'] as const
 
 export default function AddItemForm({
   onAdded,
@@ -39,6 +34,7 @@ export default function AddItemForm({
   /** Pan the map to a duplicate candidate so the user can compare places. */
   onCenterOnDuplicate?: (lat: number, lng: number) => void
 }) {
+  const t = useTranslations('sauna')
   const { user, access, loading: authLoading } = useAuth()
   // approved-master flag: visibility only — the server action re-verifies
   const isMaster = access?.hasLinkedMasterProfile === true
@@ -91,11 +87,11 @@ export default function AddItemForm({
 
   async function handleSubmit() {
     if (!name.trim()) {
-      toast.error('Podaj nazwę sauny lub obiektu')
+      toast.error(t('addForm.errorNoName'))
       return
     }
     if (latitude === undefined || longitude === undefined) {
-      toast.error('Kliknij na mapie, aby ustawić lokalizację')
+      toast.error(t('addForm.errorNoLocation'))
       return
     }
 
@@ -184,7 +180,7 @@ export default function AddItemForm({
         errorMsg = r.error
       }
       if (errorMsg || !facilityId) {
-        toast.error(errorMsg ?? 'Nie udało się zgłosić sauny')
+        toast.error(errorMsg ?? t('addForm.errorSubmitFailed'))
         setLoading(false)
         return
       }
@@ -193,19 +189,15 @@ export default function AddItemForm({
         await uploadPhoto(facilityId)
       } catch (photoError) {
         console.error(photoError)
-        toast.error('Saunę zgłoszono, ale nie udało się dodać zdjęcia')
+        toast.error(t('addForm.errorPhotoFailed'))
       }
 
       if (facilityStatus === 'active') {
-        toast.success('Dodano saunę')
+        toast.success(t('addForm.successAdded'))
       } else if (bundling) {
-        toast.success(
-          'Zgłoszenie przyjęte! Obiekt i wydarzenie trafiły do moderacji — po zatwierdzeniu opublikują się razem, a Ty będziesz organizatorem.'
-        )
+        toast.success(t('addForm.successBundle'))
       } else {
-        toast.success(
-          'Zgłoszenie przyjęte! Sauna pojawi się na mapie po zatwierdzeniu przez moderację.'
-        )
+        toast.success(t('addForm.successFacility'))
       }
 
       setName('')
@@ -222,7 +214,7 @@ export default function AddItemForm({
       onClose()
     } catch (error) {
       console.error(error)
-      toast.error('Wystąpił błąd — spróbuj ponownie')
+      toast.error(t('addForm.errorGeneric'))
     } finally {
       setLoading(false)
     }
@@ -249,32 +241,32 @@ export default function AddItemForm({
         ✕
       </button>
 
-      <h2 className="mb-2 font-bold">Dodaj saunę</h2>
+      <h2 className="mb-2 font-bold">{t('addForm.heading')}</h2>
 
       {!authLoading && !user ? (
         <div className="py-4 text-center">
           <p className="mb-3 text-sm text-gray-600">
-            Zgłaszanie saun wymaga zalogowania.
+            {t('addForm.loginRequired')}
           </p>
           <Link
             href="/auth/login"
             className="inline-block rounded-xl bg-black px-4 py-2 text-sm text-white"
           >
-            Zaloguj się
+            {t('addForm.loginLink')}
           </Link>
         </div>
       ) : (
       <>
       <p className="mb-2 text-xs text-gray-600">
-        Lokalizacja:{' '}
+        {t('addForm.locationLabel')}{' '}
         {latitude !== undefined && longitude !== undefined
           ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-          : 'kliknij na mapie'}
+          : t('addForm.locationPlaceholder')}
       </p>
 
       <input
         className="mb-2 w-full border p-2"
-        placeholder="Nazwa sauny/obiektu"
+        placeholder={t('addForm.namePlaceholder')}
         value={name}
         onChange={(e) => {
           setName(e.target.value)
@@ -285,14 +277,14 @@ export default function AddItemForm({
 
       <input
         className="mb-2 w-full border p-2"
-        placeholder="Miasto (opcjonalnie)"
+        placeholder={t('addForm.cityPlaceholder')}
         value={city}
         onChange={(e) => setCity(e.target.value)}
       />
 
       <textarea
         className="mb-2 w-full border p-2"
-        placeholder="Opis, godziny otwarcia, zasady, atrakcje"
+        placeholder={t('addForm.descriptionPlaceholder')}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
@@ -302,16 +294,16 @@ export default function AddItemForm({
 	  value={category}
 	  onChange={(e) => setCategory(e.target.value)}
 	>
-	  {categories.map((cat) => (
-		<option key={cat.value} value={cat.value}>
-		  {cat.label}
+	  {CATEGORY_VALUES.map((value) => (
+		<option key={value} value={value}>
+		  {t(`addForm.categories.${value}`)}
 		</option>
 	  ))}
 	</select>
 
  <div className="mb-3">
   <label className="mb-2 block text-sm font-semibold text-gray-700">
-    Zdjęcie
+    {t('addForm.photoLabel')}
   </label>
 
   <label
@@ -329,12 +321,12 @@ className="
         <img
           loading="lazy"
           src={URL.createObjectURL(photo)}
-          alt="Preview"
+          alt={t('addForm.photoPreviewAlt')}
           className="mb-2 h-32 w-full rounded-lg object-cover"
         />
 
         <div className="text-sm font-semibold text-gray-700">
-          Zmień zdjęcie
+          {t('addForm.photoChange')}
         </div>
       </>
     ) : (
@@ -342,11 +334,11 @@ className="
         <div className="text-3xl">📷</div>
 
         <div className="mt-2 text-sm font-semibold text-gray-700">
-          Dodaj zdjęcie
+          {t('addForm.photoAdd')}
         </div>
 
         <div className="text-xs text-gray-500">
-          Otwieranie może chwilę potrwać
+          {t('addForm.photoHint')}
         </div>
       </>
     )}
@@ -365,7 +357,7 @@ className="
 
 {photo && (
   <div className="mt-2 text-xs text-green-700">
-    Zdjęcie wybrane
+    {t('addForm.photoSelected')}
   </div>
 )}
 
@@ -378,7 +370,7 @@ className="
             checked={withEvent}
             onChange={(e) => setWithEvent(e.target.checked)}
           />
-          🔥 Dodaj wydarzenie do tego zgłoszenia (saunamistrz)
+          {t('addForm.addEventLabel')}
         </label>
       )}
       {isMaster && withEvent && (
@@ -390,7 +382,7 @@ className="
       {duplicates !== null && duplicates.length > 0 && (
         <div className="mb-3 rounded-xl border border-yellow-300 bg-yellow-50 p-3">
           <p className="mb-1 text-xs font-semibold text-yellow-800">
-            ⚠️ Podobne obiekty już istnieją:
+            {t('addForm.duplicatesHeading')}
           </p>
           <ul className="mb-1 space-y-0.5 text-xs text-yellow-800">
             {duplicates.map((d) => (
@@ -409,14 +401,14 @@ className="
                   <span>• {d.name}</span>
                 )}
                 {d.city && ` (${d.city})`}
-                {d.status === 'pending' && ' — czeka na moderację'}
+                {d.status === 'pending' && t('addForm.duplicatePending')}
                 {d.distance_m !== null && d.distance_m < 1000 &&
-                  ` — ${Math.round(d.distance_m)} m stąd`}
+                  t('addForm.duplicateDistance', { distance: Math.round(d.distance_m) })}
               </li>
             ))}
           </ul>
           <p className="text-xs text-yellow-700">
-            Jeśli to inny obiekt, kliknij „Wyślij mimo to”.
+            {t('addForm.duplicatesHint')}
           </p>
         </div>
       )}
@@ -427,14 +419,14 @@ className="
         className="w-full rounded-xl bg-black p-3 text-white disabled:opacity-50"
       >
         {loading
-          ? 'Wysyłanie...'
+          ? t('addForm.submitting')
           : duplicates !== null && duplicates.length > 0
-            ? 'Wyślij mimo to'
-            : 'Zgłoś saunę'}
+            ? t('addForm.submitAnyway')
+            : t('addForm.submit')}
       </button>
 
       <p className="mt-2 text-center text-[11px] text-gray-400">
-        Zgłoszenie trafi do moderacji przed publikacją na mapie.
+        {t('addForm.moderationNote')}
       </p>
       </>
       )}

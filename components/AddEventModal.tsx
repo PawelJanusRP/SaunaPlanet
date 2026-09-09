@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { createEvent } from '@/app/[locale]/events/actions'
 
@@ -17,6 +18,7 @@ export default function AddEventModal({
   onClose,
   onAdded,
 }: AddEventModalProps) {
+  const t = useTranslations('events')
   const [title, setTitle] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
@@ -29,12 +31,12 @@ export default function AddEventModal({
     e.preventDefault()
 
     if (!title.trim()) {
-      toast.error('Podaj nazwę wydarzenia')
+      toast.error(t('addModal.validationTitle'))
       return
     }
 
     if (!eventDate) {
-      toast.error('Podaj datę wydarzenia')
+      toast.error(t('addModal.validationDate'))
       return
     }
 
@@ -61,7 +63,7 @@ export default function AddEventModal({
       // back as result.error (prod strips thrown server-action messages).
       setLoading(false)
       console.error(e)
-      toast.error('Nie udało się dodać eventu')
+      toast.error(t('addModal.genericError'))
       return
     }
 
@@ -69,11 +71,9 @@ export default function AddEventModal({
     // Routing feedback from the action result (SP-037B): masters at
     // managed facilities create a pending proposal, not a live event.
     if (createdStatus === 'pending') {
-      toast.success(
-        'Propozycja wysłana — obiekt ma managera, więc wydarzenie i Twój udział czekają na jego akceptację.'
-      )
+      toast.success(t('addModal.successPending'))
     } else {
-      toast.success('Dodano event')
+      toast.success(t('addModal.success'))
     }
     await onAdded()
     onClose()
@@ -87,11 +87,16 @@ export default function AddEventModal({
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Dodaj event saunowy</h2>
+            <h2 className="text-lg font-bold">{t('addModal.title')}</h2>
             <p className="text-sm text-gray-500">{saunaName}</p>
           </div>
 
-          <button type="button" onClick={onClose} className="text-gray-500">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('addModal.close')}
+            className="text-gray-500"
+          >
             ✕
           </button>
         </div>
@@ -99,7 +104,7 @@ export default function AddEventModal({
         <div className="space-y-3">
           <input
             className="w-full rounded-xl border p-3 text-sm"
-            placeholder="Nazwa eventu, np. Noc saunowa"
+            placeholder={t('addModal.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -123,7 +128,7 @@ export default function AddEventModal({
           <div className="grid grid-cols-2 gap-2">
             <input
               className="w-full rounded-xl border p-3 text-sm"
-              placeholder="Cena, np. 120 zł"
+              placeholder={t('addModal.pricePlaceholder')}
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
@@ -132,7 +137,7 @@ export default function AddEventModal({
               type="number"
               min={1}
               className="w-full rounded-xl border p-3 text-sm"
-              placeholder="Limit miejsc"
+              placeholder={t('addModal.maxParticipantsPlaceholder')}
               value={maxParticipants}
               onChange={(e) => setMaxParticipants(e.target.value)}
             />
@@ -140,7 +145,7 @@ export default function AddEventModal({
 
           <textarea
             className="min-h-28 w-full rounded-xl border p-3 text-sm"
-            placeholder="Opis wydarzenia"
+            placeholder={t('addModal.descriptionPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -150,7 +155,7 @@ export default function AddEventModal({
             disabled={loading}
             className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-orange-700 disabled:opacity-60"
           >
-            {loading ? 'Dodawanie...' : 'Dodaj event'}
+            {loading ? t('addModal.submitting') : t('addModal.submit')}
           </button>
         </div>
       </form>

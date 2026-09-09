@@ -1,11 +1,13 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export default function UploadEventPhotoButton({ eventId }: { eventId: string }) {
+  const t = useTranslations('events')
   const [loading, setLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
   const router = useRouter()
@@ -35,9 +37,9 @@ export default function UploadEventPhotoButton({ eventId }: { eventId: string })
       if (dbError) throw dbError
 
       router.refresh()
-      toast.success('Zdjęcie dodane')
+      toast.success(t('photoUpload.success'))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Błąd uploadu')
+      toast.error(e instanceof Error ? e.message : t('photoUpload.error'))
     } finally {
       setLoading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -59,7 +61,7 @@ export default function UploadEventPhotoButton({ eventId }: { eventId: string })
         htmlFor="event-photo-upload"
         className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
       >
-        {loading ? 'Wysyłanie...' : '📷 Dodaj zdjęcie'}
+        {loading ? t('photoUpload.uploading') : t('photoUpload.add')}
       </label>
     </>
   )

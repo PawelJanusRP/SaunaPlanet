@@ -68,5 +68,107 @@
   },
   "common": {
     "userFallback": "Benutzer"
+  },
+  "addModal": {
+    "title": "Sauna-Event hinzufügen",
+    "close": "Schließen",
+    "titlePlaceholder": "Event-Name, z. B. Sauna-Nacht",
+    "pricePlaceholder": "Preis, z. B. 120 zł",
+    "maxParticipantsPlaceholder": "Platzlimit",
+    "descriptionPlaceholder": "Event-Beschreibung",
+    "submit": "Event hinzufügen",
+    "submitting": "Wird hinzugefügt...",
+    "validationTitle": "Gib einen Event-Namen ein",
+    "validationDate": "Gib ein Event-Datum ein",
+    "genericError": "Event konnte nicht hinzugefügt werden",
+    "successPending": "Vorschlag gesendet — diese Anlage hat einen Manager, daher warten das Event und deine Teilnahme auf dessen Freigabe.",
+    "success": "Event hinzugefügt"
+  },
+  "editForm": {
+    "openButton": "✏️ Event bearbeiten",
+    "heading": "Event bearbeiten",
+    "titleLabel": "Titel *",
+    "dateLabel": "Datum *",
+    "timeLabel": "Uhrzeit",
+    "priceLabel": "Preis",
+    "pricePlaceholder": "z. B. 50 zł",
+    "maxParticipantsLabel": "Platzlimit",
+    "maxParticipantsPlaceholder": "kein Limit",
+    "descriptionLabel": "Beschreibung",
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "cancel": "Abbrechen",
+    "saveSuccess": "Änderungen gespeichert",
+    "saveError": "Speicherfehler"
+  },
+  "bundledFields": {
+    "notice": "🔥 Event mit der Einreichung gebündelt. Alles geht an die Plattform-Moderation — nach der Genehmigung werden Anlage und Event gemeinsam veröffentlicht, und du wirst Event-Organisator (Rolle: lead). Die Einreichung gewährt keine Rechte zur Verwaltung der Anlage.",
+    "titlePlaceholder": "Event-Name, z. B. Sauna-Nacht",
+    "pricePlaceholder": "Preis, z. B. 120 zł",
+    "maxParticipantsPlaceholder": "Platzlimit",
+    "descriptionPlaceholder": "Event-Beschreibung"
+  },
+  "participation": {
+    "request": "🧖 Teilnahme als Saunameister anfragen",
+    "requestSuccess": "Anfrage gesendet — die Anlage entscheidet über deine Teilnahme",
+    "withdrawSuccess": "Anfrage zurückgezogen",
+    "pendingBadge": "⏳ Anfrage wartet auf die Entscheidung der Anlage",
+    "withdraw": "Zurückziehen",
+    "approvedBadge": "✓ Du trittst bei diesem Event auf",
+    "approvedBadgeWithRole": "✓ Du trittst bei diesem Event auf ({role})",
+    "rejectedBadge": "✗ Anfrage von der Anlage abgelehnt"
+  },
+  "comment": {
+    "placeholder": "Schreibe einen Kommentar zu diesem Event…",
+    "submit": "Kommentar hinzufügen",
+    "submitting": "Wird gespeichert…",
+    "validation": "Schreibe einen Kommentar",
+    "success": "Kommentar hinzugefügt",
+    "error": "Speicherfehler"
+  },
+  "review": {
+    "yourRating": "Deine Bewertung",
+    "commentPlaceholder": "Optionaler Kommentar…",
+    "submit": "Bewertung hinzufügen",
+    "submitting": "Wird gespeichert…",
+    "validation": "Wähle eine Bewertung",
+    "success": "Bewertung hinzugefügt",
+    "error": "Speicherfehler"
+  },
+  "deleteEvent": {
+    "delete": "🗑️ Löschen",
+    "confirm": "Wirklich löschen",
+    "deleting": "Wird gelöscht...",
+    "cancel": "Abbrechen",
+    "success": "Event „{title}\" gelöscht",
+    "error": "Fehler beim Löschen"
+  },
+  "eventMaster": {
+    "removeTitle": "Aus Event entfernen",
+    "removeSuccess": "{name} aus dem Event entfernt",
+    "removeError": "Fehler beim Löschen",
+    "loadError": "Saunameister konnten nicht geladen werden",
+    "selectValidation": "Wähle einen Saunameister",
+    "assignError": "Saunameister konnte nicht zugewiesen werden",
+    "assignSuccess": "Saunameister zugewiesen",
+    "heading": "➕ Saunameister zuweisen",
+    "selectPlaceholder": "Saunameister auswählen",
+    "roleLead": "Leitung",
+    "roleAssistant": "Assistent",
+    "roleGuest": "Gast",
+    "assign": "Zuweisen",
+    "assigning": "Wird zugewiesen..."
+  },
+  "photoUpload": {
+    "add": "📷 Foto hinzufügen",
+    "uploading": "Wird hochgeladen...",
+    "success": "Foto hinzugefügt",
+    "error": "Fehler beim Hochladen"
+  },
+  "reservationBadge": {
+    "taken": "Vergeben",
+    "expired": "Reservierung abgelaufen",
+    "reservedFor": "Noch reserviert für {timeLeft}",
+    "available": "Verfügbar"
   }
 }

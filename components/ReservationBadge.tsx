@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   formatReservationTimeLeft,
   isReservationExpired,
@@ -15,6 +16,7 @@ export default function ReservationBadge({
   status,
   reservedUntil,
 }: ReservationBadgeProps) {
+  const t = useTranslations('events')
   const [, setTick] = useState(0)
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function ReservationBadge({
   if (status === 'taken') {
     return (
       <span className="rounded-full bg-gray-200 px-2 py-1 text-xs font-semibold text-gray-700">
-        Zabrane
+        {t('reservationBadge.taken')}
       </span>
     )
   }
@@ -47,15 +49,17 @@ export default function ReservationBadge({
         }`}
       >
         {expired
-          ? 'Rezerwacja wygasła'
-          : `Zarezerwowane jeszcze ${formatReservationTimeLeft(reservedUntil)}`}
+          ? t('reservationBadge.expired')
+          : t('reservationBadge.reservedFor', {
+              timeLeft: formatReservationTimeLeft(reservedUntil),
+            })}
       </span>
     )
   }
 
   return (
     <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-      Dostępne
+      {t('reservationBadge.available')}
     </span>
   )
 }

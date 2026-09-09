@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -8,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 type Sauna = { id: string; name: string }
 
 export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
+  const t = useTranslations('masters')
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [open, setOpen] = useState(false)
@@ -43,7 +45,7 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
 
   async function handleSubmit() {
     if (!name.trim()) {
-      toast.error('Podaj imię i nazwisko')
+      toast.error(t('addMaster.validationName'))
       return
     }
     setSaving(true)
@@ -81,11 +83,11 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
 
       if (insertError) throw insertError
 
-      toast.success('Saunamistrz dodany')
+      toast.success(t('addMaster.success'))
       handleClose()
       router.refresh()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+      toast.error(e instanceof Error ? e.message : t('common.errorSave'))
     } finally {
       setSaving(false)
     }
@@ -97,7 +99,7 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
         onClick={() => setOpen(true)}
         className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
       >
-        ➕ Dodaj saunamistrza
+        {t('addMaster.openButton')}
       </button>
     )
   }
@@ -106,8 +108,8 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-bold">Nowy saunamistrz</h2>
-          <button onClick={handleClose} className="text-gray-400 hover:text-gray-700">✕</button>
+          <h2 className="font-bold">{t('addMaster.title')}</h2>
+          <button onClick={handleClose} aria-label={t('common.close')} className="text-gray-400 hover:text-gray-700">✕</button>
         </div>
 
         <div className="space-y-3">
@@ -116,7 +118,7 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
             {avatarPreview ? (
               <img
                 src={avatarPreview}
-                alt="Podgląd awatara"
+                alt={t('addMaster.avatarAlt')}
                 className="h-20 w-20 rounded-full object-cover"
               />
             ) : (
@@ -135,54 +137,54 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
               onClick={() => fileRef.current?.click()}
               className="cursor-pointer rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-100"
             >
-              📷 {avatarPreview ? 'Zmień zdjęcie' : 'Dodaj zdjęcie'}
+              {avatarPreview ? t('addMaster.changePhoto') : t('addMaster.addPhoto')}
             </label>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Imię i nazwisko *</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('common.nameLabel')}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="np. Jan Kowalski"
+              placeholder={t('common.namePlaceholder')}
               className="w-full rounded-xl border p-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Poziom</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('common.levelLabel')}</label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value)}
               className="w-full rounded-xl border p-2 text-sm"
             >
-              <option value="master">Master</option>
-              <option value="senior">Senior</option>
-              <option value="certified">Certified</option>
-              <option value="guest">Guest</option>
+              <option value="master">{t('levels.master')}</option>
+              <option value="senior">{t('levels.senior')}</option>
+              <option value="certified">{t('levels.certified')}</option>
+              <option value="guest">{t('levels.guest')}</option>
             </select>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Bio</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('common.bioLabel')}</label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={2}
-              placeholder="Krótki opis (opcjonalnie)..."
+              placeholder={t('common.bioPlaceholder')}
               className="w-full rounded-xl border p-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-700">Sauna macierzysta</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700">{t('addMaster.homeSaunaLabel')}</label>
             <select
               value={homeSaunaId}
               onChange={(e) => setHomeSaunaId(e.target.value)}
               className="w-full rounded-xl border p-2 text-sm"
             >
-              <option value="">Brak przypisania</option>
+              <option value="">{t('addMaster.noSaunaAssignment')}</option>
               {saunas.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -195,7 +197,7 @@ export default function AddMasterModal({ saunas }: { saunas: Sauna[] }) {
           disabled={saving}
           className="mt-4 w-full rounded-xl bg-orange-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {saving ? 'Zapisywanie...' : 'Dodaj saunamistrza'}
+          {saving ? t('common.saving') : t('addMaster.submit')}
         </button>
       </div>
     </div>

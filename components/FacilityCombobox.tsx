@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { foldPolishDiacritics as fold } from '@/lib/master/slug'
 
 export type FacilityOption = { id: string; name: string; city: string | null }
@@ -32,8 +33,8 @@ export default function FacilityCombobox({
   saunas,
   value,
   onChange,
-  placeholder = 'Wpisz nazwę sauny lub miasto',
-  emptyLabel = 'Nie znaleziono obiektu',
+  placeholder,
+  emptyLabel,
   groupWhenEmpty = true,
   ariaLabel,
 }: {
@@ -45,6 +46,9 @@ export default function FacilityCombobox({
   groupWhenEmpty?: boolean
   ariaLabel?: string
 }) {
+  const t = useTranslations('sauna')
+  const placeholderText = placeholder ?? t('facilityCombobox.placeholder')
+  const emptyLabelText = emptyLabel ?? t('facilityCombobox.empty')
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(0)
@@ -114,7 +118,7 @@ export default function FacilityCombobox({
         <button
           type="button"
           onClick={clear}
-          aria-label="Wyczyść wybrany obiekt"
+          aria-label={t('facilityCombobox.clearAriaLabel')}
           className="shrink-0 rounded-full px-2 py-0.5 text-gray-500 hover:bg-orange-100"
         >
           ✕
@@ -132,7 +136,7 @@ export default function FacilityCombobox({
         aria-autocomplete="list"
         aria-label={ariaLabel}
         className="w-full rounded-xl border p-3 text-sm"
-        placeholder={placeholder}
+        placeholder={placeholderText}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value)
@@ -150,7 +154,7 @@ export default function FacilityCombobox({
           className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border bg-white shadow-lg"
         >
           {visible.length === 0 ? (
-            <li className="px-3 py-2.5 text-sm text-gray-500">{emptyLabel}</li>
+            <li className="px-3 py-2.5 text-sm text-gray-500">{emptyLabelText}</li>
           ) : (
             visible.map((s, i) => {
               const cityHeader =
@@ -159,7 +163,7 @@ export default function FacilityCombobox({
                 <li key={s.id}>
                   {cityHeader && (
                     <div className="bg-gray-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                      {s.city ?? 'Bez miasta'}
+                      {s.city ?? t('facilityCombobox.noCity')}
                     </div>
                   )}
                   <button
@@ -185,7 +189,7 @@ export default function FacilityCombobox({
           )}
           {results.length > VISIBLE_LIMIT && (
             <li className="px-3 py-2 text-xs text-gray-400">
-              Pokazano {VISIBLE_LIMIT} z {results.length} — doprecyzuj wyszukiwanie
+              {t('facilityCombobox.truncated', { visible: VISIBLE_LIMIT, total: results.length })}
             </li>
           )}
         </ul>

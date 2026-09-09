@@ -68,5 +68,107 @@
   },
   "common": {
     "userFallback": "Użytkownik"
+  },
+  "addModal": {
+    "title": "Dodaj event saunowy",
+    "close": "Zamknij",
+    "titlePlaceholder": "Nazwa eventu, np. Noc saunowa",
+    "pricePlaceholder": "Cena, np. 120 zł",
+    "maxParticipantsPlaceholder": "Limit miejsc",
+    "descriptionPlaceholder": "Opis wydarzenia",
+    "submit": "Dodaj event",
+    "submitting": "Dodawanie...",
+    "validationTitle": "Podaj nazwę wydarzenia",
+    "validationDate": "Podaj datę wydarzenia",
+    "genericError": "Nie udało się dodać eventu",
+    "successPending": "Propozycja wysłana — obiekt ma managera, więc wydarzenie i Twój udział czekają na jego akceptację.",
+    "success": "Dodano event"
+  },
+  "editForm": {
+    "openButton": "✏️ Edytuj wydarzenie",
+    "heading": "Edycja wydarzenia",
+    "titleLabel": "Tytuł *",
+    "dateLabel": "Data *",
+    "timeLabel": "Godzina",
+    "priceLabel": "Cena",
+    "pricePlaceholder": "np. 50 zł",
+    "maxParticipantsLabel": "Limit miejsc",
+    "maxParticipantsPlaceholder": "bez limitu",
+    "descriptionLabel": "Opis",
+    "save": "Zapisz",
+    "saving": "Zapisywanie...",
+    "cancel": "Anuluj",
+    "saveSuccess": "Zapisano zmiany",
+    "saveError": "Błąd zapisu"
+  },
+  "bundledFields": {
+    "notice": "🔥 Wydarzenie dołączone do zgłoszenia. Całość trafia do moderacji platformy — po zatwierdzeniu obiekt i wydarzenie opublikują się razem, a Ty zostaniesz organizatorem wydarzenia (rola: lead). Zgłoszenie nie daje żadnych praw do zarządzania obiektem.",
+    "titlePlaceholder": "Nazwa wydarzenia, np. Noc saunowa",
+    "pricePlaceholder": "Cena, np. 120 zł",
+    "maxParticipantsPlaceholder": "Limit miejsc",
+    "descriptionPlaceholder": "Opis wydarzenia"
+  },
+  "participation": {
+    "request": "🧖 Zgłoś udział jako saunamistrz",
+    "requestSuccess": "Zgłoszenie wysłane — obiekt zdecyduje o Twoim udziale",
+    "withdrawSuccess": "Zgłoszenie wycofane",
+    "pendingBadge": "⏳ Zgłoszenie oczekuje na decyzję obiektu",
+    "withdraw": "Wycofaj",
+    "approvedBadge": "✓ Występujesz na tym wydarzeniu",
+    "approvedBadgeWithRole": "✓ Występujesz na tym wydarzeniu ({role})",
+    "rejectedBadge": "✗ Zgłoszenie odrzucone przez obiekt"
+  },
+  "comment": {
+    "placeholder": "Napisz komentarz do tego wydarzenia…",
+    "submit": "Dodaj komentarz",
+    "submitting": "Zapisywanie…",
+    "validation": "Napisz komentarz",
+    "success": "Komentarz dodany",
+    "error": "Błąd zapisu"
+  },
+  "review": {
+    "yourRating": "Twoja ocena",
+    "commentPlaceholder": "Opcjonalny komentarz…",
+    "submit": "Dodaj ocenę",
+    "submitting": "Zapisywanie…",
+    "validation": "Wybierz ocenę",
+    "success": "Ocena dodana",
+    "error": "Błąd zapisu"
+  },
+  "deleteEvent": {
+    "delete": "🗑️ Usuń",
+    "confirm": "Na pewno usuń",
+    "deleting": "Usuwanie...",
+    "cancel": "Anuluj",
+    "success": "Usunięto wydarzenie „{title}\"",
+    "error": "Błąd usuwania"
+  },
+  "eventMaster": {
+    "removeTitle": "Usuń z wydarzenia",
+    "removeSuccess": "{name} usunięty z wydarzenia",
+    "removeError": "Błąd usuwania",
+    "loadError": "Nie udało się pobrać saunamistrzów",
+    "selectValidation": "Wybierz saunamistrza",
+    "assignError": "Nie udało się przypisać saunamistrza",
+    "assignSuccess": "Saunamistrz przypisany",
+    "heading": "➕ Przypisz saunamistrza",
+    "selectPlaceholder": "Wybierz saunamistrza",
+    "roleLead": "Prowadzący",
+    "roleAssistant": "Asystent",
+    "roleGuest": "Gość",
+    "assign": "Przypisz",
+    "assigning": "Przypisywanie..."
+  },
+  "photoUpload": {
+    "add": "📷 Dodaj zdjęcie",
+    "uploading": "Wysyłanie...",
+    "success": "Zdjęcie dodane",
+    "error": "Błąd uploadu"
+  },
+  "reservationBadge": {
+    "taken": "Zabrane",
+    "expired": "Rezerwacja wygasła",
+    "reservedFor": "Zarezerwowane jeszcze {timeLeft}",
+    "available": "Dostępne"
   }
 }

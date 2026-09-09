@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export default function BecomeMasterForm() {
+  const t = useTranslations('masters')
   const [open, setOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -13,7 +15,7 @@ export default function BecomeMasterForm() {
 
   async function handleSubmit() {
     if (!name.trim()) {
-      toast.error('Podaj swoje imię i nazwisko')
+      toast.error(t('becomeMaster.validationName'))
       return
     }
     setSaving(true)
@@ -34,14 +36,14 @@ export default function BecomeMasterForm() {
       if (error) {
         // unique index on sauna_masters.user_id (SP-035): one profile per account
         if (error.code === '23505' || error.message.includes('sauna_masters_user_id_unique')) {
-          throw new Error('To konto ma już profil saunamistrza')
+          throw new Error(t('becomeMaster.alreadyHasProfile'))
         }
         throw error
       }
       setSubmitted(true)
       setOpen(false)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Błąd wysyłania zgłoszenia')
+      toast.error(e instanceof Error ? e.message : t('becomeMaster.errorSend'))
     } finally {
       setSaving(false)
     }
@@ -50,8 +52,8 @@ export default function BecomeMasterForm() {
   if (submitted) {
     return (
       <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4">
-        <p className="font-semibold text-green-700">✓ Zgłoszenie wysłane!</p>
-        <p className="mt-1 text-sm text-green-600">Administrator zweryfikuje Twój profil i doda go do listy.</p>
+        <p className="font-semibold text-green-700">{t('becomeMaster.submittedTitle')}</p>
+        <p className="mt-1 text-sm text-green-600">{t('becomeMaster.submittedBody')}</p>
       </div>
     )
   }
@@ -59,13 +61,13 @@ export default function BecomeMasterForm() {
   if (!open) {
     return (
       <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
-        <p className="font-semibold text-orange-800">Jesteś saunamistrzem?</p>
-        <p className="mt-1 text-sm text-gray-600">Zgłoś swój profil — administrator zatwierdzi go i pojawi się na liście.</p>
+        <p className="font-semibold text-orange-800">{t('becomeMaster.promptTitle')}</p>
+        <p className="mt-1 text-sm text-gray-600">{t('becomeMaster.promptBody')}</p>
         <button
           onClick={() => setOpen(true)}
           className="mt-3 rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
         >
-          Zgłoś się jako saunamistrz
+          {t('becomeMaster.promptButton')}
         </button>
       </div>
     )
@@ -74,29 +76,29 @@ export default function BecomeMasterForm() {
   return (
     <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="font-semibold text-orange-800">Zgłoszenie profilu saunamistrza</p>
-        <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+        <p className="font-semibold text-orange-800">{t('becomeMaster.formTitle')}</p>
+        <button onClick={() => setOpen(false)} aria-label={t('common.close')} className="text-gray-400 hover:text-gray-600">✕</button>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-700">Imię i nazwisko *</label>
+          <label className="mb-1 block text-sm font-semibold text-gray-700">{t('becomeMaster.nameLabel')}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="np. Anna Kowalska"
+            placeholder={t('becomeMaster.namePlaceholder')}
             className="w-full rounded-xl border bg-white p-2 text-sm"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-semibold text-gray-700">O sobie</label>
+          <label className="mb-1 block text-sm font-semibold text-gray-700">{t('becomeMaster.aboutLabel')}</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            placeholder="Krótki opis doświadczenia, specjalizacji..."
+            placeholder={t('becomeMaster.aboutPlaceholder')}
             className="w-full rounded-xl border bg-white p-2 text-sm"
           />
         </div>
@@ -106,7 +108,7 @@ export default function BecomeMasterForm() {
           disabled={saving}
           className="w-full rounded-xl bg-orange-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {saving ? 'Wysyłanie...' : 'Wyślij zgłoszenie'}
+          {saving ? t('becomeMaster.sending') : t('becomeMaster.submit')}
         </button>
       </div>
     </div>

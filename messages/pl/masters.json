@@ -51,5 +51,104 @@
       "title": "📅 Poprzednie wydarzenia"
     },
     "role": "Rola: {role}"
+  },
+  "levels": {
+    "master": "Master",
+    "senior": "Senior",
+    "certified": "Certified",
+    "guest": "Guest"
+  },
+  "eventRoles": {
+    "lead": "Prowadzący",
+    "assistant": "Asystent",
+    "guest": "Gość"
+  },
+  "common": {
+    "close": "Zamknij",
+    "nameLabel": "Imię i nazwisko *",
+    "namePlaceholder": "np. Jan Kowalski",
+    "levelLabel": "Poziom",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Krótki opis (opcjonalnie)...",
+    "saving": "Zapisywanie...",
+    "errorSave": "Błąd zapisu"
+  },
+  "addMaster": {
+    "openButton": "➕ Dodaj saunamistrza",
+    "title": "Nowy saunamistrz",
+    "avatarAlt": "Podgląd awatara",
+    "changePhoto": "📷 Zmień zdjęcie",
+    "addPhoto": "📷 Dodaj zdjęcie",
+    "homeSaunaLabel": "Sauna macierzysta",
+    "noSaunaAssignment": "Brak przypisania",
+    "submit": "Dodaj saunamistrza",
+    "validationName": "Podaj imię i nazwisko",
+    "success": "Saunamistrz dodany"
+  },
+  "addToSauna": {
+    "openButton": "➕ Dodaj saunamistrza",
+    "title": "Dodaj saunamistrza",
+    "tabExisting": "Istniejący",
+    "tabNew": "Nowy profil",
+    "masterLabel": "Saunamistrz",
+    "selectMaster": "Wybierz saunamistrza",
+    "assignSection": "Przypisz do wydarzenia",
+    "eventLabel": "Wydarzenie",
+    "noEventAssignment": "Bez przypisania",
+    "roleLabel": "Rola",
+    "noUpcomingEvents": "Brak nadchodzących wydarzeń — po dodaniu saunamistrza przypisz go do wydarzenia.",
+    "submit": "Zapisz",
+    "validationName": "Podaj imię i nazwisko saunamistrza",
+    "validationMaster": "Wybierz saunamistrza",
+    "successNewAndAssigned": "Saunamistrz dodany i przypisany do wydarzenia",
+    "successProfileCreated": "Profil saunamistrza utworzony",
+    "successAssigned": "Saunamistrz przypisany do wydarzenia"
+  },
+  "editMaster": {
+    "openButton": "✏️ Edytuj profil",
+    "title": "Edytuj profil saunamistrza",
+    "bioPlaceholder": "Krótki opis...",
+    "levelReadOnly": "Poziom: <b>{level}</b> — zmienia go moderacja (poziom wynika z certyfikacji).",
+    "submit": "Zapisz zmiany",
+    "validationName": "Imię i nazwisko nie może być puste",
+    "noPermission": "Brak uprawnień do edycji tego profilu",
+    "success": "Profil zaktualizowany"
+  },
+  "addCertificate": {
+    "openButton": "🏅 Dodaj certyfikat",
+    "title": "Dodaj certyfikat",
+    "moderationNote": "Zgłoszenie trafi do moderacji i zostanie opublikowane po akceptacji admina.",
+    "certificateLabel": "Certyfikat *",
+    "loading": "Ładowanie...",
+    "selectCertificate": "Wybierz certyfikat",
+    "customNameLabel": "Nazwa certyfikatu *",
+    "customNamePlaceholder": "np. Certyfikat Termy Mazowieckie",
+    "yearLabel": "Rok",
+    "yearPlaceholder": "np. 2024",
+    "notesLabel": "Uwagi",
+    "notesPlaceholder": "Dodatkowe informacje (opcjonalnie)",
+    "submitAdmin": "Dodaj certyfikat",
+    "submitUser": "Wyślij zgłoszenie",
+    "validationSelect": "Wybierz certyfikat",
+    "validationCustomName": "Podaj nazwę certyfikatu",
+    "successAdmin": "Certyfikat dodany",
+    "successUser": "Zgłoszenie wysłane — czeka na akceptację"
+  },
+  "becomeMaster": {
+    "submittedTitle": "✓ Zgłoszenie wysłane!",
+    "submittedBody": "Administrator zweryfikuje Twój profil i doda go do listy.",
+    "promptTitle": "Jesteś saunamistrzem?",
+    "promptBody": "Zgłoś swój profil — administrator zatwierdzi go i pojawi się na liście.",
+    "promptButton": "Zgłoś się jako saunamistrz",
+    "formTitle": "Zgłoszenie profilu saunamistrza",
+    "nameLabel": "Imię i nazwisko *",
+    "namePlaceholder": "np. Anna Kowalska",
+    "aboutLabel": "O sobie",
+    "aboutPlaceholder": "Krótki opis doświadczenia, specjalizacji...",
+    "submit": "Wyślij zgłoszenie",
+    "sending": "Wysyłanie...",
+    "validationName": "Podaj swoje imię i nazwisko",
+    "alreadyHasProfile": "To konto ma już profil saunamistrza",
+    "errorSend": "Błąd wysyłania zgłoszenia"
   }
 }

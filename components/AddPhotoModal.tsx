@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AddPhotoModal({
@@ -13,13 +14,14 @@ export default function AddPhotoModal({
   onClose: () => void
   onUploaded: () => void
 }) {
+  const t = useTranslations('sauna')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   async function handleUpload() {
     if (!file) {
-      toast.error('Wybierz zdjęcie')
+      toast.error(t('photo.errorNoFile'))
       return
     }
 
@@ -58,14 +60,14 @@ export default function AddPhotoModal({
       await onUploaded()
       onClose()
 
-      toast.success('Zdjęcie dodane')
+      toast.success(t('photo.successAdded'))
     } catch (e) {
       console.error('UPLOAD ERROR FULL:', e)
 
 	  if (e instanceof Error) {
 	  toast.error(e.message)
 	  } else {
-	  toast.error('Błąd uploadu')
+	  toast.error(t('photo.errorUpload'))
 	  }
     } finally {
       setLoading(false)
@@ -76,7 +78,7 @@ export default function AddPhotoModal({
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-bold">Dodaj zdjęcie</h2>
+          <h2 className="font-bold">{t('photo.heading')}</h2>
 
           <button
             onClick={onClose}
@@ -89,7 +91,7 @@ export default function AddPhotoModal({
 
         <div className="mb-3">
           <label className="mb-2 block text-sm font-semibold text-gray-700">
-            Zdjęcie
+            {t('photo.label')}
           </label>
 
           <label
@@ -105,16 +107,16 @@ export default function AddPhotoModal({
               <>
                 <img
                   src={URL.createObjectURL(file)}
-                  alt="Podgląd zdjęcia"
+                  alt={t('photo.previewAlt')}
                   className="mb-2 h-40 w-full rounded-lg object-cover"
                 />
 
                 <div className="text-sm font-semibold text-gray-700">
-                  Zmień zdjęcie
+                  {t('photo.change')}
                 </div>
 
                 <div className="mt-1 text-xs text-green-700">
-                  Zdjęcie wybrane
+                  {t('photo.selected')}
                 </div>
               </>
             ) : (
@@ -122,11 +124,11 @@ export default function AddPhotoModal({
                 <div className="text-3xl">📷</div>
 
                 <div className="mt-2 text-sm font-semibold text-gray-700">
-                  Dodaj zdjęcie
+                  {t('photo.add')}
                 </div>
 
                 <div className="text-xs text-gray-500">
-                  Kliknij tutaj
+                  {t('photo.hint')}
                 </div>
               </>
             )}
@@ -150,7 +152,7 @@ export default function AddPhotoModal({
           disabled={loading || !file}
           className="mb-2 w-full rounded-xl bg-black p-3 text-white disabled:opacity-50"
         >
-          {loading ? 'Wysyłanie...' : 'Wyślij zdjęcie'}
+          {loading ? t('photo.submitting') : t('photo.submit')}
         </button>
 
         <button
@@ -158,7 +160,7 @@ export default function AddPhotoModal({
           disabled={loading}
           className="w-full rounded-xl border p-3 font-semibold"
         >
-          Zamknij
+          {t('photo.close')}
         </button>
       </div>
     </div>

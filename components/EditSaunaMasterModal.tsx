@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -19,6 +20,7 @@ export default function EditSaunaMasterModal({
   /** Level implies certification — editable by moderation only (USER_MODEL §2.4). */
   canEditLevel?: boolean
 }) {
+  const t = useTranslations('masters')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -36,7 +38,7 @@ export default function EditSaunaMasterModal({
 
   async function handleSubmit() {
     if (!name.trim()) {
-      toast.error('Imię i nazwisko nie może być puste')
+      toast.error(t('editMaster.validationName'))
       return
     }
 
@@ -57,14 +59,14 @@ export default function EditSaunaMasterModal({
       if (error) throw error
       // RLS mismatch updates 0 rows without an error — fail loud instead
       if (!updated || updated.length === 0) {
-        throw new Error('Brak uprawnień do edycji tego profilu')
+        throw new Error(t('editMaster.noPermission'))
       }
 
-      toast.success('Profil zaktualizowany')
+      toast.success(t('editMaster.success'))
       setOpen(false)
       router.refresh()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Błąd zapisu')
+      toast.error(e instanceof Error ? e.message : t('common.errorSave'))
     } finally {
       setSaving(false)
     }
@@ -76,15 +78,15 @@ export default function EditSaunaMasterModal({
         onClick={() => setOpen(true)}
         className="mt-2 rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100"
       >
-        ✏️ Edytuj profil
+        {t('editMaster.openButton')}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-bold">Edytuj profil saunamistrza</h2>
-              <button onClick={handleClose} className="text-gray-400 hover:text-gray-700">
+              <h2 className="font-bold">{t('editMaster.title')}</h2>
+              <button onClick={handleClose} aria-label={t('common.close')} className="text-gray-400 hover:text-gray-700">
                 ✕
               </button>
             </div>
@@ -92,7 +94,7 @@ export default function EditSaunaMasterModal({
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-gray-700">
-                  Imię i nazwisko *
+                  {t('common.nameLabel')}
                 </label>
                 <input
                   type="text"
@@ -105,35 +107,37 @@ export default function EditSaunaMasterModal({
               {canEditLevel ? (
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-gray-700">
-                    Poziom
+                    {t('common.levelLabel')}
                   </label>
                   <select
                     value={level}
                     onChange={(e) => setLevel(e.target.value)}
                     className="w-full rounded-xl border p-2 text-sm"
                   >
-                    <option value="master">Master</option>
-                    <option value="senior">Senior</option>
-                    <option value="certified">Certified</option>
-                    <option value="guest">Guest</option>
+                    <option value="master">{t('levels.master')}</option>
+                    <option value="senior">{t('levels.senior')}</option>
+                    <option value="certified">{t('levels.certified')}</option>
+                    <option value="guest">{t('levels.guest')}</option>
                   </select>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">
-                  Poziom: <span className="font-semibold capitalize">{level}</span> — zmienia go
-                  moderacja (poziom wynika z certyfikacji).
+                  {t.rich('editMaster.levelReadOnly', {
+                    level,
+                    b: (chunks) => <span className="font-semibold capitalize">{chunks}</span>,
+                  })}
                 </p>
               )}
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-gray-700">
-                  Bio
+                  {t('common.bioLabel')}
                 </label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
-                  placeholder="Krótki opis..."
+                  placeholder={t('editMaster.bioPlaceholder')}
                   className="w-full rounded-xl border p-2 text-sm"
                 />
               </div>
@@ -144,7 +148,7 @@ export default function EditSaunaMasterModal({
               disabled={saving}
               className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+              {saving ? t('common.saving') : t('editMaster.submit')}
             </button>
           </div>
         </div>

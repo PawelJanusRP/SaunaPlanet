@@ -1,15 +1,17 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SubmitSaunaForm from '@/components/SubmitSaunaForm'
 
-const statusLabel: Record<string, { label: string; className: string }> = {
-  pending:  { label: 'Czeka na moderację', className: 'bg-yellow-100 text-yellow-700' },
-  active:   { label: 'Zatwierdzona',       className: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Odrzucona',          className: 'bg-red-100 text-red-700' },
+const statusClassName: Record<string, string> = {
+  pending:  'bg-yellow-100 text-yellow-700',
+  active:   'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
 }
 
 export default async function SubmitPage() {
+  const t = await getTranslations('sauna')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -36,18 +38,20 @@ export default async function SubmitPage() {
 
   return (
     <main className="mx-auto max-w-2xl p-4">
-      <h1 className="mb-2 text-2xl font-bold">Zgłoś saunę</h1>
+      <h1 className="mb-2 text-2xl font-bold">{t('submitPage.heading')}</h1>
       <p className="mb-6 text-sm text-gray-500">
-        Wypełnij formularz. Zgłoszenie trafi do moderacji i po zatwierdzeniu pojawi się na mapie.
+        {t('submitPage.intro')}
       </p>
       <SubmitSaunaForm isMaster={ownMaster !== null} />
 
       {ownSubmissions && ownSubmissions.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-lg font-bold">Twoje zgłoszenia</h2>
+          <h2 className="mb-3 text-lg font-bold">{t('submitPage.ownSubmissionsHeading')}</h2>
           <div className="space-y-2">
             {ownSubmissions.map((s) => {
-              const st = statusLabel[s.status] ?? statusLabel.pending
+              const statusKey = ['pending', 'active', 'rejected'].includes(s.status)
+                ? (s.status as 'pending' | 'active' | 'rejected')
+                : 'pending'
               return (
                 <div
                   key={s.id}
@@ -63,8 +67,8 @@ export default async function SubmitPage() {
                     )}
                     {s.city && <span className="ml-2 text-sm text-gray-500">{s.city}</span>}
                   </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>
-                    {st.label}
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClassName[statusKey]}`}>
+                    {t(`submitPage.status.${statusKey}`)}
                   </span>
                 </div>
               )

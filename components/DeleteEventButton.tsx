@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { deleteEvent } from '@/app/[locale]/events/actions'
 
@@ -11,6 +12,7 @@ export default function DeleteEventButton({
   eventId: string
   eventTitle: string
 }) {
+  const t = useTranslations('events')
   const [confirming, setConfirming] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -18,9 +20,9 @@ export default function DeleteEventButton({
     startTransition(async () => {
       try {
         await deleteEvent(eventId)
-        toast.success(`Usunięto wydarzenie „${eventTitle}"`)
+        toast.success(t('deleteEvent.success', { title: eventTitle }))
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Błąd usuwania')
+        toast.error(e instanceof Error ? e.message : t('deleteEvent.error'))
       } finally {
         setConfirming(false)
       }
@@ -33,7 +35,7 @@ export default function DeleteEventButton({
         onClick={() => setConfirming(true)}
         className="rounded-xl border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-500 hover:bg-red-50"
       >
-        🗑️ Usuń
+        {t('deleteEvent.delete')}
       </button>
     )
   }
@@ -45,14 +47,14 @@ export default function DeleteEventButton({
         disabled={isPending}
         className="rounded-xl bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
       >
-        {isPending ? 'Usuwanie...' : 'Na pewno usuń'}
+        {isPending ? t('deleteEvent.deleting') : t('deleteEvent.confirm')}
       </button>
       <button
         onClick={() => setConfirming(false)}
         disabled={isPending}
         className="rounded-xl border px-3 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
       >
-        Anuluj
+        {t('deleteEvent.cancel')}
       </button>
     </span>
   )
