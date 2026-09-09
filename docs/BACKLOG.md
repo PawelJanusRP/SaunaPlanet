@@ -685,10 +685,12 @@ Confirm exact column names against the live schema during the sprint.
 
 ---
 
-# SP-042 Facility Data Improvement Proposals
+# SP-042 Feedback, Facility Corrections & Contact
 
 Status: PLANNED (recorded 2026-07-20, discovered during SP-038 Smart
-Facility Import). Backlog entry only — **explicitly out of scope for
+Facility Import; scope expanded 2026-09-09 from "Facility Data
+Improvement Proposals" into a unified feedback/corrections/contact
+mechanism). Backlog entry only — **explicitly out of scope for
 SP-038**. In SP-038 only the extension point is documented
 (`docs/SP038_SMART_IMPORT_ARCHITECTURE.md`) and the existing warn-only
 duplicate behavior is preserved unchanged.
@@ -737,6 +739,160 @@ moderated, auditable "suggest an update" workflow instead of a write.
   `import_log`) is the intended data source for proposal provenance.
 * Candidate future extension of the same mechanism: PTS re-sync and
   community corrections from facility pages.
+
+## Expanded scope: unified feedback & contact (approved 2026-09-09)
+
+### Goal
+
+Create one shared SaunaPlanet feedback mechanism covering:
+
+1. facility-data corrections;
+2. general product suggestions;
+3. contact with SaunaPlanet.
+
+The three entry points share one moderation/admin workflow rather than
+being implemented as unrelated systems.
+
+### User entry points
+
+**Facility.** Every public facility exposes an action such as
+"Zgłoś nieprawidłowość" / "Report incorrect information". The report
+automatically carries the facility identity (`sauna_id`). Candidate
+correction categories:
+
+* incorrect name;
+* incorrect address/location;
+* incorrect coordinates;
+* incorrect website/social link;
+* incorrect category;
+* incorrect opening information;
+* incorrect photo;
+* facility permanently/temporarily closed;
+* duplicate facility;
+* other incorrect information.
+
+Where structured fields are being corrected, integrate with the
+existing SP-042 field-level proposal model (above) rather than creating
+a second correction architecture.
+
+**Global application menu.** Future entry points:
+
+* "Wyślij sugestię" / product suggestion;
+* "Kontakt z nami" / contact SaunaPlanet.
+
+These are generic feedback/contact records and do not modify facility
+data.
+
+### Unified conceptual intake
+
+Evaluate one common moderation/intake model, conceptually supporting:
+
+* type: `facility_correction` | `suggestion` | `contact`;
+* `sauna_id` nullable;
+* authenticated `user_id` nullable;
+* optional contact e-mail for anonymous users;
+* category;
+* message;
+* status;
+* `created_at`;
+* `resolved_at`;
+* `resolved_by`;
+* internal admin note.
+
+The database schema is NOT locked by this backlog entry. Exact schema,
+RPC and RLS design belongs to the SP-042 architecture slice. For
+structured facility corrections, the existing field-level proposal
+model remains authoritative and may require related proposal/detail
+rows rather than placing all corrections in a generic feedback table.
+
+### Anonymous submissions
+
+Facility corrections, suggestions and contact SHOULD be possible
+without requiring account registration.
+
+* Authenticated users: associate the authenticated user where
+  appropriate.
+* Anonymous users: contact e-mail is optional; submitter information is
+  never exposed publicly.
+
+Architecture must include abuse controls: rate limiting, validation,
+spam/bot protection or honeypot, and sensible length limits. Do not
+require CAPTCHA unless evidence shows it is necessary.
+
+### Moderation / Admin
+
+One future admin queue: "Zgłoszenia" / Feedback, with filtering by
+feedback type and status.
+
+For facility corrections the moderator immediately sees: the facility,
+current data, the proposed correction, provenance/source where
+available, and a link to the facility/admin edit context.
+
+Suggested lifecycle (exact status model to be confirmed during
+architecture):
+
+`new` → `in_review` → `resolved` / `rejected`
+
+Facility reports NEVER directly modify the public facility row.
+Explicit moderation/acceptance is required (consistent with the
+"never touches the active record until acceptance" property above).
+
+### Communication boundary
+
+SP-042 MVP is NOT an in-app conversation system. Initial flow:
+
+submission → admin review → resolution
+
+Do NOT add: conversation threads, user/admin chat, an inbox, or
+realtime messaging. If two-way conversations are later needed,
+integrate/reuse the architecture from SP-046 Master Inbox & Client
+Communication rather than creating a second messaging system.
+
+### Internationalization
+
+SP-047 PL/EN/DE is being implemented before SP-042, therefore all
+future SP-042 user-facing UI must use the shared i18n architecture from
+day one. Do not hardcode Polish labels. Initial supported UI languages
+at SP-042 implementation time: pl, en, de. User-written feedback itself
+remains in the original language and is NOT automatically translated.
+
+### Future extensions
+
+The same feedback intake architecture should be extensible later to:
+
+* event corrections;
+* sauna-master profile corrections;
+* abuse/content reports;
+* photo reports;
+* other platform feedback.
+
+Do not implement those extensions in the initial SP-042 unless
+explicitly approved.
+
+### Initial implementation target
+
+Keep the first implementation deliberately small:
+
+* facility "report incorrect information" action;
+* global Suggestion action;
+* global Contact action;
+* common intake/moderation queue;
+* anonymous + authenticated submission;
+* rate limiting / anti-spam;
+* PL/EN/DE UI;
+* moderator resolution.
+
+Attachments/screenshots, automated e-mail replies and two-way
+conversations are deferred unless separately approved.
+
+### Dependency / priority note
+
+SP-042 remains PLANNED. Current intended ordering:
+
+* complete SP-047 PL/EN/DE;
+* SP-040 remains the mandatory guardrail before broad SP-039P rollout
+  (do not weaken or remove the SP-040 pilot gate);
+* SP-042 may follow according to product priority.
 
 ---
 
