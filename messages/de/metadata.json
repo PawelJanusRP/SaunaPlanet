@@ -3,5 +3,9 @@
     "name": "SaunaPlanet",
     "title": "SaunaPlanet — Karte der Saunen und Sauna-Events",
     "description": "Entdecke Saunen, Sauna-Events und Saunameister in ganz Europa."
+  },
+  "about": {
+    "title": "Über die App",
+    "description": "Über SaunaPlanet und die Historie der zuletzt veröffentlichten Änderungen."
   }
 }

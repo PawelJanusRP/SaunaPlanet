@@ -1,1 +1,72 @@
-{}
+{
+  "backToMap": "← Back to map",
+  "backToEvents": "← Back to events",
+  "back": "Back",
+  "list": {
+    "title": "🔥 Upcoming sauna events",
+    "empty": "No upcoming events.",
+    "timeMissing": "Time not specified",
+    "emptyForDay": "No events on this day."
+  },
+  "calendar": {
+    "weekday": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "detail": {
+    "notFound": "Event not found",
+    "at": "at {time}",
+    "previousEventsInSauna": "Previous events at this sauna:",
+    "ratingCount": "({count, plural, one {# rating} other {# ratings}})"
+  },
+  "registration": {
+    "heading": "Reserve a spot",
+    "spotsLeft": "{count} spots left",
+    "noSpots": "No spots",
+    "register": "Register →",
+    "full": "No spots left",
+    "pending": "⏳ Registration awaiting confirmation",
+    "cancel": "Cancel",
+    "confirmed": "✓ You are registered",
+    "cancelRegistration": "Cancel registration",
+    "confirmedCount": "{count, plural, one {# person registered} other {# people registered}}"
+  },
+  "interest": {
+    "going": "✓ Going",
+    "goNoReservation": "Going (no reservation)",
+    "goingCount": "{count, plural, one {# person going} other {# people going}}"
+  },
+  "masters": {
+    "heading": "🧖 Sauna masters",
+    "organizerEvent": "Sauna master's event",
+    "organizedBy": " — organized by ",
+    "organizerFallback": "sauna master",
+    "empty": "No sauna masters assigned.",
+    "organizerBadge": "📣 ORGANIZER"
+  },
+  "photos": {
+    "heading": "📸 Photos",
+    "empty": "No photos for this event."
+  },
+  "comments": {
+    "heading": "💬 Comments",
+    "empty": "No comments yet. Be the first!",
+    "delete": "Delete"
+  },
+  "reviews": {
+    "heading": "⭐ Ratings",
+    "prompt": "Were you at this event? Rate it!",
+    "alreadyReviewed": "✓ You have already rated this event.",
+    "empty": "No ratings.",
+    "delete": "Delete"
+  },
+  "common": {
+    "userFallback": "User"
+  }
+}

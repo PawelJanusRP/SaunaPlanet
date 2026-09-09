@@ -1,1 +1,56 @@
-{}
+{
+  "notFound": {
+    "title": "Nie znaleziono sauny",
+    "back": "Powrót"
+  },
+  "detail": {
+    "backToMap": "← Powrót do mapy",
+    "favorite": "♥ Ulubiona",
+    "addFavorite": "♡ Dodaj do ulubionych",
+    "becomeManager": "🏢 Zostań managerem",
+    "managerPending": "⏳ Wniosek managera oczekuje",
+    "managerApproved": "✓ Manager obiektu",
+    "ratingSummary": "⭐ {rating} ({count, plural, one {# opinia} few {# opinie} many {# opinii} other {# opinii}})",
+    "mastersHeading": "🧖 Saunamistrzowie",
+    "noMasters": "Brak przypisanych saunamistrzów.",
+    "masterRole": "Rola: {role}",
+    "upcomingEventsHeading": "🔥 Najbliższe wydarzenia",
+    "noEventMasters": "Brak przypisanych saunamistrzów",
+    "reviewsHeading": "⭐ Opinie",
+    "reviewFallbackAuthor": "Użytkownik",
+    "website": "Strona obiektu"
+  },
+  "reviews": {
+    "backToSauna": "← {name}",
+    "heading": "⭐ Oceny eventów",
+    "ratingCount": "({count, plural, one {# ocena} few {# oceny} many {# ocen} other {# ocen}})",
+    "empty": "Brak ocen dla eventów w tej saunie.",
+    "eventFallback": "Event",
+    "authorFallback": "Użytkownik"
+  },
+  "list": {
+    "backToMap": "← Powrót do mapy",
+    "heading": "🧖 Sauny",
+    "count": "{count, plural, one {# obiekt} few {# obiekty} many {# obiektów} other {# obiektów}}",
+    "allCities": "Wszystkie miasta",
+    "empty": "Brak saun."
+  },
+  "category": {
+    "public_sauna": "Sauna publiczna",
+    "hotel_sauna": "Sauna hotelowa",
+    "private_sauna": "Sauna prywatna",
+    "sports_sauna": "Sauna sportowa",
+    "wellness_sauna": "Wellness / SPA",
+    "other": "Inne"
+  },
+  "addReview": {
+    "loginSuffix": " aby dodać opinię.",
+    "loginLink": "Zaloguj się",
+    "heading": "Dodaj opinię",
+    "placeholder": "Napisz opinię...",
+    "submit": "Dodaj opinię",
+    "saving": "Zapisywanie...",
+    "errorToast": "Nie udało się dodać opinii",
+    "successToast": "Opinia dodana"
+  }
+}

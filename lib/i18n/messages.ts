@@ -16,6 +16,7 @@ import { DEFAULT_LOCALE } from './locales'
 export const NAMESPACES = [
   'common',
   'nav',
+  'about',
   'map',
   'sauna',
   'masters',

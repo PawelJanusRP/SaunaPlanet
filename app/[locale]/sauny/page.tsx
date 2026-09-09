@@ -2,9 +2,11 @@ import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import SaunyClient from '@/components/SaunyClient'
 import { createClient } from '@/lib/supabase/server'
+import { getTranslations } from 'next-intl/server'
 
 export default async function SaunyPage() {
   const supabase = await createClient()
+  const t = await getTranslations('sauna')
 
   const [
     { data: saunasRaw },
@@ -52,7 +54,7 @@ export default async function SaunyPage() {
       <Navbar />
       <main className="mx-auto max-w-3xl p-4">
         <Link href="/" className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-          ← Powrót do mapy
+          {t('list.backToMap')}
         </Link>
         <SaunyClient saunas={saunas} />
       </main>

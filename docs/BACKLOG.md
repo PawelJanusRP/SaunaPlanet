@@ -898,6 +898,50 @@ event, claim, and reaction notifications can reuse it.
 
 ---
 
+# SP-047 Internationalization & Localization (PL/EN/DE)
+
+Status: IN PROGRESS — next implementation release (see docs/ROADMAP.md
+execution-order update 2026-09-09 and docs/SP047_I18N_ARCHITECTURE.md).
+
+Target multilingual architecture on **next-intl** (Next.js 16 App Router),
+delivered as the language package before SP-040. Initial production locales:
+**Polish `pl` (default/reference), English `en`, German `de`**. The architecture
+is registry-driven so adding a 4th/5th language (Swedish, Finnish, Italian,
+Spanish, …) is a **catalog task**, not a routing refactor (worked Swedish
+example in the architecture doc).
+
+Delivered by SP-047:
+
+* canonical `/{locale}/…` URLs (stable, untranslated route segments);
+* root `/` locale negotiation (cookie → Accept-Language → Polish, temporary 307);
+* permanent (308) legacy `→ /pl` redirects preserving path + query
+  (incl. `/?sauna=<uuid>`);
+* bare, unchanged `/auth/callback` and `/claim/**` (token + no-index + already
+  sent invitations preserved; locale resolved after auth);
+* file-based message catalogs `messages/<locale>/<namespace>.json` + loader;
+* shared language selector (globe, language names, preserves path+query, cookie);
+* domain-code vs presentation-label separation; ICU pluralization; locale-aware
+  formatting; `<html lang>` on first SSR response;
+* international SEO: localized metadata, hreflang, multilingual sitemap, robots;
+* catalog-parity + routing-policy regression tests; hardcoded-string audit
+  script (`scripts/i18n-audit.mjs`).
+
+Explicitly out of scope / deferred (do not build under SP-047):
+
+* additional locales `it`, `es`, `sv`, `fi` — follow-up catalog tasks once
+  PL/EN/DE is in production;
+* on-demand machine translation of USER/ENTITY content (sauna/event/master text
+  stays authored — never auto-translated);
+* runtime-editable multilingual editorial copy (`content_translations` table) —
+  documented extension point, deferred; **no DB migration in SP-047**;
+* full localization of the `/about` changelog entries (authored editorial
+  content; the page chrome is localized).
+
+Boundaries: zero production DB migrations; existing deep links, slugs and the
+SP-044 privacy model preserved; no renumbering of established SP identifiers.
+
+---
+
 # Later backlog (unscheduled)
 
 Normalized future themes — recorded so they are not lost; not yet assigned

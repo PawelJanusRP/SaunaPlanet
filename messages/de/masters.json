@@ -1,1 +1,55 @@
-{}
+{
+  "directory": {
+    "backToMap": "← Zurück zur Karte",
+    "title": "Saunameister",
+    "empty": "Keine Saunameister",
+    "unassigned": "Ohne zugeordnete Sauna"
+  },
+  "status": {
+    "pending": "Ausstehend",
+    "rejected": "Abgelehnt"
+  },
+  "profile": {
+    "notFound": "Saunameister nicht gefunden",
+    "back": "Zurück",
+    "backToDirectory": "← Zurück zu den Saunameistern",
+    "preview": {
+      "title": "VORSCHAU — dieses Profil ist noch nicht öffentlich",
+      "onlyYou": "Diese Seite siehst nur du",
+      "moderation": "(Moderation)",
+      "afterPublication": "— das Profil erscheint nach der Veröffentlichung im Verzeichnis."
+    },
+    "public": "🌍 öffentlich",
+    "foundingPartner": "Founding Partner",
+    "saunaSince": "in der Saunaszene seit {year}",
+    "reviewsCount": "{count, plural, one {# Bewertung} other {# Bewertungen}}",
+    "website": "Website",
+    "affiliations": {
+      "title": "🤝 Anlagen",
+      "primary": "Stammanlage"
+    },
+    "certificates": {
+      "title": "🏅 Zertifikate und Titel",
+      "empty": "Keine Zertifikate.",
+      "pendingAdminOnly": "Ausstehend (nur für Admins sichtbar)"
+    },
+    "categories": {
+      "certification": "Zertifikate",
+      "championship_pl": "Polnische Meisterschaft",
+      "gladiators": "Battle of Gladiators",
+      "aufguss_wm": "Aufguss WM",
+      "classic_cup": "Modern Classic Cup",
+      "cup": "Pokale",
+      "other": "Sonstige"
+    },
+    "upcomingEvents": {
+      "title": "🔥 Kommende Events",
+      "empty": "Keine kommenden Events.",
+      "nextAppearance": "Nächster Auftritt"
+    },
+    "pastEvents": {
+      "title": "📅 Vergangene Events"
+    },
+    "role": "Rolle: {role}"
+  }
+}

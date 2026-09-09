@@ -1,1 +1,55 @@
-{}
+{
+  "directory": {
+    "backToMap": "← Back to map",
+    "title": "Sauna masters",
+    "empty": "No sauna masters",
+    "unassigned": "Without an assigned sauna"
+  },
+  "status": {
+    "pending": "Pending",
+    "rejected": "Rejected"
+  },
+  "profile": {
+    "notFound": "Sauna master not found",
+    "back": "Back",
+    "backToDirectory": "← Back to sauna masters",
+    "preview": {
+      "title": "PREVIEW — this profile is not public yet",
+      "onlyYou": "Only you can see this page",
+      "moderation": "(moderation)",
+      "afterPublication": "— the profile will appear in the directory once published."
+    },
+    "public": "🌍 public",
+    "foundingPartner": "Founding Partner",
+    "saunaSince": "in the sauna scene since {year}",
+    "reviewsCount": "{count, plural, one {# review} other {# reviews}}",
+    "website": "Website",
+    "affiliations": {
+      "title": "🤝 Venues",
+      "primary": "Home venue"
+    },
+    "certificates": {
+      "title": "🏅 Certificates and titles",
+      "empty": "No certificates.",
+      "pendingAdminOnly": "Pending (visible to admins only)"
+    },
+    "categories": {
+      "certification": "Certificates",
+      "championship_pl": "Polish Championship",
+      "gladiators": "Battle of Gladiators",
+      "aufguss_wm": "Aufguss WM",
+      "classic_cup": "Modern Classic Cup",
+      "cup": "Cups",
+      "other": "Other"
+    },
+    "upcomingEvents": {
+      "title": "🔥 Upcoming events",
+      "empty": "No upcoming events.",
+      "nextAppearance": "Next appearance"
+    },
+    "pastEvents": {
+      "title": "📅 Past events"
+    },
+    "role": "Role: {role}"
+  }
+}

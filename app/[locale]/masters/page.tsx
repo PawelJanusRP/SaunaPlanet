@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import AddMasterModal from '@/components/AddMasterModal'
@@ -21,12 +22,14 @@ type Master = {
 
 // Non-approved profiles reach this page only for moderation (query filter +
 // RLS keep them away from the public); the chip keeps them distinguishable.
-const statusBadge: Record<string, { label: string; className: string }> = {
-  pending:  { label: 'Oczekuje',  className: 'bg-yellow-100 text-yellow-700' },
-  rejected: { label: 'Odrzucony', className: 'bg-red-100 text-red-700' },
+// Codes stay canonical; only the label is localized (SP-047).
+const statusBadgeClass: Record<string, string> = {
+  pending:  'bg-yellow-100 text-yellow-700',
+  rejected: 'bg-red-100 text-red-700',
 }
 
 export default async function MastersPage() {
+  const t = await getTranslations('masters')
   const supabase = await createClient()
   const role = await getCurrentUserRole()
   const { data: { user } } = await supabase.auth.getUser()
@@ -72,23 +75,27 @@ export default async function MastersPage() {
     a.sauna.name.localeCompare(b.sauna.name, 'pl')
   )
 
+  // Localize known status codes; unknown codes fall back to the raw code.
+  const statusLabel = (status: string): string =>
+    status === 'pending' || status === 'rejected' ? t(`status.${status}`) : status
+
   return (
     <>
       <Navbar />
       <main className="mx-auto max-w-5xl p-4">
         <Link href="/" className="mb-4 inline-block rounded-xl border px-4 py-2">
-          ← Powrót do mapy
+          {t('directory.backToMap')}
         </Link>
 
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">🧖 Saunamistrzowie</h1>
+          <h1 className="text-3xl font-bold">🧖 {t('directory.title')}</h1>
           {isAdmin && <AddMasterModal saunas={allSaunas} />}
         </div>
 
         {!isAdmin && isLoggedIn && <BecomeMasterForm />}
 
         {masters.length === 0 ? (
-          <div className="rounded-xl border p-6 text-gray-500">Brak saunamistrzów</div>
+          <div className="rounded-xl border p-6 text-gray-500">{t('directory.empty')}</div>
         ) : (
           <div className="space-y-8">
             {sortedGroups.map(({ sauna, masters: groupMasters }) => (
@@ -101,7 +108,7 @@ export default async function MastersPage() {
                 </Link>
                 <div className="grid gap-4 md:grid-cols-2">
                   {groupMasters.map((master) => (
-                    <MasterCard key={master.id} master={master} canDelete={isAdminOnly} />
+                    <MasterCard key={master.id} master={master} canDelete={isAdminOnly} statusLabel={statusLabel} />
                   ))}
                 </div>
               </section>
@@ -109,10 +116,10 @@ export default async function MastersPage() {
 
             {unassigned.length > 0 && (
               <section>
-                <h2 className="mb-3 text-xl font-bold text-gray-500">Bez przypisanej sauny</h2>
+                <h2 className="mb-3 text-xl font-bold text-gray-500">{t('directory.unassigned')}</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {unassigned.map((master) => (
-                    <MasterCard key={master.id} master={master} canDelete={isAdminOnly} />
+                    <MasterCard key={master.id} master={master} canDelete={isAdminOnly} statusLabel={statusLabel} />
                   ))}
                 </div>
               </section>
@@ -124,7 +131,15 @@ export default async function MastersPage() {
   )
 }
 
-function MasterCard({ master, canDelete }: { master: Master; canDelete?: boolean }) {
+function MasterCard({
+  master,
+  canDelete,
+  statusLabel,
+}: {
+  master: Master
+  canDelete?: boolean
+  statusLabel: (status: string) => string
+}) {
   return (
     <div className="relative">
       {canDelete && (
@@ -154,10 +169,10 @@ function MasterCard({ master, canDelete }: { master: Master; canDelete?: boolean
             {master.status !== 'approved' && (
               <span
                 className={`ml-2 inline-block rounded-full px-2 py-0.5 align-middle text-xs font-semibold ${
-                  statusBadge[master.status]?.className ?? 'bg-gray-100 text-gray-600'
+                  statusBadgeClass[master.status] ?? 'bg-gray-100 text-gray-600'
                 }`}
               >
-                {statusBadge[master.status]?.label ?? master.status}
+                {statusLabel(master.status)}
               </span>
             )}
           </div>

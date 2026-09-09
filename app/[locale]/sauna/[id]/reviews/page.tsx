@@ -1,6 +1,7 @@
 import { Link } from '@/lib/i18n/navigation'
 import Navbar from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/server'
+import { getTranslations } from 'next-intl/server'
 
 export default async function SaunaReviewsPage({
   params,
@@ -9,6 +10,7 @@ export default async function SaunaReviewsPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const t = await getTranslations('sauna')
   const today = new Date().toISOString().split('T')[0]
 
   const { data: sauna } = await supabase
@@ -20,8 +22,8 @@ export default async function SaunaReviewsPage({
   if (!sauna) {
     return (
       <main className="p-6">
-        <h1 className="text-2xl font-bold">Nie znaleziono sauny</h1>
-        <Link href="/sauny" className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-white">Powrót</Link>
+        <h1 className="text-2xl font-bold">{t('notFound.title')}</h1>
+        <Link href="/sauny" className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-white">{t('notFound.back')}</Link>
       </main>
     )
   }
@@ -61,7 +63,7 @@ export default async function SaunaReviewsPage({
   const nameById: Record<string, string> = {}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const p of (profilesRaw ?? []) as any[]) {
-    nameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Użytkownik'
+    nameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || t('reviews.authorFallback')
   }
 
   // Sort reviews by event_date descending
@@ -80,25 +82,25 @@ export default async function SaunaReviewsPage({
       <Navbar />
       <main className="mx-auto max-w-2xl p-4">
         <Link href={`/sauna/${id}`} className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-          ← {sauna.name}
+          {t('reviews.backToSauna', { name: sauna.name })}
         </Link>
 
         <section className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-bold">⭐ Oceny eventów</h1>
+          <h1 className="text-2xl font-bold">{t('reviews.heading')}</h1>
           <p className="mt-1 text-sm text-gray-500">{sauna.name}{sauna.city ? ` · ${sauna.city}` : ''}</p>
 
           {avg !== null && (
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-3xl font-bold text-orange-700">{avg.toFixed(1)}</span>
               <span className="text-sm text-gray-500">
-                ({sorted.length} {sorted.length === 1 ? 'ocena' : sorted.length < 5 ? 'oceny' : 'ocen'})
+                {t('reviews.ratingCount', { count: sorted.length })}
               </span>
             </div>
           )}
         </section>
 
         {sorted.length === 0 ? (
-          <p className="mt-6 text-center text-gray-500">Brak ocen dla eventów w tej saunie.</p>
+          <p className="mt-6 text-center text-gray-500">{t('reviews.empty')}</p>
         ) : (
           <div className="mt-4 space-y-3">
             {sorted.map((r) => {
@@ -114,7 +116,7 @@ export default async function SaunaReviewsPage({
                         href={`/events/${r.event_id}`}
                         className="font-semibold text-orange-700 hover:underline"
                       >
-                        🔥 {event?.title ?? 'Event'}
+                        🔥 {event?.title ?? t('reviews.eventFallback')}
                       </Link>
                       {dateStr && (
                         <p className="mt-0.5 text-xs text-gray-400">{dateStr}</p>
@@ -130,7 +132,7 @@ export default async function SaunaReviewsPage({
                   )}
 
                   <p className="mt-2 text-xs text-gray-400">
-                    {nameById[r.user_id] ?? 'Użytkownik'} · {new Date(r.created_at).toLocaleDateString('pl-PL')}
+                    {nameById[r.user_id] ?? t('reviews.authorFallback')} · {new Date(r.created_at).toLocaleDateString('pl-PL')}
                   </p>
                 </div>
               )

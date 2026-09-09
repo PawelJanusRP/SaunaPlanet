@@ -7,6 +7,7 @@ import { getTranslations } from 'next-intl/server'
 import { AuthProvider } from '@/components/AuthProvider'
 import { routing } from '@/lib/i18n/routing'
 import { HTML_LANG, type Locale } from '@/lib/i18n/locales'
+import { metadataBase, localizedAlternates } from '@/lib/i18n/seo'
 import '../globals.css'
 
 // The app is dynamic (Supabase auth cookies on nearly every request, map/query
@@ -37,11 +38,21 @@ export async function generateMetadata({
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'metadata' })
   return {
+    metadataBase,
     title: {
       default: t('site.title'),
       template: `%s · ${t('site.name')}`,
     },
     description: t('site.description'),
+    // Home-path hreflang; entity/sub-pages set their own alternates.
+    alternates: localizedAlternates(locale as Locale, ''),
+    openGraph: {
+      siteName: t('site.name'),
+      title: t('site.title'),
+      description: t('site.description'),
+      locale,
+      type: 'website',
+    },
   }
 }
 

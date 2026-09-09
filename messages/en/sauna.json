@@ -1,1 +1,56 @@
-{}
+{
+  "notFound": {
+    "title": "Sauna not found",
+    "back": "Back"
+  },
+  "detail": {
+    "backToMap": "← Back to map",
+    "favorite": "♥ Favorite",
+    "addFavorite": "♡ Add to favorites",
+    "becomeManager": "🏢 Become a manager",
+    "managerPending": "⏳ Manager request pending",
+    "managerApproved": "✓ Venue manager",
+    "ratingSummary": "⭐ {rating} ({count, plural, one {# review} other {# reviews}})",
+    "mastersHeading": "🧖 Sauna masters",
+    "noMasters": "No sauna masters assigned.",
+    "masterRole": "Role: {role}",
+    "upcomingEventsHeading": "🔥 Upcoming events",
+    "noEventMasters": "No sauna masters assigned",
+    "reviewsHeading": "⭐ Reviews",
+    "reviewFallbackAuthor": "User",
+    "website": "Venue website"
+  },
+  "reviews": {
+    "backToSauna": "← {name}",
+    "heading": "⭐ Event ratings",
+    "ratingCount": "({count, plural, one {# rating} other {# ratings}})",
+    "empty": "No event ratings for this venue yet.",
+    "eventFallback": "Event",
+    "authorFallback": "User"
+  },
+  "list": {
+    "backToMap": "← Back to map",
+    "heading": "🧖 Saunas",
+    "count": "{count, plural, one {# venue} other {# venues}}",
+    "allCities": "All cities",
+    "empty": "No saunas."
+  },
+  "category": {
+    "public_sauna": "Public sauna",
+    "hotel_sauna": "Hotel sauna",
+    "private_sauna": "Private sauna",
+    "sports_sauna": "Sports sauna",
+    "wellness_sauna": "Wellness / spa",
+    "other": "Other"
+  },
+  "addReview": {
+    "loginSuffix": " to add a review.",
+    "loginLink": "Sign in",
+    "heading": "Add a review",
+    "placeholder": "Write a review...",
+    "submit": "Add review",
+    "saving": "Saving...",
+    "errorToast": "Failed to add review",
+    "successToast": "Review added"
+  }
+}

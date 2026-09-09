@@ -1,1 +1,55 @@
-{}
+{
+  "directory": {
+    "backToMap": "← Powrót do mapy",
+    "title": "Saunamistrzowie",
+    "empty": "Brak saunamistrzów",
+    "unassigned": "Bez przypisanej sauny"
+  },
+  "status": {
+    "pending": "Oczekuje",
+    "rejected": "Odrzucony"
+  },
+  "profile": {
+    "notFound": "Nie znaleziono saunamistrza",
+    "back": "Powrót",
+    "backToDirectory": "← Powrót do saunamistrzów",
+    "preview": {
+      "title": "PODGLĄD — profil nie jest jeszcze publiczny",
+      "onlyYou": "Tę stronę widzisz tylko Ty",
+      "moderation": "(moderacja)",
+      "afterPublication": "— profil pojawi się w katalogu po publikacji."
+    },
+    "public": "🌍 publiczny",
+    "foundingPartner": "Founding Partner",
+    "saunaSince": "saunuje od {year}",
+    "reviewsCount": "{count, plural, one {# opinia} few {# opinie} many {# opinii} other {# opinii}}",
+    "website": "Strona WWW",
+    "affiliations": {
+      "title": "🤝 Obiekty",
+      "primary": "Obiekt macierzysty"
+    },
+    "certificates": {
+      "title": "🏅 Certyfikaty i tytuły",
+      "empty": "Brak certyfikatów.",
+      "pendingAdminOnly": "Oczekujące (widoczne tylko dla admina)"
+    },
+    "categories": {
+      "certification": "Certyfikaty",
+      "championship_pl": "Mistrzostwa Polski",
+      "gladiators": "Battle of Gladiators",
+      "aufguss_wm": "Aufguss WM",
+      "classic_cup": "Modern Classic Cup",
+      "cup": "Puchary",
+      "other": "Inne"
+    },
+    "upcomingEvents": {
+      "title": "🔥 Najbliższe wydarzenia",
+      "empty": "Brak nadchodzących wydarzeń.",
+      "nextAppearance": "Następny występ"
+    },
+    "pastEvents": {
+      "title": "📅 Poprzednie wydarzenia"
+    },
+    "role": "Rola: {role}"
+  }
+}

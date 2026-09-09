@@ -1,1 +1,56 @@
-{}
+{
+  "notFound": {
+    "title": "Sauna nicht gefunden",
+    "back": "Zurück"
+  },
+  "detail": {
+    "backToMap": "← Zurück zur Karte",
+    "favorite": "♥ Favorit",
+    "addFavorite": "♡ Zu Favoriten hinzufügen",
+    "becomeManager": "🏢 Manager werden",
+    "managerPending": "⏳ Manager-Anfrage ausstehend",
+    "managerApproved": "✓ Anlagen-Manager",
+    "ratingSummary": "⭐ {rating} ({count, plural, one {# Bewertung} other {# Bewertungen}})",
+    "mastersHeading": "🧖 Saunameister",
+    "noMasters": "Keine Saunameister zugewiesen.",
+    "masterRole": "Rolle: {role}",
+    "upcomingEventsHeading": "🔥 Kommende Events",
+    "noEventMasters": "Keine Saunameister zugewiesen",
+    "reviewsHeading": "⭐ Bewertungen",
+    "reviewFallbackAuthor": "Nutzer",
+    "website": "Website der Anlage"
+  },
+  "reviews": {
+    "backToSauna": "← {name}",
+    "heading": "⭐ Event-Bewertungen",
+    "ratingCount": "({count, plural, one {# Bewertung} other {# Bewertungen}})",
+    "empty": "Noch keine Event-Bewertungen für diese Anlage.",
+    "eventFallback": "Event",
+    "authorFallback": "Nutzer"
+  },
+  "list": {
+    "backToMap": "← Zurück zur Karte",
+    "heading": "🧖 Saunen",
+    "count": "{count, plural, one {# Anlage} other {# Anlagen}}",
+    "allCities": "Alle Städte",
+    "empty": "Keine Saunen."
+  },
+  "category": {
+    "public_sauna": "Öffentliche Sauna",
+    "hotel_sauna": "Hotelsauna",
+    "private_sauna": "Private Sauna",
+    "sports_sauna": "Sportsauna",
+    "wellness_sauna": "Wellness / Spa",
+    "other": "Sonstige"
+  },
+  "addReview": {
+    "loginSuffix": ", um eine Bewertung hinzuzufügen.",
+    "loginLink": "Anmelden",
+    "heading": "Bewertung hinzufügen",
+    "placeholder": "Bewertung schreiben...",
+    "submit": "Bewertung hinzufügen",
+    "saving": "Wird gespeichert...",
+    "errorToast": "Bewertung konnte nicht hinzugefügt werden",
+    "successToast": "Bewertung hinzugefügt"
+  }
+}

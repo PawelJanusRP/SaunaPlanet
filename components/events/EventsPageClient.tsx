@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import CalendarView from '@/components/events/CalendarView'
 
@@ -20,6 +21,7 @@ export default function EventsPageClient({
 }: {
   events: UpcomingEvent[]
 }) {
+  const t = useTranslations('events')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const currentDate = new Date()
@@ -48,7 +50,7 @@ export default function EventsPageClient({
 
           {selectedEvents.length === 0 ? (
             <div className="text-sm text-gray-600">
-              Brak wydarzeń tego dnia.
+              {t('list.emptyForDay')}
             </div>
           ) : (
             <div className="space-y-3">
@@ -70,7 +72,7 @@ export default function EventsPageClient({
                   <div className="text-sm text-gray-500">
                     {event.event_time
                       ? event.event_time.substring(0, 5)
-                      : 'Godzina niepodana'}
+                      : t('list.timeMissing')}
                   </div>
 
                   {event.price && (

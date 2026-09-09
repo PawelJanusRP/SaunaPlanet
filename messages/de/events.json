@@ -1,1 +1,72 @@
-{}
+{
+  "backToMap": "← Zurück zur Karte",
+  "backToEvents": "← Zurück zu den Events",
+  "back": "Zurück",
+  "list": {
+    "title": "🔥 Kommende Sauna-Events",
+    "empty": "Keine kommenden Events.",
+    "timeMissing": "Uhrzeit nicht angegeben",
+    "emptyForDay": "Keine Events an diesem Tag."
+  },
+  "calendar": {
+    "weekday": {
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "So"
+    }
+  },
+  "detail": {
+    "notFound": "Event nicht gefunden",
+    "at": "um {time}",
+    "previousEventsInSauna": "Frühere Events in dieser Sauna:",
+    "ratingCount": "({count, plural, one {# Bewertung} other {# Bewertungen}})"
+  },
+  "registration": {
+    "heading": "Platz reservieren",
+    "spotsLeft": "{count} Plätze frei",
+    "noSpots": "Keine Plätze",
+    "register": "Anmelden →",
+    "full": "Keine Plätze frei",
+    "pending": "⏳ Anmeldung wartet auf Bestätigung",
+    "cancel": "Abbrechen",
+    "confirmed": "✓ Du bist angemeldet",
+    "cancelRegistration": "Anmeldung stornieren",
+    "confirmedCount": "{count, plural, one {# Person angemeldet} other {# Personen angemeldet}}"
+  },
+  "interest": {
+    "going": "✓ Ich komme",
+    "goNoReservation": "Ich komme (ohne Reservierung)",
+    "goingCount": "{count, plural, one {# Person kommt} other {# Personen kommen}}"
+  },
+  "masters": {
+    "heading": "🧖 Saunameister",
+    "organizerEvent": "Event des Saunameisters",
+    "organizedBy": " — organisiert von ",
+    "organizerFallback": "Saunameister",
+    "empty": "Keine Saunameister zugewiesen.",
+    "organizerBadge": "📣 ORGANISATOR"
+  },
+  "photos": {
+    "heading": "📸 Fotos",
+    "empty": "Keine Fotos für dieses Event."
+  },
+  "comments": {
+    "heading": "💬 Kommentare",
+    "empty": "Noch keine Kommentare. Sei der Erste!",
+    "delete": "Löschen"
+  },
+  "reviews": {
+    "heading": "⭐ Bewertungen",
+    "prompt": "Warst du bei diesem Event? Bewerte es!",
+    "alreadyReviewed": "✓ Du hast dieses Event bereits bewertet.",
+    "empty": "Keine Bewertungen.",
+    "delete": "Löschen"
+  },
+  "common": {
+    "userFallback": "Benutzer"
+  }
+}

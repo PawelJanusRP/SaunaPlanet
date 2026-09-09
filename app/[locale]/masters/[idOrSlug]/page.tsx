@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import UploadAvatarButton, { UploadMasterImageButton } from '@/components/UploadAvatarButton'
 import EditSaunaMasterModal from '@/components/EditSaunaMasterModal'
@@ -9,15 +10,17 @@ import { isUuid } from '@/lib/master/slug'
 import { languageLabel, specialtyLabel } from '@/lib/master/specialties'
 import type { EventMasterRow } from '@/lib/types'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  certification:   'Certyfikaty',
-  championship_pl: 'Mistrzostwa Polski',
-  gladiators:      'Battle of Gladiators',
-  aufguss_wm:      'Aufguss WM',
-  classic_cup:     'Modern Classic Cup',
-  cup:             'Puchary',
-  other:           'Inne',
-}
+// Canonical category codes with a localized label (SP-047). Codes stay
+// canonical; unknown codes fall back to the raw code at render time.
+const CATEGORY_CODES = [
+  'certification',
+  'championship_pl',
+  'gladiators',
+  'aufguss_wm',
+  'classic_cup',
+  'cup',
+  'other',
+] as const
 
 const SOCIAL_BUTTONS = [
   ['facebook', 'Facebook'],
@@ -32,6 +35,7 @@ export default async function MasterPage({
   params: Promise<{ idOrSlug: string }>
 }) {
   const { idOrSlug } = await params
+  const t = await getTranslations('masters')
   const supabase = await createClient()
   const role = await getCurrentUserRole()
   const isAdmin = role === 'admin' || role === 'moderator'
@@ -53,9 +57,9 @@ export default async function MasterPage({
   if (!master) {
     return (
       <main className="p-6">
-        <h1 className="text-2xl font-bold">Nie znaleziono saunamistrza</h1>
+        <h1 className="text-2xl font-bold">{t('profile.notFound')}</h1>
         <Link href="/masters" className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-white">
-          Powrót
+          {t('profile.back')}
         </Link>
       </main>
     )
@@ -127,23 +131,23 @@ export default async function MasterPage({
       <Navbar />
       <main className="mx-auto max-w-4xl p-4">
         <Link href="/masters" className="mb-4 inline-block rounded-xl border px-4 py-2">
-          ← Powrót do saunamistrzów
+          {t('profile.backToDirectory')}
         </Link>
 
         {!publiclyVisible && (
           <div className="mb-4 rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-center">
             <p className="text-sm font-bold uppercase tracking-wide text-amber-900">
-              PODGLĄD — profil nie jest jeszcze publiczny
+              {t('profile.preview.title')}
             </p>
             <p className="mt-1 text-xs text-amber-800">
-              Tę stronę widzisz tylko Ty {canManageProfile && !isOwnProfile ? '(moderacja)' : ''}
-              — profil pojawi się w katalogu po publikacji.
+              {t('profile.preview.onlyYou')} {canManageProfile && !isOwnProfile ? t('profile.preview.moderation') : ''}
+              {' '}{t('profile.preview.afterPublication')}
             </p>
           </div>
         )}
         {publiclyVisible && canManageProfile && (
           <p className="mb-4 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-            🌍 publiczny
+            {t('profile.public')}
           </p>
         )}
 
@@ -181,7 +185,7 @@ export default async function MasterPage({
                   )}
                   {master.is_founding_partner && (
                     <span className="rounded-full bg-amber-100 px-3 py-0.5 text-sm font-semibold text-amber-700">
-                      🏅 Founding Partner
+                      🏅 {t('profile.foundingPartner')}
                     </span>
                   )}
                 </div>
@@ -190,14 +194,14 @@ export default async function MasterPage({
                     {master.city && <span>📍 {master.city}</span>}
                     {master.city && master.experience_since_year && ' · '}
                     {master.experience_since_year && (
-                      <span>saunuje od {master.experience_since_year}</span>
+                      <span>{t('profile.saunaSince', { year: master.experience_since_year })}</span>
                     )}
                   </p>
                 )}
                 {/* Legacy rating renders ONLY with real reviews (decision D5) */}
                 {Number(master.review_count ?? 0) > 0 && (
                   <div className="mt-1.5 text-sm font-semibold text-yellow-600">
-                    ⭐ {Number(master.rating ?? 0).toFixed(1)} ({master.review_count} opinii)
+                    ⭐ {Number(master.rating ?? 0).toFixed(1)} ({t('profile.reviewsCount', { count: Number(master.review_count ?? 0) })})
                   </div>
                 )}
                 {canManageProfile && (
@@ -221,7 +225,7 @@ export default async function MasterPage({
                     rel="noreferrer"
                     className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
                   >
-                    Strona WWW
+                    {t('profile.website')}
                   </a>
                 )}
                 {SOCIAL_BUTTONS.map(([key, label]) => {
@@ -278,7 +282,7 @@ export default async function MasterPage({
         {/* Affiliations (SP-039): approved only; primary highlighted */}
         {affiliations.length > 0 && (
           <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-2xl font-bold">🤝 Obiekty</h2>
+            <h2 className="mb-4 text-2xl font-bold">{t('profile.affiliations.title')}</h2>
             <div className="space-y-2">
               {affiliations.map((a) => (
                 <Link
@@ -296,7 +300,7 @@ export default async function MasterPage({
                   </span>
                   {a.is_primary && (
                     <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-semibold text-white">
-                      Obiekt macierzysty
+                      {t('profile.affiliations.primary')}
                     </span>
                   )}
                 </Link>
@@ -307,16 +311,16 @@ export default async function MasterPage({
 
         {/* Certyfikaty */}
         <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-2xl font-bold">🏅 Certyfikaty i tytuły</h2>
+          <h2 className="mb-4 text-2xl font-bold">{t('profile.certificates.title')}</h2>
 
           {approvedCerts.length === 0 && pendingCerts.length === 0 ? (
-            <div className="text-gray-500">Brak certyfikatów.</div>
+            <div className="text-gray-500">{t('profile.certificates.empty')}</div>
           ) : (
             <div className="space-y-4">
               {Object.entries(certsByCategory).map(([cat, certs]) => (
                 <div key={cat}>
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-400">
-                    {CATEGORY_LABELS[cat] ?? cat}
+                    {(CATEGORY_CODES as readonly string[]).includes(cat) ? t(`profile.categories.${cat}`) : cat}
                   </p>
                   <div className="space-y-2">
                     {certs.map((c) => {
@@ -337,7 +341,7 @@ export default async function MasterPage({
               {isAdmin && pendingCerts.length > 0 && (
                 <div>
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-orange-400">
-                    Oczekujące (widoczne tylko dla admina)
+                    {t('profile.certificates.pendingAdminOnly')}
                   </p>
                   <div className="space-y-2">
                     {pendingCerts.map((c) => {
@@ -362,9 +366,9 @@ export default async function MasterPage({
 
         {/* Najbliższe wydarzenia — the very next appearance is highlighted */}
         <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-2xl font-bold">🔥 Najbliższe wydarzenia</h2>
+          <h2 className="mb-4 text-2xl font-bold">{t('profile.upcomingEvents.title')}</h2>
           {upcomingEvents.length === 0 ? (
-            <div className="text-gray-500">Brak nadchodzących wydarzeń.</div>
+            <div className="text-gray-500">{t('profile.upcomingEvents.empty')}</div>
           ) : (
             <div className="space-y-3">
               {upcomingEvents.map((item, index) => {
@@ -382,12 +386,12 @@ export default async function MasterPage({
                   >
                     {isNext && (
                       <div className="mb-1 text-xs font-bold uppercase tracking-wide text-orange-500">
-                        Następny występ
+                        {t('profile.upcomingEvents.nextAppearance')}
                       </div>
                     )}
                     <div className="font-bold text-orange-700">🔥 {event?.title}</div>
                     <div className="text-sm text-gray-500">{event?.event_date?.substring(0, 10)}</div>
-                    <div className="text-sm">Rola: {item.role}</div>
+                    <div className="text-sm">{t('profile.role', { role: item.role ?? '' })}</div>
                   </Link>
                 )
               })}
@@ -397,7 +401,7 @@ export default async function MasterPage({
 
         {pastEvents.length > 0 && (
           <section className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-2xl font-bold text-gray-600">📅 Poprzednie wydarzenia</h2>
+            <h2 className="mb-4 text-2xl font-bold text-gray-600">{t('profile.pastEvents.title')}</h2>
             <div className="space-y-3">
               {pastEvents.map((item, index) => {
                 const event = item.sauna_events
@@ -405,7 +409,7 @@ export default async function MasterPage({
                   <Link key={index} href={`/events/${event?.id}`} className="block rounded-xl bg-gray-50 p-3 hover:bg-gray-100 transition-colors">
                     <div className="font-bold text-gray-700">🔥 {event?.title}</div>
                     <div className="text-sm text-gray-500">{event?.event_date?.substring(0, 10)}</div>
-                    <div className="text-sm text-gray-500">Rola: {item.role}</div>
+                    <div className="text-sm text-gray-500">{t('profile.role', { role: item.role ?? '' })}</div>
                   </Link>
                 )
               })}

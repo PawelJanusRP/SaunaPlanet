@@ -1,4 +1,5 @@
 import { Link } from '@/lib/i18n/navigation'
+import { getTranslations } from 'next-intl/server'
 import Navbar from '@/components/Navbar'
 import EditEventForm from '@/components/EditEventForm'
 import AddEventMasterForm from '@/components/AddEventMasterForm'
@@ -17,6 +18,7 @@ export default async function EventPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  const t = await getTranslations('events')
   const supabase = await createClient()
   const role = await getCurrentUserRole()
   // isEditor gates content moderation (comment/review removal, event photos):
@@ -36,9 +38,9 @@ export default async function EventPage({
   if (!eventData) {
     return (
       <main className="p-6">
-        <h1 className="text-2xl font-bold">Nie znaleziono wydarzenia</h1>
+        <h1 className="text-2xl font-bold">{t('detail.notFound')}</h1>
         <Link href="/events" className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-white">
-          Powrót
+          {t('back')}
         </Link>
       </main>
     )
@@ -160,7 +162,7 @@ export default async function EventPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const p of (authorProfiles ?? []) as any[]) {
     const name = [p.first_name, p.last_name].filter(Boolean).join(' ')
-    nameById[p.id] = name || 'Użytkownik'
+    nameById[p.id] = name || t('common.userFallback')
   }
 
   // Historical event rating for this sauna (shown on upcoming event pages)
@@ -214,11 +216,11 @@ export default async function EventPage({
             list. The map deep link targets the sauna, not the event. */}
         {(isAdmin || isOrganizerViewer) && sauna ? (
           <Link href={`/?sauna=${sauna.id}`} className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-            ← Powrót do mapy
+            {t('backToMap')}
           </Link>
         ) : (
           <Link href="/events" className="mb-4 inline-block rounded-xl border px-4 py-2 text-sm">
-            ← Powrót do wydarzeń
+            {t('backToEvents')}
           </Link>
         )}
 
@@ -242,7 +244,7 @@ export default async function EventPage({
           <div className="mt-3 space-y-1.5 text-sm text-gray-600">
             {dateFormatted && (
               <p>📅 <span className="font-semibold capitalize">{dateFormatted}</span>
-                {ev.event_time && <span className="ml-1">o {ev.event_time.substring(0, 5)}</span>}
+                {ev.event_time && <span className="ml-1">{t('detail.at', { time: ev.event_time.substring(0, 5) })}</span>}
               </p>
             )}
             {sauna && (
@@ -261,7 +263,7 @@ export default async function EventPage({
             )}
             {avgReview !== null && (
               <p>⭐ <span className="font-semibold">{avgReview.toFixed(1)}</span>
-                <span className="ml-1 text-gray-400">({reviews.length} {reviews.length === 1 ? 'ocena' : reviews.length < 5 ? 'oceny' : 'ocen'})</span>
+                <span className="ml-1 text-gray-400">{t('detail.ratingCount', { count: reviews.length })}</span>
               </p>
             )}
             {saunaHistoricalRating && (
@@ -269,9 +271,9 @@ export default async function EventPage({
                 href={`/sauna/${sauna.id}/reviews`}
                 className="flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-1.5 text-xs text-orange-700 hover:bg-orange-100 transition-colors"
               >
-                <span>Poprzednie eventy w tej saunie:</span>
+                <span>{t('detail.previousEventsInSauna')}</span>
                 <span className="font-semibold">⭐ {saunaHistoricalRating.avg.toFixed(1)}</span>
-                <span className="text-orange-500">({saunaHistoricalRating.count} {saunaHistoricalRating.count === 1 ? 'ocena' : saunaHistoricalRating.count < 5 ? 'oceny' : 'ocen'})</span>
+                <span className="text-orange-500">{t('detail.ratingCount', { count: saunaHistoricalRating.count })}</span>
                 <span className="ml-auto text-orange-400">→</span>
               </Link>
             )}
@@ -287,10 +289,10 @@ export default async function EventPage({
               {user && (
                 <div className="rounded-xl bg-gray-50 p-3">
                   <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Rezerwacja miejsca</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('registration.heading')}</p>
                     {spotsLeft !== null && (
                       <p className={`text-xs font-semibold ${spotsLeft <= 3 ? 'text-red-600' : 'text-gray-500'}`}>
-                        {spotsLeft > 0 ? `${spotsLeft} wolnych miejsc` : 'Brak miejsc'}
+                        {spotsLeft > 0 ? t('registration.spotsLeft', { count: spotsLeft }) : t('registration.noSpots')}
                       </p>
                     )}
                   </div>
@@ -301,29 +303,29 @@ export default async function EventPage({
                         disabled={isFull}
                         className="w-full rounded-xl bg-orange-600 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        {isFull ? 'Brak wolnych miejsc' : 'Zapisz się →'}
+                        {isFull ? t('registration.full') : t('registration.register')}
                       </button>
                     </form>
                   )}
                   {userRegistration?.status === 'pending' && (
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-yellow-700">⏳ Zapis oczekuje na potwierdzenie</p>
+                      <p className="text-sm font-medium text-yellow-700">{t('registration.pending')}</p>
                       <form action={cancelAction}>
-                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Anuluj</button>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">{t('registration.cancel')}</button>
                       </form>
                     </div>
                   )}
                   {userRegistration?.status === 'confirmed' && (
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-green-700">✓ Jesteś zapisany</p>
+                      <p className="text-sm font-semibold text-green-700">{t('registration.confirmed')}</p>
                       <form action={cancelAction}>
-                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">Anuluj zapis</button>
+                        <button type="submit" className="text-xs text-red-500 hover:text-red-700">{t('registration.cancelRegistration')}</button>
                       </form>
                     </div>
                   )}
                   {confirmedCount > 0 && (
                     <p className="mt-1.5 text-xs text-gray-400">
-                      {confirmedCount} {confirmedCount === 1 ? 'osoba zapisana' : confirmedCount < 5 ? 'osoby zapisane' : 'osób zapisanych'}
+                      {t('registration.confirmedCount', { count: confirmedCount })}
                     </p>
                   )}
                 </div>
@@ -341,13 +343,13 @@ export default async function EventPage({
                           : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                       }`}
                     >
-                      {isGoing ? '✓ Idę' : 'Idę (bez rezerwacji)'}
+                      {isGoing ? t('interest.going') : t('interest.goNoReservation')}
                     </button>
                   </form>
                 )}
                 {goingCount > 0 && (
                   <p className="shrink-0 text-sm text-gray-500">
-                    {goingCount} {goingCount === 1 ? 'osoba idzie' : goingCount < 5 ? 'osoby idą' : 'osób idzie'}
+                    {t('interest.goingCount', { count: goingCount })}
                   </p>
                 )}
               </div>
@@ -357,24 +359,24 @@ export default async function EventPage({
 
         {/* Saunamistrzowie */}
         <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold">🧖 Saunamistrzowie</h2>
+          <h2 className="mb-4 text-xl font-bold">{t('masters.heading')}</h2>
 
           {ev.organizer_master_id && (
             <div className="mb-4 rounded-xl bg-orange-50 px-3 py-2.5 text-sm text-orange-800">
-              📣 <span className="font-semibold">Event saunamistrza</span>
-              {' — organizuje '}
+              📣 <span className="font-semibold">{t('masters.organizerEvent')}</span>
+              {t('masters.organizedBy')}
               {organizerName ? (
                 <Link href={`/masters/${ev.organizer_master_id}`} className="font-semibold underline">
                   {organizerName}
                 </Link>
               ) : (
-                'saunamistrz'
+                t('masters.organizerFallback')
               )}
             </div>
           )}
 
           {eventMasters.length === 0 ? (
-            <p className="text-sm text-gray-500">Brak przypisanych saunamistrzów.</p>
+            <p className="text-sm text-gray-500">{t('masters.empty')}</p>
           ) : (
             <div className="space-y-2">
               {eventMasters.map((item) => {
@@ -392,7 +394,7 @@ export default async function EventPage({
                           {master?.name}
                           {item.master_id === ev.organizer_master_id && (
                             <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-700">
-                              📣 ORGANIZATOR
+                              {t('masters.organizerBadge')}
                             </span>
                           )}
                         </p>
@@ -424,12 +426,12 @@ export default async function EventPage({
         {/* Zdjęcia */}
         <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold">📸 Zdjęcia</h2>
+            <h2 className="text-xl font-bold">{t('photos.heading')}</h2>
             {isEditor && <UploadEventPhotoButton eventId={id} />}
           </div>
 
           {photos.length === 0 ? (
-            <p className="text-sm text-gray-500">Brak zdjęć tego wydarzenia.</p>
+            <p className="text-sm text-gray-500">{t('photos.empty')}</p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {photos.map((photo) => (
@@ -447,7 +449,7 @@ export default async function EventPage({
         {/* Komentarze (nadchodzące) */}
         {!isPast && (
           <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-bold">💬 Komentarze</h2>
+            <h2 className="mb-4 text-xl font-bold">{t('comments.heading')}</h2>
 
             {user && (
               <div className="mb-5">
@@ -456,7 +458,7 @@ export default async function EventPage({
             )}
 
             {comments.length === 0 ? (
-              <p className="text-sm text-gray-500">Brak komentarzy. Bądź pierwszy!</p>
+              <p className="text-sm text-gray-500">{t('comments.empty')}</p>
             ) : (
               <div className="space-y-3">
                 {comments.map((c) => {
@@ -467,7 +469,7 @@ export default async function EventPage({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-gray-500">
-                            {nameById[c.user_id] ?? 'Użytkownik'}
+                            {nameById[c.user_id] ?? t('common.userFallback')}
                             <span className="ml-2 font-normal text-gray-400">
                               {new Date(c.created_at).toLocaleDateString('pl-PL')}
                             </span>
@@ -476,7 +478,7 @@ export default async function EventPage({
                         </div>
                         {canDelete && (
                           <form action={deleteAction}>
-                            <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-600">Usuń</button>
+                            <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-600">{t('comments.delete')}</button>
                           </form>
                         )}
                       </div>
@@ -491,21 +493,21 @@ export default async function EventPage({
         {/* Oceny (minione) */}
         {isPast && (
           <section className="mt-5 rounded-3xl border bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-bold">⭐ Oceny</h2>
+            <h2 className="mb-4 text-xl font-bold">{t('reviews.heading')}</h2>
 
             {user && !userAlreadyReviewed && (
               <div className="mb-5 rounded-xl bg-orange-50 p-4">
-                <p className="mb-3 text-sm font-medium text-orange-700">Byłeś na tym evencie? Oceń go!</p>
+                <p className="mb-3 text-sm font-medium text-orange-700">{t('reviews.prompt')}</p>
                 <EventReviewForm eventId={id} />
               </div>
             )}
 
             {user && userAlreadyReviewed && (
-              <p className="mb-4 text-sm text-green-700">✓ Już oceniłeś to wydarzenie.</p>
+              <p className="mb-4 text-sm text-green-700">{t('reviews.alreadyReviewed')}</p>
             )}
 
             {reviews.length === 0 ? (
-              <p className="text-sm text-gray-500">Brak ocen.</p>
+              <p className="text-sm text-gray-500">{t('reviews.empty')}</p>
             ) : (
               <div className="space-y-3">
                 {reviews.map((r) => {
@@ -516,7 +518,7 @@ export default async function EventPage({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-gray-500">
-                            {nameById[r.user_id] ?? 'Użytkownik'}
+                            {nameById[r.user_id] ?? t('common.userFallback')}
                             <span className="ml-2 font-normal text-gray-400">
                               {new Date(r.created_at).toLocaleDateString('pl-PL')}
                             </span>
@@ -528,7 +530,7 @@ export default async function EventPage({
                         </div>
                         {canDelete && (
                           <form action={deleteAction}>
-                            <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-600">Usuń</button>
+                            <button type="submit" className="shrink-0 text-xs text-red-400 hover:text-red-600">{t('reviews.delete')}</button>
                           </form>
                         )}
                       </div>

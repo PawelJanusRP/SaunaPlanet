@@ -1,1 +1,72 @@
-{}
+{
+  "backToMap": "← Powrót do mapy",
+  "backToEvents": "← Powrót do wydarzeń",
+  "back": "Powrót",
+  "list": {
+    "title": "🔥 Nadchodzące wydarzenia saunowe",
+    "empty": "Brak nadchodzących wydarzeń.",
+    "timeMissing": "Godzina niepodana",
+    "emptyForDay": "Brak wydarzeń tego dnia."
+  },
+  "calendar": {
+    "weekday": {
+      "mon": "Pn",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Cz",
+      "fri": "Pt",
+      "sat": "So",
+      "sun": "Nd"
+    }
+  },
+  "detail": {
+    "notFound": "Nie znaleziono wydarzenia",
+    "at": "o {time}",
+    "previousEventsInSauna": "Poprzednie eventy w tej saunie:",
+    "ratingCount": "({count, plural, one {# ocena} few {# oceny} many {# ocen} other {# ocen}})"
+  },
+  "registration": {
+    "heading": "Rezerwacja miejsca",
+    "spotsLeft": "{count} wolnych miejsc",
+    "noSpots": "Brak miejsc",
+    "register": "Zapisz się →",
+    "full": "Brak wolnych miejsc",
+    "pending": "⏳ Zapis oczekuje na potwierdzenie",
+    "cancel": "Anuluj",
+    "confirmed": "✓ Jesteś zapisany",
+    "cancelRegistration": "Anuluj zapis",
+    "confirmedCount": "{count, plural, one {# osoba zapisana} few {# osoby zapisane} many {# osób zapisanych} other {# osób zapisanych}}"
+  },
+  "interest": {
+    "going": "✓ Idę",
+    "goNoReservation": "Idę (bez rezerwacji)",
+    "goingCount": "{count, plural, one {# osoba idzie} few {# osoby idą} many {# osób idzie} other {# osób idzie}}"
+  },
+  "masters": {
+    "heading": "🧖 Saunamistrzowie",
+    "organizerEvent": "Event saunamistrza",
+    "organizedBy": " — organizuje ",
+    "organizerFallback": "saunamistrz",
+    "empty": "Brak przypisanych saunamistrzów.",
+    "organizerBadge": "📣 ORGANIZATOR"
+  },
+  "photos": {
+    "heading": "📸 Zdjęcia",
+    "empty": "Brak zdjęć tego wydarzenia."
+  },
+  "comments": {
+    "heading": "💬 Komentarze",
+    "empty": "Brak komentarzy. Bądź pierwszy!",
+    "delete": "Usuń"
+  },
+  "reviews": {
+    "heading": "⭐ Oceny",
+    "prompt": "Byłeś na tym evencie? Oceń go!",
+    "alreadyReviewed": "✓ Już oceniłeś to wydarzenie.",
+    "empty": "Brak ocen.",
+    "delete": "Usuń"
+  },
+  "common": {
+    "userFallback": "Użytkownik"
+  }
+}

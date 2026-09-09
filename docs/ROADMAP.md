@@ -524,6 +524,11 @@ Long-term priority:
 8. Private sauna ecosystem
 9. International expansion
 
+> **Note (2026-09-09):** the multilingual foundation for international
+> expansion (#9) is pulled forward as **SP-047**, the next implementation
+> release — see the execution-order update under *Platform Operations and
+> product sprints* below.
+
 ---
 
 # Platform Operations and product sprints (planned)
@@ -540,6 +545,31 @@ Long-term priority:
 >   relocated out of the SP-039 architecture.
 > * The earlier "Architecture, Performance & Scalability Review" moves to
 >   **SP-043** (its full scope is preserved in `docs/BACKLOG.md`).
+
+> **Execution-order update (2026-09-09).** The **PL/EN/DE language package
+> (SP-047 Internationalization & Localization)** is promoted to the **next
+> implementation release**, ahead of the previously planned next sprint. This is
+> an ordering/priority change ONLY — no historical or established SP identifier
+> is renumbered (SP-039/039P, SP-040…SP-047 keep their numbers; the repository
+> has no separate release-version queue to renumber). The current execution
+> sequence is:
+> 1. SP-039P Wave 1 continues operationally;
+> 2. **SP-047 — PL/EN/DE language package** (next implementation release);
+> 3. **SP-040 — Platform Operations / Free-Tier Guardrails**;
+> 4. later planned work (SP-041, SP-042, SP-043, …) per this roadmap.
+>
+> The SP-040 gate is unchanged: **SP-040 must be complete before broad
+> invitations go to all 10 SP-039P pilot participants.** SP-047 does not affect
+> that gate.
+
+**SP-047 — Internationalization & Localization (PL/EN/DE)** — the next
+implementation release. Target multilingual architecture on next-intl (App
+Router), canonical `/{locale}/…` URLs (pl/en/de), root locale negotiation,
+permanent legacy→`/pl` redirects, file-based message catalogs, localized
+metadata + hreflang + multilingual sitemap, and a shared language selector.
+Designed so adding a 4th/5th language (e.g. Swedish) is a catalog task, not a
+routing refactor. Zero production DB migrations. Full architecture:
+`docs/SP047_I18N_ARCHITECTURE.md`; terminology: `docs/SP047_TERMINOLOGY.md`.
 
 **SP-040 — Platform Operations and Free-Tier Guardrails** (full scope:
 docs/BACKLOG.md) — an internal `/admin/system` dashboard showing whether

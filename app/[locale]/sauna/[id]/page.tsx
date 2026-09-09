@@ -5,6 +5,7 @@ import { Link } from '@/lib/i18n/navigation'
 import AddReviewForm from '@/components/AddReviewForm'
 import Navbar from '@/components/Navbar'
 import { toggleFavoriteSauna, requestManagerRole } from '@/app/[locale]/(main)/profile/actions'
+import { getTranslations } from 'next-intl/server'
 
 export default async function SaunaPage({
   params,
@@ -13,6 +14,7 @@ export default async function SaunaPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const t = await getTranslations('sauna')
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -39,9 +41,9 @@ export default async function SaunaPage({
   if (!sauna) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold">Nie znaleziono sauny</h1>
+        <h1 className="text-2xl font-bold">{t('notFound.title')}</h1>
         <Link href="/" className="mt-4 inline-block rounded-xl bg-black px-4 py-2 text-white">
-          Powrót
+          {t('notFound.back')}
         </Link>
       </div>
     )
@@ -118,7 +120,7 @@ export default async function SaunaPage({
   const reviewNameById: Record<string, string> = {}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const p of (reviewAuthorsRaw ?? []) as any[]) {
-    reviewNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Użytkownik'
+    reviewNameById[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || t('detail.reviewFallbackAuthor')
   }
 
   const mainImage = photos?.[0]?.image_url ?? sauna.cover_image_url
@@ -131,7 +133,7 @@ export default async function SaunaPage({
       <Navbar />
       <main className="mx-auto max-w-5xl p-4">
         <Link href="/" className="mb-4 inline-block rounded-xl border px-4 py-2">
-          ← Powrót do mapy
+          {t('detail.backToMap')}
         </Link>
 
         <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
@@ -148,7 +150,7 @@ export default async function SaunaPage({
                       : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
                   }`}
                 >
-                  {isFavorited ? '♥ Ulubiona' : '♡ Dodaj do ulubionych'}
+                  {isFavorited ? t('detail.favorite') : t('detail.addFavorite')}
                 </button>
               </form>
             )}
@@ -158,18 +160,18 @@ export default async function SaunaPage({
                   type="submit"
                   className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                 >
-                  🏢 Zostań managerem
+                  {t('detail.becomeManager')}
                 </button>
               </form>
             )}
             {user && managerStatus === 'pending' && (
               <span className="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700">
-                ⏳ Wniosek managera oczekuje
+                {t('detail.managerPending')}
               </span>
             )}
             {user && managerStatus === 'approved' && (
               <span className="rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
-                ✓ Manager obiektu
+                {t('detail.managerApproved')}
               </span>
             )}
           </div>
@@ -177,7 +179,7 @@ export default async function SaunaPage({
 
         {averageRating && (
           <div className="mb-4 text-lg font-semibold text-yellow-600">
-            ⭐ {averageRating.toFixed(1)} ({reviews?.length} opinii)
+            {t('detail.ratingSummary', { rating: averageRating.toFixed(1), count: reviews?.length ?? 0 })}
           </div>
         )}
 
@@ -206,10 +208,10 @@ export default async function SaunaPage({
         <div className="mb-6 text-gray-700">{sauna.description}</div>
 
         <section className="mb-6 rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
-          <h2 className="mb-3 text-xl font-bold text-yellow-700">🧖 Saunamistrzowie</h2>
+          <h2 className="mb-3 text-xl font-bold text-yellow-700">{t('detail.mastersHeading')}</h2>
 
           {activeMasters.length === 0 ? (
-            <div className="text-sm text-gray-600">Brak przypisanych saunamistrzów.</div>
+            <div className="text-sm text-gray-600">{t('detail.noMasters')}</div>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {activeMasters.map((item, index) => {
@@ -229,7 +231,7 @@ export default async function SaunaPage({
                     <div>
                       <div className="font-bold">{master?.name}</div>
                       <div className="text-sm text-yellow-700">⭐ {Number(master?.rating ?? 0).toFixed(1)}</div>
-                      <div className="text-xs text-gray-500">Rola: {item.role}</div>
+                      <div className="text-xs text-gray-500">{t('detail.masterRole', { role: item.role })}</div>
                     </div>
                   </Link>
                 )
@@ -250,7 +252,7 @@ export default async function SaunaPage({
 
         {events && events.length > 0 && (
           <section className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-4">
-            <h2 className="mb-3 text-xl font-bold text-orange-700">🔥 Najbliższe wydarzenia</h2>
+            <h2 className="mb-3 text-xl font-bold text-orange-700">{t('detail.upcomingEventsHeading')}</h2>
 
             <div className="space-y-3">
               {events.map((event) => (
@@ -295,7 +297,7 @@ export default async function SaunaPage({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-400">Brak przypisanych saunamistrzów</p>
+                      <p className="text-xs text-gray-400">{t('detail.noEventMasters')}</p>
                     )}
                   </div>
 
@@ -312,14 +314,14 @@ export default async function SaunaPage({
 
         {reviews && reviews.length > 0 && (
           <section className="mb-6 rounded-2xl border p-4">
-            <h2 className="mb-3 text-xl font-bold">⭐ Opinie</h2>
+            <h2 className="mb-3 text-xl font-bold">{t('detail.reviewsHeading')}</h2>
             <div className="space-y-3">
               {reviews.map((review) => (
                 <div key={review.id} className="rounded-xl bg-gray-50 p-3">
                   <div className="font-semibold">
                     {'⭐'.repeat(review.rating)} —{' '}
                     {review.user_id
-                      ? (reviewNameById[review.user_id] ?? 'Użytkownik')
+                      ? (reviewNameById[review.user_id] ?? t('detail.reviewFallbackAuthor'))
                       : review.author_name}
                   </div>
                   {review.review_text && (
@@ -339,7 +341,7 @@ export default async function SaunaPage({
               rel="noreferrer"
               className="inline-block rounded-xl bg-orange-600 px-4 py-2 text-white"
             >
-              Strona obiektu
+              {t('detail.website')}
             </a>
           )}
           {/* SP-038 slice 3C: only known platforms with non-empty values render */}

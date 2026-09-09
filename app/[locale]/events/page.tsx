@@ -1,6 +1,7 @@
 import EventsPageClient from '@/components/events/EventsPageClient'
 import { createClient } from '@supabase/supabase-js'
 import { Link } from '@/lib/i18n/navigation'
+import { getTranslations } from 'next-intl/server'
 import Navbar from '@/components/Navbar'
 import type { UpcomingEventRow } from '@/lib/types'
 
@@ -10,6 +11,7 @@ const supabase = createClient(
 )
 
 export default async function EventsPage() {
+  const t = await getTranslations('events')
   const { data: events } = await supabase.rpc('get_upcoming_events')
 
   return (
@@ -17,11 +19,11 @@ export default async function EventsPage() {
       <Navbar />
       <main className="mx-auto max-w-5xl p-4">
       <Link href="/" className="mb-4 inline-block rounded-xl border px-4 py-2">
-        ← Powrót do mapy
+        {t('backToMap')}
       </Link>
 
       <h1 className="mb-6 text-3xl font-bold">
-        🔥 Nadchodzące wydarzenia saunowe
+        {t('list.title')}
       </h1>
 
 	  <div className="mb-8">
@@ -30,7 +32,7 @@ export default async function EventsPage() {
 	  
       {!events || events.length === 0 ? (
         <div className="rounded-2xl border p-6 text-gray-600">
-          Brak nadchodzących wydarzeń.
+          {t('list.empty')}
         </div>
       ) : (
         <div className="space-y-4">
