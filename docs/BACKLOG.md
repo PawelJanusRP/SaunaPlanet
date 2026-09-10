@@ -687,11 +687,13 @@ Confirm exact column names against the live schema during the sprint.
 
 # SP-042 Feedback, Facility Corrections & Contact
 
-Status: PLANNED (recorded 2026-07-20, discovered during SP-038 Smart
+Status: **SP-042A ARCHITECTURE DELIVERED — awaiting owner decisions**
+(2026-09-10, `docs/SP042_FEEDBACK_ARCHITECTURE.md`; no implementation, no
+migrations). Originally recorded 2026-07-20, discovered during SP-038 Smart
 Facility Import; scope expanded 2026-09-09 from "Facility Data
 Improvement Proposals" into a unified feedback/corrections/contact
-mechanism). Backlog entry only — **explicitly out of scope for
-SP-038**. In SP-038 only the extension point is documented
+mechanism. **Explicitly out of scope for SP-038**. In SP-038 only the
+extension point is documented
 (`docs/SP038_SMART_IMPORT_ARCHITECTURE.md`) and the existing warn-only
 duplicate behavior is preserved unchanged.
 
@@ -887,12 +889,18 @@ conversations are deferred unless separately approved.
 
 ### Dependency / priority note
 
-SP-042 remains PLANNED. Current intended ordering:
+Sequencing (approved 2026-09-10):
 
-* complete SP-047 PL/EN/DE;
-* SP-040 remains the mandatory guardrail before broad SP-039P rollout
-  (do not weaken or remove the SP-040 pilot gate);
-* SP-042 may follow according to product priority.
+* SP-047 PL/EN/DE is COMPLETE (production 2026-09-09);
+* **SP-042 is intentionally implemented before SP-040** because feedback
+  collection is valuable during the currently running SP-039P controlled
+  pilot;
+* this does NOT weaken the existing gate: **SP-040 must be completed
+  before broad invitations are sent to all 10 SP-039P participants**;
+* delivery slices: SP-042A architecture (delivered) → SP-042B facility
+  correction submission → SP-042C suggestions & contact → SP-042D admin
+  moderation + partial apply + production release
+  (`docs/SP042_FEEDBACK_ARCHITECTURE.md` §25).
 
 ---
 
