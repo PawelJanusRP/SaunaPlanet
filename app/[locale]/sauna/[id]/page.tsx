@@ -4,6 +4,7 @@ import AddMasterToSaunaModal from '@/components/AddMasterToSaunaModal'
 import { createClient, getCurrentUserRole } from '@/lib/supabase/server'
 import { Link } from '@/lib/i18n/navigation'
 import AddReviewForm from '@/components/AddReviewForm'
+import FeedbackReportButton from '@/components/feedback/FeedbackReportButton'
 import Navbar from '@/components/Navbar'
 import { toggleFavoriteSauna, requestManagerRole } from '@/app/[locale]/(main)/profile/actions'
 import { getTranslations, getFormatter } from 'next-intl/server'
@@ -170,6 +171,13 @@ export default async function SaunaPage({
           <h1 className="text-3xl font-bold">{sauna.name}</h1>
 
           <div className="flex flex-wrap gap-2">
+            {sauna.status === 'active' && (
+              <FeedbackReportButton
+                saunaId={id}
+                saunaName={sauna.name}
+                isAuthenticated={!!user}
+              />
+            )}
             {user && (
               <form action={toggleFavoriteAction}>
                 <button
