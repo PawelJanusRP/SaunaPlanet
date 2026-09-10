@@ -55,6 +55,8 @@
       "saunasPending": "Saunen ({count}) · {pending} ausstehend",
       "events": "Events ({count})",
       "reviews": "Bewertungen ({count})",
+      "feedback": "Nutzermeldungen",
+      "feedbackPending": "Nutzermeldungen ({count})",
       "masters": "Saunameister",
       "mastersPending": "Saunameister ({count})",
       "pilot": "🧖 Saunameister-Pilot",
