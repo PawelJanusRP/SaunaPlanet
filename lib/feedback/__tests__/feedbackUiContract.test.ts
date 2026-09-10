@@ -13,6 +13,7 @@ const SAUNA_MAP = read('components', 'SaunaMap.tsx')
 const BUTTON = read('components', 'feedback', 'FeedbackReportButton.tsx')
 const ACTION = read('app', 'feedback', 'actions.ts')
 const ADMIN_PAGE = read('app', '[locale]', '(main)', 'admin', 'page.tsx')
+const TRUSTED_CLIENT = read('lib', 'supabase', 'service.ts')
 
 describe('facility detail entry (D1)', () => {
   it('the sauna detail page renders the correction entry with page-context identity', () => {
@@ -82,6 +83,33 @@ describe('server action contracts', () => {
     expect(trapIndex).toBeGreaterThan(-1)
     expect(trapIndex).toBeLessThan(rpcIndex)
     expect(ACTION).toMatch(/input\.trap[\s\S]{0,120}return \{ ok: true \}/)
+  })
+
+  it('routes anonymous submissions through the trusted server-only client, fail-closed', () => {
+    // the anonymous branch swaps the RPC client for the trusted one and
+    // refuses to proceed when the server credential is unavailable
+    expect(ACTION).toContain('createTrustedServerClient')
+    expect(ACTION).toMatch(/if \(!user\) \{[\s\S]+?createTrustedServerClient\(\)/)
+    expect(ACTION).toMatch(/if \(!trusted\) \{[\s\S]{0,300}?unavailable/)
+  })
+
+  it('uses the trusted client for the intake RPC only — never table access', () => {
+    expect(ACTION).not.toContain('.from(')
+    // exactly one RPC name is called in this action
+    expect(ACTION.match(/\.rpc\(/g)?.length).toBe(1)
+  })
+})
+
+describe('trusted server client module contracts', () => {
+  it('is guarded against browser execution and uses server-only env', () => {
+    expect(TRUSTED_CLIENT).toContain("typeof window !== 'undefined'")
+    expect(TRUSTED_CLIENT).toContain('throw new Error')
+    expect(TRUSTED_CLIENT).toContain('SUPABASE_SERVICE_ROLE_KEY')
+    expect(TRUSTED_CLIENT).not.toContain('NEXT_PUBLIC_SUPABASE_SERVICE')
+  })
+
+  it('returns null (fail-closed) when the credential is absent', () => {
+    expect(TRUSTED_CLIENT).toMatch(/if \(!url \|\| !key\) return null/)
   })
 })
 

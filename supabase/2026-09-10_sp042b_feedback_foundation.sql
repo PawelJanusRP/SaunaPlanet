@@ -7,8 +7,10 @@
 --   * feedback_correction_items — field-level proposals (partial acceptance);
 --   * feedback_report_events    — append-only audit;
 --   * submit_feedback_report()  — the ONLY intake path (SECURITY DEFINER,
---                                 granted to anon + authenticated — the
---                                 platform's first anonymous write, RPC-only).
+--                                 granted to authenticated + service_role;
+--                                 anon has NO EXECUTE — anonymous intake
+--                                 exists exclusively through the trusted
+--                                 server-only invocation, see below).
 --
 -- PRIVACY CONTRACT (hard): reports are private. Clients (anon and plain
 -- authenticated) have NO SELECT/INSERT/UPDATE/DELETE on any feedback table —
@@ -17,6 +19,20 @@
 -- RPC and never accepted from the caller. No raw IP is ever stored — only an
 -- HMAC-derived submitter key hash for anonymous rolling-window rate limiting
 -- (computed by the server action from trusted platform headers).
+--
+-- ANTI-ABUSE TRUST MODEL (security review fix, 2026-09-10): the anonymous
+-- branch is reachable ONLY through the trusted server path. Direct anon
+-- PostgREST callers could otherwise mint a fresh random 64-hex key per
+-- request and rotate around the anonymous rolling windows (and skip the
+-- Server Action honeypot). Two independent locks enforce this:
+--   1. GRANTS — EXECUTE goes to authenticated + service_role only; anon is
+--      revoked, so an anonymous browser cannot call the RPC at all;
+--   2. IN-BODY PIN — the anonymous branch (auth.uid() IS NULL) additionally
+--      requires the trusted server JWT context (claims role = service_role),
+--      so even a grant drift cannot silently reopen direct anonymous intake.
+-- Authenticated sessions keep calling the RPC directly: identity binds to
+-- auth.uid() and the per-account window applies regardless of any
+-- client-supplied key material (the key is ignored and stored NULL).
 --
 -- SP-042B scope: the RPC accepts type='facility_correction' only; SP-042C
 -- extends the accepted set to suggestion/contact without schema changes.
@@ -332,6 +348,11 @@ begin
       return jsonb_build_object('ok', false, 'code', 'rate-limited');
     end if;
   else
+    -- Anonymous branch: ONLY the trusted server path may enter (see header —
+    -- grants already exclude anon; this pin survives any grant drift).
+    if coalesce(auth.jwt()->>'role', '') <> 'service_role' then
+      return jsonb_build_object('ok', false, 'code', 'invalid-input');
+    end if;
     -- anonymous submissions are accepted only with a server-derived HMAC key
     if v_key is null or v_key !~ '^[0-9a-f]{64}$' then
       return jsonb_build_object('ok', false, 'code', 'invalid-input');
@@ -435,14 +456,15 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 8. Function grants — revoke-then-grant, incl. the default service_role
---    EXECUTE (M7-established posture). Trigger/guard functions stay
---    postgres-only.
+-- 8. Function grants — explicit revoke-then-grant; never rely on Supabase
+--    default privileges. anon deliberately receives NO EXECUTE (anonymous
+--    intake = trusted server path only; see header). Trigger/guard functions
+--    stay postgres-only.
 -- ---------------------------------------------------------------------------
 revoke all on function public.submit_feedback_report(text,uuid,text,text,jsonb,text,text,text,text)
   from public, anon, authenticated, service_role;
 grant execute on function public.submit_feedback_report(text,uuid,text,text,jsonb,text,text,text,text)
-  to anon, authenticated;
+  to authenticated, service_role;
 
 revoke all on function public.guard_feedback_report_update()
   from public, anon, authenticated, service_role;

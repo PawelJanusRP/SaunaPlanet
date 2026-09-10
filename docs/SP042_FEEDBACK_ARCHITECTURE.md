@@ -409,8 +409,18 @@ INSERT/UPDATE/DELETE anywhere**; intake is RPC-only.
 
 ### 12.1 `submit_feedback_report(...)` — SECURITY DEFINER, `set search_path = ''`
 
-Grant: `anon, authenticated` (revoke from `public`, and from `service_role`
-per the M7-established posture note in KNOWN_ISSUES). Signature (proposal):
+Grant (hardened by the 2026-09-10 security review — see §28): `authenticated,
+service_role`; **`anon` has NO EXECUTE** and `public` is revoked. Rationale: a
+direct anonymous PostgREST caller could mint a fresh random key hash per
+request and rotate around the anonymous rolling windows (and skip the Server
+Action honeypot). Anonymous intake therefore exists exclusively through the
+Server Action using the trusted server-only client
+(`lib/supabase/service.ts`); the RPC's anonymous branch additionally pins
+itself to the trusted server JWT context (claims role = `service_role`), so a
+future grant drift cannot silently reopen direct anonymous intake.
+Authenticated sessions call the RPC directly — identity binds to
+`auth.uid()`, the per-account window applies, and any client-supplied key
+material is ignored. Signature (proposal):
 
 ```
 submit_feedback_report(
@@ -828,6 +838,20 @@ applied at the time of this record).** Delivered:
   Moderation workflow (item decisions, apply, resolution) remains SP-042D.
 * **Tests**: `lib/feedback/__tests__/` — intake unit + localization
   coverage, M1 SQL contract, UI/action boundary contracts.
+
+**Security review fix (2026-09-10, before M1 was ever applied).** A review
+found that granting the intake RPC to `anon` let a direct PostgREST caller
+bypass the Server Action (honeypot) and rotate a random 64-hex key per
+request, defeating the anonymous rolling windows. Fixed in place in M1:
+EXECUTE now goes to `authenticated + service_role` only (anon revoked), the
+RPC's anonymous branch is additionally pinned to the trusted server JWT
+context, and the Server Action routes anonymous submissions through the
+server-only trusted client `lib/supabase/service.ts` — the single sanctioned
+holder of the privileged credential (pinned by a repo-wide contract test),
+used exclusively for this one RPC call and fail-closed when the credential
+is absent. New runtime requirement alongside `FEEDBACK_RATE_LIMIT_SECRET`:
+**`SUPABASE_SERVICE_ROLE_KEY`** (server-only env) must be present wherever
+anonymous submissions are accepted.
 
 Deferred exactly as planned: suggestions/contact (SP-042C), moderation +
 partial apply + production release + changelog entry (SP-042D).

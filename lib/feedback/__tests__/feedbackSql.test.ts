@@ -135,7 +135,22 @@ describe('SP-042B M1 migration contract', () => {
     expect(MIGRATION.match(/security definer/g)?.length).toBe(3) // RPC + 2 trigger fns
     expect(MIGRATION.match(/set search_path = ''/g)?.length).toBe(3)
     expect(MIGRATION).toContain('from public, anon, authenticated, service_role')
-    expect(MIGRATION).toMatch(/grant execute on function public\.submit_feedback_report[\s\S]+?to anon, authenticated/)
+    expect(MIGRATION).toMatch(/grant execute on function public\.submit_feedback_report[\s\S]+?to authenticated, service_role/)
+  })
+
+  it('gives anon NO EXECUTE anywhere — anonymous intake is server-path only', () => {
+    const grants = MIGRATION.match(/grant execute[\s\S]+?;/g) ?? []
+    expect(grants.length).toBe(1)
+    for (const grant of grants) {
+      expect(grant).not.toMatch(/\banon\b/)
+    }
+  })
+
+  it('pins the anonymous branch to the trusted server JWT context', () => {
+    const rpcBody = MIGRATION.slice(MIGRATION.indexOf('create function public.submit_feedback_report'))
+    const anonBranch = rpcBody.slice(rpcBody.indexOf('else'), rpcBody.indexOf("interval '24 hours'"))
+    expect(anonBranch).toContain("auth.jwt()->>'role'")
+    expect(anonBranch).toContain("<> 'service_role'")
   })
 
   it('returns only stable codes — no identifiers in RPC results', () => {

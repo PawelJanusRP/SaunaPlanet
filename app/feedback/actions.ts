@@ -4,6 +4,7 @@ import { createHmac } from 'node:crypto'
 import { headers } from 'next/headers'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
+import { createTrustedServerClient } from '@/lib/supabase/service'
 import {
   validateCorrectionInput,
   type CorrectionFormInput,
@@ -16,14 +17,26 @@ import {
  * §16).
  *
  * Boundary rules: the ONLY write path is the submit_feedback_report SECURITY
- * DEFINER RPC — this action never touches the feedback tables directly and
- * never uses a service-role client. Identity comes exclusively from the
- * session (the RPC binds created_by := auth.uid()); no user identifier is
- * accepted from the client. The honeypot is resolved here: a filled trap
- * field returns a fake success WITHOUT calling the RPC (silent drop — bots
- * get no signal). Anonymous rate limiting derives a transient key by HMAC
- * from the platform-set client network address; the raw address is never
- * persisted, never sent to the database and never logged by this code.
+ * DEFINER RPC — this action never touches the feedback tables directly.
+ * Identity comes exclusively from the session (the RPC binds
+ * created_by := auth.uid()); no user identifier is accepted from the client.
+ * The honeypot is resolved here: a filled trap field returns a fake success
+ * WITHOUT calling the RPC (silent drop — bots get no signal). Anonymous rate
+ * limiting derives a transient key by HMAC from the platform-set client
+ * network address; the raw address is never persisted, never sent to the
+ * database and never logged by this code.
+ *
+ * Trust model (security review fix, 2026-09-10): direct `anon` EXECUTE on
+ * the RPC is REVOKED — a browser cannot call the intake RPC anonymously via
+ * PostgREST at all, so a fresh random key hash per request can no longer
+ * rotate around the anonymous rolling windows or skip this honeypot.
+ *   - authenticated submissions: session client → RPC (auth.uid() binds,
+ *     10/h per account);
+ *   - anonymous submissions: ONLY this action, via the trusted server-only
+ *     client (lib/supabase/service.ts) → RPC anonymous branch, which the
+ *     database additionally pins to the trusted server context.
+ * The trusted client is used EXCLUSIVELY for this one RPC call — never for
+ * table access — and its credential never reaches the browser.
  */
 
 export type SubmitFeedbackResult =
@@ -89,6 +102,7 @@ export async function submitFeedbackReport(
     } = await supabase.auth.getUser()
 
     let keyHash: string | null = null
+    let rpcClient = supabase
     if (!user) {
       keyHash = await deriveAnonymousKeyHash()
       if (!keyHash) {
@@ -96,12 +110,20 @@ export async function submitFeedbackReport(
         console.error('submitFeedbackReport: FEEDBACK_RATE_LIMIT_SECRET missing/short')
         return { ok: false, code: 'unavailable', message: t('form.errors.unavailable') }
       }
+      // Anonymous intake goes through the trusted server-only client (the RPC
+      // grants exclude anon). Missing server credential → fail closed.
+      const trusted = createTrustedServerClient()
+      if (!trusted) {
+        console.error('submitFeedbackReport: trusted server client unavailable')
+        return { ok: false, code: 'unavailable', message: t('form.errors.unavailable') }
+      }
+      rpcClient = trusted
     }
 
     const locale = await getLocale()
     const { value } = validated
 
-    const { data, error } = await supabase.rpc('submit_feedback_report', {
+    const { data, error } = await rpcClient.rpc('submit_feedback_report', {
       p_type: 'facility_correction',
       p_sauna_id: value.saunaId,
       p_category: value.category,
