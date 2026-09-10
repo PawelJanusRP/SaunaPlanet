@@ -789,3 +789,45 @@ override vocabulary, full audit, never-touch-active-record) satisfied.
   operations backlog. Alternative: defer the policy entirely — leaves
   personal data with no stated bound. Consequence: GDPR posture documented
   now at zero implementation cost.
+
+---
+
+## 28. Delivery record
+
+**Owner decisions D1–D5 APPROVED (2026-09-10)** with one change to D2:
+contact e-mail is **required for anonymous `contact`** submissions (there is
+no reply channel otherwise); optional for facility corrections and
+suggestions; authenticated contact may use the account e-mail with the UI
+making the used address explicit. Additional approved constraint: the
+anonymous rate-limit key is HMAC-derived ONLY from trusted, server-observed
+Vercel request information; raw IPs are never stored or trusted from client
+input.
+
+**SP-042B — Facility Correction Submission — implemented on
+`feature/sp-042-facility-feedback` (2026-09-10; NOT merged, migration NOT
+applied at the time of this record).** Delivered:
+
+* **M1 migration** `supabase/2026-09-10_sp042b_feedback_foundation.sql`
+  (+ guarded rollback): `feedback_reports`, `feedback_correction_items`,
+  `feedback_report_events`, moderation-only RLS + client privilege revokes,
+  content-immutability guard trigger, status-change audit trigger, and the
+  `submit_feedback_report` SECURITY DEFINER RPC (SP-042B accepts
+  `facility_correction` only; §12.1 contract otherwise as designed).
+* **Intake**: `lib/feedback/intake.ts` (pure validation core),
+  `app/feedback/actions.ts` (honeypot silent-drop, HMAC anonymous key from
+  `x-real-ip`/`x-forwarded-for`, RPC-only boundary). Requires the
+  server-only env var **`FEEDBACK_RATE_LIMIT_SECRET`** (≥16 chars) in every
+  runtime that accepts anonymous submissions — without it anonymous intake
+  fails closed with `unavailable`.
+* **UX**: `components/feedback/FeedbackReportButton.tsx` on the sauna detail
+  page (active facilities only; D1 — no map-popup entry), `feedback`
+  message namespace in PL/EN/DE.
+* **Admin**: read-only "Zgłoszenia użytkowników / User reports /
+  Nutzermeldungen" tab in `/admin` (label deliberately NOT "Zgłoszenia" —
+  the legacy `sauna_submissions` tab already uses that Polish word).
+  Moderation workflow (item decisions, apply, resolution) remains SP-042D.
+* **Tests**: `lib/feedback/__tests__/` — intake unit + localization
+  coverage, M1 SQL contract, UI/action boundary contracts.
+
+Deferred exactly as planned: suggestions/contact (SP-042C), moderation +
+partial apply + production release + changelog entry (SP-042D).

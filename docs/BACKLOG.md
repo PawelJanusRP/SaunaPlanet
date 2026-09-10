@@ -687,9 +687,11 @@ Confirm exact column names against the live schema during the sprint.
 
 # SP-042 Feedback, Facility Corrections & Contact
 
-Status: **SP-042A ARCHITECTURE DELIVERED — awaiting owner decisions**
-(2026-09-10, `docs/SP042_FEEDBACK_ARCHITECTURE.md`; no implementation, no
-migrations). Originally recorded 2026-07-20, discovered during SP-038 Smart
+Status: **SP-042A APPROVED (decisions D1–D5, 2026-09-10); SP-042B Facility
+Correction Submission implemented on `feature/sp-042-facility-feedback`**
+(awaiting M1 migration approval + owner QA; NOT merged, NOT deployed —
+delivery record: `docs/SP042_FEEDBACK_ARCHITECTURE.md` §28). Originally
+recorded 2026-07-20, discovered during SP-038 Smart
 Facility Import; scope expanded 2026-09-09 from "Facility Data
 Improvement Proposals" into a unified feedback/corrections/contact
 mechanism. **Explicitly out of scope for SP-038**. In SP-038 only the
