@@ -1,0 +1,91 @@
+{
+  "entry": {
+    "reportIncorrect": "Report incorrect information"
+  },
+  "form": {
+    "title": "Report incorrect information",
+    "facilityLabel": "Facility",
+    "categoryLabel": "What is this report about?",
+    "categoryPlaceholder": "Choose a category…",
+    "messageLabel": "Describe the issue",
+    "messagePlaceholder": "E.g. the address is outdated — the facility moved to Poznańska 12.",
+    "proposedLabel": "Correct value (optional)",
+    "proposedPlaceholder": "E.g. the correct address, name or link",
+    "proposedCoordinatesPlaceholder": "E.g. 52.40637, 16.92517",
+    "proposedHint": "If you know the correct value, provide it — it speeds up verification.",
+    "emailLabel": "Your e-mail (optional)",
+    "emailPlaceholder": "address@example.com",
+    "emailHint": "Without an e-mail address we will not be able to reply to your report.",
+    "submit": "Send report",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "close": "Close",
+    "successTitle": "Thank you for your report",
+    "successBody": "We will review the information about this facility.",
+    "validation": {
+      "category-required": "Choose a report category.",
+      "message-too-short": "The description is too short — write at least 10 characters.",
+      "message-too-long": "The description is too long (maximum 4000 characters).",
+      "email-invalid": "The e-mail address looks invalid.",
+      "proposed-invalid": "The proposed value is invalid. For coordinates use the format: 52.40637, 16.92517.",
+      "invalid-input": "The report contains invalid data. Check the form and try again."
+    },
+    "errors": {
+      "invalid-input": "The report contains invalid data. Check the form and try again.",
+      "invalid-category": "Choose a valid report category.",
+      "invalid-email": "The e-mail address looks invalid.",
+      "invalid-facility": "This facility cannot be reported.",
+      "rate-limited": "Too many reports were sent. Please try again later.",
+      "unavailable": "The report could not be sent. Please try again later."
+    }
+  },
+  "categories": {
+    "name": "Facility name",
+    "address": "Address",
+    "coordinates": "Location on the map",
+    "website": "Website",
+    "social_link": "Social profile",
+    "contact_details": "Contact details (phone / e-mail)",
+    "category": "Facility category",
+    "opening_info": "Opening hours",
+    "photo": "Photo",
+    "closed": "Facility closed",
+    "duplicate": "Duplicate facility",
+    "other": "Other issue"
+  },
+  "statuses": {
+    "new": "New",
+    "in_review": "In review",
+    "resolved": "Resolved",
+    "rejected": "Rejected"
+  },
+  "fields": {
+    "name": "Name",
+    "description": "Description",
+    "address": "Address",
+    "city": "City",
+    "website": "Website",
+    "phone": "Phone",
+    "email": "E-mail",
+    "category": "Category",
+    "coordinates": "Coordinates",
+    "opening_hours": "Opening hours",
+    "social_links": "Social links"
+  },
+  "admin": {
+    "empty": "No reports.",
+    "types": {
+      "facility_correction": "Facility data correction",
+      "suggestion": "Suggestion",
+      "contact": "Contact"
+    },
+    "proposedChange": "Proposed change",
+    "currentValue": "Current value",
+    "proposedValue": "Proposed value",
+    "noValue": "(none)",
+    "authenticated": "Authenticated user",
+    "anonymous": "Anonymous report",
+    "hasEmail": "Contact e-mail provided",
+    "noEmail": "No contact e-mail"
+  }
+}

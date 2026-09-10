@@ -1,0 +1,91 @@
+{
+  "entry": {
+    "reportIncorrect": "Zgłoś nieprawidłowość"
+  },
+  "form": {
+    "title": "Zgłoś nieprawidłowość",
+    "facilityLabel": "Obiekt",
+    "categoryLabel": "Czego dotyczy zgłoszenie?",
+    "categoryPlaceholder": "Wybierz kategorię…",
+    "messageLabel": "Opisz nieprawidłowość",
+    "messagePlaceholder": "Np. adres jest nieaktualny — obiekt przeniósł się na ul. Poznańską 12.",
+    "proposedLabel": "Poprawna wartość (opcjonalnie)",
+    "proposedPlaceholder": "Np. poprawny adres, nazwa lub link",
+    "proposedCoordinatesPlaceholder": "Np. 52.40637, 16.92517",
+    "proposedHint": "Jeśli znasz poprawną wartość, podaj ją — przyspieszy to weryfikację.",
+    "emailLabel": "Twój e-mail (opcjonalnie)",
+    "emailPlaceholder": "adres@example.com",
+    "emailHint": "Bez adresu e-mail nie będziemy mogli odpowiedzieć na zgłoszenie.",
+    "submit": "Wyślij zgłoszenie",
+    "sending": "Wysyłanie…",
+    "cancel": "Anuluj",
+    "close": "Zamknij",
+    "successTitle": "Dziękujemy za zgłoszenie",
+    "successBody": "Sprawdzimy informacje o tym obiekcie.",
+    "validation": {
+      "category-required": "Wybierz kategorię zgłoszenia.",
+      "message-too-short": "Opis jest za krótki — napisz co najmniej 10 znaków.",
+      "message-too-long": "Opis jest za długi (maksymalnie 4000 znaków).",
+      "email-invalid": "Podany adres e-mail wygląda na nieprawidłowy.",
+      "proposed-invalid": "Proponowana wartość jest nieprawidłowa. Dla współrzędnych użyj formatu: 52.40637, 16.92517.",
+      "invalid-input": "Zgłoszenie zawiera nieprawidłowe dane. Sprawdź formularz i spróbuj ponownie."
+    },
+    "errors": {
+      "invalid-input": "Zgłoszenie zawiera nieprawidłowe dane. Sprawdź formularz i spróbuj ponownie.",
+      "invalid-category": "Wybierz prawidłową kategorię zgłoszenia.",
+      "invalid-email": "Podany adres e-mail wygląda na nieprawidłowy.",
+      "invalid-facility": "Nie można zgłosić nieprawidłowości dla tego obiektu.",
+      "rate-limited": "Wysłano zbyt wiele zgłoszeń. Spróbuj ponownie później.",
+      "unavailable": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie później."
+    }
+  },
+  "categories": {
+    "name": "Nazwa obiektu",
+    "address": "Adres",
+    "coordinates": "Położenie na mapie",
+    "website": "Strona internetowa",
+    "social_link": "Profil społecznościowy",
+    "contact_details": "Dane kontaktowe (telefon / e-mail)",
+    "category": "Kategoria obiektu",
+    "opening_info": "Godziny otwarcia",
+    "photo": "Zdjęcie",
+    "closed": "Obiekt zamknięty",
+    "duplicate": "Duplikat obiektu",
+    "other": "Inna nieprawidłowość"
+  },
+  "statuses": {
+    "new": "Nowe",
+    "in_review": "W weryfikacji",
+    "resolved": "Rozwiązane",
+    "rejected": "Odrzucone"
+  },
+  "fields": {
+    "name": "Nazwa",
+    "description": "Opis",
+    "address": "Adres",
+    "city": "Miasto",
+    "website": "Strona internetowa",
+    "phone": "Telefon",
+    "email": "E-mail",
+    "category": "Kategoria",
+    "coordinates": "Współrzędne",
+    "opening_hours": "Godziny otwarcia",
+    "social_links": "Linki społecznościowe"
+  },
+  "admin": {
+    "empty": "Brak zgłoszeń.",
+    "types": {
+      "facility_correction": "Korekta danych obiektu",
+      "suggestion": "Sugestia",
+      "contact": "Kontakt"
+    },
+    "proposedChange": "Proponowana zmiana",
+    "currentValue": "Wartość obecna",
+    "proposedValue": "Wartość proponowana",
+    "noValue": "(brak)",
+    "authenticated": "Użytkownik zalogowany",
+    "anonymous": "Zgłoszenie anonimowe",
+    "hasEmail": "Podano e-mail kontaktowy",
+    "noEmail": "Bez e-maila kontaktowego"
+  }
+}

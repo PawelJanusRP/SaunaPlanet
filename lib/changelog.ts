@@ -21,6 +21,18 @@ export type ChangelogEntry = {
 /** Newest release first. */
 export const changelog: ChangelogEntry[] = [
   {
+    // SP-042B — facility correction submission, deployed 2026-09-10.
+    date: '10 września 2026',
+    title: 'Zgłaszanie nieprawidłowości w danych saun',
+    items: [
+      'Na stronie każdej sauny znajdziesz przycisk „Zgłoś nieprawidłowość" — możesz poinformować nas o błędnym adresie, położeniu na mapie, godzinach otwarcia, stronie internetowej i innych danych obiektu.',
+      'Jeśli znasz poprawną wartość (np. właściwy adres), możesz podać ją od razu w zgłoszeniu — przyspieszy to weryfikację.',
+      'Zgłoszenie wyślesz bez zakładania konta; adres e-mail jest opcjonalny (bez niego nie będziemy mogli odpowiedzieć).',
+      'Formularz dostępny jest po polsku, angielsku i niemiecku.',
+      'Zgłoszenia trafiają do moderacji SaunaPlanet — dane obiektu nigdy nie zmieniają się automatycznie.',
+    ],
+  },
+  {
     // SP-047 — deployed to production 2026-09-09.
     date: '9 września 2026',
     title: 'SaunaPlanet po polsku, angielsku i niemiecku',

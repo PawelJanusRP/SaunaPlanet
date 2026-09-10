@@ -60,6 +60,7 @@ export default async function AdminPage({
     { data: reviews },
     { data: pendingManagers },
     { data: linkedMasters },
+    { data: feedbackReports },
   ] = await Promise.all([
     supabase.rpc('admin_get_users'),
     supabase.from('sauna_submissions').select('*').order('created_at', { ascending: false }),
@@ -94,6 +95,12 @@ export default async function AdminPage({
       .from('sauna_masters')
       .select('user_id, status')
       .not('user_id', 'is', null),
+    // SP-042B: read-only feedback queue (moderation RLS SELECT arm). Full
+    // moderation controls (item decisions, apply, resolution) are SP-042D.
+    supabase
+      .from('feedback_reports')
+      .select('id, type, status, category, message, contact_email, locale, sauna_id, sauna_name_snapshot, created_at, created_by, saunas(name), feedback_correction_items(id, field_code, status, current_value, proposed_value)')
+      .order('created_at', { ascending: false }),
   ])
 
   const masterStatusByUserId: Record<string, string> = {}
@@ -101,6 +108,11 @@ export default async function AdminPage({
   for (const m of (linkedMasters ?? []) as any[]) {
     if (m.user_id) masterStatusByUserId[m.user_id] = m.status
   }
+
+  const tf = await getTranslations('feedback')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const feedbackRows = (feedbackReports ?? []) as any[]
+  const newFeedbackCount = feedbackRows.filter((r) => r.status === 'new').length
 
   const pending = submissions?.filter((s) => s.status === 'pending') ?? []
   const pendingMasterCount = pendingMasters?.length ?? 0
@@ -198,6 +210,9 @@ export default async function AdminPage({
                                   : t('tabs.saunas', { count: saunas?.length ?? 0 }) },
     { id: 'eventy',      label: t('tabs.events', { count: events?.length ?? 0 }) },
     { id: 'recenzje',    label: t('tabs.reviews', { count: reviews?.length ?? 0 }) },
+    { id: 'feedback',    label: newFeedbackCount > 0
+                                  ? t('tabs.feedbackPending', { count: newFeedbackCount })
+                                  : t('tabs.feedback') },
     { id: 'masters',     label: pendingMasterCount > 0
                                   ? t('tabs.mastersPending', { count: pendingMasterCount })
                                   : t('tabs.masters') },
@@ -243,6 +258,77 @@ export default async function AdminPage({
           </Link>
         ))}
       </div>
+
+      {/* Feedback tab — SP-042B read-only queue (moderation workflow is SP-042D) */}
+      {activeTab === 'feedback' && (
+        <section className="space-y-3">
+          {feedbackRows.length === 0 ? (
+            <div className="rounded-3xl border bg-white p-8 text-center text-sm text-gray-500">{tf('admin.empty')}</div>
+          ) : (
+            feedbackRows.map((r) => {
+              const statusClass =
+                r.status === 'new' ? 'bg-yellow-100 text-yellow-700'
+                : r.status === 'in_review' ? 'bg-blue-100 text-blue-700'
+                : r.status === 'resolved' ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+              const renderValue = (v: unknown): string => {
+                if (v === null || v === undefined) return tf('admin.noValue')
+                if (typeof v === 'string') return v
+                if (typeof v === 'object' && v !== null && 'lat' in (v as object) && 'lng' in (v as object)) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  return `${(v as any).lat}, ${(v as any).lng}`
+                }
+                return JSON.stringify(v)
+              }
+              const saunaName = r.saunas?.name ?? r.sauna_name_snapshot
+              return (
+                <div key={r.id} className="rounded-3xl border bg-white p-5 shadow-sm">
+                  <div className="mb-2 flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-lg font-bold">
+                        {r.sauna_id ? (
+                          <Link href={`/sauna/${r.sauna_id}`} className="hover:underline">{saunaName}</Link>
+                        ) : (
+                          saunaName
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-sm text-gray-500">
+                        <span>{tf(`admin.types.${r.type}`)}</span>
+                        {r.category && <span> · {tf(`categories.${r.category}`)}</span>}
+                      </div>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass}`}>
+                      {tf(`statuses.${r.status}`)}
+                    </span>
+                  </div>
+
+                  <p className="mb-3 whitespace-pre-wrap rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-700">{r.message}</p>
+
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(r.feedback_correction_items ?? []).map((item: any) => (
+                    <div key={item.id} className="mb-3 rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-2 text-sm">
+                      <div className="mb-1 font-medium text-blue-900">{tf('admin.proposedChange')} · {tf(`fields.${item.field_code}`)}</div>
+                      <div className="text-gray-600">
+                        <span className="text-gray-400">{tf('admin.currentValue')}:</span> {renderValue(item.current_value)}
+                      </div>
+                      <div className="text-gray-800">
+                        <span className="text-gray-400">{tf('admin.proposedValue')}:</span> {renderValue(item.proposed_value)}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                    <span>{format.dateTime(new Date(r.created_at), { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{r.created_by ? tf('admin.authenticated') : tf('admin.anonymous')}</span>
+                    <span>{r.contact_email ? tf('admin.hasEmail') : tf('admin.noEmail')}</span>
+                    <span className="uppercase">{r.locale}</span>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </section>
+      )}
 
       {/* Submissions tab */}
       {activeTab === 'submissions' && (

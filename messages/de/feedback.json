@@ -1,0 +1,91 @@
+{
+  "entry": {
+    "reportIncorrect": "Fehlerhafte Angaben melden"
+  },
+  "form": {
+    "title": "Fehlerhafte Angaben melden",
+    "facilityLabel": "Einrichtung",
+    "categoryLabel": "Worauf bezieht sich die Meldung?",
+    "categoryPlaceholder": "Kategorie wählen…",
+    "messageLabel": "Beschreibe das Problem",
+    "messagePlaceholder": "Z. B. die Adresse ist veraltet — die Einrichtung ist in die Poznańska 12 umgezogen.",
+    "proposedLabel": "Korrekter Wert (optional)",
+    "proposedPlaceholder": "Z. B. die korrekte Adresse, der Name oder ein Link",
+    "proposedCoordinatesPlaceholder": "Z. B. 52.40637, 16.92517",
+    "proposedHint": "Wenn du den korrekten Wert kennst, gib ihn an — das beschleunigt die Prüfung.",
+    "emailLabel": "Deine E-Mail (optional)",
+    "emailPlaceholder": "adresse@example.com",
+    "emailHint": "Ohne E-Mail-Adresse können wir auf deine Meldung nicht antworten.",
+    "submit": "Meldung senden",
+    "sending": "Wird gesendet…",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "successTitle": "Danke für deine Meldung",
+    "successBody": "Wir prüfen die Angaben zu dieser Einrichtung.",
+    "validation": {
+      "category-required": "Wähle eine Kategorie für die Meldung.",
+      "message-too-short": "Die Beschreibung ist zu kurz — schreibe mindestens 10 Zeichen.",
+      "message-too-long": "Die Beschreibung ist zu lang (maximal 4000 Zeichen).",
+      "email-invalid": "Die E-Mail-Adresse scheint ungültig zu sein.",
+      "proposed-invalid": "Der vorgeschlagene Wert ist ungültig. Für Koordinaten nutze das Format: 52.40637, 16.92517.",
+      "invalid-input": "Die Meldung enthält ungültige Daten. Prüfe das Formular und versuche es erneut."
+    },
+    "errors": {
+      "invalid-input": "Die Meldung enthält ungültige Daten. Prüfe das Formular und versuche es erneut.",
+      "invalid-category": "Wähle eine gültige Kategorie für die Meldung.",
+      "invalid-email": "Die E-Mail-Adresse scheint ungültig zu sein.",
+      "invalid-facility": "Für diese Einrichtung kann keine Meldung abgegeben werden.",
+      "rate-limited": "Es wurden zu viele Meldungen gesendet. Bitte versuche es später erneut.",
+      "unavailable": "Die Meldung konnte nicht gesendet werden. Bitte versuche es später erneut."
+    }
+  },
+  "categories": {
+    "name": "Name der Einrichtung",
+    "address": "Adresse",
+    "coordinates": "Position auf der Karte",
+    "website": "Website",
+    "social_link": "Social-Media-Profil",
+    "contact_details": "Kontaktdaten (Telefon / E-Mail)",
+    "category": "Kategorie der Einrichtung",
+    "opening_info": "Öffnungszeiten",
+    "photo": "Foto",
+    "closed": "Einrichtung geschlossen",
+    "duplicate": "Doppelter Eintrag",
+    "other": "Anderes Problem"
+  },
+  "statuses": {
+    "new": "Neu",
+    "in_review": "In Prüfung",
+    "resolved": "Erledigt",
+    "rejected": "Abgelehnt"
+  },
+  "fields": {
+    "name": "Name",
+    "description": "Beschreibung",
+    "address": "Adresse",
+    "city": "Stadt",
+    "website": "Website",
+    "phone": "Telefon",
+    "email": "E-Mail",
+    "category": "Kategorie",
+    "coordinates": "Koordinaten",
+    "opening_hours": "Öffnungszeiten",
+    "social_links": "Social-Media-Links"
+  },
+  "admin": {
+    "empty": "Keine Meldungen.",
+    "types": {
+      "facility_correction": "Korrektur der Einrichtungsdaten",
+      "suggestion": "Vorschlag",
+      "contact": "Kontakt"
+    },
+    "proposedChange": "Vorgeschlagene Änderung",
+    "currentValue": "Aktueller Wert",
+    "proposedValue": "Vorgeschlagener Wert",
+    "noValue": "(keiner)",
+    "authenticated": "Angemeldete Person",
+    "anonymous": "Anonyme Meldung",
+    "hasEmail": "Kontakt-E-Mail angegeben",
+    "noEmail": "Keine Kontakt-E-Mail"
+  }
+}

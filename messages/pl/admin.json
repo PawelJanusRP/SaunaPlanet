@@ -55,6 +55,8 @@
       "saunasPending": "Sauny ({count}) · {pending} oczekuje",
       "events": "Eventy ({count})",
       "reviews": "Recenzje ({count})",
+      "feedback": "Zgłoszenia użytkowników",
+      "feedbackPending": "Zgłoszenia użytkowników ({count})",
       "masters": "Saunamistrzowie",
       "mastersPending": "Saunamistrzowie ({count})",
       "pilot": "🧖 Pilot saunamistrzów",

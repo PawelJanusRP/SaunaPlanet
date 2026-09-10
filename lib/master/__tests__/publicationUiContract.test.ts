@@ -59,11 +59,14 @@ describe('RPC names are centralized', () => {
 })
 
 describe('privilege and secrecy hygiene', () => {
-  it('no service-role usage anywhere in the app sources', () => {
+  it('service-role usage is confined to the single sanctioned module', () => {
+    // SP-042B security fix: anonymous feedback intake requires ONE trusted
+    // server-only client. lib/supabase/service.ts is the only source allowed
+    // to reference the privileged credential; everything else stays clean.
     const offenders = nonTestSources.filter((f) =>
       /service_role|SERVICE_ROLE/.test(f.text)
     )
-    expect(offenders.map((f) => f.path)).toEqual([])
+    expect(offenders.map((f) => f.path)).toEqual(['lib/supabase/service.ts'])
   })
   it('publication UI never touches claim-token fields', () => {
     const publicationUi = nonTestSources.filter(

@@ -562,6 +562,15 @@ Long-term priority:
 > invitations go to all 10 SP-039P pilot participants.** SP-047 does not affect
 > that gate.
 
+> **Execution-order update (2026-09-10).** With SP-047 closed, **SP-042 —
+> Feedback, Facility Corrections & Contact** starts next, intentionally ahead
+> of SP-040, because feedback collection is valuable during the currently
+> running SP-039P controlled pilot. This is an ordering change only; **the
+> SP-040 gate is unchanged: SP-040 must be complete before broad invitations
+> go to all 10 SP-039P pilot participants.** SP-042A (architecture) is
+> delivered and awaiting owner decisions — see
+> `docs/SP042_FEEDBACK_ARCHITECTURE.md`.
+
 **SP-047 — Internationalization & Localization (PL/EN/DE)** —
 **CLOSED / DEPLOYED / VERIFIED (production 2026-09-09, merge `3f27922`).**
 Multilingual architecture on next-intl (App Router): canonical `/{locale}/…`
@@ -601,11 +610,16 @@ whole-series manager acceptance; individual occurrence editing;
 cancellation metadata** (event history preserved); Today-Queue reminders
 before a series ends. Important but must **not** block the claim pilot.
 
-**SP-042 — Facility Data Improvement Proposals** (unchanged; full scope:
-docs/BACKLOG.md) — controlled, moderated "suggest an update" workflow for
-existing facilities (field-level diffs, per-value provenance, partial
-acceptance, manager review, moderator override, full audit, no automatic
-management-right assignment).
+**SP-042 — Feedback, Facility Corrections & Contact** (full scope:
+docs/BACKLOG.md; architecture: docs/SP042_FEEDBACK_ARCHITECTURE.md,
+delivered 2026-09-10, awaiting owner decisions) — one shared feedback
+mechanism: facility "report incorrect information" (field-level diffs,
+per-value provenance, partial acceptance, moderator review/override, full
+audit, never mutating the active record without explicit acceptance),
+product suggestions and contact intake; anonymous + authenticated
+submission, PL/EN/DE, one admin moderation queue. Runs before SP-040 (see
+the 2026-09-10 execution-order note above); the SP-040 pilot gate is
+unchanged.
 
 **SP-043 — Architecture, Performance & Scalability Review** (renumbered
 from the earlier SP-040; full scope: docs/BACKLOG.md) — a comprehensive,
